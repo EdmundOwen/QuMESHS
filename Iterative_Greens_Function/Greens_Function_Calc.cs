@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OpenCLNet;
+using CenterSpace.NMath.Core;
+using CenterSpace.NMath.Matrix;
 
 namespace Iterative_Greens_Function
 {
@@ -10,7 +12,7 @@ namespace Iterative_Greens_Function
     {
         int no_Energy_Count, no_Slices;
         double dE;
-        Mem hop_mat, hop_mat_conj, H0_slice;
+        DoubleComplexMatrix hop_mat, hop_mat_conj, H0_slice;
 
         int slice_width;
 
@@ -18,13 +20,14 @@ namespace Iterative_Greens_Function
         {
         }
 
-        public Mem[] Iterate(out Mem G_0n, out Mem G_n0, Mem Potential, double Energy)
+        public DoubleComplexMatrix[] Iterate(out DoubleComplexMatrix G_0n, out DoubleComplexMatrix G_n0, DoubleMatrix Potential, double Energy)
         {
-            Mem[] G_ii = new Mem[no_Slices];
-            Mem[] G_in = new Mem[no_Slices];
-            Mem[] G_ni = new Mem[no_Slices];
+            DoubleComplexMatrix[] G_ii = new DoubleComplexMatrix[no_Slices];
+            DoubleComplexMatrix[] G_in = new DoubleComplexMatrix[no_Slices];
+            DoubleComplexMatrix[] G_ni = new DoubleComplexMatrix[no_Slices];
 
             // Calculate Green's function boundary conditions
+            Calculate_BCs(ref G_ii, Potential,  Energy);
 
             // Iterate Green's function at given energy
             for (int j = 1; j < no_Slices - 1; j++)
@@ -41,10 +44,151 @@ namespace Iterative_Greens_Function
             return G_ii;
         }
 
-        void Iterate_Slice(ref Mem[] G_ii, ref Mem[] G_in, ref Mem[] G_ni, Mem Potential, int slice_no, double Energy)
+        void Calculate_BCs(ref DoubleComplexMatrix[] G_ii, DoubleMatrix Potential, double Energy)
+        {
+            // Generate transfer matrix
+            DoubleComplexMatrix transfer_mat = Generate_Transfer_Matrix(Potential, Energy);
+
+            // Calculate eigenvalues
+            DoubleComplexEigDecomp eig_decomp = new DoubleComplexEigDecomp(transfer_mat);
+            if (!eig_decomp.IsGood)
+                throw new Exception("Error - Eigenvalue decomposition of transfer matrix failed!");
+
+            // Sort through eigenvalues
+            int[] backward_modes, forward_modes;
+            int no_forwards, no_backwards, no_propagating_modes;
+            Sort_Eigenvalues(eig_decomp, out backward_modes, out forward_modes, out no_forwards, out no_backwards, out no_propagating_modes);
+
+            // Compile eigenvectors
+            DoubleComplexMatrix forward_eigenvecs, backward_eigenvecs;
+            Compile_Eigenvectors(out forward_eigenvecs, out backward_eigenvecs, eig_decomp, backward_modes, forward_modes, no_forwards, no_backwards);
+
+            // Input boundary conditions into G_ii
+
+            throw new NotImplementedException();
+        }
+        
+        /// <summary>
+        /// Generates the transfer matrix needed to solve the boundary conditions from the leads
+        /// NOTE!!!!!! This is calculated for the first slice of the potential which assumes that
+        /// the system is symmetric!!
+        /// </summary>
+        DoubleComplexMatrix Generate_Transfer_Matrix(DoubleMatrix Potential, double Energy)
+        {
+            DoubleComplexMatrix trans = new DoubleComplexMatrix(2 * slice_width, 2 * slice_width, 0);
+
+            ////////////// NOTE: Hamiltonian is calculated for the potential on the first slice!!!!!! ////////////
+            DoubleComplexMatrix top_left = hop_mat_conj * Calculate_Hamiltonian(Potential, 0, Energy);
+            for (int i = 0; i < slice_width; i++)
+                for (int j = 0; j < slice_width; j++)
+                {
+                    // fill top left
+                    trans[i, j] = top_left[i, j];
+
+                    // fill off diagonal blocks
+                    trans[i + slice_width, j] = hop_mat_conj[i, j];
+                    trans[i, j + slice_width] = -1 * hop_mat_conj[i, j];
+                }
+
+            return trans;
+        }
+
+        /// <summary>
+        /// sorts the eigenvalues to work out which have |alpha| \geq 1 and which have
+        /// |alpha| \leq 1 to discount unphysical solutions in the leads
+        /// </summary>
+        void Sort_Eigenvalues(DoubleComplexEigDecomp eig_decomp, out int[] backward_modes, out int[] forward_modes, out int no_forward, out int no_backward, out int no_propagating)
+        {
+            // a tolerance for the propagating eigenvalues around |alpha| = 1
+            double tol = 0.000000001;
+
+            no_forward = 0;
+            no_backward = 0;
+            no_propagating = 0;
+
+            DoubleVector abs_vals = NMathFunctions.Abs(eig_decomp.EigenValues);
+            forward_modes = new int[abs_vals.Length];
+            backward_modes = new int[abs_vals.Length];
+
+            // and add the assign
+            for (int i = 0; i < abs_vals.Length; i++)
+            {
+                // first check for propagating modes
+                if (abs_vals[i] >= 1.0 - tol && abs_vals[i] <= 1.0 + tol)
+                {
+                    double current = Check_Direction_Of_Propagation(eig_decomp, i);
+                    if (current > 0)
+                    {
+                        forward_modes[no_forward] = i;
+                        no_forward++;
+                        no_propagating++;
+                    }
+                    else if (current < 0)
+                    {
+                        backward_modes[no_backward] = i;
+                        no_backward++;
+                        no_propagating++;
+                    }
+                    else
+                        throw new Exception("Error - Propagating mode is not propagating!");
+                }
+
+                // then add the evanescent modes
+                if (abs_vals[i] < 1.0 - tol)
+                {
+                    forward_modes[no_forward] = i;
+                    no_forward++;
+                }
+                else if (abs_vals[i] > 1.0 + tol)
+                {
+                    backward_modes[no_backward] = i;
+                    no_backward++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Calculates the direction of propagation of the i-th mode from the matrix decomposition
+        /// Taken from Crispin's code.... ie. Check how this works!
+        /// </summary>
+        double Check_Direction_Of_Propagation(DoubleComplexEigDecomp eig_decomp, int i)
+        {
+            double current = 0.0;
+
+            DoubleComplex eigenvalue = eig_decomp.EigenValue(i);
+            DoubleComplexVector eigenvector = eig_decomp.RightEigenVector(i);
+            for (int j = 0; j < slice_width; j++)
+            {
+                double tmp = NMathFunctions.Abs(eigenvector[j]);
+                current += 2.0 * (eigenvalue + something).Imag * tmp * tmp;
+            }
+
+            return current;
+        }
+
+        /// <summary>
+        /// Compiles the eigenvectors in either direction from the eigenvalue decomposition
+        /// using the results from "Sort_Eigenvalues"
+        /// </summary>
+        void Compile_Eigenvectors(out DoubleComplexMatrix forward_eigenvecs, out DoubleComplexMatrix backward_eigenvecs, 
+            DoubleComplexEigDecomp eig_decomp, int[] backward_modes, int[] forward_modes, int no_forwards, int no_backwards)
+        {
+
+            forward_eigenvecs = new DoubleComplexMatrix(no_forwards, no_forwards);
+            for (int i = 0; i < no_forwards; i++)
+                for (int j = 0; j < slice_width; j++)
+                    forward_eigenvecs[i, j] = eig_decomp.LeftEigenVector(forward_modes[i])[j];
+
+            backward_eigenvecs = new DoubleComplexMatrix(no_backwards, no_backwards);
+            for (int i = 0; i < no_backwards; i++)
+                for (int j = 0; j < slice_width; j++)
+                    backward_eigenvecs[i, j] = eig_decomp.LeftEigenVector(backward_modes[i])[j];
+        }
+
+        void Iterate_Slice(ref DoubleComplexMatrix[] G_ii, ref DoubleComplexMatrix[] G_in, ref DoubleComplexMatrix[] G_ni, DoubleMatrix Potential, int slice_no, double Energy)
         {
             // Calculate G_n+1,n+1 (MacKinnon 5a)
-            Mem E_minus_H = Calculate_Hamiltonian(Potential, slice_no, Energy);
+            DoubleComplexMatrix E_minus_H = Calculate_Hamiltonian(Potential, slice_no, Energy);
             G_ii[slice_no] = Calculate_New_Greens_Function(E_minus_H, G_ii[slice_no - 1]);
             
             // Calculate influence of the new slice on the previously calculated results
@@ -56,42 +200,44 @@ namespace Iterative_Greens_Function
         /// how the new diagonal Green's functions are influenced by the new
         /// slice
         /// </summary>
-        void Calculate_Connections(Mem G_nplusnplus, ref Mem[] G_ii, ref Mem[] G_in, ref Mem[] G_ni, Mem Potential, int slice_no, double Energy)
+        void Calculate_Connections(DoubleComplexMatrix G_nplusnplus, ref DoubleComplexMatrix[] G_ii, ref DoubleComplexMatrix[] G_in, ref DoubleComplexMatrix[] G_ni, DoubleMatrix Potential, int slice_no, double Energy)
         {
             // Calculate G_n+1,i 
             for (int i = 0; i < slice_no; i++)
-                G_ni[i] = ViennaCL.TripMatProd(G_ii[slice_no], hop_mat_conj, G_ni[i]);   // (MacKinnon 5c)
+                G_ni[i] = G_ii[slice_no] * hop_mat_conj * G_ni[i];// ViennaCL.TripMatProd(G_ii[slice_no], hop_mat_conj, G_ni[i]);   // (MacKinnon 5c)
 
             // Calculate G_i,i ( note that G_ni has been updated to include the next slice so
             // it is technically G_{n+1, i} )
             for (int i = 1; i < slice_no; i++)
-                G_ii[i] = ViennalCL.Add(G_ii[i], ViennalCL.TripProd(G_in[i], hop_mat, G_ni[i]));      // (MacKinnon 5d with i = j)
+                G_ii[i] = G_ii[i] + G_in[i] * hop_mat * G_ni[i]; // ViennalCL.Add(G_ii[i], ViennalCL.TripProd(G_in[i], hop_mat, G_ni[i]));      // (MacKinnon 5d with i = j)
                     
             // Calculate G_i,n+1
             for (int i = 0; i < slice_no + 1; i++)
-                G_in[i] = ViennaCL.TripProd(G_in[i], hop_mat, G_ii[slice_no]);  // (MacKinnon 5d)
+                G_in[i] = G_in[i] * hop_mat * G_ii[slice_no]; // ViennaCL.TripProd(G_in[i], hop_mat, G_ii[slice_no]);  // (MacKinnon 5d)
         }
 
-        Mem Calculate_Hamiltonian(Mem Potential, int slice_no, double Energy)
+        DoubleComplexMatrix Calculate_Hamiltonian(DoubleMatrix Potential, int slice_no, double Energy)
         {
             int slice_start = slice_no * slice_width;
+            DoubleMatrix diagonal_matrix = Energy * DoubleMatrix.Identity(slice_width);
 
             // Get potential from memory
-            Mem pot_Slice = ViennaCL.GetSlice(Potential, slice_start, slice_start + slice_width, 1);
-            pot_Slice = ViennaCL.Subtract(ViennaCL.Prod(Energy, ViennaCL.UnitVector), pot_Slice);
+            DoubleVector pot_data = Potential.Slice(0, slice_no, slice_no, 0, 1);
+            DoubleMatrix pot_slice = new DoubleMatrix(slice_width, slice_width, pot_data.DataBlock, 1, 1);// ViennaCL.GetSlice(Potential, slice_start, slice_start + slice_width, 1);
+            diagonal_matrix = diagonal_matrix - pot_slice;// pot_Slice = ViennaCL.Subtract(ViennaCL.Prod(Energy, ViennaCL.UnitVector), pot_Slice);
 
             // Construct (E - V) - H_0
-            return ViennaCL.Subtract(ViennaCL.Prod(ViennaCL.Identity, pot_Slice), H0_slice);
+            return diagonal_matrix - H0_slice;
         }
 
-        Mem Calculate_New_Greens_Function(Mem E_minus_H, Mem G_nn)
+        DoubleComplexMatrix Calculate_New_Greens_Function(DoubleComplexMatrix E_minus_H, DoubleComplexMatrix G_nn)
         {
             // Calculate V G_nn V\dag
-            Mem result = ViennaCL.TripProd(hop_mat, G_nn, hop_mat_conj);
-            result = ViennaCL.Add(E_minus_H, result);
+            DoubleComplexMatrix result = hop_mat * G_nn * hop_mat_conj;
+            result = E_minus_H + result;
 
             // Invert matrix
-            return ViennaCL.Invert(result);
+            return MatrixFunctions.Inverse(result);
         }
 
         public double Calculate_Currents()

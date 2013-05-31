@@ -34,6 +34,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NMath, Version=5.3.0.1, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath 5.3\Assemblies\NMath.dll</HintPath>
+    </Reference>
     <Reference Include="OpenCLNet">
       <HintPath>.\OpenCLNet.dll</HintPath>
     </Reference>
