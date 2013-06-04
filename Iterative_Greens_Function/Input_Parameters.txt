@@ -1,0 +1,27 @@
+﻿############################################################################
+#### Input parameter file for Iterative_Greens_Function calculator...	####
+############################################################################
+#
+# Any line not starting with % is commented out.
+# The input names are case sensitive
+# The only spaces allowed are before and after the = sign and immediately after the % sign
+# If a line starts #%, this is an optional input.
+# Some inputs override others; typically, refer to the example input file to see
+# which inputs are default... one's with #% tend to be overriden
+#
+############## Simulation domain details ##############################
+#
+## Number of slices between the leads
+% no_Slices = 10
+#
+## Number of lattice sites on each slice
+% slice_width = 10;
+#
+#
+############## Energy sweep details##### ##############################
+#
+## Number of energy levels to calculate Green's functions for
+% no_Energy_Count = 1;
+#
+## Spacing between energy levels
+% dE = 1;

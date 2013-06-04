@@ -10,14 +10,49 @@ namespace Iterative_Greens_Function
 {
     class Greens_Function_Calc
     {
-        int no_Energy_Count, no_Slices;
-        double dE;
+        int no_Slices, slice_width;
+        double dx;
         DoubleComplexMatrix hop_mat, hop_mat_conj, H0_slice;
+        
+        // physical constants
+        #region
+        const double hbar = 1;
+        const double mass = 1;
+        #endregion
 
-        int slice_width;
+        public Greens_Function_Calc(int no_Slices, int slice_width)
+        {
+            this.no_Slices = no_Slices;
+            this.slice_width = slice_width;
+        }
 
         public void Initialise()
         {
+            // Hamiltonian hopping prefactor
+            double alpha = hbar * hbar / (2.0 * mass * dx * dx);
+
+            // create hopping matrices
+            hop_mat = new DoubleComplexMatrix(slice_width, slice_width);
+            for (int i = 0; i < slice_width; i++)
+            {
+                if (i != 0)
+                    hop_mat[i, i - 1] = -1.0 * alpha;
+                if (i != slice_width - 1)
+                    hop_mat[i, i + 1] = -1.0 * alpha;
+            }
+            hop_mat_conj = NMathFunctions.Conj(hop_mat);
+
+            // create on-slice Hamiltonian without potential
+            H0_slice = new DoubleComplexMatrix(slice_width, slice_width);
+            for (int i = 0; i < slice_width; i++)
+            {
+                H0_slice[i, i] = 2.0 * alpha;
+
+                if (i != 0)
+                    H0_slice[i, i - 1] = -1.0 * alpha;
+                if (i != slice_width - 1)
+                    H0_slice[i, i + 1] = -1.0 * alpha;
+            }
         }
 
         public DoubleComplexMatrix[] Iterate(out DoubleComplexMatrix G_0n, out DoubleComplexMatrix G_n0, DoubleMatrix Potential, double Energy)
@@ -61,13 +96,14 @@ namespace Iterative_Greens_Function
 
             // Compile eigenvectors
             DoubleComplexMatrix forward_eigenvecs, backward_eigenvecs;
-            Compile_Eigenvectors(out forward_eigenvecs, out backward_eigenvecs, eig_decomp, backward_modes, forward_modes, no_forwards, no_backwards);
+            DoubleComplexMatrix forward_eigenvals, backward_eigenvals;
+            Compile_Eigenvectors(out forward_eigenvecs, out backward_eigenvecs, out forward_eigenvals, out backward_eigenvals, eig_decomp, backward_modes, forward_modes, no_forwards, no_backwards);
 
             // Input boundary conditions into G_ii
-
-            throw new NotImplementedException();
+            G_ii = new DoubleComplexMatrix[no_Slices];
+            Create_Boundary_Conditions(ref G_ii, forward_eigenvecs, backward_eigenvecs, forward_eigenvals, backward_eigenvals);
         }
-        
+
         /// <summary>
         /// Generates the transfer matrix needed to solve the boundary conditions from the leads
         /// NOTE!!!!!! This is calculated for the first slice of the potential which assumes that
@@ -160,7 +196,8 @@ namespace Iterative_Greens_Function
             for (int j = 0; j < slice_width; j++)
             {
                 double tmp = NMathFunctions.Abs(eigenvector[j]);
-                current += 2.0 * (eigenvalue + something).Imag * tmp * tmp;
+                if (j != 0)
+                    current += 2.0 * (eigenvalue * hop_mat[j, j - 1]).Imag * tmp * tmp;
             }
 
             return current;
@@ -170,21 +207,38 @@ namespace Iterative_Greens_Function
         /// Compiles the eigenvectors in either direction from the eigenvalue decomposition
         /// using the results from "Sort_Eigenvalues"
         /// </summary>
-        void Compile_Eigenvectors(out DoubleComplexMatrix forward_eigenvecs, out DoubleComplexMatrix backward_eigenvecs, 
+        void Compile_Eigenvectors(out DoubleComplexMatrix forward_eigenvecs, out DoubleComplexMatrix backward_eigenvecs, out DoubleComplexMatrix forward_eigenvals, out DoubleComplexMatrix backward_eigenvals, 
             DoubleComplexEigDecomp eig_decomp, int[] backward_modes, int[] forward_modes, int no_forwards, int no_backwards)
         {
-
-            forward_eigenvecs = new DoubleComplexMatrix(no_forwards, no_forwards);
+            forward_eigenvecs = new DoubleComplexMatrix(slice_width, slice_width, 0.0);
+            forward_eigenvals = new DoubleComplexMatrix(slice_width, slice_width, 0.0);
             for (int i = 0; i < no_forwards; i++)
+            {
+                forward_eigenvals[i, i] = eig_decomp.EigenValue(i);
                 for (int j = 0; j < slice_width; j++)
                     forward_eigenvecs[i, j] = eig_decomp.LeftEigenVector(forward_modes[i])[j];
+            }
 
-            backward_eigenvecs = new DoubleComplexMatrix(no_backwards, no_backwards);
+            backward_eigenvecs = new DoubleComplexMatrix(slice_width, slice_width, 0.0);
+            backward_eigenvals = new DoubleComplexMatrix(slice_width, slice_width, 0.0);
             for (int i = 0; i < no_backwards; i++)
+            {
+                backward_eigenvals[i, i] = eig_decomp.EigenValue(i);
                 for (int j = 0; j < slice_width; j++)
                     backward_eigenvecs[i, j] = eig_decomp.LeftEigenVector(backward_modes[i])[j];
+            }
         }
 
+        /// <summary>
+        /// Calculates and inputs the boundary conditions into the first and last elements of G_ii
+        /// </summary>
+        void Create_Boundary_Conditions(ref DoubleComplexMatrix[] G_ii, DoubleComplexMatrix forward_eigenvecs, DoubleComplexMatrix backward_eigenvecs, DoubleComplexMatrix forward_eigenvals, DoubleComplexMatrix backward_eigenvals)
+        {
+            G_ii[0] = forward_eigenvecs * forward_eigenvals * NMathFunctions.Inverse(forward_eigenvecs) * hop_mat_conj;
+
+            G_ii[no_Slices - 1] = backward_eigenvecs * NMathFunctions.Inverse(backward_eigenvals) * NMathFunctions.Inverse(backward_eigenvecs) * hop_mat;
+        }
+        
         void Iterate_Slice(ref DoubleComplexMatrix[] G_ii, ref DoubleComplexMatrix[] G_in, ref DoubleComplexMatrix[] G_ni, DoubleMatrix Potential, int slice_no, double Energy)
         {
             // Calculate G_n+1,n+1 (MacKinnon 5a)

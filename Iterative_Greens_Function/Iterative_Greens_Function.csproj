@@ -52,8 +52,12 @@
   <ItemGroup>
     <Compile Include="Experiment.cs" />
     <Compile Include="Greens_Function_Calc.cs" />
+    <Compile Include="Inputs_to_Dictionary.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Input_Parameters.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
