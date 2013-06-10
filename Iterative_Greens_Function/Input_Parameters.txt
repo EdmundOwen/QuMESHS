@@ -12,16 +12,21 @@
 ############## Simulation domain details ##############################
 #
 ## Number of slices between the leads
-% no_Slices = 10
+% no_Slices = 200
 #
 ## Number of lattice sites on each slice
-% slice_width = 10;
+% slice_width = 20
+#
+## Lattice spacing
+% dx = 1
 #
 #
 ############## Energy sweep details##### ##############################
 #
+## Initial energy level to start from
+% initial_Energy = 0
 ## Number of energy levels to calculate Green's functions for
-% no_Energy_Count = 1;
+% no_Energy_Count = 1
 #
 ## Spacing between energy levels
-% dE = 1;
+% dE = 0.1
