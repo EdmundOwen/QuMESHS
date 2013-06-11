@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Iterative_Greens_Function
 {
-    static class Inputs_to_Dictionary
+    public static class Inputs_to_Dictionary
     {
         /// <summary>
         /// Adds the inputs from filename into the dictionary... this includes file names for the wavefunctions and potentials
