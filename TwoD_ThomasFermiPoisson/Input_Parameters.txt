@@ -12,10 +12,10 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the transverse direction
-% ny = 100
+% nx = 100
 #
 ## Spacing of lattice sites in the transverse direction
-% dy = 0.1
+% dx = 1
 #
 #
 ############## Poisson solver details #################################
@@ -24,7 +24,7 @@
 ############## Generic density solver details #########################
 #
 ## Fermi energy
-% E_f = 2.0
+% E_f = 50.0
 #
 ## Number of k_B T to calculate above the Fermi energy
 % No_kB_T_Above_E_f = 0.0
@@ -36,7 +36,7 @@
 ############## Momentum density solver details ########################
 #
 ## Spacing in momentum space
-% dk = 0.1
+% dk = 1
 #
 #
 #

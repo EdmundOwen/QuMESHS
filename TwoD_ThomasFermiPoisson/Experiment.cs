@@ -18,7 +18,7 @@ namespace TwoD_ThomasFermiPoisson
         public const double kB = 0.086173324;               // (meV) (K)^-1
 
         bool converged = false;
-        Density_Method calculation_method;
+        Density_Method calculation_method = Density_Method.by_k;
 
         double fermi_Energy, init_Energy, no_kB_T;
         double max_Energy;
@@ -30,14 +30,14 @@ namespace TwoD_ThomasFermiPoisson
 
         double temperature;
 
-        int ny, nz;
+        int nx, nz;
         int layer_index;
-        double dy, dz;
+        double dx, dz;
 
         public void Initialise(Dictionary<string, object> input_dict)
         {
-            ny = (int)(double)input_dict["ny"];
-            dy = (double)input_dict["dy"];
+            nx = (int)(double)input_dict["nx"];
+            dx = (double)input_dict["dx"];
 
             fermi_Energy = (double)input_dict["E_f"];
             no_kB_T = (double)input_dict["No_kB_T_Above_E_f"];
@@ -64,10 +64,10 @@ namespace TwoD_ThomasFermiPoisson
             {
                 // Calculate 2D electrostatic potential
                 TwoD_PoissonSolver pot_solv = new TwoD_PoissonSolver();
-                DoubleVector well_potential = pot_solv.Get_Well_Potential(ny);
+                DoubleVector well_potential = pot_solv.Get_Well_Potential(nx);
 
                 // Calculate density using given method
-                TwoD_DensitySolver dens_solv = new TwoD_DensitySolver(dy, fermi_Energy, ny);
+                TwoD_DensitySolver dens_solv = new TwoD_DensitySolver(dx, fermi_Energy, nx);
                 dens_solv.Initialise_Hamiltonian(well_potential);
 
                 if (calculation_method == Density_Method.by_k)

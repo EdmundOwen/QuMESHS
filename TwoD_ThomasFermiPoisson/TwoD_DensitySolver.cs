@@ -33,7 +33,7 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         /// <summary>
-        /// Initialises the Hamiltonian with the given potential from the potential well
+        /// Initialises the Hamiltonian with the given potential from the well
         /// </summary>
         public void Initialise_Hamiltonian(DoubleVector well_potential)
         {
@@ -41,7 +41,7 @@ namespace TwoD_ThomasFermiPoisson
             H = new DoubleComplexMatrix(2 * nx, 2 * nx, 0.0);
 
             // this is the hopping element
-            double alpha = 1;//hbar * hbar / (2.0 * mass * dx * dx);
+            double alpha = hbar * hbar / (2.0 * mass * dx * dx);
 
             // initialise matrix elements
             for (int i = 0; i < 2 * nx - 1; i++)
@@ -75,7 +75,8 @@ namespace TwoD_ThomasFermiPoisson
             // calculate states and energies at k = 0
             DoubleComplexMatrix k_mat = new DoubleComplexMatrix(2 * nx, 2 * nx);
             k_mat.Diagonal().Set(Range.All, 0.0);
-            DoubleComplexEigDecomp eigs = new DoubleComplexEigDecomp(H + k_mat);
+            DoubleComplexEigDecomp eigs = new DoubleComplexEigDecomp();
+            eigs.FactorNoPreconditioning(H);// + k_mat);
 
             DoubleComplexVector energies_before = eigs.EigenValues;
             DoubleComplexMatrix states_before = eigs.RightEigenVectors;
@@ -94,9 +95,9 @@ namespace TwoD_ThomasFermiPoisson
             {
                 double ky = no_ky * dk;
 
-                // diagonalise H - k_y^2
+                // diagonalise H + k_y^2
                 k_mat.Diagonal().Set(Range.All, ky * ky);
-                eigs = new DoubleComplexEigDecomp(H + k_mat);
+                eigs.FactorNoPreconditioning(H + k_mat);
 
                 // create new energies and eigenvalues for this value of ky
                 DoubleComplexVector new_eig_vals = eigs.EigenValues;
@@ -104,9 +105,13 @@ namespace TwoD_ThomasFermiPoisson
                 // and sort them
                 Sort_Eigenvectors(ref new_eig_vals, ref new_eig_states);
 
+                //DEBUGGING LINE
+                DoubleComplexVector test = new_eig_vals - energies_before;
+
                 // calculate dk/dE for remaining subbands
                 DoubleVector[] dn_dk = new DoubleVector[no_subbands];
                 double[] dk_dE = new double[no_subbands];
+                double[] fermi_function = new double[no_subbands];
 
                 int tmp = no_subbands;
                 for (int i = 0; i < tmp; i++)
@@ -123,14 +128,19 @@ namespace TwoD_ThomasFermiPoisson
                         else
                             dk_dE[i] = dk / (new_eig_vals[i] - energies_before[i]).Real;
 
-                        // and dn(x) / dk
-                        dn_dk[i] = 2 * Math.PI * Calculate_Density_Change(states_before, new_eig_states, i);
+                        // and dn(x) / dk (first term is from the longitudinal direction and second term is the transverse density change, calculated numerically)
+                        dn_dk[i] = (2 / Math.PI) * Calculate_Density_Change(states_before, new_eig_states, i);
+
+                        // and get the fermi function for this energy
+                        fermi_function[i] = Get_Fermi_Function(new_eig_vals[i].Real);
                     }
+
+                Console.WriteLine((1.0/dk_dE[0]).ToString() + '\t' + (1.0/dk_dE[1]).ToString());
 
                 // Finally, integrate the sub-band densities and add
                 for (int i = 0; i < no_subbands; i++)
                     for (int j = 0; j < 2 * nx; j++)
-                        density[j] += dn_dk[i][j] * dk_dE[i];
+                        density[j] += dn_dk[i][j] * dk_dE[i] * fermi_function[i];
 
                 // and replace the old eigenvectors and eigenvalues
                 energies_before = new_eig_vals;
@@ -208,6 +218,9 @@ namespace TwoD_ThomasFermiPoisson
                 }
         }
 
+        /// <summary>
+        /// Calculates the change in density between the states given by the columns of the input matrices with index "sub_band"
+        /// </summary>
         private DoubleVector Calculate_Density_Change(DoubleComplexMatrix states_before, DoubleComplexMatrix states_after, int sub_band)
         {
             // Initialise the density vector
@@ -259,11 +272,17 @@ namespace TwoD_ThomasFermiPoisson
             return density;
         }
 
+        /// <summary>
+        /// Gets the fermi function at a given energy using the default temperature and fermi energy
+        /// </summary>
         double Get_Fermi_Function(double energy)
         {
             return Get_Fermi_Function(energy, fermi_Energy, temperature);
         }
 
+        /// <summary>
+        /// Calculates the fermi function for arbitrary energy, E_f and T
+        /// </summary>
         double Get_Fermi_Function(double energy, double E_f, double T)
         {
             if (T == 0)
