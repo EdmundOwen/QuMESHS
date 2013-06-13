@@ -4,32 +4,20 @@ using System.Linq;
 using System.Text;
 using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Matrix;
+using Solver_Bases;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    class TwoD_DensitySolver
+    class TwoD_DensitySolver : Density_Solver
     {
-        int nx;
         double dx;
-
-        double fermi_Energy;
-        // default temperature is zero
-        double temperature = 0.0;
-
-        // physical constants
-        public const double hbar = 0.658211814;             // (meV) (ps)
-        public const double q_e = -0.160217646;             // (aC)
-        public const double mass = 0.067 * 5.68562958e-3;   // (meV) (ps)^2 (nm)^-2 with GaAs effective mass
-        public const double epsilon = 13 * 1.41859713e-6;   // (aC)^2 (nm)^-1 (meV)^-1 for GaAs
-        public const double kB = 0.086173324;               // (meV) (K)^-1
 
         DoubleComplexMatrix H;
 
-        public TwoD_DensitySolver(double dx, double fermi_Energy, int nx)
+        public TwoD_DensitySolver(double dx, double fermi_Energy, int nx) 
+            : base(fermi_Energy, 0.0, nx, 1, 1)
         {
             this.dx = dx; this.nx = nx;
-
-            this.fermi_Energy = fermi_Energy;
         }
 
         /// <summary>
@@ -76,7 +64,7 @@ namespace TwoD_ThomasFermiPoisson
             DoubleComplexMatrix k_mat = new DoubleComplexMatrix(2 * nx, 2 * nx);
             k_mat.Diagonal().Set(Range.All, 0.0);
             DoubleComplexEigDecomp eigs = new DoubleComplexEigDecomp();
-            eigs.FactorNoPreconditioning(H);// + k_mat);
+            eigs.FactorNoPreconditioning(H + k_mat);
 
             DoubleComplexVector energies_before = eigs.EigenValues;
             DoubleComplexMatrix states_before = eigs.RightEigenVectors;
@@ -270,28 +258,6 @@ namespace TwoD_ThomasFermiPoisson
 
             throw new NotImplementedException();
             return density;
-        }
-
-        /// <summary>
-        /// Gets the fermi function at a given energy using the default temperature and fermi energy
-        /// </summary>
-        double Get_Fermi_Function(double energy)
-        {
-            return Get_Fermi_Function(energy, fermi_Energy, temperature);
-        }
-
-        /// <summary>
-        /// Calculates the fermi function for arbitrary energy, E_f and T
-        /// </summary>
-        double Get_Fermi_Function(double energy, double E_f, double T)
-        {
-            if (T == 0)
-                if (energy > E_f)
-                    return 0.0;
-                else
-                    return 1.0;
-            else
-                return 1.0 / (Math.Exp((energy - fermi_Energy) / (kB * T)) + 1.0);
         }
     }
 }

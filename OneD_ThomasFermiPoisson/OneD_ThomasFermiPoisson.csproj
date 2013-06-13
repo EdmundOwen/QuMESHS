@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{E8F5B43E-FEC4-40B5-B1F2-C91A7249EC43}</ProjectGuid>
+    <ProjectGuid>{B8D898B4-4AE2-4D60-9F7F-85BD75594640}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TwoD_ThomasFermiPoisson</RootNamespace>
-    <AssemblyName>TwoD_ThomasFermiPoisson</AssemblyName>
+    <RootNamespace>OneD_ThomasFermiPoisson</RootNamespace>
+    <AssemblyName>OneD_ThomasFermiPoisson</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -33,28 +33,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="NMath, Version=5.3.0.1, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -70,21 +48,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experiment.cs" />
+    <Compile Include="OneD_PoissonSolver.cs" />
+    <Compile Include="OneD_ThomasFermiSolver.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TwoD_DensitySolver.cs" />
-    <Compile Include="TwoD_PoissonSolver.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Input_Parameters.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Iterative_Greens_Function\Iterative_Greens_Function.csproj">
-      <Project>{1E729227-083F-4393-A9BF-8781E656E84A}</Project>
-      <Name>Iterative_Greens_Function</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Solver_Bases\Solver_Bases.csproj">
       <Project>{E50D4360-27F2-442C-AD4D-4D267C273CBE}</Project>
       <Name>Solver_Bases</Name>
