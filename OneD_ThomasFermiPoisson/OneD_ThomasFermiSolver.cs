@@ -11,14 +11,23 @@ namespace OneD_ThomasFermiPoisson
     {
         DoubleVector band_gap;
         DoubleVector acceptor_concentration, donor_concentration;
-        double acceptor_energy_below_Ec, donoe_energy_below_Ec;
+        double acceptor_energy_below_Ec, donor_energy_below_Ec;
 
         double no_kB_T_above_Ef = 10.0;
         double dE;
 
-        public OneD_ThomasFermiSolver(double fermi_Energy, double temperature, int nx, int ny, int nz) 
+        public OneD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, double acceptor_energy, double donor_energy,
+                                        double fermi_Energy, double temperature, double dE, int nx, int ny, int nz) 
             : base(fermi_Energy, temperature, nx, ny, nz)
         {
+            this.dE = dE;
+
+            // set band profile with spin-degeneracy
+            this.band_gap = band_gap;
+
+            // set dopent concentrations
+            this.acceptor_concentration = acceptor_concentration; this.acceptor_energy_below_Ec = acceptor_energy;
+            this.donor_concentration = donor_concentration; this.donor_energy_below_Ec = donor_energy;
         }
 
         public DoubleVector Get_OneD_Density(DoubleVector conduction_band_energy)
@@ -27,14 +36,14 @@ namespace OneD_ThomasFermiPoisson
             DoubleVector density = new DoubleVector(2 * nz);
 
             // Find conduction band density
-            density = Calculate_Conduction_Band_Density(conduction_band_energy);
+            density -= Calculate_Conduction_Band_Density(conduction_band_energy);
 
             // Find valence band density
             density += Calculate_Valence_Band_Density(conduction_band_energy);
 
             // Calculate donor occupation probability
-            density -= Calculate_Dopent_Density(conduction_band_energy, acceptor_concentration, acceptor_energy_below_Ec);
-            density += Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donoe_energy_below_Ec);
+            density += Calculate_Dopent_Density(conduction_band_energy, acceptor_concentration, acceptor_energy_below_Ec);
+            density -= Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
 
             // return total density
             return density;
@@ -45,7 +54,7 @@ namespace OneD_ThomasFermiPoisson
         /// </summary>
         DoubleVector Calculate_Conduction_Band_Density(DoubleVector conduction_band_energy)
         {
-            DoubleVector result = new DoubleVector(2 * nx);
+            DoubleVector result = new DoubleVector(2 * nz);
 
             // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
             int no_energy_steps;
@@ -55,7 +64,7 @@ namespace OneD_ThomasFermiPoisson
                 no_energy_steps = 100;
 
             for (int i = 0; i < no_energy_steps; i++)
-                for (int j = 0; j < 2 * nx; j++)
+                for (int j = 0; j < 2 * nz; j++)
                 {
                     double energy_above_eF = conduction_band_energy[j % nz] + i * dE;
 
@@ -70,18 +79,18 @@ namespace OneD_ThomasFermiPoisson
         /// </summary>
         DoubleVector Calculate_Valence_Band_Density(DoubleVector conduction_band_energy)
         {
-            DoubleVector result = new DoubleVector(2 * nx);
+            DoubleVector result = new DoubleVector(2 * nz);
             DoubleVector valence_band = conduction_band_energy - band_gap;
 
             // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
             int no_energy_steps;
             if (temperature != 0.0)
-                no_energy_steps = (int)(-1.0 * (valence_band.Max() - no_kB_T_above_Ef * kB * temperature) / dE);
+                no_energy_steps = (int)((valence_band.Max() - no_kB_T_above_Ef * kB * temperature) / dE);
             else
                 no_energy_steps = 100;
 
             for (int i = 0; i < no_energy_steps; i++)
-                for (int j = 0; j < 2 * nx; j++)
+                for (int j = 0; j < 2 * nz; j++)
                 {
                     double energy_below_eF = valence_band[j % nz] - i * dE;
 
