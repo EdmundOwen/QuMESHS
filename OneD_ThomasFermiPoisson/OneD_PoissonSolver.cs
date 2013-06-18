@@ -38,7 +38,9 @@ namespace OneD_ThomasFermiPoisson
             density[0] = top_bc; density[nz] = top_bc;
             density[nz - 1] = bottom_bc; density[2 * nz - 1] = bottom_bc;
 
-            return NMathFunctions.Solve(laplacian, density);
+            DoubleVector potential = NMathFunctions.Solve(laplacian, density);
+
+            return potential;
         }
 
         /// <summary>
@@ -47,32 +49,35 @@ namespace OneD_ThomasFermiPoisson
         /// <returns></returns>
         DoubleMatrix Generate_Laplacian()
         {
+            // the factor which multiplies the Laplace equation
+            double factor = -1.0 * epsilon / (dz * dz);
+
             DoubleMatrix result = new DoubleMatrix(2 * nz, 2 * nz);
             for (int i = 0; i < 2 * nz - 1; i++)
             {
                 // on-diagonal term
-                result[i, i] = -2.0 * epsilon;
+                result[i, i] = 2.0 * factor;
                 // off-diagonal
-                result[i + 1, i] = 1.0 * epsilon;
-                result[i, i + 1] = 1.0 * epsilon;
+                result[i + 1, i] = -1.0 * factor;
+                result[i, i + 1] = -1.0 * factor;
             }
             // and delete spin-sector coupling terms 
             result[nz - 1, nz] = 0.0;
             result[nz, nz - 1] = 0.0;
 
             // and fix boundary conditions for spin-up
-            result[0, 0] = -1.0 * epsilon;
+            result[0, 0] = 1.0 * factor;
             result[0, 1] = 0.0;
-            result[nz - 1, nz - 1] = -1.0 * epsilon;
+            result[nz - 1, nz - 1] = 1.0 * factor;
             result[nz - 1, nz - 2] = 0.0;
 
             // and similarly for spin-down
-            result[nz, nz] = -1.0 * epsilon;
+            result[nz, nz] = 1.0 * factor;
             result[nz, nz + 1] = 0.0;
-            result[2 * nz - 1, 2 * nz - 1] = -1.0 * epsilon;
+            result[2 * nz - 1, 2 * nz - 1] = 1.0 * factor;
             result[2 * nz - 1, 2 * nz - 2] = 0.0;
 
-            return result / (dz * dz);
+            return result;
         }
     }
 }

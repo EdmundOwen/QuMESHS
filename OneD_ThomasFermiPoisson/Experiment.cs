@@ -25,16 +25,18 @@ namespace OneD_ThomasFermiPoisson
         {
             // temporary band structure... (spin-degenerate)
             DoubleVector band_structure = new DoubleVector(2* nz, 2100.0);
-            for (int i = 20; i < 30; i++)
-            {
-                band_structure[i] = 1400.0;
-                band_structure[i + nz] = band_structure[i];
-            }
+            //for (int k = 20; k < 30; k++)
+            //{
+            int k = 2;
+                band_structure[k] = 1400.0;
+                band_structure[k + nz] = band_structure[k];
+            //}
 
             DoubleVector donors = new DoubleVector(nz);
             // and put in some delta-dopants
-            for (int i = 5; i < 10; i++)
-                donors[i] = 1.0;
+            //for (int k = 5; k < 10; k++)
+            k = 5;
+                donors[k] = 1.0;
 
 
             // create classes and initialise
@@ -55,8 +57,7 @@ namespace OneD_ThomasFermiPoisson
                 density = dens_solv.Get_OneD_Density(potential);
 
                 // solve the potential for the given density and mix in with the old potential
-                DoubleVector new_potential = pois_solv.Get_Potential(density);
-                potential += alpha * new_potential;
+                DoubleVector new_potential = potential + alpha * pois_solv.Get_Potential(density);
 
                 // check for convergence
                 DoubleVector pot_dens = new_potential - potential;
@@ -71,6 +72,8 @@ namespace OneD_ThomasFermiPoisson
                 if (converged_test.Sum() == 2 * nz)
                     converged = true;
 
+                // transfer new potential array to potential array
+                potential = new_potential;
                 count++;
             }
         }
