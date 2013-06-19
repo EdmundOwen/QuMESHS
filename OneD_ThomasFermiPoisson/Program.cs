@@ -10,7 +10,7 @@ namespace OneD_ThomasFermiPoisson
         static void Main(string[] args)
         {
             Experiment exp = new Experiment();
-            exp.Initialise(25.0, 0.01, 0.00000000001, 10);
+            exp.Initialise(25.0, 0.1, 0.0000001, 40);
             exp.Run();
         }
     }

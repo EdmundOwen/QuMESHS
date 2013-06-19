@@ -11,23 +11,32 @@ namespace OneD_ThomasFermiPoisson
     {
         DoubleVector band_gap;
         DoubleVector acceptor_concentration, donor_concentration;
-        double acceptor_energy_below_Ec, donor_energy_below_Ec;
+        DoubleVector acceptor_energy_below_Ec, donor_energy_below_Ec;
 
-        double no_kB_T_above_Ef = 10.0;
+        double no_kB_T_above_Ef = 100.0;
         double dE;
 
-        public OneD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, double acceptor_energy, double donor_energy,
-                                        double fermi_Energy, double temperature, double dE, int nx, int ny, int nz) 
-            : base(fermi_Energy, temperature, nx, ny, nz)
+        public OneD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
+                                        double fermi_Energy, double temperature, double dE, int nz) 
+            : base(fermi_Energy, temperature, 1, 1, nz)
         {
             this.dE = dE;
 
             // set band profile with spin-degeneracy
             this.band_gap = band_gap;
 
-            // set dopent concentrations
-            this.acceptor_concentration = acceptor_concentration; this.acceptor_energy_below_Ec = acceptor_energy;
-            this.donor_concentration = donor_concentration; this.donor_energy_below_Ec = donor_energy;
+            // set dopent concentrations and copy to a vector of double the length for spin-degeneracy
+            this.acceptor_concentration = new DoubleVector(2 * nz);
+            this.donor_concentration = new DoubleVector(2 * nz);
+            for (int i = 0; i < nz; i++)
+            {
+                this.acceptor_concentration[i] = acceptor_concentration[i]; this.acceptor_concentration[i + nz] = acceptor_concentration[i];
+                this.donor_concentration[i] = donor_concentration[i]; this.donor_concentration[i + nz] = donor_concentration[i];
+            }
+
+            // and set relative dopent energies to the conduction band
+            this.donor_energy_below_Ec = band_gap / 2.0 - donor_energy;
+            this.acceptor_energy_below_Ec = band_gap / 2.0 - acceptor_energy;
         }
 
         public DoubleVector Get_OneD_Density(DoubleVector conduction_band_energy)
@@ -36,17 +45,17 @@ namespace OneD_ThomasFermiPoisson
             DoubleVector density = new DoubleVector(2 * nz);
 
             // Find conduction band density
-            density -= Calculate_Conduction_Band_Density(conduction_band_energy);
+            DoubleVector conduction_density = Calculate_Conduction_Band_Density(conduction_band_energy);
 
             // Find valence band density
-            density += Calculate_Valence_Band_Density(conduction_band_energy);
+            DoubleVector valence_density = Calculate_Valence_Band_Density(conduction_band_energy);
 
             // Calculate donor occupation probability
-            density += Calculate_Dopent_Density(conduction_band_energy, acceptor_concentration, acceptor_energy_below_Ec);
-            density -= Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
+            DoubleVector acceptor_density = Calculate_Dopent_Density(conduction_band_energy, acceptor_concentration, acceptor_energy_below_Ec);
+            DoubleVector donor_density = Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
 
             // return total density
-            return density;
+            return -1.0 *  q_e * (donor_concentration - acceptor_concentration + valence_density + acceptor_density - conduction_density - donor_density);
         }
 
         /// <summary>
@@ -105,7 +114,7 @@ namespace OneD_ThomasFermiPoisson
         /// <summary>
         /// calculates the dopent density profile (spin-resolved) as a function of depth using a given conduction band potential
         /// </summary>
-        DoubleVector Calculate_Dopent_Density(DoubleVector conduction_band_energy, DoubleVector dopent_concentration, double dopent_energy_below_Ec)
+        DoubleVector Calculate_Dopent_Density(DoubleVector conduction_band_energy, DoubleVector dopent_concentration, DoubleVector dopent_energy_below_Ec)
         {
             DoubleVector result = new DoubleVector(2 * nz);
 
@@ -113,9 +122,9 @@ namespace OneD_ThomasFermiPoisson
             for (int i = 0; i < nz; i++)
             {
                 // spin-up
-                result[i] = dopent_concentration[i] * (1.0 - Get_Dopent_Occupation(conduction_band_energy[i] - dopent_energy_below_Ec));
+                result[i] = dopent_concentration[i] * Get_Dopent_Occupation(conduction_band_energy[i] - dopent_energy_below_Ec[i]);
                 // and spin-down is degenerate here
-                result[i + nz] = dopent_concentration[i] * (1.0 - Get_Dopent_Occupation(conduction_band_energy[i] - dopent_energy_below_Ec));
+                result[i + nz] = dopent_concentration[i] * Get_Dopent_Occupation(conduction_band_energy[i] - dopent_energy_below_Ec[i]);
             }
 
             return result;
