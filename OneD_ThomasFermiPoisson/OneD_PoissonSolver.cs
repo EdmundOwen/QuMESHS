@@ -7,6 +7,7 @@ using System.Text;
 using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Matrix;
 using Solver_Bases;
+using System.Threading;
 
 namespace OneD_ThomasFermiPoisson
 {
@@ -59,10 +60,34 @@ namespace OneD_ThomasFermiPoisson
         {
             // save density to file in a FlexPDE "TABLE" format
             Save_Density(density, "density_1d.dat");
+            // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
+            try { File.Delete("pot.dat"); } catch (Exception) { }
 
-            Process.Start("FlexPDE6.exe", "-Q " + flexpde_inputfile);
+            // run the flexPDE program as a process (quietly)
+            Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
+            while (!File.Exists("pot.dat"))
+                Thread.Sleep(10);
+            
+            string[] lines = File.ReadAllLines("pot.dat");
+            // work out where the data starts (this is flexPDE specific)
+            int first_line = 0;
+            for (int i = 0; i < lines.Length; i++)
+                if (lines[i].StartsWith("}"))
+                {
+                    first_line = i + 1;
+                    break;
+                }
 
-            throw new NotImplementedException();
+            // and check that there is the right number of data points back
+            if (lines.Length - first_line != nz)
+                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
+
+            // and parse these values into a DoubleVector
+            DoubleVector result = new DoubleVector(nz);
+            for (int i = 0; i < nz; i++)
+                result[i] = double.Parse(lines[first_line + i]);
+
+            return result;
         }
 
         void Save_Density(DoubleVector density, string filename)
