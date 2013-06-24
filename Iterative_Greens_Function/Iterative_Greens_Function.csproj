@@ -72,7 +72,6 @@
   <ItemGroup>
     <Compile Include="Experiment.cs" />
     <Compile Include="Greens_Function_Calc.cs" />
-    <Compile Include="Inputs_to_Dictionary.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -80,6 +79,12 @@
     <Content Include="Input_Parameters.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Solver_Bases\Solver_Bases.csproj">
+      <Project>{E50D4360-27F2-442C-AD4D-4D267C273CBE}</Project>
+      <Name>Solver_Bases</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

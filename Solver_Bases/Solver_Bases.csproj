@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Density_Base.cs" />
+    <Compile Include="Inputs_to_Dictionary.cs" />
     <Compile Include="Physics_Base.cs" />
     <Compile Include="Potential_Base.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

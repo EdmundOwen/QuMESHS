@@ -1,0 +1,47 @@
+﻿############################################################################
+#### Input parameter file for OneD_ThomasFermiPoisson calculator...	########
+############################################################################
+#
+# Any line not starting with % is commented out.
+# The input names are case sensitive
+# The only spaces allowed are before and after the = sign and immediately after the % sign
+# If a line starts #%, this is an optional input.
+# Some inputs override others; typically, refer to the example input file to see
+# which inputs are default... one's with #% tend to be overriden
+#
+############## Simulation domain details ##############################
+#
+## Number of lattice sites for the density calculation
+% nz = 100
+#
+## Spacing of lattice sites for the density calculation
+% dz = 1
+#
+#
+############## Poisson solver details #################################
+#
+## Potential mixing parameter.  i.e. potential += alpha * new_potential (this is adaptive, it is the maximum)
+% alpha = 0.1
+#
+## File name with band structure in
+% BandStructure_File = band_structure.txt
+#
+## FlexPDE input file
+% FlexPDE_file = band_structure.pde
+#
+#
+############## Generic density solver details #########################
+#
+## Final solution tolerance
+% tolerance = 10e-7
+#
+## Fermi energy
+% E_f = 50.0
+#
+## Number of k_B T to calculate above the Fermi energy
+% No_kB_T_Above_E_f = 0.0
+#
+## Temperature
+% T = 0.0
+#
+#

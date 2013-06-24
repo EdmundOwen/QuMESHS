@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Solver_Bases;
 
 namespace OneD_ThomasFermiPoisson
 {
@@ -9,8 +10,11 @@ namespace OneD_ThomasFermiPoisson
     {
         static void Main(string[] args)
         {
+            Dictionary<string,object> input = new Dictionary<string,object>();
+            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref input, "Input_Parameters.txt");
+
             Experiment exp = new Experiment();
-            exp.Initialise(25.0, 0.1, 0.0000001, 40);
+            exp.Initialise(input);
             exp.Run();
         }
     }

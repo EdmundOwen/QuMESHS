@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Iterative_Greens_Function
+namespace Solver_Bases
 {
     public static class Inputs_to_Dictionary
     {

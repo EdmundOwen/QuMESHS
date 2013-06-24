@@ -11,15 +11,47 @@ namespace OneD_ThomasFermiPoisson
     {
         bool converged = false;
         double alpha, alpha_prime, tol;
-        int potential_mixing_rate;
+        int potential_mixing_rate = 100;
+        
+        bool using_flexPDE = false;
+        string flexdPDE_input;
+
+        DoubleVector potential, density, band_structure;
 
         double temperature = 100.0;
 
         double dz;
         int nz;
 
+        public void Initialise(Dictionary<string, object> input_dict)
+        {
+            // simulation domain inputs
+            if (input_dict.ContainsKey("dz")) this.dz = (double)input_dict["dz"]; else throw new KeyNotFoundException("No dz in input dictionary!");
+            if (input_dict.ContainsKey("nz")) this.nz = (int)(double)input_dict["nz"]; else throw new KeyNotFoundException("No nz in input dictionary!");
+
+            // solver inputs
+            if (input_dict.ContainsKey("tolerance")) this.tol = (double)input_dict["tolerance"]; else throw new KeyNotFoundException("No solution tolerance in input dictionary!");
+            if (input_dict.ContainsKey("alpha")) this.alpha = (double)input_dict["alpha"]; else throw new KeyNotFoundException("No potential mixing parameter, alpha, in input dictionary!");
+            if (input_dict.ContainsKey("FlexPDE_file")) { this.using_flexPDE = true; this.flexdPDE_input = (string)input_dict["FlexPDE_file"]; }
+
+            // physical inputs
+            if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
+            if (input_dict.ContainsKey("BandStructure_File")) band_structure = GetBandStructure((string)input_dict["BandStructure_File"]); else throw new KeyNotFoundException("No band structure file found in input dictionary!");
+
+            // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
+            if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new DoubleVector(2 * nz, 0.0);
+            if (input_dict.ContainsKey("Potential")) this.potential = (DoubleVector)input_dict["Potential"]; else potential = band_structure / 2.0;
+        }
+
+        public void Initialise(DoubleVector Potential, DoubleVector Density, double dz, double alpha, double tol, int nz)
+        {
+            this.potential = Potential; this.density = Density;
+            Initialise(dz, alpha, tol, nz);
+        }
+
         public void Initialise(double dz, double alpha, double tol, int nz)
         {
+
             this.alpha = alpha; this.alpha_prime = alpha;
             this.potential_mixing_rate = 100;
 
@@ -30,13 +62,6 @@ namespace OneD_ThomasFermiPoisson
 
         public void Run()
         {
-            // temporary band structure... (spin-degenerate)
-            DoubleVector band_structure = new DoubleVector(nz, 2100.0);
-            for (int k = 15; k < nz; k++)
-            {
-            //int k = 10;
-                band_structure[k] = 1400.0;
-            }
 
             DoubleVector donors = new DoubleVector(nz);
             // and put in some delta-dopants
@@ -46,14 +71,9 @@ namespace OneD_ThomasFermiPoisson
 
 
             // create classes and initialise
-            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0);
+            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input);
             OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -1000.0), new DoubleVector(nz, 1000.0), 0.0, temperature, 1.0, nz);
-
-            DoubleVector density = new DoubleVector(2 * nz, 0.0);
-            DoubleVector potential = new DoubleVector(nz);
-            for (int i = 0; i < nz; i++)
-                potential[i] = band_structure[i] / 2.0;
-
+            
             int count = 0;
             while (!converged)
             {
@@ -76,6 +96,20 @@ namespace OneD_ThomasFermiPoisson
                 potential = new_potential;
                 count++;
             }
+        }
+
+
+        DoubleVector GetBandStructure(string filename)
+        {
+            // temporary band structure... (spin-degenerate)
+            DoubleVector result = new DoubleVector(nz, 2100.0);
+            for (int k = 15; k < nz; k++)
+            {
+                //int k = 10;
+                result[k] = 1400.0;
+            }
+            
+            return result;
         }
 
         /// <summary>
