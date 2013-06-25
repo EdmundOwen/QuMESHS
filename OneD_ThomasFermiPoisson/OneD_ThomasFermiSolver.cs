@@ -17,8 +17,8 @@ namespace OneD_ThomasFermiPoisson
         double dE;
 
         public OneD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
-                                        double fermi_Energy, double temperature, double dE, int nz) 
-            : base(fermi_Energy, temperature, 1, 1, nz)
+                                        double fermi_Energy, double temperature, double dE, double dz, int nz) 
+            : base(fermi_Energy, temperature, 1.0, 1.0, dz, 1, 1, nz)
         {
             this.dE = dE;
 
@@ -30,8 +30,8 @@ namespace OneD_ThomasFermiPoisson
             this.donor_concentration = new DoubleVector(2 * nz);
             for (int i = 0; i < nz; i++)
             {
-                this.acceptor_concentration[i] = acceptor_concentration[i]; this.acceptor_concentration[i + nz] = acceptor_concentration[i];
-                this.donor_concentration[i] = donor_concentration[i]; this.donor_concentration[i + nz] = donor_concentration[i];
+                this.acceptor_concentration[i] = acceptor_concentration[i] / 2.0; this.acceptor_concentration[i + nz] = acceptor_concentration[i] / 2.0;
+                this.donor_concentration[i] = donor_concentration[i] / 2.0; this.donor_concentration[i + nz] = donor_concentration[i] / 2.0;
             }
 
             // and set relative dopent energies to the conduction band
@@ -54,8 +54,8 @@ namespace OneD_ThomasFermiPoisson
             DoubleVector acceptor_density = Calculate_Dopent_Density(conduction_band_energy, acceptor_concentration, acceptor_energy_below_Ec);
             DoubleVector donor_density = Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
 
-            // return total density
-            return -1.0 *  q_e * (donor_concentration - acceptor_concentration + valence_density + acceptor_density - conduction_density - donor_density);
+            // return total density (for 1D; hence the divide-by-lattice-spacing)
+            return -1.0 * q_e * (donor_concentration - acceptor_concentration + valence_density + acceptor_density - conduction_density - donor_density);
         }
 
         /// <summary>
@@ -72,8 +72,8 @@ namespace OneD_ThomasFermiPoisson
             else
                 no_energy_steps = 100;
 
-            for (int i = 0; i < no_energy_steps; i++)
-                for (int j = 0; j < 2 * nz; j++)
+            for (int j = 0; j < 2 * nz; j++)
+                for (int i = 0; i < no_energy_steps; i++)
                 {
                     double energy_above_eF = conduction_band_energy[j % nz] + i * dE;
 
@@ -105,7 +105,7 @@ namespace OneD_ThomasFermiPoisson
 
                     // energies are negative (for density of states) as we are considering holes
                     // also, we subtract from "result" as holes are negatively charged
-                    result[j] -= Get_3D_DensityofStates(-1.0 * valence_band[j % nz], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF));
+                    result[j] += Get_3D_DensityofStates(-1.0 * valence_band[j % nz], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF));
                 }
 
             return result;
@@ -118,14 +118,18 @@ namespace OneD_ThomasFermiPoisson
         {
             DoubleVector result = new DoubleVector(2 * nz);
 
+            double tmp = temperature;
+            temperature = 0;
             // calculate today density of dopents (dopent charge and carrier charge)
             for (int i = 0; i < nz; i++)
             {
                 // spin-up
-                result[i] = dopent_concentration[i] * Get_Dopent_Occupation(conduction_band_energy[i] - dopent_energy_below_Ec[i]);
+                result[i] = dopent_concentration[i] * Get_Fermi_Function(conduction_band_energy[i] - dopent_energy_below_Ec[i]);
                 // and spin-down is degenerate here
-                result[i + nz] = dopent_concentration[i] * Get_Dopent_Occupation(conduction_band_energy[i] - dopent_energy_below_Ec[i]);
+                result[i + nz] = dopent_concentration[i] * Get_Fermi_Function(conduction_band_energy[i] - dopent_energy_below_Ec[i]);
             }
+            temperature = tmp;
+            Console.WriteLine("temporary code");
 
             return result;
         }
@@ -136,7 +140,7 @@ namespace OneD_ThomasFermiPoisson
         double Get_3D_DensityofStates(double potential, double energy)
         {
             // calculate dk^2 / dE and k^2
-            double dk2_dE = hbar * hbar / (2 * mass);
+            double dk2_dE = (2 * mass) / hbar * hbar;
             double k2 = (energy - potential) * dk2_dE;
             
             // prefactor for number of states per unit volume... ie (4 pi / 3) / (2 pi)^3

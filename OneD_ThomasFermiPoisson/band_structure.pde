@@ -14,9 +14,9 @@ SELECT
 DEFINITIONS    { parameter definitions }
 
   rho = TABLE('density_1d.dat', x)
-  nx = 100
+  nx = 400
 
-  ly = 1000
+  ly = 4000
   
   well_depth = -30
 
@@ -28,7 +28,7 @@ DEFINITIONS    { parameter definitions }
 
 ! INITIAL VALUES
 EQUATIONS        { PDE's, one for each variable }
-  div(eps * grad(u))= rho { one possibility }
+  div(eps * grad(u)) = rho { one possibility }
 
 ! CONSTRAINTS    { Integral constraints }
 BOUNDARIES       { The domain definition }

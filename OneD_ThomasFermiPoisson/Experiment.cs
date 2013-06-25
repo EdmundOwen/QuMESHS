@@ -31,7 +31,7 @@ namespace OneD_ThomasFermiPoisson
 
             // solver inputs
             if (input_dict.ContainsKey("tolerance")) this.tol = (double)input_dict["tolerance"]; else throw new KeyNotFoundException("No solution tolerance in input dictionary!");
-            if (input_dict.ContainsKey("alpha")) this.alpha = (double)input_dict["alpha"]; else throw new KeyNotFoundException("No potential mixing parameter, alpha, in input dictionary!");
+            if (input_dict.ContainsKey("alpha")) { this.alpha = (double)input_dict["alpha"]; alpha_prime = alpha; } else throw new KeyNotFoundException("No potential mixing parameter, alpha, in input dictionary!");
             if (input_dict.ContainsKey("FlexPDE_file")) { this.using_flexPDE = true; this.flexdPDE_input = (string)input_dict["FlexPDE_file"]; }
 
             // physical inputs
@@ -65,14 +65,13 @@ namespace OneD_ThomasFermiPoisson
 
             DoubleVector donors = new DoubleVector(nz);
             // and put in some delta-dopants
-            //for (int k = 15; k < 10; k++)
-            //k = 2;
-                donors[10] = 0.001;
+            for (int k = 27; k < 43; k++)
+                donors[k] = 0.0001;
 
 
             // create classes and initialise
             OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input);
-            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -1000.0), new DoubleVector(nz, 1000.0), 0.0, temperature, 1.0, nz);
+            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -900.0), new DoubleVector(nz, 900.0), 0.0, temperature, 1.0, dz, nz);
             
             int count = 0;
             while (!converged)
@@ -96,6 +95,19 @@ namespace OneD_ThomasFermiPoisson
                 potential = new_potential;
                 count++;
             }
+
+            Output(density, "density.dat");
+            Output(potential, "potential.dat");
+        }
+
+        void Output(DoubleVector data, string filename)
+        {
+            StreamWriter sw = new StreamWriter(filename);
+
+            for (int i = 0; i < data.Length; i++)
+                sw.WriteLine(data[i].ToString());
+
+            sw.Close();
         }
 
 
@@ -103,7 +115,7 @@ namespace OneD_ThomasFermiPoisson
         {
             // temporary band structure... (spin-degenerate)
             DoubleVector result = new DoubleVector(nz, 2100.0);
-            for (int k = 15; k < nz; k++)
+            for (int k = 100; k < 130; k++)
             {
                 //int k = 10;
                 result[k] = 1400.0;

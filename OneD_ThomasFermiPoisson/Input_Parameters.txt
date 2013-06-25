@@ -12,10 +12,10 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 100
+% nz = 400
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 1
+% dz = 10
 #
 #
 ############## Poisson solver details #################################
@@ -42,6 +42,6 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 0.0
+% T = 1.5
 #
 #

@@ -55,7 +55,9 @@ namespace OneD_ThomasFermiPoisson
                 return Get_Potential_On_Regular_Grid(density);
         }
 
-
+        /// <summary>
+        /// gets the potential using flexPDE
+        /// </summary>
         DoubleVector Get_Potential_From_FlexPDE(DoubleVector density)
         {
             // save density to file in a FlexPDE "TABLE" format
@@ -67,6 +69,7 @@ namespace OneD_ThomasFermiPoisson
             Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
             while (!File.Exists("pot.dat"))
                 Thread.Sleep(10);
+            Thread.Sleep(10);
             
             string[] lines = File.ReadAllLines("pot.dat");
             // work out where the data starts (this is flexPDE specific)
@@ -98,13 +101,13 @@ namespace OneD_ThomasFermiPoisson
             // save out positions
             sw.WriteLine("x " + nz.ToString());
             for (int i = 0; i < nz;i++)
-                sw.Write((i * dz).ToString() + '\t');
+                sw.Write(((float)(i * dz)).ToString() + '\t');
 
             // save out densities
             sw.WriteLine();
             sw.WriteLine("data");
             for (int i = 0; i < nz; i++)
-                sw.Write(density[i].ToString() + '\t');
+                sw.Write(((float)density[i]).ToString() + '\t');
 
             sw.Close();
         }
@@ -127,7 +130,6 @@ namespace OneD_ThomasFermiPoisson
         /// <summary>
         /// Generates a spin-resolved laplacian matrix in one-dimension on a regular grid with Dirichlet BCs
         /// </summary>
-        /// <returns></returns>
         DoubleMatrix Generate_Laplacian()
         {
             // the factor which multiplies the Laplace equation
