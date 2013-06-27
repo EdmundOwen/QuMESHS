@@ -35,6 +35,10 @@
     <CodeAnalysisFailOnMissingRules>true</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NMath, Version=5.3.0.1, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath 5.3\Assemblies\NMath.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -45,10 +49,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Density_Base.cs" />
+    <Compile Include="Enums.cs" />
     <Compile Include="Inputs_to_Dictionary.cs" />
     <Compile Include="Physics_Base.cs" />
     <Compile Include="Potential_Base.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpinResolved_DoubleMatrix.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

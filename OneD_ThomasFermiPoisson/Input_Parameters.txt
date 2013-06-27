@@ -21,7 +21,7 @@
 ############## Poisson solver details #################################
 #
 ## Potential mixing parameter.  i.e. potential += alpha * new_potential (this is adaptive, it is the maximum)
-% alpha = 0.1
+% alpha = 1.0
 #
 ## File name with band structure in
 % BandStructure_File = band_structure.txt
@@ -33,7 +33,7 @@
 ############## Generic density solver details #########################
 #
 ## Final solution tolerance
-% tolerance = 10e-7
+% tolerance = 10e-5
 #
 ## Fermi energy
 % E_f = 50.0

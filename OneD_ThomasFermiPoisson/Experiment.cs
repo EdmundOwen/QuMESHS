@@ -11,7 +11,7 @@ namespace OneD_ThomasFermiPoisson
     {
         bool converged = false;
         double alpha, alpha_prime, tol;
-        int potential_mixing_rate = 100;
+        int potential_mixing_rate = 10;
         
         bool using_flexPDE = false;
         string flexdPDE_input;
@@ -51,9 +51,7 @@ namespace OneD_ThomasFermiPoisson
 
         public void Initialise(double dz, double alpha, double tol, int nz)
         {
-
             this.alpha = alpha; this.alpha_prime = alpha;
-            this.potential_mixing_rate = 100;
 
             this.tol = tol;
 
@@ -65,13 +63,13 @@ namespace OneD_ThomasFermiPoisson
 
             DoubleVector donors = new DoubleVector(nz);
             // and put in some delta-dopants
-            for (int k = 27; k < 43; k++)
-                donors[k] = 0.0001;
+            for (int k = 80; k < 81; k++)
+                donors[k] = 0.001;
 
 
             // create classes and initialise
             OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input);
-            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -900.0), new DoubleVector(nz, 900.0), 0.0, temperature, 1.0, dz, nz);
+            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -1000.0), new DoubleVector(nz, 1000.0), 0.0, temperature, 10.0, dz, nz);
             
             int count = 0;
             while (!converged)

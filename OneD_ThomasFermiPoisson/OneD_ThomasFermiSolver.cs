@@ -118,8 +118,8 @@ namespace OneD_ThomasFermiPoisson
         {
             DoubleVector result = new DoubleVector(2 * nz);
 
-            double tmp = temperature;
-            temperature = 0;
+            //double tmp = temperature;
+            //temperature = 0;
             // calculate today density of dopents (dopent charge and carrier charge)
             for (int i = 0; i < nz; i++)
             {
@@ -128,8 +128,8 @@ namespace OneD_ThomasFermiPoisson
                 // and spin-down is degenerate here
                 result[i + nz] = dopent_concentration[i] * Get_Fermi_Function(conduction_band_energy[i] - dopent_energy_below_Ec[i]);
             }
-            temperature = tmp;
-            Console.WriteLine("temporary code");
+            //temperature = tmp;
+            //Console.WriteLine("temporary code");
 
             return result;
         }
