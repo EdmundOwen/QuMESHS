@@ -9,7 +9,8 @@ namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_ThomasFermiSolver : Density_Solver
     {
-        DoubleVector band_gap;
+        DoubleMatrix band_gap;
+        SpinResolved_DoubleMatrix dopent_concentration;
         DoubleVector acceptor_concentration, donor_concentration;
         DoubleVector acceptor_energy_below_Ec, donor_energy_below_Ec;
 
@@ -23,7 +24,12 @@ namespace TwoD_ThomasFermiPoisson
             this.dE = dE;
 
             // set band profile with spin-degeneracy
-            this.band_gap = band_gap;
+            this.band_gap = Input_Band_Structure.Expand_BandStructure(band_gap, ny);
+
+            this.acceptor_concentration = acceptor_concentration;
+            this.donor_concentration = donor_concentration;
+
+            this.dopent_concentration = (SpinResolved_DoubleMatrix)Input_Band_Structure.Expand_BandStructure(donor_concentration - acceptor_concentration, ny);
 
             // and set relative dopent energies to the conduction band
             this.donor_energy_below_Ec = band_gap / 2.0 - donor_energy;
@@ -46,7 +52,7 @@ namespace TwoD_ThomasFermiPoisson
             SpinResolved_DoubleMatrix donor_density = Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
 
             // return total density (for 1D; hence the divide-by-lattice-spacing)
-            return -1.0 * q_e * ((SpinResolved_DoubleMatrix)Expand_BandStructure(donor_concentration - acceptor_concentration) + valence_density + acceptor_density - conduction_density - donor_density);
+            return -1.0 * q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
         }
 
         /// <summary>
@@ -82,7 +88,7 @@ namespace TwoD_ThomasFermiPoisson
         SpinResolved_DoubleMatrix Calculate_Valence_Band_Density(DoubleMatrix conduction_band_energy)
         {
             SpinResolved_DoubleMatrix result = new SpinResolved_DoubleMatrix(ny, nz);
-            DoubleMatrix valence_band = conduction_band_energy - Expand_BandStructure(band_gap);
+            DoubleMatrix valence_band = conduction_band_energy - band_gap;
 
             // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
             int no_energy_steps;
@@ -139,19 +145,6 @@ namespace TwoD_ThomasFermiPoisson
 
             double density_of_states = geometric_prefactor * dk2_dE * 1.5 * Math.Pow(k2, 0.5);
             return density_of_states;
-        }
-
-        /// <summary>
-        /// returns a DoubleMatrix with the given band structure planarised in the transverse direction
-        /// </summary>
-        DoubleMatrix Expand_BandStructure(DoubleVector structure)
-        {
-            DoubleMatrix result = new DoubleMatrix(ny, nz);
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                    result[i, j] = structure[j];
-
-            return result;
         }
     }
 }

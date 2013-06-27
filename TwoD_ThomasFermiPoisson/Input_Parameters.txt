@@ -11,17 +11,35 @@
 #
 ############## Simulation domain details ##############################
 #
-## Number of lattice sites in the transverse direction
-% nx = 100
+## Number of lattice sites in the transverse direction for the density calculation
+% ny = 400
 #
-## Spacing of lattice sites in the transverse direction
-% dx = 1
+## Spacing of lattice sites in the transverse direction for the density calculation
+% dy = 10
+#
+## Number of lattice sites in the growth direction for the density calculation
+% nz = 400
+#
+## Spacing of lattice sites in the growth direction for the density calculation
+% dz = 10
 #
 #
 ############## Poisson solver details #################################
 #
+## Potential mixing parameter.  i.e. potential += alpha * new_potential (this is adaptive, it is the maximum)
+% alpha = 1.0
+#
+## File name with band structure in
+% BandStructure_File = band_structure.txt
+#
+## FlexPDE input file
+% FlexPDE_file = band_structure.pde
+#
 #
 ############## Generic density solver details #########################
+#
+## Final solution tolerance
+% tolerance = 10e-5
 #
 ## Fermi energy
 % E_f = 50.0
@@ -30,7 +48,11 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 0.0
+% T = 1.5
+#
+#
+#
+#
 #
 #
 ############## Momentum density solver details ########################

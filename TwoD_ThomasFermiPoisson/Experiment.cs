@@ -3,47 +3,75 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using CenterSpace.NMath.Core;
+using Solver_Bases;
 
 namespace TwoD_ThomasFermiPoisson
 {
     enum Density_Method
     {
         by_k,
-        by_E
+        by_E,
+        by_ThomasFermi
     }
 
     class Experiment
     {
-        // physical constants
-        public const double kB = 0.086173324;               // (meV) (K)^-1
-
         bool converged = false;
-        Density_Method calculation_method = Density_Method.by_k;
+        double alpha, alpha_prime, tol;
+        int potential_mixing_rate = 10;
 
-        double fermi_Energy, init_Energy, no_kB_T;
-        double max_Energy;
+        bool using_flexPDE = false;
+        string flexdPDE_input;
 
-        double dk;
+        SpinResolved_DoubleMatrix density;
+        DoubleMatrix potential;
+        DoubleVector band_structure;
 
-        double dE;
-        int no_Energy_Steps;
+        double temperature = 100.0;
 
-        double temperature;
+        double dy, dz;
+        int ny, nz; 
 
-        int nx, nz;
-        int layer_index;
-        double dx, dz;
+        Density_Method calculation_method = Density_Method.by_ThomasFermi;
+
+        //double fermi_Energy, init_Energy, no_kB_T;
+        //double max_Energy;
+
+        //double dk;
+
+        //double dE;
+        //int no_Energy_Steps;
 
         public void Initialise(Dictionary<string, object> input_dict)
         {
-            nx = (int)(double)input_dict["nx"];
+            // simulation domain inputs
+            if (input_dict.ContainsKey("dy")) this.dy = (double)input_dict["dy"]; else throw new KeyNotFoundException("No dy in input dictionary!");
+            if (input_dict.ContainsKey("ny")) this.ny = (int)(double)input_dict["ny"]; else throw new KeyNotFoundException("No ny in input dictionary!");
+            if (input_dict.ContainsKey("dz")) this.dz = (double)input_dict["dz"]; else throw new KeyNotFoundException("No dz in input dictionary!");
+            if (input_dict.ContainsKey("nz")) this.nz = (int)(double)input_dict["nz"]; else throw new KeyNotFoundException("No nz in input dictionary!");
+
+            // solver inputs
+            if (input_dict.ContainsKey("tolerance")) this.tol = (double)input_dict["tolerance"]; else throw new KeyNotFoundException("No solution tolerance in input dictionary!");
+            if (input_dict.ContainsKey("alpha")) { this.alpha = (double)input_dict["alpha"]; alpha_prime = alpha; } else throw new KeyNotFoundException("No potential mixing parameter, alpha, in input dictionary!");
+            if (input_dict.ContainsKey("FlexPDE_file")) { this.using_flexPDE = true; this.flexdPDE_input = (string)input_dict["FlexPDE_file"]; }
+
+            // physical inputs
+            if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
+
+            // get the band structure
+            if (input_dict.ContainsKey("BandStructure_File")) band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"]);
+            else throw new KeyNotFoundException("No band structure file found in input dictionary!");
+
+            // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
+            if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (SpinResolved_DoubleMatrix)input_dict["SpinResolved_Density"]; else this.density = new SpinResolved_DoubleMatrix(ny, nz);
+            if (input_dict.ContainsKey("Potential")) this.potential = (DoubleMatrix)input_dict["Potential"]; else potential = Input_Band_Structure.Expand_BandStructure(band_structure / 2.0, ny);
+
+            /*nx = (int)(double)input_dict["nx"];
             dx = (double)input_dict["dx"];
 
             fermi_Energy = (double)input_dict["E_f"];
             no_kB_T = (double)input_dict["No_kB_T_Above_E_f"];
             temperature = (double)input_dict["T"];
-            // calculate the maximum energy to calculate to above the fermi surface
-            max_Energy = fermi_Energy + (no_kB_T * kB * temperature);
 
 
             // momentum density solver parameters
@@ -52,17 +80,45 @@ namespace TwoD_ThomasFermiPoisson
             // energy density solver parameters
             init_Energy = (double)input_dict["Lowest_Energy"];
             dE = (double)input_dict["dE"];
-            no_Energy_Steps = (int)((max_Energy - init_Energy) / dE);
+            no_Energy_Steps = (int)((max_Energy - init_Energy) / dE);*/
         }
 
         public void Run()
         {
-            //
+            DoubleVector donors = new DoubleVector(nz);
+            // and put in some delta-dopants
+            for (int k = 80; k < 81; k++)
+                donors[k] = 0.001;
 
+
+            // create classes and initialise
+            TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, using_flexPDE, flexdPDE_input);
+            TwoD_ThomasFermiSolver dens_solv = new TwoD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -1000.0), new DoubleVector(nz, 1000.0), 0.0, temperature, 10.0, dy, dz, ny, nz);
+            
             // run self consistent loop
+            int count = 0;
             while (!converged)
             {
-                // Calculate 2D electrostatic potential
+                Console.WriteLine("Iteration:\t" + count.ToString());
+
+                // calculate the total density for this potential
+                density = dens_solv.Get_OneD_Density(potential);
+
+                // solve the potential for the given density and mix in with the old potential
+                DoubleMatrix new_potential = potential + alpha * pois_solv.Get_Potential(density);
+
+                // check for convergence
+                converged = Check_Convergence(potential, new_potential);
+
+                // change the potential mixing parameter
+                if ((count + 1) % potential_mixing_rate == 0)
+                    alpha = Renew_Mixing_Factor(potential, new_potential);
+
+                // transfer new potential array to potential array
+                potential = new_potential;
+                count++;
+
+                /*/ Calculate 2D electrostatic potential
                 TwoD_PoissonSolver pot_solv = new TwoD_PoissonSolver();
                 DoubleVector well_potential = pot_solv.Get_Well_Potential(nx);
 
@@ -71,7 +127,7 @@ namespace TwoD_ThomasFermiPoisson
                 dens_solv.Initialise_Hamiltonian(well_potential);
 
                 if (calculation_method == Density_Method.by_k)
-                    dens_solv.Solve_Density_Using_Momentum(max_Energy, dk);
+                    dens_solv.Solve_Density_Using_Momentum(fermi_Energy, dk);
                 else if (calculation_method == Density_Method.by_E)
                     dens_solv.Solve_Density_Using_Energy(dE, init_Energy, no_Energy_Steps);
                 else
@@ -80,7 +136,7 @@ namespace TwoD_ThomasFermiPoisson
                 // calculate DFT potential
 
                 // check if converged
-                converged = true;
+                converged = true;*/
             }
 
         }

@@ -13,29 +13,17 @@ namespace OneD_ThomasFermiPoisson
 {
     class OneD_PoissonSolver : Potential_Base
     {
-        // parameters for regular grid solve
-        int nz;
-        double dz;
-
         double top_bc, bottom_bc;
 
-        bool flexPDE;
-        string flexpde_inputfile;
-
+        // parameters for regular grid solve
         DoubleMatrix laplacian;
         DoubleLUFact lu_fact;
 
         // 
         public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, bool using_flexPDE, string flexPDE_input)
+            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input)
         {
-            this.nz = nz; this.dz = dz;
-
             this.top_bc = top_bc; this.bottom_bc = bottom_bc;
-
-            // check whether using flexPDE
-            flexPDE = using_flexPDE;
-            if (using_flexPDE)
-                this.flexpde_inputfile = flexPDE_input;
 
             // generate Laplacian matrix (spin-resolved)
             if (!flexPDE)
@@ -49,52 +37,18 @@ namespace OneD_ThomasFermiPoisson
         {
             if (flexPDE)
                 // calculate potential by calling FlexPDE
-                return Get_Potential_From_FlexPDE(density);
+                return Get_Potential_From_FlexPDE(new Potential_Data(density)).vec;
             else
                 // calculate potential on a regular grid (not ideal, or scalable)
                 return Get_Potential_On_Regular_Grid(density);
         }
 
-        /// <summary>
-        /// gets the potential using flexPDE
-        /// </summary>
-        DoubleVector Get_Potential_From_FlexPDE(DoubleVector density)
+        void Save_Density(Potential_Data density, string filename)
         {
-            // save density to file in a FlexPDE "TABLE" format
-            Save_Density(density, "density_1d.dat");
-            // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
-            try { File.Delete("pot.dat"); } catch (Exception) { }
+            // check that the dimension of the density is correct
+            if (density.Dimension != 1)
+                throw new RankException();
 
-            // run the flexPDE program as a process (quietly)
-            Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
-            while (!File.Exists("pot.dat"))
-                Thread.Sleep(10);
-            Thread.Sleep(10);
-            
-            string[] lines = File.ReadAllLines("pot.dat");
-            // work out where the data starts (this is flexPDE specific)
-            int first_line = 0;
-            for (int i = 0; i < lines.Length; i++)
-                if (lines[i].StartsWith("}"))
-                {
-                    first_line = i + 1;
-                    break;
-                }
-
-            // and check that there is the right number of data points back
-            if (lines.Length - first_line != nz)
-                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
-
-            // and parse these values into a DoubleVector
-            DoubleVector result = new DoubleVector(nz);
-            for (int i = 0; i < nz; i++)
-                result[i] = double.Parse(lines[first_line + i]);
-
-            return result;
-        }
-
-        void Save_Density(DoubleVector density, string filename)
-        {
             // open stream
             StreamWriter sw = new StreamWriter(filename);
 
@@ -107,9 +61,23 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine();
             sw.WriteLine("data");
             for (int i = 0; i < nz; i++)
-                sw.Write(((float)density[i]).ToString() + '\t');
+                sw.Write(((float)density.vec[i]).ToString() + '\t');
 
             sw.Close();
+        }
+
+        Potential_Data Parse_Potential(string[] data, int first_line)
+        {
+            // and check that there is the right number of data points back
+            if (data.Length - first_line != nz)
+                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
+
+            // and parse these values into a DoubleVector
+            Potential_Data result = new Potential_Data(new DoubleVector(nz));
+            for (int i = 0; i < nz; i++)
+                result.vec[i] = double.Parse(data[first_line + i]);
+
+            return result;
         }
 
         DoubleVector Get_Potential_On_Regular_Grid(DoubleVector spin_resolved_density)

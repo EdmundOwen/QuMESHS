@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CenterSpace.NMath.Core;
+using Solver_Bases;
 
 namespace OneD_ThomasFermiPoisson
 {
@@ -36,7 +37,10 @@ namespace OneD_ThomasFermiPoisson
 
             // physical inputs
             if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
-            if (input_dict.ContainsKey("BandStructure_File")) band_structure = GetBandStructure((string)input_dict["BandStructure_File"]); else throw new KeyNotFoundException("No band structure file found in input dictionary!");
+
+            // get the band structure
+            if (input_dict.ContainsKey("BandStructure_File")) band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"]); 
+            else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new DoubleVector(2 * nz, 0.0);
@@ -108,19 +112,6 @@ namespace OneD_ThomasFermiPoisson
             sw.Close();
         }
 
-
-        DoubleVector GetBandStructure(string filename)
-        {
-            // temporary band structure... (spin-degenerate)
-            DoubleVector result = new DoubleVector(nz, 2100.0);
-            for (int k = 100; k < 130; k++)
-            {
-                //int k = 10;
-                result[k] = 1400.0;
-            }
-            
-            return result;
-        }
 
         /// <summary>
         /// Checks whether the potential has converged by comparing old and new potentials

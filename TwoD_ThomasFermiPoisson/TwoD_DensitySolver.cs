@@ -50,8 +50,11 @@ namespace TwoD_ThomasFermiPoisson
             H[nx, nx - 1] = 0.0;
         }
 
-        public DoubleVector Solve_Density_Using_Momentum(double max_Energy, double dk)
+        public DoubleVector Solve_Density_Using_Momentum(double fermi_Energy, double no_kB_T, double dk)
         {
+            // calculate the maximum energy to calculate to above the fermi surface
+            double max_Energy = fermi_Energy + (no_kB_T * kB * temperature);
+
             // density vector is spin resolved
             DoubleVector density = new DoubleVector(2 * nx);
             
