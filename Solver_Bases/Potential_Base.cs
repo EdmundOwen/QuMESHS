@@ -60,6 +60,28 @@ namespace Solver_Bases
             return Parse_Potential(lines, first_line);
         }
 
+        /// <summary>
+        /// Checks whether the potential has converged by comparing old and new potentials
+        /// and determining whether every term is the same within a given tolerance
+        /// </summary>
+        public bool Check_Convergence(Potential_Data potential, Potential_Data new_potential, double tol)
+        {
+            Potential_Data pot_diff = new_potential - potential;
+
+            int[] converged_test = new int[pot_diff.Length];
+            for (int i = 0; i < nz; i++)
+            {
+                converged_test[i] = 0;
+                if (Math.Abs(pot_diff[i]) < tol)
+                    converged_test[i] = 1;
+            }
+
+            if (converged_test.Sum() == pot_diff.Length)
+                return true;
+            else
+                return false;
+        }
+
         abstract void Save_Density(Potential_Data density, string filename);
         abstract Potential_Data Parse_Potential(string[] data, int first_line);
     }

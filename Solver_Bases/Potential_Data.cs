@@ -35,9 +35,95 @@ namespace Solver_Bases
             dim = 3;
         }
 
+        /// <summary>
+        /// returns a value for this data type.
+        /// Note that value ordering is not very well defined
+        /// </summary>
+        public double this[int i]
+        {
+            get 
+            {
+                if (Dimension == 1)
+                    return vec[i];
+                else if (Dimension == 2)
+                    return (double)mat.ToArray().GetValue(i);
+                else if (Dimension == 3)
+                {
+                    int matsize = vol[0].Rows * vol[0].Cols;
+                    int index1 = i % matsize;
+                    int index2 = (int)((i - index1) / matsize);
+
+                    return (double)vol[index2].ToArray().GetValue(index1);
+                }
+                else
+                    throw new NotImplementedException();
+            }
+        }
+
+        public static Potential_Data operator +(Potential_Data vec1, Potential_Data vec2)
+        {
+            if (vec1.Dimension != vec2.Dimension)
+                throw new RankException();
+
+            if (vec1.Dimension == 1)
+                return new Potential_Data(vec1.vec + vec2.vec);
+            else if (vec1.Dimension == 2)
+                return new Potential_Data(vec1.mat + vec2.mat);
+            else if (vec1.Dimension == 3)
+            {
+                Potential_Data result = new Potential_Data(new DoubleMatrix[vec1.vol.Length]);
+                for (int i = 0; i < vec1.vol.Length; i++)
+                    result.vol[i] = vec1.vol[i] + vec2.vol[i];
+
+                return result;
+            }
+            else
+                throw new NotImplementedException();
+        }
+
+        public static Potential_Data operator -(Potential_Data vec1, Potential_Data vec2)
+        {
+            if (vec1.Dimension != vec2.Dimension)
+                throw new RankException();
+
+            if (vec1.Dimension == 1)
+                return new Potential_Data(vec1.vec - vec2.vec);
+            else if (vec1.Dimension == 2)
+                return new Potential_Data(vec1.mat - vec2.mat);
+            else if (vec1.Dimension == 3)
+            {
+                Potential_Data result = new Potential_Data(new DoubleMatrix[vec1.vol.Length]);
+                for (int i = 0; i < vec1.vol.Length; i++)
+                    result.vol[i] = vec1.vol[i] - vec2.vol[i];
+
+                return result;
+            }
+            else
+                throw new NotImplementedException();
+        }
+
+
         public int Dimension
         {
             get { return dim; }
+        }
+
+        /// <summary>
+        /// returns the number of data points in the Potential_Data object
+        /// </summary>
+        public int Length
+        {
+            get
+            {
+                if (Dimension == 1)
+                    return vec.Length;
+                else if (Dimension == 2)
+                    return mat.Cols * mat.Rows;
+                else if (Dimension == 3)
+                    return vol.Length * vol[0].Cols * vol[0].Rows;
+                else
+                    throw new NotImplementedException();
+            }
         }
     }
 }

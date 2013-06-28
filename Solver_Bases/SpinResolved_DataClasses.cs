@@ -203,7 +203,7 @@ namespace Solver_Bases
                 return spin_matrix[1];
         }
 
-        public DoubleMatrix Spin_Summed_Vector
+        public DoubleMatrix Spin_Summed_Matrix
         {
             get { return spin_matrix[0] + spin_matrix[1]; }
         }
