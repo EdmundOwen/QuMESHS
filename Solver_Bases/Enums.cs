@@ -10,4 +10,19 @@ namespace Solver_Bases
         Up = 0,
         Down = 1
     }
+
+    public enum Materials
+    {
+        GaAs,
+        Al03GaAs,
+        AlAs,
+        In075GaAs,
+        InAs
+    }
+
+    public enum Dopent
+    {
+        donor,
+        acceptor
+    }
 }

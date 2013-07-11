@@ -24,12 +24,12 @@ namespace TwoD_ThomasFermiPoisson
             this.dE = dE;
 
             // set band profile with spin-degeneracy
-            this.band_gap = Input_Band_Structure.Expand_BandStructure(band_gap, ny);
+            this.band_gap = Input_Band_Structure.Expand_BandStructure(band_gap, ny).mat;
 
             this.acceptor_concentration = acceptor_concentration;
             this.donor_concentration = donor_concentration;
 
-            this.dopent_concentration = (SpinResolved_DoubleMatrix)Input_Band_Structure.Expand_BandStructure(donor_concentration - acceptor_concentration, ny);
+            this.dopent_concentration = (SpinResolved_DoubleMatrix)Input_Band_Structure.Expand_BandStructure(donor_concentration - acceptor_concentration, ny).mat;
 
             // and set relative dopent energies to the conduction band
             this.donor_energy_below_Ec = band_gap / 2.0 - donor_energy;

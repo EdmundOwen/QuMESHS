@@ -43,7 +43,7 @@ namespace OneD_ThomasFermiPoisson
                 return Get_Potential_On_Regular_Grid(density);
         }
 
-        void Save_Density(Potential_Data density, string filename)
+        protected override void Save_Density(Potential_Data density, string filename)
         {
             // check that the dimension of the density is correct
             if (density.Dimension != 1)
@@ -66,7 +66,7 @@ namespace OneD_ThomasFermiPoisson
             sw.Close();
         }
 
-        Potential_Data Parse_Potential(string[] data, int first_line)
+        protected override Potential_Data Parse_Potential(string[] data, int first_line)
         {
             // and check that there is the right number of data points back
             if (data.Length - first_line != nz)

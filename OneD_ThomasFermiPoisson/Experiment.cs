@@ -17,9 +17,12 @@ namespace OneD_ThomasFermiPoisson
         bool using_flexPDE = false;
         string flexdPDE_input;
 
-        DoubleVector potential, density, band_structure;
+        Potential_Data potential;
+        SpinResolved_DoubleVector density;
+        DoubleVector band_structure;
+        DoubleVector acceptors, donors;
 
-        double temperature = 100.0;
+        double temperature = 300.0;
 
         double dz;
         int nz;
@@ -39,17 +42,23 @@ namespace OneD_ThomasFermiPoisson
             if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
 
             // get the band structure
-            if (input_dict.ContainsKey("BandStructure_File")) band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"]); 
+            if (input_dict.ContainsKey("BandStructure_File"))
+            {
+                band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"], nz, dz);
+                acceptors = Input_Band_Structure.GetDopentConcentration((string)input_dict["BandStructure_File"], nz, dz, Dopent.acceptor);
+                donors = Input_Band_Structure.GetDopentConcentration((string)input_dict["BandStructure_File"], nz, dz, Dopent.donor);
+            }
             else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
-            if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new DoubleVector(2 * nz, 0.0);
-            if (input_dict.ContainsKey("Potential")) this.potential = (DoubleVector)input_dict["Potential"]; else potential = band_structure / 2.0;
+            if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (SpinResolved_DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new SpinResolved_DoubleVector(nz);
+            if (input_dict.ContainsKey("Potential")) this.potential = new Potential_Data((DoubleMatrix)input_dict["Potential"]); else potential = new Potential_Data(band_structure / 2.0);
         }
 
         public void Initialise(DoubleVector Potential, DoubleVector Density, double dz, double alpha, double tol, int nz)
         {
-            this.potential = Potential; this.density = Density;
+            throw new NotImplementedException();
+            //this.potential = Potential; this.density = Density;
             Initialise(dz, alpha, tol, nz);
         }
 
@@ -64,16 +73,9 @@ namespace OneD_ThomasFermiPoisson
 
         public void Run()
         {
-
-            DoubleVector donors = new DoubleVector(nz);
-            // and put in some delta-dopants
-            for (int k = 80; k < 81; k++)
-                donors[k] = 0.001;
-
-
             // create classes and initialise
             OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input);
-            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -1000.0), new DoubleVector(nz, 1000.0), 0.0, temperature, 10.0, dz, nz);
+            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptors, donors, new DoubleVector(nz, -850.0), new DoubleVector(nz, 850.0), 0.0, temperature, 10.0, dz, nz);
             
             int count = 0;
             while (!converged)
@@ -81,17 +83,18 @@ namespace OneD_ThomasFermiPoisson
                 Console.WriteLine("Iteration:\t" + count.ToString());
 
                 // calculate the total density for this potential
-                density = dens_solv.Get_OneD_Density(potential);
+                density = dens_solv.Get_OneD_Density(potential.vec);
 
                 // solve the potential for the given density and mix in with the old potential
-                DoubleVector new_potential = potential + alpha * pois_solv.Get_Potential(density);
+                Potential_Data new_potential = potential + new Potential_Data(alpha * pois_solv.Get_Potential(density.Spin_Summed_Vector));
 
                 // check for convergence
                 converged = Check_Convergence(potential, new_potential);
 
                 // change the potential mixing parameter
                 if ((count + 1) % potential_mixing_rate == 0)
-                    alpha = Renew_Mixing_Factor(potential, new_potential);
+                    alpha = pois_solv.Renew_Mixing_Parameter(new Potential_Data(potential), new Potential_Data(new_potential), alpha_prime);
+                    //alpha = pois_solv.Renew_Mixing_Factor(potential, new_potential);
 
                 // transfer new potential array to potential array
                 potential = new_potential;
@@ -134,7 +137,7 @@ namespace OneD_ThomasFermiPoisson
             else
                 return false;
         }
-
+        /*
         double Renew_Mixing_Factor(DoubleVector potential, DoubleVector new_potential)
         {
             // fill a vector with the absolute differences between potential and new_potential (except boundaries)
@@ -149,6 +152,6 @@ namespace OneD_ThomasFermiPoisson
             else
                 return alpha_prime;
         }
-
+        */
     }
 }

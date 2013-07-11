@@ -12,16 +12,16 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 400
+% ny = 40
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 10
+% dy = 100
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 400
+% nz = 40
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 10
+% dz = 100
 #
 #
 ############## Poisson solver details #################################
@@ -33,7 +33,7 @@
 % BandStructure_File = band_structure.txt
 #
 ## FlexPDE input file
-% FlexPDE_file = band_structure.pde
+% FlexPDE_file = split_gate.pde
 #
 #
 ############## Generic density solver details #########################

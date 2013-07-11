@@ -59,7 +59,7 @@ namespace TwoD_ThomasFermiPoisson
             if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
 
             // get the band structure
-            if (input_dict.ContainsKey("BandStructure_File")) band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"]);
+            if (input_dict.ContainsKey("BandStructure_File")) band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"], nz, dz);
             else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
@@ -87,7 +87,7 @@ namespace TwoD_ThomasFermiPoisson
         {
             DoubleVector donors = new DoubleVector(nz);
             // and put in some delta-dopants
-            for (int k = 80; k < 81; k++)
+            for (int k = 8; k < 9; k++)
                 donors[k] = 0.001;
 
 
@@ -112,7 +112,7 @@ namespace TwoD_ThomasFermiPoisson
 
                 // change the potential mixing parameter
                 if ((count + 1) % potential_mixing_rate == 0)
-                    alpha = Renew_Mixing_Factor(potential, new_potential);
+                    alpha = pois_solv.Renew_Mixing_Parameter(potential, new_potential, alpha_prime);
 
                 // transfer new potential array to potential array
                 potential = new_potential;

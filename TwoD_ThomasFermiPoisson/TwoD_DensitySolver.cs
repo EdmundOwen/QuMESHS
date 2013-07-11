@@ -10,8 +10,6 @@ namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_DensitySolver : Density_Solver
     {
-        double dx;
-
         DoubleComplexMatrix H;
 
         public TwoD_DensitySolver(double dx, double fermi_Energy, int nx) 

@@ -12,7 +12,7 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 400
+% nz = 500
 #
 ## Spacing of lattice sites for the density calculation
 % dz = 10
@@ -24,7 +24,7 @@
 % alpha = 1.0
 #
 ## File name with band structure in
-% BandStructure_File = band_structure.txt
+% BandStructure_File = Band_Structure.txt
 #
 ## FlexPDE input file
 % FlexPDE_file = band_structure.pde

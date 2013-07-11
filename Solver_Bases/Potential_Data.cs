@@ -46,14 +46,20 @@ namespace Solver_Bases
                 if (Dimension == 1)
                     return vec[i];
                 else if (Dimension == 2)
-                    return (double)mat.ToArray().GetValue(i);
+                {
+                    int x = i % mat.Cols;
+                    int y = (int)((i - x) / mat.Cols);
+                    return (double)mat[y, x];
+                }
                 else if (Dimension == 3)
                 {
                     int matsize = vol[0].Rows * vol[0].Cols;
                     int index1 = i % matsize;
-                    int index2 = (int)((i - index1) / matsize);
+                    int x = i % vol[0].Cols;
+                    int y = (int)((i - x) / vol[0].Cols);
+                    int z = (int)((i - index1) / matsize);
 
-                    return (double)vol[index2].ToArray().GetValue(index1);
+                    return (double)vol[z][y,x];
                 }
                 else
                     throw new NotImplementedException();

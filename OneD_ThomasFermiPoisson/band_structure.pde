@@ -14,11 +14,9 @@ SELECT
 DEFINITIONS    { parameter definitions }
 
   rho = TABLE('density_1d.dat', x)
-  nx = 400
+  nx = 500
 
-  ly = 4000
-  
-  well_depth = -30
+  lx = 5000
 
   split_V = 0
 
@@ -28,7 +26,7 @@ DEFINITIONS    { parameter definitions }
 
 ! INITIAL VALUES
 EQUATIONS        { PDE's, one for each variable }
-  div(eps * grad(u)) = rho { one possibility }
+  div(eps * grad(u)) = - rho { one possibility }
 
 ! CONSTRAINTS    { Integral constraints }
 BOUNDARIES       { The domain definition }
@@ -36,12 +34,12 @@ BOUNDARIES       { The domain definition }
 	eps = eps_0 * eps_r
     START(0)   { Walk the domain boundary }
 	POINT VALUE(u) = split_V
-    LINE TO (ly) 
+    LINE TO (lx) 
 	POINT VALUE(u) = 0
 
 ! TIME 0 TO 1    { if time dependent }
 ! MONITORS         { show progress }
 PLOTS            { save result displays }
-	ELEVATION(rho) FROM (0) TO (ly)
-	ELEVATION(u) FROM (0) TO (ly) export(nx) format '#1' file='pot.dat'
+	ELEVATION(rho) FROM (0) TO (lx)
+	ELEVATION(u) FROM (0) TO (lx) export(nx) format '#1' file='pot.dat'
 END
