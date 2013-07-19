@@ -64,6 +64,30 @@ namespace Solver_Bases
                 else
                     throw new NotImplementedException();
             }
+
+            private set
+            {
+                if (Dimension == 1)
+                    vec[i] = value;
+                else if (Dimension == 2)
+                {
+                    int x = i % mat.Cols;
+                    int y = (int)((i - x) / mat.Cols);
+                    mat[y, x] = value;
+                }
+                else if (Dimension == 3)
+                {
+                    int matsize = vol[0].Rows * vol[0].Cols;
+                    int index1 = i % matsize;
+                    int x = i % vol[0].Cols;
+                    int y = (int)((i - x) / vol[0].Cols);
+                    int z = (int)((i - index1) / matsize);
+
+                    vol[z][y, x] = value;
+                }
+                else
+                    throw new NotImplementedException();
+            }
         }
 
         public static Potential_Data operator +(Potential_Data vec1, Potential_Data vec2)
@@ -108,6 +132,23 @@ namespace Solver_Bases
                 throw new NotImplementedException();
         }
 
+        public static Potential_Data operator *(double scalar, Potential_Data data)
+        {
+            for (int i = 0; i < data.Length; i++)
+                data[i] *= scalar;
+
+            return data;
+        }
+
+        public static Potential_Data operator *(Potential_Data data, double scalar)
+        {
+            return scalar * data;
+        }
+
+        public static Potential_Data operator /(Potential_Data data, double scalar)
+        {
+            return (1 / scalar) * data;
+        }
 
         public int Dimension
         {

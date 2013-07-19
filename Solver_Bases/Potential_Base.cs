@@ -34,7 +34,7 @@ namespace Solver_Bases
         protected Potential_Data Get_Potential_From_FlexPDE(Potential_Data density)
         {
             // save density to file in a FlexPDE "TABLE" format
-            Save_Density(density, "density_2d.dat");
+            Save_Density(density, "dens.dat");
 
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
             try { File.Delete("pot.dat"); }
@@ -83,12 +83,36 @@ namespace Solver_Bases
                 return false;
         }
 
-        public double Renew_Mixing_Parameter(Potential_Data potential, Potential_Data new_potential, double alpha_max)
+        /// <summary>
+        /// Checks whether the potential has converged by calculating the absolute value of the blended potential
+        /// and determining whether every term is zero within a given tolerance
+        /// </summary>
+        public bool Check_Convergence(Potential_Data blending_potential, double tol)
+        {
+            double[] pot_diff = new double[blending_potential.Length];
+            for (int i = 0; i < blending_potential.Length; i++)
+                pot_diff[i] = Math.Abs(blending_potential[i]);
+
+            int[] converged_test = new int[pot_diff.Length];
+            for (int i = 0; i < pot_diff.Length; i++)
+            {
+                converged_test[i] = 0;
+                if (pot_diff[i] < tol)
+                    converged_test[i] = 1;
+            }
+
+            if (converged_test.Sum() == pot_diff.Length)
+                return true;
+            else
+                return false;
+        }
+
+        public double Renew_Mixing_Parameter(Potential_Data potential, Potential_Data new_potential, double alpha_max, double alpha)
         {
             double[] pot_diff = Get_Array_of_Absolute_Differences(potential, new_potential);
 
             // the new mixing factor is the maximum absolute change, multiplied by the original mixing factor
-            double new_mixing_parameter = alpha_max * pot_diff.Max();
+            double new_mixing_parameter = pot_diff.Max();
             if (new_mixing_parameter < alpha_max)
                 return new_mixing_parameter;
             else
@@ -105,6 +129,16 @@ namespace Solver_Bases
                 result[i] = Math.Abs(pot1[i] - pot2[i]);
 
             return result;
+        }
+
+        public void Output(Potential_Data data, string filename)
+        {
+            StreamWriter sw = new StreamWriter(filename);
+
+            for (int i = 0; i < data.Length; i++)
+                sw.WriteLine(data[i].ToString());
+
+            sw.Close();
         }
 
         protected abstract void Save_Density(Potential_Data density, string filename);

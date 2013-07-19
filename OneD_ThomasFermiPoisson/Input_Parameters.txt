@@ -21,7 +21,7 @@
 ############## Poisson solver details #################################
 #
 ## Potential mixing parameter.  i.e. potential += alpha * new_potential (this is adaptive, it is the maximum)
-% alpha = 1.0
+% alpha = 0.005
 #
 ## File name with band structure in
 % BandStructure_File = Band_Structure.txt
@@ -36,12 +36,12 @@
 % tolerance = 10e-5
 #
 ## Fermi energy
-% E_f = 50.0
+% E_f = 0.0
 #
 ## Number of k_B T to calculate above the Fermi energy
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 1.5
+% T = 100
 #
 #

@@ -27,5 +27,20 @@ namespace Solver_Bases
             else
                 return 1.0 / (Math.Exp((energy - E_f) / (kB * T)) + 1.0);
         }
+
+        /// <summary>
+        /// Calculates the spin-resolved fermi function for a dopent.
+        /// This is different from the typical fermi function as double occupation of the donor is not allowed
+        /// </summary>
+        protected double Get_Dopent_Fermi_Function(double energy, double E_f, double T)
+        {
+            if (T == 0)
+                if (energy > E_f)
+                    return 0.0;
+                else
+                    return 1.0;
+            else
+                return 1.0 / (Math.Exp((energy - E_f) / (kB * T)) + 2.0);
+        }
     }
 }

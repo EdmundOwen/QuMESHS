@@ -13,7 +13,7 @@ fullyionized
 v1 -0.5
 #schrodingerstart=50
 #schrodingerstop=2000
-implant donor dose=2e12 Rp=860 drp=440
-implant acceptor dose=1e11 Rp=.075um drp=20nm
+#implant donor dose=2e12 Rp=860 drp=440
+#implant acceptor dose=1e11 Rp=.075um drp=20nm
 temp=300K
 dy=10

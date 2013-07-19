@@ -12,7 +12,7 @@ SELECT
 
 DEFINITIONS    { parameter definitions }
 
-  rho = 0  {table('density_2d.dat', x, y)}
+  rho = 0  {table('dens.dat', x, y)}
   nx = 40
   ny = 40
 

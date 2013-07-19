@@ -121,5 +121,6 @@ namespace OneD_ThomasFermiPoisson
 
             return result;
         }
+
     }
 }

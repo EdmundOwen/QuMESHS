@@ -13,7 +13,7 @@ SELECT
 
 DEFINITIONS    { parameter definitions }
 
-  rho = TABLE('density_1d.dat', x)
+  rho = TABLE('dens.dat', x)
   nx = 500
 
   lx = 5000
@@ -26,7 +26,7 @@ DEFINITIONS    { parameter definitions }
 
 ! INITIAL VALUES
 EQUATIONS        { PDE's, one for each variable }
-  div(eps * grad(u)) = - rho { one possibility }
+  div(eps * grad(u)) = rho { one possibility }
 
 ! CONSTRAINTS    { Integral constraints }
 BOUNDARIES       { The domain definition }
@@ -35,7 +35,7 @@ BOUNDARIES       { The domain definition }
     START(0)   { Walk the domain boundary }
 	POINT VALUE(u) = split_V
     LINE TO (lx) 
-	POINT VALUE(u) = 0
+	POINT NATURAL(u) = 0
 
 ! TIME 0 TO 1    { if time dependent }
 ! MONITORS         { show progress }

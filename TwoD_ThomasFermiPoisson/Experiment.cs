@@ -105,14 +105,14 @@ namespace TwoD_ThomasFermiPoisson
                 density = dens_solv.Get_OneD_Density(potential.mat);
 
                 // solve the potential for the given density and mix in with the old potential
-                Potential_Data new_potential = potential + new Potential_Data(alpha * pois_solv.Get_Potential(density.Spin_Summed_Matrix));
+                Potential_Data new_potential = (1.0 - alpha) * potential + new Potential_Data(alpha * pois_solv.Get_Potential(density.Spin_Summed_Matrix));
 
                 // check for convergence
                 converged = pois_solv.Check_Convergence(potential, new_potential, tol);
 
                 // change the potential mixing parameter
                 if ((count + 1) % potential_mixing_rate == 0)
-                    alpha = pois_solv.Renew_Mixing_Parameter(potential, new_potential, alpha_prime);
+                    alpha = pois_solv.Renew_Mixing_Parameter(potential, new_potential, alpha_prime, alpha);
 
                 // transfer new potential array to potential array
                 potential = new_potential;

@@ -20,7 +20,8 @@ namespace OneD_ThomasFermiPoisson
         Potential_Data potential;
         SpinResolved_DoubleVector density;
         DoubleVector band_structure;
-        DoubleVector acceptors, donors;
+        DoubleVector acceptor_energy, donor_energy;
+        DoubleVector acceptor_conc, donor_conc;
 
         double temperature = 300.0;
 
@@ -45,14 +46,15 @@ namespace OneD_ThomasFermiPoisson
             if (input_dict.ContainsKey("BandStructure_File"))
             {
                 band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"], nz, dz);
-                acceptors = Input_Band_Structure.GetDopentConcentration((string)input_dict["BandStructure_File"], nz, dz, Dopent.acceptor);
-                donors = Input_Band_Structure.GetDopentConcentration((string)input_dict["BandStructure_File"], nz, dz, Dopent.donor);
+
+                Input_Band_Structure.GetDopentData((string)input_dict["BandStructure_File"], nz, dz, Dopent.acceptor, out acceptor_conc, out acceptor_energy);
+                Input_Band_Structure.GetDopentData((string)input_dict["BandStructure_File"], nz, dz, Dopent.donor, out donor_conc, out donor_energy);
             }
             else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (SpinResolved_DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new SpinResolved_DoubleVector(nz);
-            if (input_dict.ContainsKey("Potential")) this.potential = new Potential_Data((DoubleMatrix)input_dict["Potential"]); else potential = new Potential_Data(band_structure / 2.0);
+            if (input_dict.ContainsKey("Potential")) this.potential = new Potential_Data((DoubleMatrix)input_dict["Potential"]); else potential = new Potential_Data(new DoubleVector(nz));
         }
 
         public void Initialise(DoubleVector Potential, DoubleVector Density, double dz, double alpha, double tol, int nz)
@@ -75,7 +77,7 @@ namespace OneD_ThomasFermiPoisson
         {
             // create classes and initialise
             OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input);
-            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptors, donors, new DoubleVector(nz, -850.0), new DoubleVector(nz, 850.0), 0.0, temperature, 10.0, dz, nz);
+            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, 0.0, temperature, 10.0, dz, nz);
             
             int count = 0;
             while (!converged)
@@ -83,17 +85,18 @@ namespace OneD_ThomasFermiPoisson
                 Console.WriteLine("Iteration:\t" + count.ToString());
 
                 // calculate the total density for this potential
-                density = dens_solv.Get_OneD_Density(potential.vec);
+                density = dens_solv.Get_OneD_Density(band_structure / 2.0 + potential.vec);
 
                 // solve the potential for the given density and mix in with the old potential
-                Potential_Data new_potential = potential + new Potential_Data(alpha * pois_solv.Get_Potential(density.Spin_Summed_Vector));
+                Potential_Data blending_potential = alpha * (potential - new Potential_Data(pois_solv.Get_Potential(density.Spin_Summed_Vector)));
+                Potential_Data new_potential = potential - blending_potential;
 
                 // check for convergence
-                converged = Check_Convergence(potential, new_potential);
+                converged = pois_solv.Check_Convergence(blending_potential, tol);
 
                 // change the potential mixing parameter
                 if ((count + 1) % potential_mixing_rate == 0)
-                    alpha = pois_solv.Renew_Mixing_Parameter(new Potential_Data(potential), new Potential_Data(new_potential), alpha_prime);
+                    alpha = pois_solv.Renew_Mixing_Parameter(potential, new_potential, alpha_prime, alpha);
                     //alpha = pois_solv.Renew_Mixing_Factor(potential, new_potential);
 
                 // transfer new potential array to potential array
@@ -101,57 +104,8 @@ namespace OneD_ThomasFermiPoisson
                 count++;
             }
 
-            Output(density, "density.dat");
-            Output(potential, "potential.dat");
+            dens_solv.Output(density, "density.dat");
+            pois_solv.Output(new Potential_Data(potential.vec + band_structure / 2.0), "potential.dat");
         }
-
-        void Output(DoubleVector data, string filename)
-        {
-            StreamWriter sw = new StreamWriter(filename);
-
-            for (int i = 0; i < data.Length; i++)
-                sw.WriteLine(data[i].ToString());
-
-            sw.Close();
-        }
-
-
-        /// <summary>
-        /// Checks whether the potential has converged by comparing old and new potentials
-        /// and determining whether every term is the same within a given tolerance
-        /// </summary>
-        bool Check_Convergence(DoubleVector potential, DoubleVector new_potential)
-        {
-            DoubleVector pot_diff = new_potential - potential;
-
-            int[] converged_test = new int[pot_diff.Length];
-            for (int i = 0; i < nz; i++)
-            {
-                converged_test[i] = 0;
-                if (Math.Abs(pot_diff[i]) < tol)
-                    converged_test[i] = 1;
-            }
-
-            if (converged_test.Sum() == pot_diff.Length)
-                return true;
-            else
-                return false;
-        }
-        /*
-        double Renew_Mixing_Factor(DoubleVector potential, DoubleVector new_potential)
-        {
-            // fill a vector with the absolute differences between potential and new_potential (except boundaries)
-            DoubleVector pot_diff = new DoubleVector(nz - 2);
-            for (int i = 1; i < nz - 1; i++)
-                pot_diff[i - 1] = Math.Abs(potential[i] - new_potential[i]);
-
-            // the new mixing factor is the maximum absolute change, multiplied by the original mixing factor
-            double new_mixing_parameter = alpha_prime * pot_diff.Max();
-            if (new_mixing_parameter < alpha_prime)
-                return new_mixing_parameter;
-            else
-                return alpha_prime;
-        }
-        */
     }
 }

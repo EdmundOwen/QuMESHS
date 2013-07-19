@@ -41,12 +41,9 @@ namespace Solver_Bases
             double[] layer_boundaries;
             int end_of_band_structure;
 
-            string[] raw_input = Get_BandStructure_Data(filename, out layer_boundaries, out end_of_band_structure);
-
             // get an array of the desired materials
-            Materials[] band_structure = new Materials[end_of_band_structure - 1];
-            for (int i = 1; i < end_of_band_structure; i++)
-                band_structure[i - 1] = Get_Material(raw_input[i]);
+            string[] raw_input = Get_BandStructure_Data(filename, out layer_boundaries, out end_of_band_structure);
+            Materials[] band_structure = Get_Materials_Array(end_of_band_structure, raw_input);
 
             // and fill the result vector with band structures
             int layer = 0;
@@ -62,13 +59,17 @@ namespace Solver_Bases
             return result;
         }
 
-        public static DoubleVector GetDopentConcentration(string filename, int nz, double dz, Dopent dopent)
+        public static void GetDopentData(string filename, int nz, double dz, Dopent dopent, out DoubleVector concentration, out DoubleVector energy)
         {
-            DoubleVector result = new DoubleVector(nz);
+            concentration = new DoubleVector(nz);
+            energy = new DoubleVector(nz);
 
             int end_of_band_structure;
             double[] layer_boundaries;
+
+            // get an array of the desired materials
             string[] raw_input = Get_BandStructure_Data(filename, out layer_boundaries, out end_of_band_structure);
+            Materials[] material_structure = Get_Materials_Array(end_of_band_structure, raw_input);
 
             string dopent_string;
             if (dopent == Dopent.acceptor)
@@ -79,22 +80,22 @@ namespace Solver_Bases
                 throw new Exception("It is completely impossible to get here");
 
             // and get the dopent concentration
-            int layer = 0;
+            int layer = 1;
             for (int i = 0; i < nz; i++)
             {
                 double z = i * dz;
-                if (z > layer_boundaries[layer + 1] && layer != end_of_band_structure - 2)
+                if (z > layer_boundaries[layer] && layer != end_of_band_structure - 1)
                     layer++;
 
-                double concentration = (from data in raw_input[layer].Split()
+                double conc = (from data in raw_input[layer].Split()
                                        where data.ToLower().StartsWith(dopent_string)
                                        select double.Parse(data.Split('=').Last())).FirstOrDefault();
 
                 // add concentration to result with a factor of 10^-21 to convert from cm^-3 to nm^-3
-                result[i] = concentration * 10e-21;
+                concentration[i] = conc * 10e-21;
+                // and get the dopent energy
+                energy[i] = Get_Dopent_Energy(material_structure[layer - 1], dopent);
             }
-
-            return result;
         }
 
         static string[] Get_BandStructure_Data(string filename, out double[] layer_boundaries , out int end_of_band_structure)
@@ -123,6 +124,18 @@ namespace Solver_Bases
                 layer_boundaries[i] = double.Parse(raw_input[i].Split()[1].Split('=').Last()) + layer_boundaries[i - 1];
 
             return raw_input;
+        }
+
+        /// <summary>
+        /// converts a string array of inputs to an array of Materials enums
+        /// </summary>
+        private static Materials[] Get_Materials_Array(int end_of_band_structure, string[] raw_input)
+        {
+            Materials[] band_structure = new Materials[end_of_band_structure - 1];
+            for (int i = 1; i < end_of_band_structure; i++)
+                band_structure[i - 1] = Get_Material(raw_input[i]);
+
+            return band_structure;
         }
 
         /// <summary>
@@ -179,6 +192,40 @@ namespace Solver_Bases
                 default:
                     throw new NotImplementedException("Error - no material details for " + materials.ToString());
             }
+        }
+
+        /// <summary>
+        /// returns the dopent energy for the given material in meV above or below E_f
+        /// </summary>
+        public static double Get_Dopent_Energy(Materials materials, Dopent dopent)
+        {
+            if (dopent == Dopent.acceptor)
+            {
+                switch (materials)
+                {
+                    case Materials.GaAs:
+                        return 680.0;
+                    case Materials.Al03GaAs:
+                        return 859.0;
+
+                    default:
+                        throw new NotImplementedException("Error - no material details for " + materials.ToString());
+                }
+            }
+            else if (dopent == Dopent.donor)
+            {
+                switch (materials)
+                {
+                    case Materials.GaAs:
+                        return 704.0;
+                    case Materials.Al03GaAs:
+                        return 869.0;
+
+                    default:
+                        throw new NotImplementedException("Error - no material details for " + materials.ToString());
+                }
+            }
+            else throw new NotImplementedException();
         }
 
         /// <summary>
