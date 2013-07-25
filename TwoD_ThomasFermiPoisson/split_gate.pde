@@ -16,7 +16,7 @@ DEFINITIONS    { parameter definitions }
   nx = 40
   ny = 40
 
-  lx = 1000	 ly = 4000
+  lx = 1000	 ly = 2000
   lx_1 = lx+1		ly_1 = ly+1
   pmma_depth = 200
   gate_depth = 2
@@ -109,12 +109,4 @@ PLOTS            { save result displays }
 	ELEVATION(u) FROM (0, 0) TO (0, -ly)
 	TRANSFER() FILE = 'mesh.dat'
 END
-
-
-
-
-
-
-
-
 

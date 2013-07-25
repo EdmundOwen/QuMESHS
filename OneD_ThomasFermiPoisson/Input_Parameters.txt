@@ -21,7 +21,7 @@
 ############## Poisson solver details #################################
 #
 ## Potential mixing parameter.  i.e. potential += alpha * new_potential (this is adaptive, it is the maximum)
-% alpha = 0.005
+% alpha = 0.0005
 #
 ## File name with band structure in
 % BandStructure_File = Band_Structure.txt

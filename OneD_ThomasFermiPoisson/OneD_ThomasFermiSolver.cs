@@ -93,7 +93,7 @@ namespace OneD_ThomasFermiPoisson
             // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
             int no_energy_steps;
             if (temperature != 0.0)
-                no_energy_steps = (int)((valence_band.Max() - no_kB_T_above_Ef * kB * temperature) / dE);
+                no_energy_steps = (int)((valence_band.Max() + no_kB_T_above_Ef * kB * temperature) / dE);
             else
                 no_energy_steps = 100;
 
