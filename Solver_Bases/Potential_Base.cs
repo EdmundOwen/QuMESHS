@@ -17,7 +17,10 @@ namespace Solver_Bases
         protected bool flexPDE;
         protected string flexpde_inputfile;
 
-        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, bool using_flexPDE, string flexPDE_input)
+        protected double tol;
+        private bool converged;
+
+        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, bool using_flexPDE, string flexPDE_input, double tol)
         {
             this.nx = nx; this.ny = ny; this.nz = nz;
             this.dx = dx; this.dy = dy; this.dz = dz;
@@ -26,6 +29,9 @@ namespace Solver_Bases
             flexPDE = using_flexPDE;
             if (using_flexPDE)
                 this.flexpde_inputfile = flexPDE_input;
+
+            // get the tolerance needed for the potential before saying it's good enough
+            this.tol = tol;
         }
 
         /// <summary>
@@ -139,6 +145,26 @@ namespace Solver_Bases
                 sw.WriteLine(data[i].ToString());
 
             sw.Close();
+        }
+
+        /// <summary>
+        /// blends the old and new potentials based on a parameter using a simple (I think it's a Newton) scheme
+        /// psi_new = (1 - alpha) * psi_old + alpha * psi_calc
+        /// ALSO: checks for convergence here
+        /// </summary>
+        public Potential_Data Blend(Potential_Data potential, Potential_Data new_potential, double blend_parameter)
+        {
+            Potential_Data blending_potential = blend_parameter * (potential - new_potential);
+
+            // check for convergence
+            converged = Check_Convergence(blending_potential, tol);
+
+            return potential - blending_potential;
+        }
+
+        public bool Converged
+        {
+            get { return converged; }
         }
 
         protected abstract void Save_Density(Potential_Data density, string filename);

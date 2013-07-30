@@ -92,7 +92,7 @@ namespace TwoD_ThomasFermiPoisson
 
 
             // create classes and initialise
-            TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, using_flexPDE, flexdPDE_input);
+            TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, using_flexPDE, flexdPDE_input, tol);
             TwoD_ThomasFermiSolver dens_solv = new TwoD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -1000.0), new DoubleVector(nz, 1000.0), 0.0, temperature, 10.0, dy, dz, ny, nz);
             
             // run self consistent loop

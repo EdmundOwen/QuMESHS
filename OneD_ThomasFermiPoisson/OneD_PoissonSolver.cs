@@ -20,8 +20,8 @@ namespace OneD_ThomasFermiPoisson
         DoubleLUFact lu_fact;
 
         // 
-        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, bool using_flexPDE, string flexPDE_input)
-            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input)
+        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, bool using_flexPDE, string flexPDE_input, double tol)
+            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, tol)
         {
             this.top_bc = top_bc; this.bottom_bc = bottom_bc;
 
@@ -121,6 +121,5 @@ namespace OneD_ThomasFermiPoisson
 
             return result;
         }
-
     }
 }

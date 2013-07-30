@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CenterSpace.NMath.Core;
+using CenterSpace.NMath.Analysis;
 using Solver_Bases;
 
 namespace OneD_ThomasFermiPoisson
@@ -76,11 +77,12 @@ namespace OneD_ThomasFermiPoisson
         public void Run()
         {
             // create classes and initialise
-            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input);
+            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input, tol);
             OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, 0.0, temperature, 10.0, dz, nz);
-            
+
+            /*
             int count = 0;
-            while (!converged)
+            while (!pois_solv.Converged)
             {
                 Console.WriteLine("Iteration:\t" + count.ToString());
 
@@ -88,11 +90,7 @@ namespace OneD_ThomasFermiPoisson
                 density = dens_solv.Get_OneD_Density(band_structure / 2.0 + potential.vec);
 
                 // solve the potential for the given density and mix in with the old potential
-                Potential_Data blending_potential = alpha * (potential - new Potential_Data(pois_solv.Get_Potential(density.Spin_Summed_Vector)));
-                Potential_Data new_potential = potential - blending_potential;
-
-                // check for convergence
-                converged = pois_solv.Check_Convergence(blending_potential, tol);
+                Potential_Data new_potential = pois_solv.Blend(potential, new Potential_Data(pois_solv.Get_Potential(density.Spin_Summed_Vector)), alpha);
 
                 // change the potential mixing parameter
                 if ((count + 1) % potential_mixing_rate == 0)
@@ -103,6 +101,20 @@ namespace OneD_ThomasFermiPoisson
                 potential = new_potential;
                 count++;
             }
+            */
+
+            OneD_Error_Functional error_func = new OneD_Error_Functional(dens_solv, pois_solv, nz);
+            List<Constraint> constraints = new List<Constraint>();
+            DoubleFunctionalDelegate c1 =            new DoubleFunctionalDelegate(nz, new Func<DoubleVector,double>(delegate(DoubleVector v) { return 0.0; }));
+            NonlinearConstraint constraint1 = new NonlinearConstraint(            c1, ConstraintType.GreaterThanOrEqualTo);
+            constraints.Add(constraint1);
+            NonlinearProgrammingProblem problem = new NonlinearProgrammingProblem(error_func, constraints);
+
+            ActiveSetLineSearchSQP solver = new ActiveSetLineSearchSQP(20000, tol);
+            converged = solver.Solve(problem, new DoubleVector(nz));
+            Console.WriteLine("Termination status = " + solver.SolverTerminationStatus);
+            density.Spin_Up = solver.OptimalX;
+            potential.vec = pois_solv.Get_Potential(density.Spin_Summed_Vector);
 
             dens_solv.Output(density, "density.dat");
             pois_solv.Output(new Potential_Data(potential.vec + band_structure / 2.0), "potential.dat");

@@ -12,8 +12,8 @@ namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_PoissonSolver : Potential_Base
     {
-        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, bool using_flexPDE, string flexPDE_input)
-            : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input)
+        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, bool using_flexPDE, string flexPDE_input, double tol)
+            : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input, tol)
         {
         }
 
