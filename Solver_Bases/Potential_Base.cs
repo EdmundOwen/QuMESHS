@@ -9,7 +9,7 @@ using CenterSpace.NMath.Core;
 
 namespace Solver_Bases
 {
-    public abstract class Potential_Base : Physics_Base
+    public abstract class Potential_Base 
     {
         protected int nx, ny, nz;
         protected double dx, dy, dz;
@@ -113,16 +113,18 @@ namespace Solver_Bases
                 return false;
         }
 
-        public double Renew_Mixing_Parameter(Potential_Data potential, Potential_Data new_potential, double alpha_max, double alpha)
+        public double Renew_Mixing_Parameter(Potential_Data potential, Potential_Data new_potential, double alpha_min, double alpha)
         {
             double[] pot_diff = Get_Array_of_Absolute_Differences(potential, new_potential);
 
             // the new mixing factor is the maximum absolute change, multiplied by the original mixing factor
-            double new_mixing_parameter = pot_diff.Max();
-            if (new_mixing_parameter < alpha_max)
+            double new_mixing_parameter = alpha_min / pot_diff.Max();
+            if (new_mixing_parameter > alpha_min && new_mixing_parameter < 0.01)
                 return new_mixing_parameter;
+            else if (new_mixing_parameter > 0.01)
+                return 0.01;
             else
-                return alpha_max;
+                return alpha_min;
         }
 
         /// <summary>

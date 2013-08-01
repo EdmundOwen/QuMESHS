@@ -6,13 +6,13 @@ using System.Text;
 
 namespace Solver_Bases
 {
-    public abstract class Density_Solver : Physics_Base
+    public abstract class Density_Base
     {
         protected double fermi_Energy, temperature;
         protected double dx, dy, dz;
         protected int nx, ny, nz;
 
-        public Density_Solver(double fermi_Energy, double temperature, double dx, double dy, double dz, int nx, int ny, int nz)
+        public Density_Base(double fermi_Energy, double temperature, double dx, double dy, double dz, int nx, int ny, int nz)
         {
             this.fermi_Energy = fermi_Energy; this.temperature = temperature;
             this.dx = dx; this.dy = dy; this.dz = dz;
@@ -38,7 +38,7 @@ namespace Solver_Bases
                 else
                     return 1.0;
             else
-                return 2.0 / (Math.Exp((energy - fermi_Energy) / (kB * T)) + 2.0);
+                return 2.0 / (Math.Exp((energy - fermi_Energy) / (Physics_Base.kB * T)) + 2.0);
         }
 
         public void Output(SpinResolved_DoubleVector data, string filename)
@@ -81,7 +81,7 @@ namespace Solver_Bases
         /// </summary>
         protected double Get_Fermi_Function(double energy)
         {
-            return Get_Fermi_Function(energy, fermi_Energy, temperature);
+            return Physics_Base.Get_Fermi_Function(energy, fermi_Energy, temperature);
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace Solver_Bases
         /// </summary>
         protected double Get_Dopent_Fermi_Function(double energy)
         {
-            return Get_Dopent_Fermi_Function(energy, fermi_Energy, temperature);
+            return Physics_Base.Get_Dopent_Fermi_Function(energy, fermi_Energy, temperature);
         }
     }
 }

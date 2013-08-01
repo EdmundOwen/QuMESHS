@@ -5,19 +5,19 @@ using System.Text;
 
 namespace Solver_Bases
 {
-    public abstract class Physics_Base
+    public static class Physics_Base
     {
         // physical constants
-        protected const double hbar = 0.658211814;             // (meV) (ps)
-        protected const double q_e = -160.217646;              // (fC)
-        protected const double mass = 0.067 * 5.68562958e-3;   // (meV) (ps)^2 (nm)^-2 with GaAs effective mass
-        protected const double epsilon = 13 * 1.41859713;      // (fC)^2 (nm)^-1 (meV)^-1 for GaAs
-        protected const double kB = 0.086173324;               // (meV) (K)^-1
+        public const double hbar = 0.658211814;             // (meV) (ps)
+        public const double q_e = -160.217646;              // (fC)
+        public const double mass = 0.067 * 5.68562958e-3;   // (meV) (ps)^2 (nm)^-2 with GaAs effective mass
+        public const double epsilon = 13 * 1.41859713;      // (fC)^2 (nm)^-1 (meV)^-1 for GaAs
+        public const double kB = 0.086173324;               // (meV) (K)^-1
         
         /// <summary>
         /// Calculates the fermi function for arbitrary energy, E_f and T
         /// </summary>
-        protected double Get_Fermi_Function(double energy, double E_f, double T)
+        public static double Get_Fermi_Function(double energy, double E_f, double T)
         {
             if (T == 0)
                 if (energy > E_f)
@@ -32,7 +32,7 @@ namespace Solver_Bases
         /// Calculates the spin-resolved fermi function for a dopent.
         /// This is different from the typical fermi function as double occupation of the donor is not allowed
         /// </summary>
-        protected double Get_Dopent_Fermi_Function(double energy, double E_f, double T)
+        public static double Get_Dopent_Fermi_Function(double energy, double E_f, double T)
         {
             if (T == 0)
                 if (energy > E_f)
@@ -41,6 +41,22 @@ namespace Solver_Bases
                     return 1.0;
             else
                 return 1.0 / (Math.Exp((energy - E_f) / (kB * T)) + 2.0);
+        }
+
+        /// <summary>
+        /// gets 3D spin-resolved density of states for given potential and energy
+        /// </summary>
+        public static double Get_3D_DensityofStates(double potential, double energy)
+        {
+            // calculate dk^2 / dE and k^2
+            double dk2_dE = (2 * mass) / hbar * hbar;
+            double k2 = (energy - potential) * dk2_dE;
+
+            // prefactor for number of states per unit volume... ie (4 pi / 3) / (2 pi)^3
+            double geometric_prefactor = 1.0 / (6 * Math.PI * Math.PI);
+
+            double density_of_states = geometric_prefactor * dk2_dE * 1.5 * Math.Pow(k2, 0.5);
+            return density_of_states;
         }
     }
 }
