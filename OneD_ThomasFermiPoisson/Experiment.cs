@@ -76,11 +76,14 @@ namespace OneD_ThomasFermiPoisson
 
         public void Run()
         {
-            // create classes and initialise
-            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, 0.0, 0.0, using_flexPDE, flexdPDE_input, tol);
+            // create density solver and calculate boundary conditions
             OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, 0.0, temperature, 10.0, dz, nz);
+            double top_bc = dens_solv.Get_Chemical_Potential(0);
+            double bottom_bc = dens_solv.Get_Chemical_Potential(nz - 1);
 
-            /*
+            // initialise potential solver
+            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, top_bc, bottom_bc, using_flexPDE, flexdPDE_input, tol);
+
             int count = 0;
             while (!pois_solv.Converged)
             {
@@ -101,8 +104,10 @@ namespace OneD_ThomasFermiPoisson
                 potential = new_potential;
                 count++;
             }
-            */
 
+            Solver_Bases.ZeroD_Charge tmp = new ZeroD_Charge(band_structure[0], acceptor_conc[0], acceptor_energy[0], donor_conc[0], donor_energy[0], temperature);
+            
+            /*
             OneD_Error_Functional error_func = new OneD_Error_Functional(dens_solv, pois_solv, nz);
             List<Constraint> constraints = new List<Constraint>();
             DoubleFunctionalDelegate c1 =            new DoubleFunctionalDelegate(nz, new Func<DoubleVector,double>(delegate(DoubleVector v) { return 0.0; }));
@@ -115,6 +120,7 @@ namespace OneD_ThomasFermiPoisson
             Console.WriteLine("Termination status = " + solver.SolverTerminationStatus);
             density.Spin_Up = solver.OptimalX;
             potential.vec = pois_solv.Get_Potential(density.Spin_Summed_Vector);
+            */
 
             dens_solv.Output(density, "density.dat");
             pois_solv.Output(new Potential_Data(potential.vec + band_structure / 2.0), "potential.dat");

@@ -37,10 +37,10 @@ namespace Solver_Bases
         /// <summary>
         /// gets the potential using flexPDE
         /// </summary>
-        protected Potential_Data Get_Potential_From_FlexPDE(Potential_Data density)
+        protected Potential_Data Get_Potential_From_FlexPDE(Potential_Data density, string dens_filename)
         {
             // save density to file in a FlexPDE "TABLE" format
-            Save_Density(density, "dens.dat");
+            Save_Density(density, dens_filename);
 
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
             try { File.Delete("pot.dat"); }
@@ -171,5 +171,6 @@ namespace Solver_Bases
 
         protected abstract void Save_Density(Potential_Data density, string filename);
         protected abstract Potential_Data Parse_Potential(string[] data, int first_line);
-    }
+        protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename);
+        }
 }

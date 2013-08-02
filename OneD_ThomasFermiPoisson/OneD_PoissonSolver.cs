@@ -14,6 +14,8 @@ namespace OneD_ThomasFermiPoisson
     class OneD_PoissonSolver : Potential_Base
     {
         double top_bc, bottom_bc;
+        // this is where the density will be saved out to
+        string dens_filename = "dens.dat";
 
         // parameters for regular grid solve
         DoubleMatrix laplacian;
@@ -31,13 +33,15 @@ namespace OneD_ThomasFermiPoisson
                 laplacian = Generate_Laplacian();
                 lu_fact = new DoubleLUFact(laplacian);
             }
+            else
+                Create_FlexPDE_Input_File(flexPDE_input, dens_filename);
         }
 
         public DoubleVector Get_Potential(DoubleVector density)
         {
             if (flexPDE)
                 // calculate potential by calling FlexPDE
-                return Get_Potential_From_FlexPDE(new Potential_Data(density)).vec;
+                return Get_Potential_From_FlexPDE(new Potential_Data(density), dens_filename).vec;
             else
                 // calculate potential on a regular grid (not ideal, or scalable)
                 return Get_Potential_On_Regular_Grid(density);
@@ -101,7 +105,7 @@ namespace OneD_ThomasFermiPoisson
         DoubleMatrix Generate_Laplacian()
         {
             // the factor which multiplies the Laplace equation
-            double factor = -1.0 * epsilon / (dz * dz);
+            double factor = -1.0 * Physics_Base.epsilon / (dz * dz);
 
             DoubleMatrix result = new DoubleMatrix(nz, nz);
             for (int i = 0; i < nz - 1; i++)
@@ -120,6 +124,65 @@ namespace OneD_ThomasFermiPoisson
             result[nz - 1, nz - 2] = 0.0;
 
             return result;
+        }
+
+        /// <summary>
+        /// creates an input file for flexPDE to solve a 1D poisson equation
+        /// </summary>
+        protected override void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename)
+        {
+            // check if an input file already exists and delete it
+            if (File.Exists(flexPDE_input))
+                File.Delete(flexPDE_input);
+
+            // open up a new streamwriter to create the input file
+            StreamWriter sw = new StreamWriter(flexPDE_input);
+
+            // write the file
+            sw.WriteLine("TITLE \'Band Structure\'");
+            sw.WriteLine("COORDINATES cartesian1");
+            sw.WriteLine("VARIABLES");
+            sw.WriteLine("\tu");
+            sw.WriteLine("SELECT");
+            // gives the flexPDE tolerance for the finite element solve
+            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("DEFINITIONS");
+            // this is where the input data for the density is defined
+            sw.WriteLine("\trho = TABLE(\'" + dens_filename + "\', x)");
+            // number of lattice sites that the density needs to be output to
+            sw.WriteLine("\tnx = " + nz.ToString());
+            // size of the sample
+            sw.WriteLine("\tlx = " + (nz * dz).ToString());
+            // the top boundary condition on the surface of the sample
+            sw.WriteLine("\ttop_V = " + top_bc.ToString());
+            sw.WriteLine("\tbottom_V = " + bottom_bc.ToString());
+            sw.WriteLine();
+            sw.WriteLine("\teps_0 = 1.41859713");
+            // relative permitivity of GaAs
+            sw.WriteLine("\teps_r = 13");
+            sw.WriteLine("\teps");
+            sw.WriteLine();
+            sw.WriteLine("EQUATIONS");
+            // Poisson's equation
+            sw.WriteLine("\tu: div(eps * grad(u)) = rho");
+            sw.WriteLine();
+            sw.WriteLine("BOUNDARIES");
+            sw.WriteLine("\tREGION 1");
+            sw.WriteLine("\t\teps = eps_0 * eps_r");
+            sw.WriteLine("\t\tSTART(0)");
+            sw.WriteLine("\t\tPOINT VALUE(u) = top_V");
+            sw.WriteLine("\t\tLINE TO (lx)");
+            // this form of the boundary condition is equivalent to " 1.0 * d(eps * u)/dn + (1.0 / bottom_v) * u = 0.0 "
+            // which gives a combined Neumann/Dirichlet 
+            sw.WriteLine("\t\tPOINT NATURAL(u) = (1.0 / bottom_V) * u");
+            sw.WriteLine();
+            sw.WriteLine("PLOTS");
+            sw.WriteLine("\tELEVATION(rho) FROM (0) TO (lx)");
+	        sw.WriteLine("\tELEVATION(u) FROM (0) TO (lx) export(nx) format \'#1\' file=\'pot.dat\'");
+            sw.WriteLine("END");
+
+            // and close the file writer
+            sw.Close();
         }
     }
 }

@@ -38,12 +38,8 @@ namespace OneD_ThomasFermiPoisson
             return error;
         }
 
-        public override DoubleVector Gradient(DoubleVector x)
-        {
-            return base.Gradient(x);
-        }
 
-        public override double Laplacian(DoubleVector x)
+        public double Laplacian(DoubleVector x)
         {
             throw new NotImplementedException();
         }

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using CenterSpace.NMath.Core;
+using CenterSpace.NMath.Analysis;
 using Solver_Bases;
 
 namespace OneD_ThomasFermiPoisson
 {
-    class OneD_ThomasFermiSolver : Density_Solver
+    class OneD_ThomasFermiSolver : Density_Base
     {
         DoubleVector band_gap;
         SpinResolved_DoubleVector dopent_concentration;
@@ -54,7 +55,7 @@ namespace OneD_ThomasFermiPoisson
             SpinResolved_DoubleVector donor_density = Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
 
             // return total density (for 1D; hence the divide-by-lattice-spacing)
-            return -1.0 * q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
+            return -1.0 * Physics_Base.q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
         }
 
         /// <summary>
@@ -67,7 +68,7 @@ namespace OneD_ThomasFermiPoisson
             // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
             int no_energy_steps;
             if (temperature != 0.0)
-                no_energy_steps = (int)((no_kB_T_above_Ef * kB * temperature - conduction_band_energy.Min()) / dE);
+                no_energy_steps = (int)((no_kB_T_above_Ef * Physics_Base.kB * temperature - conduction_band_energy.Min()) / dE);
             else
                 no_energy_steps = 100;
 
@@ -76,8 +77,8 @@ namespace OneD_ThomasFermiPoisson
                 {
                     double energy_above_eF = conduction_band_energy[j] + i * dE;
 
-                    result[j, Spin.Up] += Get_3D_DensityofStates(conduction_band_energy[j], energy_above_eF) * Get_Fermi_Function(energy_above_eF) * dE;
-                    result[j, Spin.Down] += Get_3D_DensityofStates(conduction_band_energy[j], energy_above_eF) * Get_Fermi_Function(energy_above_eF) * dE;
+                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(conduction_band_energy[j], energy_above_eF) * Get_Fermi_Function(energy_above_eF) * dE;
+                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(conduction_band_energy[j], energy_above_eF) * Get_Fermi_Function(energy_above_eF) * dE;
                 }
 
             return result;
@@ -93,7 +94,7 @@ namespace OneD_ThomasFermiPoisson
             // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
             int no_energy_steps;
             if (temperature != 0.0)
-                no_energy_steps = (int)((valence_band.Max() + no_kB_T_above_Ef * kB * temperature) / dE);
+                no_energy_steps = (int)((valence_band.Max() + no_kB_T_above_Ef * Physics_Base.kB * temperature) / dE);
             else
                 no_energy_steps = 100;
 
@@ -104,8 +105,8 @@ namespace OneD_ThomasFermiPoisson
 
                     // energies are negative (for density of states) as we are considering holes
                     // also, we subtract from "result" as holes are negatively charged
-                    result[j, Spin.Up] += Get_3D_DensityofStates(-1.0 * valence_band[j], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
-                    result[j, Spin.Down] += Get_3D_DensityofStates(-1.0 * valence_band[j], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
+                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(-1.0 * valence_band[j], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
+                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(-1.0 * valence_band[j], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
                 }
 
             return result;
@@ -129,21 +130,11 @@ namespace OneD_ThomasFermiPoisson
             return result;
         }
 
-        /// <summary>
-        /// gets 3D spin-resolved density of states for given potential and energy
-        /// </summary>
-        double Get_3D_DensityofStates(double potential, double energy)
+        public double Get_Chemical_Potential(int location)
         {
-            // calculate dk^2 / dE and k^2
-            double dk2_dE = (2 * mass) / hbar * hbar;
-            double k2 = (energy - potential) * dk2_dE;
-            
-            // prefactor for number of states per unit volume... ie (4 pi / 3) / (2 pi)^3
-            double geometric_prefactor = 1.0 / (6 * Math.PI * Math.PI);
+            ZeroD_Charge chem_pot_cal = new ZeroD_Charge(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature);
 
-            double density_of_states = geometric_prefactor * dk2_dE * 1.5 * Math.Pow(k2, 0.5);
-            return density_of_states;
+            return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }
-
     }
 }

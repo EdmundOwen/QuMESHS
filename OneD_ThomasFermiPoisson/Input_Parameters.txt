@@ -15,7 +15,7 @@
 % nz = 500
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 10
+% dz = 1
 #
 #
 ############## Poisson solver details #################################

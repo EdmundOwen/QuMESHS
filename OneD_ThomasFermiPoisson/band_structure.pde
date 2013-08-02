@@ -16,7 +16,7 @@ DEFINITIONS    { parameter definitions }
   rho = TABLE('dens.dat', x)
   nx = 500
 
-  lx = 5000
+  lx = 500
 
   split_V = 0
 

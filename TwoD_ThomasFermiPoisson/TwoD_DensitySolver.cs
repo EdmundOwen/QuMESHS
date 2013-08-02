@@ -8,7 +8,7 @@ using Solver_Bases;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    class TwoD_DensitySolver : Density_Solver
+    class TwoD_DensitySolver : Density_Base
     {
         DoubleComplexMatrix H;
 
@@ -27,7 +27,7 @@ namespace TwoD_ThomasFermiPoisson
             H = new DoubleComplexMatrix(2 * nx, 2 * nx, 0.0);
 
             // this is the hopping element
-            double alpha = hbar * hbar / (2.0 * mass * dx * dx);
+            double alpha = Physics_Base.hbar * Physics_Base.hbar / (2.0 * Physics_Base.mass * dx * dx);
 
             // initialise matrix elements
             for (int i = 0; i < 2 * nx - 1; i++)
@@ -51,7 +51,7 @@ namespace TwoD_ThomasFermiPoisson
         public DoubleVector Solve_Density_Using_Momentum(double fermi_Energy, double no_kB_T, double dk)
         {
             // calculate the maximum energy to calculate to above the fermi surface
-            double max_Energy = fermi_Energy + (no_kB_T * kB * temperature);
+            double max_Energy = fermi_Energy + (no_kB_T * Physics_Base.kB * temperature);
 
             // density vector is spin resolved
             DoubleVector density = new DoubleVector(2 * nx);

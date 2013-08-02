@@ -1,11 +1,12 @@
 # test comment
 surface schottky=0.6 v1
-GaAs t=150 Nd=1e18
-AlGaAs t=200 Nd=1e18 x=.3
-AlGaAs t=50 x=.3
-GaAs t=150
-AlGaAs t=500 x=.3
-AlGaAs t=2500 x=.3 dy=50 Na=1e17
+GaAs t=500 Na=1e16
+#GaAs t=15 Nd=1e18
+#AlGaAs t=20 Nd=1e18 x=.3
+#AlGaAs t=5 x=.3
+#GaAs t=15
+#AlGaAs t=50 x=.3
+#AlGaAs t=250 x=.3 dy=50 Na=1e17
 substrate
 
 fullyionized
@@ -15,5 +16,5 @@ v1 -0.5
 #schrodingerstop=2000
 #implant donor dose=2e12 Rp=860 drp=440
 #implant acceptor dose=1e11 Rp=.075um drp=20nm
-temp=300K
+temp=100K
 dy=10

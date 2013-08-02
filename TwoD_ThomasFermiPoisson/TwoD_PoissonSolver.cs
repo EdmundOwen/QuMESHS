@@ -12,6 +12,8 @@ namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_PoissonSolver : Potential_Base
     {
+        string dens_filename = "dens.dat";
+
         public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, bool using_flexPDE, string flexPDE_input, double tol)
             : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input, tol)
         {
@@ -21,7 +23,7 @@ namespace TwoD_ThomasFermiPoisson
         {
             if (flexPDE)
                 // calculate potential by calling FlexPDE
-                return Get_Potential_From_FlexPDE(new Potential_Data(density)).mat;
+                return Get_Potential_From_FlexPDE(new Potential_Data(density), dens_filename).mat;
             else
                 // calculate potential on a regular grid (not ideal, or scalable)
                 throw new NotImplementedException();// return Get_Potential_On_Regular_Grid(density);
@@ -74,15 +76,13 @@ namespace TwoD_ThomasFermiPoisson
             return result;
         }
 
-        /*public DoubleVector Get_Well_Potential(int nx)
+        
+        /// <summary>
+        /// creates an input file for flexPDE to solve a 2D poisson equation (not yet implemented)
+        /// </summary>
+        protected override void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename)
         {
-            Console.WriteLine("THIS IS A PROTOTYPE! NO POISSON SOLVER IMPLEMENTED!!!");
-
-            DoubleVector result = new DoubleVector(nx);
-            for (int i = 0; i < nx; i++)
-                result[i] = (i - (double)(nx - 1) / 2) * (i - (double)(nx - 1) / 2);
-
-            return result;
-        }*/
+            throw new NotImplementedException();
+        }
     }
 }
