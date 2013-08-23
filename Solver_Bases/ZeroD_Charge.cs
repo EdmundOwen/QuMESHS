@@ -47,22 +47,24 @@ namespace Solver_Bases
             // calculate the charges due to the various components for a given chemical potential
             double conductance_electrons = Get_Conductance_Electron_Density(mu);
             // factor of 2.0 here is for spin degeneracy of the dopents
-            double donor_electrons = donor_conc * 2.0 * Physics_Base.Get_Dopent_Fermi_Function(mu, 0.5 * band_gap - donor_energy, temperature);
+            // also, exponential factor for donors is (E_d - mu)
+            double donor_electrons = donor_conc * 2.0 * Physics_Base.Get_Dopent_Fermi_Function(0.5 * band_gap - donor_energy, mu, temperature);
             double donor_nuclei = donor_conc;
             double acceptor_nuclei = acceptor_conc;
-            double acceptor_holes = acceptor_conc * 2.0 * Physics_Base.Get_Dopent_Fermi_Function(mu, -0.5 * band_gap + acceptor_energy, temperature);
+            // and exponential factor for acceptors is (mu - E_a)
+            double acceptor_holes = acceptor_conc * 2.0 * Physics_Base.Get_Dopent_Fermi_Function(-1.0 * (-0.5 * band_gap + acceptor_energy), -mu, temperature);
             double valence_holes = Get_Valence_Electron_Density(mu);
 
-            return -1.0 * Physics_Base.q_e * (conductance_electrons + donor_electrons - donor_nuclei + acceptor_nuclei - acceptor_holes - valence_holes);
+            return Physics_Base.q_e * (donor_nuclei - acceptor_nuclei + acceptor_holes + valence_holes - conductance_electrons - donor_electrons);
         }
 
         public double Get_Equilibrium_Chemical_Potential()
         {
             OneVariableFunction charge_func = new OneVariableFunction(new Func<double, double>(Get_Charge));
 
-            // initialise root finder and search for a root for the chemical potential between the band edges
+            // initialise root finder and search for a root for the chemical potential
             RiddersRootFinder finder = new RiddersRootFinder();
-            double result = finder.Find(charge_func, -0.5 * band_gap, 0.5 * band_gap);
+            double result = finder.Find(charge_func, -1.0 * band_gap, band_gap);
 
             return result;
         }
@@ -88,7 +90,7 @@ namespace Solver_Bases
 
         double Get_Conduction_Electron_Integrand(double energy)
         {
-            return Physics_Base.Get_3D_DensityofStates(chem_pot, energy) * Physics_Base.Get_Fermi_Function(energy, chem_pot, temperature);
+            return Physics_Base.Get_3D_DensityofStates(energy, 0.5 * band_gap) * Physics_Base.Get_Fermi_Function(energy, chem_pot, temperature);
         }
 
         /// <summary>
@@ -113,7 +115,7 @@ namespace Solver_Bases
         double Get_Valence_Electron_Integrand(double energy)
         {
             // note that the 3D density of states integration is inverted as the density of states increases with decreasing energy
-            return Physics_Base.Get_3D_DensityofStates(-1.0 * chem_pot, -1.0 * energy) * (1.0 - Physics_Base.Get_Fermi_Function(energy, chem_pot, temperature));
+            return Physics_Base.Get_3D_DensityofStates(-1.0 * energy, -0.5 * band_gap) * (1.0 - Physics_Base.Get_Fermi_Function(energy, chem_pot, temperature));
         }
     }
 }

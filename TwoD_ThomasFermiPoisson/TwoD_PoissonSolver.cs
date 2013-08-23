@@ -23,13 +23,13 @@ namespace TwoD_ThomasFermiPoisson
         {
             if (flexPDE)
                 // calculate potential by calling FlexPDE
-                return Get_Potential_From_FlexPDE(new Potential_Data(density), dens_filename).mat;
+                return Get_BandEnergy_From_FlexPDE(new Band_Data(density), dens_filename).mat;
             else
                 // calculate potential on a regular grid (not ideal, or scalable)
                 throw new NotImplementedException();// return Get_Potential_On_Regular_Grid(density);
         }
 
-        protected override void Save_Density(Potential_Data density, string filename)
+        protected override void Save_Density(Band_Data density, string filename)
         {
             // check that the dimension of the density is correct
             if (density.Dimension != 2)
@@ -61,14 +61,14 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
-        protected override Potential_Data Parse_Potential(string[] data, int first_line)
+        protected override Band_Data Parse_Potential(string[] data, int first_line)
         {
             // and check that there is the right number of data points back
             if (data.Length - first_line != ny * nz)
                 throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
 
             // and parse these values into a DoubleVector
-            Potential_Data result = new Potential_Data(new DoubleMatrix(ny, nz));
+            Band_Data result = new Band_Data(new DoubleMatrix(ny, nz));
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
                     result.mat[i, j] = double.Parse(data[first_line + j * ny + i]);

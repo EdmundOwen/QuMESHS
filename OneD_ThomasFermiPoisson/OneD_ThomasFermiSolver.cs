@@ -38,11 +38,8 @@ namespace OneD_ThomasFermiPoisson
             this.acceptor_energy_above_Ev = band_gap / 2.0 - acceptor_energy;
         }
 
-        public SpinResolved_DoubleVector Get_OneD_Density(DoubleVector conduction_band_energy)
+        /*public SpinResolved_DoubleVector Get_OneD_Density(DoubleVector conduction_band_energy)
         {
-            // spin-resolved density
-            SpinResolved_DoubleVector density = new SpinResolved_DoubleVector(nz);
-
             // Find conduction band density
             SpinResolved_DoubleVector conduction_density = Calculate_Conduction_Band_Density(conduction_band_energy);
 
@@ -56,10 +53,29 @@ namespace OneD_ThomasFermiPoisson
 
             // return total density (for 1D; hence the divide-by-lattice-spacing)
             return -1.0 * Physics_Base.q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
+        }*/
+
+        public SpinResolved_DoubleVector Get_OneD_Density(DoubleVector chem_pot)
+        {
+            // spin-resolved density
+            SpinResolved_DoubleVector density = new SpinResolved_DoubleVector(nz);
+
+            for (int i = 0; i < nz; i++)
+            {
+                // calculate the charge at the given point
+                ZeroD_Charge charge_calc = new ZeroD_Charge(band_gap[i], acceptor_concentration[i], acceptor_energy_above_Ev[i], donor_concentration[i], donor_energy_below_Ec[i], temperature);
+                double charge = charge_calc.Get_Charge(chem_pot[i]);
+
+                // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                density.Spin_Down[i] = 0.5 * charge;
+                density.Spin_Up[i] = 0.5 * charge;
+            }
+
+            return density;
         }
 
         /// <summary>
-        /// calculates the conduction band profile (spin-resolved) as a function of depth using a given conduction band potential
+        /// calculates the conduction band profile (spin-resolved) as a function of depth using a given conduction band energy
         /// </summary>
         SpinResolved_DoubleVector Calculate_Conduction_Band_Density(DoubleVector conduction_band_energy)
         {
@@ -77,15 +93,15 @@ namespace OneD_ThomasFermiPoisson
                 {
                     double energy_above_eF = conduction_band_energy[j] + i * dE;
 
-                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(conduction_band_energy[j], energy_above_eF) * Get_Fermi_Function(energy_above_eF) * dE;
-                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(conduction_band_energy[j], energy_above_eF) * Get_Fermi_Function(energy_above_eF) * dE;
+                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(energy_above_eF, conduction_band_energy[j]) * Get_Fermi_Function(energy_above_eF) * dE;
+                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(energy_above_eF, conduction_band_energy[j]) * Get_Fermi_Function(energy_above_eF) * dE;
                 }
 
             return result;
         }
 
         /// <summary>
-        /// calculates the valence band profile (spin-resolved) as a function of depth using a given conduction band potential
+        /// calculates the valence band profile (spin-resolved) as a function of depth using a given conduction band energy
         /// </summary>
         SpinResolved_DoubleVector Calculate_Valence_Band_Density(DoubleVector valence_band)
         {
@@ -105,15 +121,15 @@ namespace OneD_ThomasFermiPoisson
 
                     // energies are negative (for density of states) as we are considering holes
                     // also, we subtract from "result" as holes are negatively charged
-                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(-1.0 * valence_band[j], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
-                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(-1.0 * valence_band[j], -1.0 * energy_below_eF) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
+                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[j]) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
+                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[j]) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
                 }
 
             return result;
         }
 
         /// <summary>
-        /// calculates the dopent density profile (spin-resolved) as a function of depth using a given conduction band potential
+        /// calculates the dopent density profile (spin-resolved) as a function of depth using a given conduction band energy
         /// </summary>
         SpinResolved_DoubleVector Calculate_Dopent_Density(DoubleVector conduction_band_energy, DoubleVector dopent_conc, DoubleVector dopent_energy_below_Ec)
         {

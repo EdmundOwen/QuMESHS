@@ -231,20 +231,20 @@ namespace Solver_Bases
         /// <summary>
         /// returns a DoubleMatrix with the given band structure planarised in the transverse direction
         /// </summary>
-        public static Potential_Data Expand_BandStructure(DoubleVector structure, int ny)
+        public static Band_Data Expand_BandStructure(DoubleVector structure, int ny)
         {
             DoubleMatrix result = new DoubleMatrix(ny, structure.Length);
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < structure.Length; j++)
                     result[i, j] = structure[j];
 
-            return new Potential_Data(result);
+            return new Band_Data(result);
         }
 
         /// <summary>
         /// returns a DoubleMatrix with the given band structure planarised in the transverse direction
         /// </summary>
-        public static Potential_Data Expand_BandStructure(DoubleVector structure, int nx, int ny)
+        public static Band_Data Expand_BandStructure(DoubleVector structure, int nx, int ny)
         {
             DoubleMatrix[] result = new DoubleMatrix[nx];
 
@@ -256,7 +256,7 @@ namespace Solver_Bases
                         result[i][j, k] = structure[k];
             }
 
-            return new Potential_Data(result);
+            return new Band_Data(result);
         }
     }
 }

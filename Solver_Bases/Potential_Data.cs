@@ -7,29 +7,29 @@ using CenterSpace.NMath.Core;
 namespace Solver_Bases
 {
     /// <summary>
-    /// a class for holding data used in the potential which can be either
+    /// a class for holding band structure data which can be either
     /// 1, 2, or 3 dimensional
     /// </summary>
-    public class Potential_Data
+    public class Band_Data
     {
         int dim;
         public DoubleVector vec;
         public DoubleMatrix mat;
         public DoubleMatrix[] vol;
 
-        public Potential_Data(DoubleVector vec)
+        public Band_Data(DoubleVector vec)
         {
             this.vec = vec;
             dim = 1;
         }
 
-        public Potential_Data(DoubleMatrix mat)
+        public Band_Data(DoubleMatrix mat)
         {
             this.mat = mat;
             dim = 2;
         }
 
-        public Potential_Data(DoubleMatrix[] vol)
+        public Band_Data(DoubleMatrix[] vol)
         {
             this.vol = vol;
             dim = 3;
@@ -90,18 +90,18 @@ namespace Solver_Bases
             }
         }
 
-        public static Potential_Data operator +(Potential_Data vec1, Potential_Data vec2)
+        public static Band_Data operator +(Band_Data vec1, Band_Data vec2)
         {
             if (vec1.Dimension != vec2.Dimension)
                 throw new RankException();
 
             if (vec1.Dimension == 1)
-                return new Potential_Data(vec1.vec + vec2.vec);
+                return new Band_Data(vec1.vec + vec2.vec);
             else if (vec1.Dimension == 2)
-                return new Potential_Data(vec1.mat + vec2.mat);
+                return new Band_Data(vec1.mat + vec2.mat);
             else if (vec1.Dimension == 3)
             {
-                Potential_Data result = new Potential_Data(new DoubleMatrix[vec1.vol.Length]);
+                Band_Data result = new Band_Data(new DoubleMatrix[vec1.vol.Length]);
                 for (int i = 0; i < vec1.vol.Length; i++)
                     result.vol[i] = vec1.vol[i] + vec2.vol[i];
 
@@ -111,18 +111,18 @@ namespace Solver_Bases
                 throw new NotImplementedException();
         }
 
-        public static Potential_Data operator -(Potential_Data vec1, Potential_Data vec2)
+        public static Band_Data operator -(Band_Data vec1, Band_Data vec2)
         {
             if (vec1.Dimension != vec2.Dimension)
                 throw new RankException();
 
             if (vec1.Dimension == 1)
-                return new Potential_Data(vec1.vec - vec2.vec);
+                return new Band_Data(vec1.vec - vec2.vec);
             else if (vec1.Dimension == 2)
-                return new Potential_Data(vec1.mat - vec2.mat);
+                return new Band_Data(vec1.mat - vec2.mat);
             else if (vec1.Dimension == 3)
             {
-                Potential_Data result = new Potential_Data(new DoubleMatrix[vec1.vol.Length]);
+                Band_Data result = new Band_Data(new DoubleMatrix[vec1.vol.Length]);
                 for (int i = 0; i < vec1.vol.Length; i++)
                     result.vol[i] = vec1.vol[i] - vec2.vol[i];
 
@@ -132,7 +132,7 @@ namespace Solver_Bases
                 throw new NotImplementedException();
         }
 
-        public static Potential_Data operator *(double scalar, Potential_Data data)
+        public static Band_Data operator *(double scalar, Band_Data data)
         {
             for (int i = 0; i < data.Length; i++)
                 data[i] *= scalar;
@@ -140,12 +140,12 @@ namespace Solver_Bases
             return data;
         }
 
-        public static Potential_Data operator *(Potential_Data data, double scalar)
+        public static Band_Data operator *(Band_Data data, double scalar)
         {
             return scalar * data;
         }
 
-        public static Potential_Data operator /(Potential_Data data, double scalar)
+        public static Band_Data operator /(Band_Data data, double scalar)
         {
             return (1 / scalar) * data;
         }
@@ -156,7 +156,7 @@ namespace Solver_Bases
         }
 
         /// <summary>
-        /// returns the number of data points in the Potential_Data object
+        /// returns the number of data points in the Band_Data object
         /// </summary>
         public int Length
         {

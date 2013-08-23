@@ -9,7 +9,7 @@ using CenterSpace.NMath.Core;
 
 namespace Solver_Bases
 {
-    public abstract class Potential_Base 
+    public abstract class Potential_Base
     {
         protected int nx, ny, nz;
         protected double dx, dy, dz;
@@ -35,9 +35,9 @@ namespace Solver_Bases
         }
 
         /// <summary>
-        /// gets the potential using flexPDE
+        /// gets the band energies for the given charge distribution using flexPDE
         /// </summary>
-        protected Potential_Data Get_Potential_From_FlexPDE(Potential_Data density, string dens_filename)
+        protected Band_Data Get_BandEnergy_From_FlexPDE(Band_Data density, string dens_filename)
         {
             // save density to file in a FlexPDE "TABLE" format
             Save_Density(density, dens_filename);
@@ -64,61 +64,62 @@ namespace Solver_Bases
                     break;
                 }
 
-            return Parse_Potential(lines, first_line);
+            // return band energy using E_c = - q_e * phi
+            return -1.0 * Physics_Base.q_e * Parse_Potential(lines, first_line);
         }
 
         /// <summary>
-        /// Checks whether the potential has converged by comparing old and new potentials
+        /// Checks whether the band energies has converged by comparing old and new energies
         /// and determining whether every term is the same within a given tolerance
         /// </summary>
-        public bool Check_Convergence(Potential_Data potential, Potential_Data new_potential, double tol)
+        public bool Check_Convergence(Band_Data band_energy, Band_Data new_band_energy, double tol)
         {
-            double[] pot_diff = Get_Array_of_Absolute_Differences(potential, new_potential);
+            double[] energy_diff = Get_Array_of_Absolute_Differences(band_energy, new_band_energy);
 
-            int[] converged_test = new int[pot_diff.Length];
-            for (int i = 0; i < pot_diff.Length; i++)
+            int[] converged_test = new int[energy_diff.Length];
+            for (int i = 0; i < energy_diff.Length; i++)
             {
                 converged_test[i] = 0;
-                if (pot_diff[i] < tol)
+                if (energy_diff[i] < tol)
                     converged_test[i] = 1;
             }
 
-            if (converged_test.Sum() == pot_diff.Length)
+            if (converged_test.Sum() == energy_diff.Length)
                 return true;
             else
                 return false;
         }
 
         /// <summary>
-        /// Checks whether the potential has converged by calculating the absolute value of the blended potential
+        /// Checks whether the band energies has converged by calculating the absolute value of the blended band energies
         /// and determining whether every term is zero within a given tolerance
         /// </summary>
-        public bool Check_Convergence(Potential_Data blending_potential, double tol)
+        public bool Check_Convergence(Band_Data blending_energy, double tol)
         {
-            double[] pot_diff = new double[blending_potential.Length];
-            for (int i = 0; i < blending_potential.Length; i++)
-                pot_diff[i] = Math.Abs(blending_potential[i]);
+            double[] energy_diff = new double[blending_energy.Length];
+            for (int i = 0; i < blending_energy.Length; i++)
+                energy_diff[i] = Math.Abs(blending_energy[i]);
 
-            int[] converged_test = new int[pot_diff.Length];
-            for (int i = 0; i < pot_diff.Length; i++)
+            int[] converged_test = new int[energy_diff.Length];
+            for (int i = 0; i < energy_diff.Length; i++)
             {
                 converged_test[i] = 0;
-                if (pot_diff[i] < tol)
+                if (energy_diff[i] < tol)
                     converged_test[i] = 1;
             }
 
-            if (converged_test.Sum() == pot_diff.Length)
+            if (converged_test.Sum() == energy_diff.Length)
                 return true;
             else
                 return false;
         }
 
-        public double Renew_Mixing_Parameter(Potential_Data potential, Potential_Data new_potential, double alpha_min, double alpha)
+        public double Renew_Mixing_Parameter(Band_Data band_energy, Band_Data new_band_energy, double alpha_min, double alpha)
         {
-            double[] pot_diff = Get_Array_of_Absolute_Differences(potential, new_potential);
+            double[] energy_diff = Get_Array_of_Absolute_Differences(band_energy, new_band_energy);
 
             // the new mixing factor is the maximum absolute change, multiplied by the original mixing factor
-            double new_mixing_parameter = alpha_min / pot_diff.Max();
+            double new_mixing_parameter = alpha_min / energy_diff.Max();
             if (new_mixing_parameter > alpha_min && new_mixing_parameter < 0.01)
                 return new_mixing_parameter;
             else if (new_mixing_parameter > 0.01)
@@ -128,18 +129,18 @@ namespace Solver_Bases
         }
 
         /// <summary>
-        /// returns an array containing |pot1 - pot2| elements
+        /// returns an array containing |energy1 - energy2| elements
         /// </summary>
-        double[] Get_Array_of_Absolute_Differences(Potential_Data pot1, Potential_Data pot2)
+        double[] Get_Array_of_Absolute_Differences(Band_Data energy1, Band_Data energy2)
         {
-            double[] result = new double[pot1.Length];
-            for (int i = 0; i < pot1.Length; i++)
-                result[i] = Math.Abs(pot1[i] - pot2[i]);
+            double[] result = new double[energy1.Length];
+            for (int i = 0; i < energy1.Length; i++)
+                result[i] = Math.Abs(energy1[i] - energy2[i]);
 
             return result;
         }
 
-        public void Output(Potential_Data data, string filename)
+        public void Output(Band_Data data, string filename)
         {
             StreamWriter sw = new StreamWriter(filename);
 
@@ -154,14 +155,29 @@ namespace Solver_Bases
         /// psi_new = (1 - alpha) * psi_old + alpha * psi_calc
         /// ALSO: checks for convergence here
         /// </summary>
-        public Potential_Data Blend(Potential_Data potential, Potential_Data new_potential, double blend_parameter)
+        public Band_Data Blend(Band_Data band_energy, Band_Data new_band_energy, double blend_parameter)
         {
-            Potential_Data blending_potential = blend_parameter * (potential - new_potential);
+            Band_Data blending_energy = blend_parameter * (band_energy - new_band_energy);
 
             // check for convergence
-            converged = Check_Convergence(blending_potential, tol);
+            converged = Check_Convergence(blending_energy, tol);
 
-            return potential - blending_potential;
+            return band_energy - blending_energy;
+        }
+
+        /// <summary>
+        /// blends the old and new band energies based on a parameter using a simple (I think it's a Newton) scheme
+        /// psi_new = (1 - alpha) * psi_old + alpha * psi_calc
+        /// ALSO: checks for convergence here
+        /// </summary>
+        public void Blend(ref Band_Data band_energy, Band_Data new_band_energy, double blend_parameter)
+        {
+            Band_Data blending_energy = blend_parameter * (band_energy - new_band_energy);
+
+            // check for convergence
+            converged = Check_Convergence(blending_energy, tol);
+
+            band_energy = band_energy - blending_energy;
         }
 
         public bool Converged
@@ -169,8 +185,8 @@ namespace Solver_Bases
             get { return converged; }
         }
 
-        protected abstract void Save_Density(Potential_Data density, string filename);
-        protected abstract Potential_Data Parse_Potential(string[] data, int first_line);
+        protected abstract void Save_Density(Band_Data density, string filename);
+        protected abstract Band_Data Parse_Potential(string[] data, int first_line);
         protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename);
-        }
+    }
 }

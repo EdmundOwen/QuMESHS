@@ -13,12 +13,12 @@ namespace OneD_ThomasFermiPoisson
     {
         bool converged = false;
         double alpha, alpha_prime, tol;
-        int potential_mixing_rate = 10;
+        int band_energy_mixing_rate = 10;
         
         bool using_flexPDE = false;
         string flexdPDE_input;
 
-        Potential_Data potential;
+        Band_Data band_offset;
         SpinResolved_DoubleVector density;
         DoubleVector band_structure;
         DoubleVector acceptor_energy, donor_energy;
@@ -53,15 +53,15 @@ namespace OneD_ThomasFermiPoisson
             }
             else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
-            // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
+            // try to get the band offset and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (SpinResolved_DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new SpinResolved_DoubleVector(nz);
-            if (input_dict.ContainsKey("Potential")) this.potential = new Potential_Data((DoubleMatrix)input_dict["Potential"]); else potential = new Potential_Data(new DoubleVector(nz));
+            if (input_dict.ContainsKey("Band_Offset")) this.band_offset = new Band_Data((DoubleMatrix)input_dict["Potential"]); else band_offset = new Band_Data(new DoubleVector(nz));
         }
 
-        public void Initialise(DoubleVector Potential, DoubleVector Density, double dz, double alpha, double tol, int nz)
+        public void Initialise(DoubleVector Band_Offset, DoubleVector Density, double dz, double alpha, double tol, int nz)
         {
             throw new NotImplementedException();
-            //this.potential = Potential; this.density = Density;
+            //this.Band_Offset = Band_Offset; this.density = Density;
             Initialise(dz, alpha, tol, nz);
         }
 
@@ -78,8 +78,8 @@ namespace OneD_ThomasFermiPoisson
         {
             // create density solver and calculate boundary conditions
             OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, 0.0, temperature, 10.0, dz, nz);
-            double top_bc = dens_solv.Get_Chemical_Potential(0);
-            double bottom_bc = dens_solv.Get_Chemical_Potential(nz - 1);
+            double top_bc = 0;// dens_solv.Get_Chemical_Potential(0);
+            double bottom_bc = 700;// dens_solv.Get_Chemical_Potential(nz - 1);
 
             // initialise potential solver
             OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, top_bc, bottom_bc, using_flexPDE, flexdPDE_input, tol);
@@ -89,24 +89,23 @@ namespace OneD_ThomasFermiPoisson
             {
                 Console.WriteLine("Iteration:\t" + count.ToString());
 
-                // calculate the total density for this potential
-                density = dens_solv.Get_OneD_Density(band_structure / 2.0 + potential.vec);
+                // calculate the total density for this band offset
+                density = dens_solv.Get_OneD_Density(band_offset.vec);
 
-                // solve the potential for the given density and mix in with the old potential
-                Potential_Data new_potential = pois_solv.Blend(potential, new Potential_Data(pois_solv.Get_Potential(density.Spin_Summed_Vector)), alpha);
+                // solve the band energy for the given density and mix in with the old band energy
+                Band_Data new_band_energy = new Band_Data(pois_solv.Get_Band_Energy(density.Spin_Summed_Vector));
+                pois_solv.Blend(ref band_offset, new_band_energy, alpha);
 
-                // change the potential mixing parameter
-                if ((count + 1) % potential_mixing_rate == 0)
-                    alpha = pois_solv.Renew_Mixing_Parameter(potential, new_potential, alpha_prime, alpha);
-                    //alpha = pois_solv.Renew_Mixing_Factor(potential, new_potential);
+                // change the band energy mixing parameter
+                //if ((count + 1) % potential_mixing_rate == 0)
+                //    alpha = pois_solv.Renew_Mixing_Parameter(band_offset, new_band_energy, alpha_prime, alpha);
+                    //alpha = pois_solv.Renew_Mixing_Factor(band_offset, new_band_energy);
 
-                // transfer new potential array to potential array
-                potential = new_potential;
+                // transfer new band energy array to band energy array
+                //band_offset = new_band_energy;
                 count++;
             }
 
-            Solver_Bases.ZeroD_Charge tmp = new ZeroD_Charge(band_structure[0], acceptor_conc[0], acceptor_energy[0], donor_conc[0], donor_energy[0], temperature);
-            
             /*
             OneD_Error_Functional error_func = new OneD_Error_Functional(dens_solv, pois_solv, nz);
             List<Constraint> constraints = new List<Constraint>();
@@ -123,7 +122,7 @@ namespace OneD_ThomasFermiPoisson
             */
 
             dens_solv.Output(density, "density.dat");
-            pois_solv.Output(new Potential_Data(potential.vec + band_structure / 2.0), "potential.dat");
+            pois_solv.Output(new Band_Data(band_structure / 2.0 - band_offset.vec), "potential.dat");
         }
     }
 }

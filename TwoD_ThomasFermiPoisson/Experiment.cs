@@ -24,7 +24,7 @@ namespace TwoD_ThomasFermiPoisson
         string flexdPDE_input;
 
         SpinResolved_DoubleMatrix density;
-        Potential_Data potential;
+        Band_Data potential;
         DoubleVector band_structure;
 
         double temperature = 100.0;
@@ -64,7 +64,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (SpinResolved_DoubleMatrix)input_dict["SpinResolved_Density"]; else this.density = new SpinResolved_DoubleMatrix(ny, nz);
-            if (input_dict.ContainsKey("Potential")) this.potential = new Potential_Data((DoubleMatrix)input_dict["Potential"]); else potential = Input_Band_Structure.Expand_BandStructure(band_structure / 2.0, ny);
+            if (input_dict.ContainsKey("Potential")) this.potential = new Band_Data((DoubleMatrix)input_dict["Potential"]); else potential = Input_Band_Structure.Expand_BandStructure(band_structure / 2.0, ny);
 
             /*nx = (int)(double)input_dict["nx"];
             dx = (double)input_dict["dx"];
@@ -105,7 +105,7 @@ namespace TwoD_ThomasFermiPoisson
                 density = dens_solv.Get_OneD_Density(potential.mat);
 
                 // solve the potential for the given density and mix in with the old potential
-                Potential_Data new_potential = (1.0 - alpha) * potential + new Potential_Data(alpha * pois_solv.Get_Potential(density.Spin_Summed_Matrix));
+                Band_Data new_potential = (1.0 - alpha) * potential + new Band_Data(alpha * pois_solv.Get_Potential(density.Spin_Summed_Matrix));
 
                 // check for convergence
                 converged = pois_solv.Check_Convergence(potential, new_potential, tol);

@@ -25,7 +25,9 @@ namespace OneD_ThomasFermiPoisson
         public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, bool using_flexPDE, string flexPDE_input, double tol)
             : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, tol)
         {
-            this.top_bc = top_bc; this.bottom_bc = bottom_bc;
+            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
+            // (as phi = E_c / (-1.0 * q_e)
+            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
 
             // generate Laplacian matrix (spin-resolved)
             if (!flexPDE)
@@ -37,17 +39,17 @@ namespace OneD_ThomasFermiPoisson
                 Create_FlexPDE_Input_File(flexPDE_input, dens_filename);
         }
 
-        public DoubleVector Get_Potential(DoubleVector density)
+        public DoubleVector Get_Band_Energy(DoubleVector density)
         {
             if (flexPDE)
-                // calculate potential by calling FlexPDE
-                return Get_Potential_From_FlexPDE(new Potential_Data(density), dens_filename).vec;
+                // calculate band energy using a potential found by calling FlexPDE
+                return Get_BandEnergy_From_FlexPDE(new Band_Data(density), dens_filename).vec;
             else
-                // calculate potential on a regular grid (not ideal, or scalable)
-                return Get_Potential_On_Regular_Grid(density);
+                // calculate band energies using a potential calculated on a regular grid (not ideal, or scalable)
+                return Get_BandEnergy_On_Regular_Grid(density);
         }
 
-        protected override void Save_Density(Potential_Data density, string filename)
+        protected override void Save_Density(Band_Data density, string filename)
         {
             // check that the dimension of the density is correct
             if (density.Dimension != 1)
@@ -70,33 +72,31 @@ namespace OneD_ThomasFermiPoisson
             sw.Close();
         }
 
-        protected override Potential_Data Parse_Potential(string[] data, int first_line)
+        protected override Band_Data Parse_Potential(string[] data, int first_line)
         {
             // and check that there is the right number of data points back
             if (data.Length - first_line != nz)
                 throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
 
             // and parse these values into a DoubleVector
-            Potential_Data result = new Potential_Data(new DoubleVector(nz));
+            Band_Data result = new Band_Data(new DoubleVector(nz));
             for (int i = 0; i < nz; i++)
                 result.vec[i] = double.Parse(data[first_line + i]);
 
             return result;
         }
 
-        DoubleVector Get_Potential_On_Regular_Grid(DoubleVector spin_resolved_density)
+        DoubleVector Get_BandEnergy_On_Regular_Grid(DoubleVector density)
         {
-            // sum the spin contributions of the density
-            DoubleVector density = new DoubleVector(nz);
-            for (int i = 0; i < nz; i++)
-                density[i] = spin_resolved_density[i] + spin_resolved_density[i + nz];
+            // set the top and bottom boundary conditions
+            double factor = -1.0 * Physics_Base.epsilon / (dz * dz);
+            density[0] = top_bc * factor; density[density.Length - 1] = bottom_bc * factor;
 
-            // set boundary conditions
-            density[0] = top_bc; density[nz - 1] = bottom_bc;
-
+            // solve Poisson's equation
             DoubleVector potential = lu_fact.Solve(density);
             
-            return potential;
+            // return band energy
+            return -1.0 * Physics_Base.q_e * potential;
         }
 
         /// <summary>
@@ -157,9 +157,9 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine("\tbottom_V = " + bottom_bc.ToString());
             sw.WriteLine();
-            sw.WriteLine("\teps_0 = 1.41859713");
+            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
             // relative permitivity of GaAs
-            sw.WriteLine("\teps_r = 13");
+            sw.WriteLine("\teps_r = " + Physics_Base.epsilon_r.ToString());
             sw.WriteLine("\teps");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
@@ -172,13 +172,14 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\t\tSTART(0)");
             sw.WriteLine("\t\tPOINT VALUE(u) = top_V");
             sw.WriteLine("\t\tLINE TO (lx)");
-            // this form of the boundary condition is equivalent to " 1.0 * d(eps * u)/dn + (1.0 / bottom_v) * u = 0.0 "
+            // this form of the boundary condition is equivalent to " d(eps * u)/dn + (u - bottom_V) = 0.0 "
             // which gives a combined Neumann/Dirichlet 
-            sw.WriteLine("\t\tPOINT NATURAL(u) = (1.0 / bottom_V) * u");
+            //sw.WriteLine("\t\tPOINT NATURAL(u) = (u - bottom_V)");
+            sw.WriteLine("\t\tPOINT VALUE(u) = bottom_V");
             sw.WriteLine();
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tELEVATION(rho) FROM (0) TO (lx)");
-	        sw.WriteLine("\tELEVATION(u) FROM (0) TO (lx) export(nx) format \'#1\' file=\'pot.dat\'");
+	        sw.WriteLine("\tELEVATION(u) FROM (0) TO (lx) EXPORT(nx) FORMAT \'#1\' FILE=\'pot.dat\'");
             sw.WriteLine("END");
 
             // and close the file writer
