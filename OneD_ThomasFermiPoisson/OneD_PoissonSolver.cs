@@ -147,35 +147,63 @@ namespace OneD_ThomasFermiPoisson
             // gives the flexPDE tolerance for the finite element solve
             sw.WriteLine("\tERRLIM=1e-5");
             sw.WriteLine("DEFINITIONS");
-            // this is where the input data for the density is defined
-            sw.WriteLine("\trho = TABLE(\'" + dens_filename + "\', x)");
+            // this is where the density variable
+            sw.WriteLine("\trho\t! density");
             // number of lattice sites that the density needs to be output to
             sw.WriteLine("\tnx = " + nz.ToString());
             // size of the sample
             sw.WriteLine("\tlx = " + (nz * dz).ToString());
             // the top boundary condition on the surface of the sample
+            sw.WriteLine("\t! Boundary conditions");
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine("\tbottom_V = " + bottom_bc.ToString());
             sw.WriteLine();
+            sw.WriteLine("\t! Electrical permitivities");
             sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
             // relative permitivity of GaAs
             sw.WriteLine("\teps_r = " + Physics_Base.epsilon_r.ToString());
             sw.WriteLine("\teps");
             sw.WriteLine();
+            // boundary layer definitions
+            sw.WriteLine("\t! boundary layer definitions");
+	        sw.WriteLine("\tdopent_top = 24");
+	        sw.WriteLine("\tdopent_bottom = 61");
+	        sw.WriteLine("\twell_top = 65");
+            sw.WriteLine("\twell_bottom = nx * lx");
+            sw.WriteLine(); 
             sw.WriteLine("EQUATIONS");
-            // Poisson's equation
-            sw.WriteLine("\tu: div(eps * grad(u)) = rho");
+            // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
+            sw.WriteLine("\tu: div(eps * grad(u)) = rho\t! Poisson's equation");
             sw.WriteLine();
+            // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
-            sw.WriteLine("\tREGION 1");
+            sw.WriteLine("\tREGION 1	! capping layer");
+            sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\teps = eps_0 * eps_r");
             sw.WriteLine("\t\tSTART(0)");
             sw.WriteLine("\t\tPOINT VALUE(u) = top_V");
-            sw.WriteLine("\t\tLINE TO (lx)");
+            sw.WriteLine("\t\tLINE TO (dopent_top)");
+            sw.WriteLine("\tREGION 2	! dopent layer");
+            sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
+            sw.WriteLine("\t\teps = eps_0 * eps_r");
+            sw.WriteLine("\t\tSTART(dopent_top)");
+            sw.WriteLine("\t\tLINE TO (dopent_bottom)");
+            sw.WriteLine("\tREGION 3	! separator layer");
+            sw.WriteLine("\t\trho = 0");
+            sw.WriteLine("\t\teps = eps_0 * eps_r");
+            sw.WriteLine("\t\tSTART(dopent_bottom)");
+            sw.WriteLine("\t\tLINE TO (well_top)");
+            sw.WriteLine("\tREGION 3	! well layer");
+            sw.WriteLine("\t\trho = 0");
+            sw.WriteLine("\t\teps = eps_0 * eps_r");
+            sw.WriteLine("\t\tSTART(well_top)");
+            sw.WriteLine("\t\tLINE TO (well_bottom)");
+            sw.WriteLine("\t\tPOINT VALUE(u) = bottom_V");
+
+            // a possible bottomr boundary condition which hasn't worked yet...
             // this form of the boundary condition is equivalent to " d(eps * u)/dn + (u - bottom_V) = 0.0 "
             // which gives a combined Neumann/Dirichlet 
             //sw.WriteLine("\t\tPOINT NATURAL(u) = (u - bottom_V)");
-            sw.WriteLine("\t\tPOINT VALUE(u) = bottom_V");
             sw.WriteLine();
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tELEVATION(rho) FROM (0) TO (lx)");

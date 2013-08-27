@@ -27,7 +27,7 @@
 % BandStructure_File = Band_Structure.txt
 #
 ## FlexPDE input file
-#% FlexPDE_file = band_structure.pde
+% FlexPDE_file = band_structure.pde
 #
 #
 ############## Generic density solver details #########################
