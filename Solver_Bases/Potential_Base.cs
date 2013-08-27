@@ -17,10 +17,12 @@ namespace Solver_Bases
         protected bool flexPDE;
         protected string flexpde_inputfile;
 
+        protected bool freeze_out_dopents;
+
         protected double tol;
         private bool converged;
 
-        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, bool using_flexPDE, string flexPDE_input, double tol)
+        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, bool using_flexPDE, string flexPDE_input, bool freeze_out_dopents, double tol)
         {
             this.nx = nx; this.ny = ny; this.nz = nz;
             this.dx = dx; this.dy = dy; this.dz = dz;
@@ -30,6 +32,8 @@ namespace Solver_Bases
             if (using_flexPDE)
                 this.flexpde_inputfile = flexPDE_input;
 
+            // whether the dopents are frozen out or not
+            this.freeze_out_dopents = freeze_out_dopents;
             // get the tolerance needed for the potential before saying it's good enough
             this.tol = tol;
         }
@@ -187,6 +191,6 @@ namespace Solver_Bases
 
         protected abstract void Save_Density(Band_Data density, string filename);
         protected abstract Band_Data Parse_Potential(string[] data, int first_line);
-        protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename);
+        protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] band_layer_depths);
     }
 }

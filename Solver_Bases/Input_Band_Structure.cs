@@ -9,43 +9,30 @@ namespace Solver_Bases
 {
     public class Input_Band_Structure
     {
-        /// <summary>
-        /// temporary method that creates some quantum well band structure
-        /// </summary>
-        /// <param name="filename"></param>
-        /// <returns></returns>
-        public static DoubleVector GetBandStructure()
-        {
-            int nz = 500;
-            // temporary band structure... (spin-degenerate)
-            DoubleVector result = new DoubleVector(nz, 1800.0);
-            for (int k = 0; k < 15; k++)
-            {
-                //int k = 10;
-                result[k] = 1420.0;
-                result[k + 40] = 1420.0;
-            }
+        double[] layer_boundaries;
+        int end_of_band_structure;
 
-            return result;
+        string[] raw_input;
+        Materials[] band_structure;
+
+        public Input_Band_Structure(string filename)
+        {
+            // get an array of the desired materials structure
+            raw_input = Get_BandStructure_Data(filename, out layer_boundaries, out end_of_band_structure);
+            band_structure = Get_Materials_Array(end_of_band_structure, raw_input);
         }
 
         /// <summary>
-        /// reads the band structure from the given file and outputs a DoubleVector containing the given structure
+        /// outputs a DoubleVector containing the given band structure
         /// </summary>
         /// <param name="nz">number of points in the growth direction for the output</param>
         /// <param name="dz">point separation for the output</param>
         /// <returns></returns>
-        public static DoubleVector GetBandStructure(string filename, int nz, double dz)
+        public DoubleVector GetBandStructure(int nz, double dz)
         {
             DoubleVector result = new DoubleVector(nz);
-            double[] layer_boundaries;
-            int end_of_band_structure;
 
-            // get an array of the desired materials
-            string[] raw_input = Get_BandStructure_Data(filename, out layer_boundaries, out end_of_band_structure);
-            Materials[] band_structure = Get_Materials_Array(end_of_band_structure, raw_input);
-
-            // and fill the result vector with band structures
+            // fill the result vector with band structures
             int layer = 0;
             for (int i = 0; i < nz; i++)
             {
@@ -59,17 +46,10 @@ namespace Solver_Bases
             return result;
         }
 
-        public static void GetDopentData(string filename, int nz, double dz, Dopent dopent, out DoubleVector concentration, out DoubleVector energy)
+        public void GetDopentData(int nz, double dz, Dopent dopent, out DoubleVector concentration, out DoubleVector energy)
         {
             concentration = new DoubleVector(nz);
             energy = new DoubleVector(nz);
-
-            int end_of_band_structure;
-            double[] layer_boundaries;
-
-            // get an array of the desired materials
-            string[] raw_input = Get_BandStructure_Data(filename, out layer_boundaries, out end_of_band_structure);
-            Materials[] material_structure = Get_Materials_Array(end_of_band_structure, raw_input);
 
             string dopent_string;
             if (dopent == Dopent.acceptor)
@@ -79,7 +59,7 @@ namespace Solver_Bases
             else
                 throw new Exception("It is completely impossible to get here");
 
-            // and get the dopent concentration
+            // get the dopent concentration
             int layer = 1;
             for (int i = 0; i < nz; i++)
             {
@@ -94,11 +74,11 @@ namespace Solver_Bases
                 // add concentration to result with a factor of 10^-21 to convert from cm^-3 to nm^-3
                 concentration[i] = conc * 10e-21;
                 // and get the dopent energy
-                energy[i] = Get_Dopent_Energy(material_structure[layer - 1], dopent);
+                energy[i] = Get_Dopent_Energy(band_structure[layer - 1], dopent);
             }
         }
 
-        static string[] Get_BandStructure_Data(string filename, out double[] layer_boundaries , out int end_of_band_structure)
+        string[] Get_BandStructure_Data(string filename, out double[] layer_boundaries , out int end_of_band_structure)
         {
             if (!File.Exists(filename))
                 throw new FileNotFoundException();
@@ -129,7 +109,7 @@ namespace Solver_Bases
         /// <summary>
         /// converts a string array of inputs to an array of Materials enums
         /// </summary>
-        private static Materials[] Get_Materials_Array(int end_of_band_structure, string[] raw_input)
+        Materials[] Get_Materials_Array(int end_of_band_structure, string[] raw_input)
         {
             Materials[] band_structure = new Materials[end_of_band_structure - 1];
             for (int i = 1; i < end_of_band_structure; i++)
@@ -141,7 +121,7 @@ namespace Solver_Bases
         /// <summary>
         /// gets a materials enum based a Snider-type string input
         /// </summary>
-        static Materials Get_Material(string input_file_entry)
+        Materials Get_Material(string input_file_entry)
         {
             string[] material = input_file_entry.Split();
 
@@ -180,7 +160,7 @@ namespace Solver_Bases
         /// <summary>
         /// returns the band gap for the given material in meV
         /// </summary>
-        public static double Get_BandGap(Materials materials)
+        public double Get_BandGap(Materials materials)
         {
             switch (materials)
             {
@@ -197,7 +177,7 @@ namespace Solver_Bases
         /// <summary>
         /// returns the dopent energy for the given material in meV above or below E_f
         /// </summary>
-        public static double Get_Dopent_Energy(Materials materials, Dopent dopent)
+        public double Get_Dopent_Energy(Materials materials, Dopent dopent)
         {
             if (dopent == Dopent.acceptor)
             {
@@ -257,6 +237,22 @@ namespace Solver_Bases
             }
 
             return new Band_Data(result);
+        }
+
+        /// <summary>
+        /// array of materials from shallowest to deepest
+        /// </summary>
+        public Materials[] Materials_Array
+        {
+            get { return band_structure; }
+        }
+
+        /// <summary>
+        /// array of layer boundary depths
+        /// </summary>
+        public double[] Layer_Depths
+        {
+            get { return layer_boundaries; }
         }
     }
 }

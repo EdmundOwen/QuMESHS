@@ -28,6 +28,7 @@ namespace TwoD_ThomasFermiPoisson
         DoubleVector band_structure;
 
         double temperature = 100.0;
+        bool freeze_dopents;
 
         double dy, dz;
         int ny, nz; 
@@ -59,7 +60,8 @@ namespace TwoD_ThomasFermiPoisson
             if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
 
             // get the band structure
-            if (input_dict.ContainsKey("BandStructure_File")) band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"], nz, dz);
+            Input_Band_Structure band_structure_generator = new Input_Band_Structure((string)input_dict["BandStructure_File"]);
+            if (input_dict.ContainsKey("BandStructure_File")) band_structure = band_structure_generator.GetBandStructure(nz, dz);
             else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
@@ -92,7 +94,7 @@ namespace TwoD_ThomasFermiPoisson
 
 
             // create classes and initialise
-            TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, using_flexPDE, flexdPDE_input, tol);
+            TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, using_flexPDE, flexdPDE_input, freeze_dopents, tol);
             TwoD_ThomasFermiSolver dens_solv = new TwoD_ThomasFermiSolver(band_structure, new DoubleVector(nz), donors, new DoubleVector(nz, -1000.0), new DoubleVector(nz, 1000.0), 0.0, temperature, 10.0, dy, dz, ny, nz);
             
             // run self consistent loop

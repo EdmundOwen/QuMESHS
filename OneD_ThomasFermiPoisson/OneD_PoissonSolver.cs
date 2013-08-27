@@ -22,8 +22,8 @@ namespace OneD_ThomasFermiPoisson
         DoubleLUFact lu_fact;
 
         // 
-        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, bool using_flexPDE, string flexPDE_input, double tol)
-            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, tol)
+        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, bool freeze_out_dopents, double tol)
+            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, freeze_out_dopents, tol)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // (as phi = E_c / (-1.0 * q_e)
@@ -36,7 +36,7 @@ namespace OneD_ThomasFermiPoisson
                 lu_fact = new DoubleLUFact(laplacian);
             }
             else
-                Create_FlexPDE_Input_File(flexPDE_input, dens_filename);
+                Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
         }
 
         public DoubleVector Get_Band_Energy(DoubleVector density)
@@ -129,8 +129,16 @@ namespace OneD_ThomasFermiPoisson
         /// <summary>
         /// creates an input file for flexPDE to solve a 1D poisson equation
         /// </summary>
-        protected override void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename)
+        protected override void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] layer_depths)
         {
+            string well_dens_filename = dens_filename;
+            string dopent_dens_filename = dens_filename;
+            
+            // check if the dopents should be frozen out]
+            if (freeze_out_dopents)
+                // if true, change the input density filename for the dopents
+                dopent_dens_filename = "dopents_frozen_" + dens_filename;
+            
             // check if an input file already exists and delete it
             if (File.Exists(flexPDE_input))
                 File.Delete(flexPDE_input);
@@ -164,12 +172,12 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\teps_r = " + Physics_Base.epsilon_r.ToString());
             sw.WriteLine("\teps");
             sw.WriteLine();
-            // boundary layer definitions
+            // boundary layer definitions (note that this is quite a specific layer structure)
             sw.WriteLine("\t! boundary layer definitions");
-	        sw.WriteLine("\tdopent_top = 24");
-	        sw.WriteLine("\tdopent_bottom = 61");
-	        sw.WriteLine("\twell_top = 65");
-            sw.WriteLine("\twell_bottom = nx * lx");
+	        sw.WriteLine("\tdopent_top = " + layer_depths[1].ToString());
+	        sw.WriteLine("\tdopent_bottom = " + layer_depths[2].ToString());
+            sw.WriteLine("\twell_top = " + layer_depths[layer_depths.Length - 2].ToString());           // put the top of the heterostructure boundary as the penultimate layer boundary
+            sw.WriteLine("\twell_bottom = lx");
             sw.WriteLine(); 
             sw.WriteLine("EQUATIONS");
             // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
@@ -184,7 +192,7 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\t\tPOINT VALUE(u) = top_V");
             sw.WriteLine("\t\tLINE TO (dopent_top)");
             sw.WriteLine("\tREGION 2	! dopent layer");
-            sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
+            sw.WriteLine("\t\trho = TABLE(\'" + dopent_dens_filename + "\', x)");
             sw.WriteLine("\t\teps = eps_0 * eps_r");
             sw.WriteLine("\t\tSTART(dopent_top)");
             sw.WriteLine("\t\tLINE TO (dopent_bottom)");
@@ -194,7 +202,7 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\t\tSTART(dopent_bottom)");
             sw.WriteLine("\t\tLINE TO (well_top)");
             sw.WriteLine("\tREGION 3	! well layer");
-            sw.WriteLine("\t\trho = 0");
+            sw.WriteLine("\t\trho = TABLE(\'" + well_dens_filename + "\', x)");
             sw.WriteLine("\t\teps = eps_0 * eps_r");
             sw.WriteLine("\t\tSTART(well_top)");
             sw.WriteLine("\t\tLINE TO (well_bottom)");

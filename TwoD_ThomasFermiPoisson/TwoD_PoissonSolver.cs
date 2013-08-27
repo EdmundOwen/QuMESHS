@@ -14,8 +14,8 @@ namespace TwoD_ThomasFermiPoisson
     {
         string dens_filename = "dens.dat";
 
-        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, bool using_flexPDE, string flexPDE_input, double tol)
-            : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input, tol)
+        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, bool using_flexPDE, string flexPDE_input, bool freeze_out_dopents, double tol)
+            : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input, freeze_out_dopents, tol)
         {
         }
 
@@ -80,7 +80,7 @@ namespace TwoD_ThomasFermiPoisson
         /// <summary>
         /// creates an input file for flexPDE to solve a 2D poisson equation (not yet implemented)
         /// </summary>
-        protected override void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename)
+        protected override void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] layer_depths)
         {
             throw new NotImplementedException();
         }

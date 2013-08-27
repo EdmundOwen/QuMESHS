@@ -11,20 +11,24 @@ namespace OneD_ThomasFermiPoisson
 {
     class Experiment
     {
-        bool converged = false;
         double alpha, alpha_prime, tol;
-        int band_energy_mixing_rate = 10;
         
         bool using_flexPDE = false;
         string flexdPDE_input;
 
         Band_Data band_offset;
         SpinResolved_DoubleVector density;
+
+        double[] layer_depths;
         DoubleVector band_structure;
         DoubleVector acceptor_energy, donor_energy;
         DoubleVector acceptor_conc, donor_conc;
 
         double temperature = 300.0;
+        
+        // temperature at which the dopents are assumed to have frozen out
+        double freeze_out_T = 70.0;
+        bool freeze_dopents;
 
         double dz;
         int nz;
@@ -42,14 +46,20 @@ namespace OneD_ThomasFermiPoisson
 
             // physical inputs
             if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
+            // and check whether the dopents are frozen out
+            if (input_dict.ContainsKey("dopents_frozen")) this.freeze_dopents = (bool)input_dict["dopents_frozen"]; 
+            else { if (temperature < freeze_out_T) freeze_dopents = true; else freeze_dopents = false;}
 
             // get the band structure
             if (input_dict.ContainsKey("BandStructure_File"))
             {
-                band_structure = Input_Band_Structure.GetBandStructure((string)input_dict["BandStructure_File"], nz, dz);
+                Input_Band_Structure band_structure_generator = new Input_Band_Structure((string)input_dict["BandStructure_File"]);
 
-                Input_Band_Structure.GetDopentData((string)input_dict["BandStructure_File"], nz, dz, Dopent.acceptor, out acceptor_conc, out acceptor_energy);
-                Input_Band_Structure.GetDopentData((string)input_dict["BandStructure_File"], nz, dz, Dopent.donor, out donor_conc, out donor_energy);
+                band_structure = band_structure_generator.GetBandStructure(nz, dz);
+                layer_depths = band_structure_generator.Layer_Depths;
+
+                band_structure_generator.GetDopentData(nz, dz, Dopent.acceptor, out acceptor_conc, out acceptor_energy);
+                band_structure_generator.GetDopentData(nz, dz, Dopent.donor, out donor_conc, out donor_energy);
             }
             else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
@@ -82,7 +92,7 @@ namespace OneD_ThomasFermiPoisson
             double bottom_bc = 700;// dens_solv.Get_Chemical_Potential(nz - 1);
 
             // initialise potential solver
-            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, top_bc, bottom_bc, using_flexPDE, flexdPDE_input, tol);
+            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, top_bc, bottom_bc, layer_depths, using_flexPDE, flexdPDE_input, freeze_dopents, tol);
 
             int count = 0;
             while (!pois_solv.Converged)
