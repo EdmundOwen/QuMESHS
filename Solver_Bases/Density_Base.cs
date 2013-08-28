@@ -45,6 +45,7 @@ namespace Solver_Bases
         {
             StreamWriter sw = new StreamWriter(filename);
 
+            // output the charge density
             for (int i = 0; i < data.Nx; i++)
                 sw.WriteLine(data.Spin_Summed_Vector[i].ToString());
 
@@ -55,7 +56,8 @@ namespace Solver_Bases
         {
             StreamWriter sw = new StreamWriter(filename);
             sw.WriteLine("Warning - Ordering compared to PotentialData objects is not guaranteed!");
-
+            
+            // output the charge density
             for (int i = 0; i < data.Nx; i++)
                 for (int j = 0; j < data.Ny; j++)
                     sw.WriteLine(data.Spin_Summed_Matrix[i, j].ToString());
@@ -68,6 +70,7 @@ namespace Solver_Bases
             StreamWriter sw = new StreamWriter(filename);
             sw.WriteLine("Warning - Ordering compared to PotentialData objects is not guaranteed!");
 
+            // output the charge density
             for (int i = 0; i < data[0].Nx; i++)
                 for (int j = 0; j < data[0].Ny; j++)
                     for (int k = 0; k < data.Length; k++)

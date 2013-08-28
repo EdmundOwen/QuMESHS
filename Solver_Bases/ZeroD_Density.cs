@@ -8,9 +8,9 @@ using CenterSpace.NMath.Analysis;
 namespace Solver_Bases
 {
     /// <summary>
-    /// a class containing everything necessary to solve the zero dimensional charge problem
+    /// a class containing everything necessary to solve the zero dimensional density problem
     /// </summary>
-    public class ZeroD_Charge
+    public class ZeroD_Density
     {
         double band_gap;
         double acceptor_conc, donor_conc;
@@ -26,7 +26,7 @@ namespace Solver_Bases
 
         int no_kB_T = 10;
 
-        public ZeroD_Charge(double band_gap, double acceptor_conc, double acceptor_energy, double donor_conc, double donor_energy, double temperature)
+        public ZeroD_Density(double band_gap, double acceptor_conc, double acceptor_energy, double donor_conc, double donor_energy, double temperature)
         {
             // set band profile with spin-degeneracy
             this.band_gap = band_gap;
@@ -42,9 +42,9 @@ namespace Solver_Bases
             this.temperature = temperature;
         }
 
-        public double Get_Charge(double mu)
+        public double Get_Density(double mu)
         {
-            // calculate the charges due to the various components for a given chemical potential
+            // calculate the densities due to the various components for a given chemical potential
             double conductance_electrons = Get_Conductance_Electron_Density(mu);
             // factor of 2.0 here is for spin degeneracy of the dopents
             // also, exponential factor for donors is (E_d - mu)
@@ -60,7 +60,7 @@ namespace Solver_Bases
 
         public double Get_Equilibrium_Chemical_Potential()
         {
-            OneVariableFunction charge_func = new OneVariableFunction(new Func<double, double>(Get_Charge));
+            OneVariableFunction charge_func = new OneVariableFunction(new Func<double, double>(Get_Density));
 
             // initialise root finder and search for a root for the chemical potential
             RiddersRootFinder finder = new RiddersRootFinder();

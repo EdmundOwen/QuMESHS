@@ -57,7 +57,7 @@
     <Compile Include="Potential_Data.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpinResolved_DataClasses.cs" />
-    <Compile Include="ZeroD_Charge.cs" />
+    <Compile Include="ZeroD_Density.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

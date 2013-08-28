@@ -62,13 +62,13 @@ namespace OneD_ThomasFermiPoisson
 
             for (int i = 0; i < nz; i++)
             {
-                // calculate the charge at the given point
-                ZeroD_Charge charge_calc = new ZeroD_Charge(band_gap[i], acceptor_concentration[i], acceptor_energy_above_Ev[i], donor_concentration[i], donor_energy_below_Ec[i], temperature);
-                double charge = charge_calc.Get_Charge(chem_pot[i]);
+                // calculate the density at the given point
+                ZeroD_Density charge_calc = new ZeroD_Density(band_gap[i], acceptor_concentration[i], acceptor_energy_above_Ev[i], donor_concentration[i], donor_energy_below_Ec[i], temperature);
+                double local_density = charge_calc.Get_Density(chem_pot[i]);
 
                 // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
-                density.Spin_Down[i] = 0.5 * charge;
-                density.Spin_Up[i] = 0.5 * charge;
+                density.Spin_Down[i] = 0.5 * local_density;
+                density.Spin_Up[i] = 0.5 * local_density;
             }
 
             return density;
@@ -148,7 +148,7 @@ namespace OneD_ThomasFermiPoisson
 
         public double Get_Chemical_Potential(int location)
         {
-            ZeroD_Charge chem_pot_cal = new ZeroD_Charge(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature);
+            ZeroD_Density chem_pot_cal = new ZeroD_Density(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature);
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }

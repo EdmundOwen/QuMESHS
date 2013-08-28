@@ -60,12 +60,17 @@ namespace OneD_ThomasFermiPoisson
 
                 band_structure_generator.GetDopentData(nz, dz, Dopent.acceptor, out acceptor_conc, out acceptor_energy);
                 band_structure_generator.GetDopentData(nz, dz, Dopent.donor, out donor_conc, out donor_energy);
+
+                // finally, check that the total layer depth from the band structure generator is the same as nz
+                if (layer_depths[layer_depths.Length - 1] != nz * dz)
+                    throw new Exception("Error - The band structure specified is not the same as the given sample depth!");
             }
             else throw new KeyNotFoundException("No band structure file found in input dictionary!");
 
             // try to get the band offset and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (SpinResolved_DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new SpinResolved_DoubleVector(nz);
             if (input_dict.ContainsKey("Band_Offset")) this.band_offset = new Band_Data((DoubleMatrix)input_dict["Potential"]); else band_offset = new Band_Data(new DoubleVector(nz));
+
         }
 
         public void Initialise(DoubleVector Band_Offset, DoubleVector Density, double dz, double alpha, double tol, int nz)
@@ -88,11 +93,13 @@ namespace OneD_ThomasFermiPoisson
         {
             // create density solver and calculate boundary conditions
             OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, 0.0, temperature, 10.0, dz, nz);
-            double top_bc = 0;// dens_solv.Get_Chemical_Potential(0);
-            double bottom_bc = 700;// dens_solv.Get_Chemical_Potential(nz - 1);
+            double top_bc = dens_solv.Get_Chemical_Potential(0);
+            double bottom_bc = dens_solv.Get_Chemical_Potential(nz - 1);
 
             // initialise potential solver
             OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, top_bc, bottom_bc, layer_depths, using_flexPDE, flexdPDE_input, freeze_dopents, tol);
+            // initialise the band energy as the solution with zero density
+            band_offset = new Band_Data(pois_solv.Get_Band_Energy(new DoubleVector(nz, 0.0)));
 
             int count = 0;
             while (!pois_solv.Converged)

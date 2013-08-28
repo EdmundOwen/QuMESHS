@@ -206,12 +206,11 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\t\teps = eps_0 * eps_r");
             sw.WriteLine("\t\tSTART(well_top)");
             sw.WriteLine("\t\tLINE TO (well_bottom)");
-            sw.WriteLine("\t\tPOINT VALUE(u) = bottom_V");
-
             // a possible bottomr boundary condition which hasn't worked yet...
-            // this form of the boundary condition is equivalent to " d(eps * u)/dn + (u - bottom_V) = 0.0 "
+            // this form of the boundary condition is equivalent to " d(eps * u)/dn + (bottom_V - u) = 0.0 "
             // which gives a combined Neumann/Dirichlet 
-            //sw.WriteLine("\t\tPOINT NATURAL(u) = (u - bottom_V)");
+            sw.WriteLine("\t\tPOINT VALUE(u) = bottom_V");
+            //sw.WriteLine("\t\tPOINT NATURAL(u) = (bottom_V - u)");
             sw.WriteLine();
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tELEVATION(rho) FROM (0) TO (lx)");
