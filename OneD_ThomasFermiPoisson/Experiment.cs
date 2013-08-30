@@ -93,7 +93,7 @@ namespace OneD_ThomasFermiPoisson
         {
             // create density solver and calculate boundary conditions
             OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, 0.0, temperature, 10.0, dz, nz);
-            double top_bc = dens_solv.Get_Chemical_Potential(0);
+            double top_bc = 0;// dens_solv.Get_Chemical_Potential(0);
             double bottom_bc = dens_solv.Get_Chemical_Potential(nz - 1);
 
             // initialise potential solver

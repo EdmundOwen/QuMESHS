@@ -48,14 +48,14 @@ namespace Solver_Bases
         /// <summary>
         /// gets 3D spin-resolved density of states for given potential and energy
         /// </summary>
-        public static double Get_3D_DensityofStates(double energy, double potential)
+        public static double Get_Electron_3D_DensityofStates(double energy, double conduction_band_edge)
         {
             // if the energy is below the potential (i.e. below the conduction band) return zero
-            if (energy < potential)
+            if (energy < conduction_band_edge)
                 return 0.0;
 
             // generate density of states
-            return Math.Pow(2.0 * mass * mass * mass * (energy - potential), 0.5) / (Math.PI * Math.PI * hbar * hbar * hbar);
+            return Math.Pow(2.0 * mass * mass * mass * (energy - conduction_band_edge), 0.5) / (Math.PI * Math.PI * hbar * hbar * hbar);
 
             // calculate dk^2 / dE and k^2
             //double dk2_dE = (2 * mass) / hbar * hbar;
@@ -66,6 +66,19 @@ namespace Solver_Bases
 
             //double density_of_states = geometric_prefactor * dk2_dE * 1.5 * Math.Pow(k2, 0.5);
             //return density_of_states;
+        }
+
+        /// <summary>
+        /// gets 3D spin-resolved density of states for electrons given potential and energy
+        /// </summary>
+        public static double Get_Hole_3D_DensityofStates(double energy, double valence_band_edge)
+        {
+            // if the energy is below the potential (i.e. below the conduction band) return zero
+            if (energy > valence_band_edge)
+                return 0.0;
+
+            // generate density of states
+            return Math.Pow(2.0 * mass * mass * mass * (valence_band_edge - energy), 0.5) / (Math.PI * Math.PI * hbar * hbar * hbar);
         }
     }
 }

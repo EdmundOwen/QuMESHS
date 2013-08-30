@@ -12,16 +12,16 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 151
+% nz = 100
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 2
+% dz = 5
 #
 #
 ############## Poisson solver details #################################
 #
 ## Potential mixing parameter. (this is adaptive)
-% alpha = 0.001
+% alpha = 0.01
 #
 ## File name with band structure in
 % BandStructure_File = Band_Structure.txt

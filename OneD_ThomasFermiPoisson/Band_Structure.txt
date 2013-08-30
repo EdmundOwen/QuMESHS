@@ -1,15 +1,11 @@
 # test comment
 surface schottky=0.6 v1
-GaAs t=2 Nd=1e17
-GaAs t=100 Nd=1e17
-GaAs t=100
-GaAs t=100 Na=1e17
-#GaAs t=10
-#AlGaAs t=200 x=.3 Nd=3e15
-#AlGaAs t=75 x=.3
-#GaAs t=215 Na=1e10
+GaAs t=10
+AlGaAs t=200 x=.3 Nd=0.4e16
+AlGaAs t=75 x=.3
+GaAs t=215 Nd=1e10
 #GaAs t=24 Na=1e14
 #AlGaAs t=36 x=.3 Nd=0.63e17
 #AlGaAs t=10 x=.3 Na=1e14
-#GaAs t=50 Na=1e14
+#GaAs t=50 Nd=1e14
 substrate

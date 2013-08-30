@@ -93,8 +93,8 @@ namespace OneD_ThomasFermiPoisson
                 {
                     double energy_above_eF = conduction_band_energy[j] + i * dE;
 
-                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(energy_above_eF, conduction_band_energy[j]) * Get_Fermi_Function(energy_above_eF) * dE;
-                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(energy_above_eF, conduction_band_energy[j]) * Get_Fermi_Function(energy_above_eF) * dE;
+                    result[j, Spin.Up] += Physics_Base.Get_Electron_3D_DensityofStates(energy_above_eF, conduction_band_energy[j]) * Get_Fermi_Function(energy_above_eF) * dE;
+                    result[j, Spin.Down] += Physics_Base.Get_Electron_3D_DensityofStates(energy_above_eF, conduction_band_energy[j]) * Get_Fermi_Function(energy_above_eF) * dE;
                 }
 
             return result;
@@ -121,8 +121,8 @@ namespace OneD_ThomasFermiPoisson
 
                     // energies are negative (for density of states) as we are considering holes
                     // also, we subtract from "result" as holes are negatively charged
-                    result[j, Spin.Up] += Physics_Base.Get_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[j]) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
-                    result[j, Spin.Down] += Physics_Base.Get_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[j]) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
+                    result[j, Spin.Up] += Physics_Base.Get_Hole_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[j]) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
+                    result[j, Spin.Down] += Physics_Base.Get_Hole_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[j]) * (1.0 - Get_Fermi_Function(energy_below_eF)) * dE;
                 }
 
             return result;
