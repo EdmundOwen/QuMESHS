@@ -16,14 +16,14 @@ namespace OneD_ThomasFermiPoisson
         DoubleVector acceptor_energy_above_Ev, donor_energy_below_Ec;
 
         double no_kB_T_above_Ef = 10.0;
-        double dE;
+
+        // redundent integration parameter
+        double dE = 1.0;
 
         public OneD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
-                                        double fermi_Energy, double temperature, double dE, double dz, int nz) 
-            : base(fermi_Energy, temperature, 1.0, 1.0, dz, 1, 1, nz)
+                                        double temperature, double dz, int nz) 
+            : base( temperature, 1.0, 1.0, dz, 1, 1, nz)
         {
-            this.dE = dE;
-
             // set band profile with spin-degeneracy
             this.band_gap = band_gap;
 
@@ -55,23 +55,23 @@ namespace OneD_ThomasFermiPoisson
             return -1.0 * Physics_Base.q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
         }*/
 
-        public SpinResolved_DoubleVector Get_OneD_Density(DoubleVector chem_pot)
+        public SpinResolved_DoubleVector Get_OneD_ChargeDensity(DoubleVector chem_pot)
         {
-            // spin-resolved density
-            SpinResolved_DoubleVector density = new SpinResolved_DoubleVector(nz);
+            // spin-resolved charge density
+            SpinResolved_DoubleVector charge_density = new SpinResolved_DoubleVector(nz);
 
             for (int i = 0; i < nz; i++)
             {
-                // calculate the density at the given point
+                // calculate the charge density at the given point
                 ZeroD_Density charge_calc = new ZeroD_Density(band_gap[i], acceptor_concentration[i], acceptor_energy_above_Ev[i], donor_concentration[i], donor_energy_below_Ec[i], temperature);
-                double local_density = charge_calc.Get_Density(chem_pot[i]);
+                double local_chargedensity = charge_calc.Get_ChargeDensity(chem_pot[i]);
 
                 // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
-                density.Spin_Down[i] = 0.5 * local_density;
-                density.Spin_Up[i] = 0.5 * local_density;
+                charge_density.Spin_Down[i] = 0.5 * local_chargedensity;
+                charge_density.Spin_Up[i] = 0.5 * local_chargedensity;
             }
 
-            return density;
+            return charge_density;
         }
 
         /// <summary>

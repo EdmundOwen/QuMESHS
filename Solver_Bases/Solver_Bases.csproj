@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Density_Base.cs" />
     <Compile Include="Enums.cs" />
+    <Compile Include="Experiment_Base.cs" />
     <Compile Include="Inputs_to_Dictionary.cs" />
     <Compile Include="Input_Band_Structure.cs" />
     <Compile Include="Physics_Base.cs" />

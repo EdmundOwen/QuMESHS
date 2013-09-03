@@ -133,8 +133,12 @@ namespace OneD_ThomasFermiPoisson
         {
             string well_dens_filename = dens_filename;
             string dopent_dens_filename = dens_filename;
-            
-            // check if the dopents should be frozen out]
+
+            double dopent_depth = layer_depths[1];
+            double dopent_width = layer_depths[2] - layer_depths[1];
+            double well_depth = layer_depths[layer_depths.Length - 2];           // put the top of the heterostructure boundary as the penultimate layer boundary
+
+            // check if the dopents should be frozen out
             if (freeze_out_dopents)
                 // if true, change the input density filename for the dopents
                 dopent_dens_filename = "dopents_frozen_" + dens_filename;
@@ -161,6 +165,10 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\tnx = " + nz.ToString());
             // size of the sample
             sw.WriteLine("\tlx = " + (nz * dz).ToString());
+            // device dimensions
+            sw.WriteLine("\tdopent_depth = " + dopent_depth.ToString());
+            sw.WriteLine("\tdopent_width = " + dopent_width.ToString());
+            sw.WriteLine("\twell_depth = " + well_depth.ToString());
             // the top boundary condition on the surface of the sample
             sw.WriteLine("\t! Boundary conditions");
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
@@ -174,9 +182,9 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine();
             // boundary layer definitions (note that this is quite a specific layer structure)
             sw.WriteLine("\t! boundary layer definitions");
-	        sw.WriteLine("\tdopent_top = " + layer_depths[1].ToString());
-	        sw.WriteLine("\tdopent_bottom = " + layer_depths[2].ToString());
-            sw.WriteLine("\twell_top = " + layer_depths[layer_depths.Length - 2].ToString());           // put the top of the heterostructure boundary as the penultimate layer boundary
+	        sw.WriteLine("\tdopent_top = " + dopent_depth.ToString());
+	        sw.WriteLine("\tdopent_bottom = " + (dopent_depth + dopent_width).ToString());
+            sw.WriteLine("\twell_top = " + well_depth.ToString());           // put the top of the heterostructure boundary as the penultimate layer boundary
             sw.WriteLine("\twell_bottom = lx");
             sw.WriteLine(); 
             sw.WriteLine("EQUATIONS");

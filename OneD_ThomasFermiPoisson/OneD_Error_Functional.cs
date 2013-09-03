@@ -29,7 +29,7 @@ namespace OneD_ThomasFermiPoisson
         public override double Evaluate(DoubleVector density)
         {
             // calculate the density for the potential given by the old density
-            SpinResolved_DoubleVector new_density = dens_solv.Get_OneD_Density(pot_solv.Get_Band_Energy(density));
+            SpinResolved_DoubleVector new_density = dens_solv.Get_OneD_ChargeDensity(pot_solv.Get_Band_Energy(density));
             double error = (new_density.Spin_Summed_Vector - density).TwoNormSquared();
 
             Console.WriteLine("Iteration:\t" + count.ToString() + "\tError:\t" + error.ToString());

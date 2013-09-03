@@ -13,7 +13,7 @@ namespace TwoD_ThomasFermiPoisson
         DoubleComplexMatrix H;
 
         public TwoD_DensitySolver(double dx, double fermi_Energy, int nx) 
-            : base(fermi_Energy, 0.0, dx, 1.0, 1.0, nx, 1, 1)
+            : base(0.0, dx, 1.0, 1.0, nx, 1, 1)
         {
             this.dx = dx; this.nx = nx;
         }
@@ -247,7 +247,6 @@ namespace TwoD_ThomasFermiPoisson
             }
 
             throw new NotImplementedException();
-            return density;
         }
 
         public DoubleVector Solve_Density_Using_GreensFunctions(double dE, double init_energy, int Energy_steps)
@@ -258,7 +257,6 @@ namespace TwoD_ThomasFermiPoisson
             // do something
 
             throw new NotImplementedException();
-            return density;
         }
     }
 }

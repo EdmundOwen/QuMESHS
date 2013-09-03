@@ -9,26 +9,9 @@ using Solver_Bases;
 
 namespace OneD_ThomasFermiPoisson
 {
-    class Experiment
+    class Experiment : Experiment_Base
     {
-        double alpha, alpha_prime, tol;
-        
-        bool using_flexPDE = false;
-        string flexdPDE_input;
-
-        Band_Data band_offset;
-        SpinResolved_DoubleVector density;
-
-        double[] layer_depths;
-        DoubleVector band_structure;
-        DoubleVector acceptor_energy, donor_energy;
-        DoubleVector acceptor_conc, donor_conc;
-
-        double temperature = 300.0;
-        
-        // temperature at which the dopents are assumed to have frozen out
-        double freeze_out_T = 70.0;
-        bool freeze_dopents;
+        SpinResolved_DoubleVector charge_density;
 
         double dz;
         int nz;
@@ -39,60 +22,18 @@ namespace OneD_ThomasFermiPoisson
             if (input_dict.ContainsKey("dz")) this.dz = (double)input_dict["dz"]; else throw new KeyNotFoundException("No dz in input dictionary!");
             if (input_dict.ContainsKey("nz")) this.nz = (int)(double)input_dict["nz"]; else throw new KeyNotFoundException("No nz in input dictionary!");
 
-            // solver inputs
-            if (input_dict.ContainsKey("tolerance")) this.tol = (double)input_dict["tolerance"]; else throw new KeyNotFoundException("No solution tolerance in input dictionary!");
-            if (input_dict.ContainsKey("alpha")) { this.alpha = (double)input_dict["alpha"]; alpha_prime = alpha; } else throw new KeyNotFoundException("No potential mixing parameter, alpha, in input dictionary!");
-            if (input_dict.ContainsKey("FlexPDE_file")) { this.using_flexPDE = true; this.flexdPDE_input = (string)input_dict["FlexPDE_file"]; }
+            // physics parameters are done by the base method
+            base.Initialise(input_dict, dz, nz);
 
-            // physical inputs
-            if (input_dict.ContainsKey("T")) this.temperature = (double)input_dict["T"]; else throw new KeyNotFoundException("No temperature in input dictionary!");
-            // and check whether the dopents are frozen out
-            if (input_dict.ContainsKey("dopents_frozen")) this.freeze_dopents = (bool)input_dict["dopents_frozen"]; 
-            else { if (temperature < freeze_out_T) freeze_dopents = true; else freeze_dopents = false;}
-
-            // get the band structure
-            if (input_dict.ContainsKey("BandStructure_File"))
-            {
-                Input_Band_Structure band_structure_generator = new Input_Band_Structure((string)input_dict["BandStructure_File"]);
-
-                band_structure = band_structure_generator.GetBandStructure(nz, dz);
-                layer_depths = band_structure_generator.Layer_Depths;
-
-                band_structure_generator.GetDopentData(nz, dz, Dopent.acceptor, out acceptor_conc, out acceptor_energy);
-                band_structure_generator.GetDopentData(nz, dz, Dopent.donor, out donor_conc, out donor_energy);
-
-                // finally, check that the total layer depth from the band structure generator is the same as nz
-                if (layer_depths[layer_depths.Length - 1] != nz * dz)
-                    throw new Exception("Error - The band structure specified is not the same as the given sample depth!");
-            }
-            else throw new KeyNotFoundException("No band structure file found in input dictionary!");
-
-            // try to get the band offset and density from the dictionary... they probably won't be there and if not... make them
-            if (input_dict.ContainsKey("SpinResolved_Density")) this.density = (SpinResolved_DoubleVector)input_dict["SpinResolved_Density"]; else this.density = new SpinResolved_DoubleVector(nz);
+            // try to get the band offset and the charge density from the dictionary... they probably won't be there and if not... make them
+            if (input_dict.ContainsKey("SpinResolved_Density")) this.charge_density = (SpinResolved_DoubleVector)input_dict["SpinResolved_Density"]; else this.charge_density = new SpinResolved_DoubleVector(nz);
             if (input_dict.ContainsKey("Band_Offset")) this.band_offset = new Band_Data((DoubleMatrix)input_dict["Potential"]); else band_offset = new Band_Data(new DoubleVector(nz));
-
         }
 
-        public void Initialise(DoubleVector Band_Offset, DoubleVector Density, double dz, double alpha, double tol, int nz)
+        public override void Run()
         {
-            throw new NotImplementedException();
-            //this.Band_Offset = Band_Offset; this.density = Density;
-            Initialise(dz, alpha, tol, nz);
-        }
-
-        public void Initialise(double dz, double alpha, double tol, int nz)
-        {
-            this.alpha = alpha; this.alpha_prime = alpha;
-
-            this.tol = tol;
-
-            this.nz = nz; this.dz = dz;
-        }
-
-        public void Run()
-        {
-            // create density solver and calculate boundary conditions
-            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, 0.0, temperature, 10.0, dz, nz);
+            // create charge density solver and calculate boundary conditions
+            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, temperature, dz, nz);
             double top_bc = 0;// dens_solv.Get_Chemical_Potential(0);
             double bottom_bc = dens_solv.Get_Chemical_Potential(nz - 1);
 
@@ -106,11 +47,11 @@ namespace OneD_ThomasFermiPoisson
             {
                 Console.WriteLine("Iteration:\t" + count.ToString());
 
-                // calculate the total density for this band offset
-                density = dens_solv.Get_OneD_Density(band_offset.vec);
+                // calculate the total charge density for this band offset
+                charge_density = dens_solv.Get_OneD_ChargeDensity(band_offset.vec);
 
-                // solve the band energy for the given density and mix in with the old band energy
-                Band_Data new_band_energy = new Band_Data(pois_solv.Get_Band_Energy(density.Spin_Summed_Vector));
+                // solve the band energy for the givencharge  density and mix in with the old band energy
+                Band_Data new_band_energy = new Band_Data(pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Vector));
                 pois_solv.Blend(ref band_offset, new_band_energy, alpha);
 
                 // change the band energy mixing parameter
@@ -138,7 +79,7 @@ namespace OneD_ThomasFermiPoisson
             potential.vec = pois_solv.Get_Potential(density.Spin_Summed_Vector);
             */
 
-            dens_solv.Output(density, "density.dat");
+            dens_solv.Output(charge_density, "charge_density.dat");
             pois_solv.Output(new Band_Data(band_structure / 2.0 - band_offset.vec), "potential.dat");
         }
     }

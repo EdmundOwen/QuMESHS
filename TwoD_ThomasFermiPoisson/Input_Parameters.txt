@@ -18,10 +18,10 @@
 % dy = 100
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 40
+% nz = 100
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 100
+% dz = 5
 #
 #
 ############## Poisson solver details #################################

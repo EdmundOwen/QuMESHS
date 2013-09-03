@@ -9,22 +9,21 @@ namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_ThomasFermiSolver : Density_Base
     {
-        DoubleMatrix band_gap;
+        DoubleVector band_gap;
         SpinResolved_DoubleMatrix dopent_concentration;
         DoubleVector acceptor_concentration, donor_concentration;
-        DoubleVector acceptor_energy_below_Ec, donor_energy_below_Ec;
+        DoubleVector acceptor_energy_above_Ev, donor_energy_below_Ec;
 
-        double no_kB_T_above_Ef = 100.0;
-        double dE;
+        // redundant integration parameters
+        //double dE = 1.0;
+        //double no_kB_T_above_Ef = 100.0;
 
         public TwoD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
-                                        double fermi_Energy, double temperature, double dE, double dy, double dz, int ny, int nz) 
-            : base(fermi_Energy, temperature, 1.0, dy, dz, 1, ny, nz)
+                                        double temperature, double dy, double dz, int ny, int nz) 
+            : base(temperature, 1.0, dy, dz, 1, ny, nz)
         {
-            this.dE = dE;
-
             // set band profile with spin-degeneracy
-            this.band_gap = Input_Band_Structure.Expand_BandStructure(band_gap, ny).mat;
+            this.band_gap = band_gap;// Input_Band_Structure.Expand_BandStructure(band_gap, ny).mat;
 
             this.acceptor_concentration = acceptor_concentration;
             this.donor_concentration = donor_concentration;
@@ -33,9 +32,37 @@ namespace TwoD_ThomasFermiPoisson
 
             // and set relative dopent energies to the conduction band
             this.donor_energy_below_Ec = band_gap / 2.0 - donor_energy;
-            this.acceptor_energy_below_Ec = band_gap / 2.0 - acceptor_energy;
+            this.acceptor_energy_above_Ev = band_gap / 2.0 - acceptor_energy;
         }
 
+        public SpinResolved_DoubleMatrix Get_TwoD_ChargeDensity(DoubleMatrix chem_pot)
+        {
+            // spin-resolved density
+            SpinResolved_DoubleMatrix charge_density = new SpinResolved_DoubleMatrix(ny, nz);
+
+            for (int i = 0; i < ny; i++)
+                for (int j = 0; j < nz; j++)
+                {
+                    // calculate the density at the given point
+                    ZeroD_Density charge_calc = new ZeroD_Density(band_gap[j], acceptor_concentration[j], acceptor_energy_above_Ev[j], donor_concentration[j], donor_energy_below_Ec[j], temperature);
+                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot[i, j]);
+
+                    // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                    charge_density.Spin_Down[i, j] = 0.5 * local_charge_density;
+                    charge_density.Spin_Up[i, j] = 0.5 * local_charge_density;
+                }
+
+            return charge_density;
+        }
+
+        public double Get_Chemical_Potential(int location)
+        {
+            ZeroD_Density chem_pot_cal = new ZeroD_Density(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature);
+
+            return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
+        }
+
+        /*
         public SpinResolved_DoubleMatrix Get_OneD_Density(DoubleMatrix conduction_band_energy)
         {
             // spin-resolved density
@@ -130,5 +157,6 @@ namespace TwoD_ThomasFermiPoisson
 
             return result;
         }
+        */
     }
 }

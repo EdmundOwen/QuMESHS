@@ -58,6 +58,9 @@
     <Compile Include="TwoD_ThomasFermiSolver.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Band_Structure.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Input_Parameters.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

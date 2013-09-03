@@ -42,7 +42,7 @@ namespace Solver_Bases
             this.temperature = temperature;
         }
 
-        public double Get_Density(double mu)
+        public double Get_ChargeDensity(double mu)
         {
             // calculate the densities due to the various components for a given chemical potential
             double conductance_electrons = Get_Conductance_Electron_Density(mu);
@@ -60,7 +60,7 @@ namespace Solver_Bases
 
         public double Get_Equilibrium_Chemical_Potential()
         {
-            OneVariableFunction charge_func = new OneVariableFunction(new Func<double, double>(Get_Density));
+            OneVariableFunction charge_func = new OneVariableFunction(new Func<double, double>(Get_ChargeDensity));
 
             // initialise root finder and search for a root for the chemical potential
             RiddersRootFinder finder = new RiddersRootFinder();

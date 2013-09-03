@@ -13,6 +13,7 @@ namespace Solver_Bases
         public const double mass = 0.067 * 5.68562958e-3;       // (meV) (ps)^2 (nm)^-2 with GaAs effective mass
         public const double epsilon_0 = 1.41859713;             // (zC)^2 (nm)^-1 (meV)^-1 for vacuum
         public const double epsilon_r = 13.0;                   // relative permittivity for vacuum -> GaAs
+        public const double epsilon_pmma = 2.6;                 // relative permittivity for vacuum -> PMMA
         public const double epsilon = epsilon_0 * epsilon_r;    // (zC)^2 (nm)^-1 (meV)^-1 for GaAs
         public const double kB = 0.086173324;                   // (meV) (K)^-1
         

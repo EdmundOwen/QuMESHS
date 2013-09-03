@@ -8,13 +8,14 @@ namespace Solver_Bases
 {
     public abstract class Density_Base
     {
-        protected double fermi_Energy, temperature;
+        protected double temperature;
         protected double dx, dy, dz;
         protected int nx, ny, nz;
+        protected double fermi_Energy = 0.0;
 
-        public Density_Base(double fermi_Energy, double temperature, double dx, double dy, double dz, int nx, int ny, int nz)
+        public Density_Base(double temperature, double dx, double dy, double dz, int nx, int ny, int nz)
         {
-            this.fermi_Energy = fermi_Energy; this.temperature = temperature;
+            this.temperature = temperature;
             this.dx = dx; this.dy = dy; this.dz = dz;
             this.nx = nx; this.ny = ny; this.nz = nz;
         }
