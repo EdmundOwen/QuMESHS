@@ -72,7 +72,7 @@ namespace Solver_Bases
                                        select double.Parse(data.Split('=').Last())).FirstOrDefault();
 
                 // add concentration to result with a factor of 10^-21 to convert from cm^-3 to nm^-3
-                concentration[i] = conc * 10e-21;
+                concentration[i] = conc * 1e-21;
                 // and get the dopent energy
                 energy[i] = Get_Dopent_Energy(band_structure[layer - 1], dopent);
             }
