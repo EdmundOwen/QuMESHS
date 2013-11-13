@@ -12,7 +12,7 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 140
+% nz = 100
 #
 ## Spacing of lattice sites for the density calculation
 % dz = 5
@@ -20,7 +20,7 @@
 #
 ############## Poisson solver details #################################
 #
-## Potential mixing parameter. (this is adaptive)
+## Potential mixing parameter
 % alpha = 0.01
 #
 ## File name with band structure in
@@ -34,6 +34,7 @@
 #
 ## FlexPDE file executable location
 % FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
+#
 #
 ############## Generic density solver details #########################
 #
@@ -50,6 +51,6 @@
 ############## Physical parameters ####################################
 #
 ## Temperature
-% T = 100
+% T = 70
 #
 

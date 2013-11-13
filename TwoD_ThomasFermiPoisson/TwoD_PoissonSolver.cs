@@ -12,16 +12,17 @@ namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_PoissonSolver : Potential_Base
     {
-        string dens_filename = "dens.dat";
+        string dens_filename = "dens_2D.dat";
         double bottom_bc;
 
-        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, bool freeze_out_dopents, double tol)
-            : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input, freeze_out_dopents, tol)
+        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
+            : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input, flexPDE_location, freeze_out_dopents, tol)
         {
-            this.bottom_bc = bottom_bc;
+            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
+            // (as phi = E_c / (-1.0 * q_e))
+            this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
 
-            if (flexPDE)
-                Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
+            Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
         }
 
         public DoubleMatrix Get_Band_Energy(DoubleMatrix density)
@@ -34,7 +35,7 @@ namespace TwoD_ThomasFermiPoisson
                 throw new NotImplementedException();
         }
 
-        protected override void Save_Density(Band_Data density, string filename)
+        public override void Save_Density(Band_Data density, string filename)
         {
             // check that the dimension of the density is correct
             if (density.Dimension != 2)
@@ -47,21 +48,29 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("x " + ny.ToString());
             for (int i = 0; i < ny; i++)
                 //for (int j = 0; j < nz; j++)
-                    sw.Write(((float)(i * dy)).ToString() + '\t');
+                sw.Write(((float)(i - ny / 2) * dy).ToString() + '\t');
 
             sw.WriteLine();
             sw.WriteLine();
             sw.WriteLine("y " + nz.ToString());
-            //for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                    sw.Write(((float)(j * dz)).ToString() + '\t');
+            for (int j = nz - 1; j >= 0; j--)
+            //for (int j = 0; j < nz; j++)
+                sw.Write(((float)(-j * dz)).ToString() + '\t');
 
             // save out densities
             sw.WriteLine();
             sw.WriteLine("data");
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                    sw.Write(((float)density.mat[i, j]).ToString() + '\t');
+            //for (int i = 0; i < nz; i++)
+            for (int i = nz - 1; i >= 0; i--)
+            {
+                for (int j = 0; j < ny; j++)
+                    if (Math.Abs(density.mat[j, i]) < 1e-20)
+                        sw.Write("0\t");
+                    else
+                        // note that the ordering is y first, then z -- this is FlexPDE specific
+                        sw.Write(((float)density.mat[j, i]).ToString() + '\t');
+                sw.WriteLine();
+            }
 
             sw.Close();
         }
@@ -104,8 +113,8 @@ namespace TwoD_ThomasFermiPoisson
             double well_depth = layer_depths[layer_depths.Length - 2];
             double well_width = 50;
 
-            double split_V = -0.9;
-            double top_V = -0.9;
+            double split_V = -0.0;
+            double top_V = -0.0;
 
             // check if the dopents should be frozen out
             if (freeze_out_dopents)
@@ -125,7 +134,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-6");
+            //sw.WriteLine("\tERRLIM=1e-6");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
             sw.WriteLine("\trho");
@@ -135,12 +144,12 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tnz = " + nz.ToString());
             // simulation dimension
             sw.WriteLine("\tly = " + (dy * ny).ToString());
-            sw.WriteLine("\tlz = " + (dz * dy).ToString());
+            sw.WriteLine("\tlz = " + (dz * nz).ToString());
             sw.WriteLine();
             // device dimensions
             sw.WriteLine("\tpmma_depth = " + pmma_depth.ToString());
             sw.WriteLine("\tgate_depth = " + gate_depth.ToString());
-            sw.WriteLine("\tgate_width = " + split_width.ToString());
+            sw.WriteLine("\tsplit_width = " + split_width.ToString());
             sw.WriteLine("\ttop_depth = " + top_depth.ToString());
             sw.WriteLine("\twell_depth = " + well_depth.ToString());
             sw.WriteLine("\twell_width = " + well_width.ToString());
@@ -150,6 +159,9 @@ namespace TwoD_ThomasFermiPoisson
             // boundary conditions
             sw.WriteLine("\tsplit_V = " + split_V.ToString());
             sw.WriteLine("\ttop_V = " + top_V.ToString());
+            sw.WriteLine();
+            // bottom boundary condition
+            sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! Electrical permitivities");
             sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
@@ -164,26 +176,32 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
-            sw.WriteLine("\tREGION 1");
+            sw.WriteLine("\tREGION 1 ! Total simulation domain");
+            sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\teps = eps_0");
-            sw.WriteLine("\t\tSTART(-ly / 2, -lz) ! Total simulation domain");
+            sw.WriteLine("\t\tSTART(-ly / 2, -lz)");
             // bottom of device boundary condition
-            sw.WriteLine("\t\tVALUE(u) = " + bottom_bc.ToString());
+            sw.WriteLine("\t\tVALUE(u) = bottom_bc");
             sw.WriteLine("\t\tLINE TO (ly / 2, -lz)");
+            // and reset to default boundary conditions for all other edges
+            sw.WriteLine("\t\tNATURAL(u) = 0");
             sw.WriteLine("\t\tLINE TO (ly / 2, pmma_depth + top_depth)");
             sw.WriteLine("\t\tLINE TO (-ly / 2, pmma_depth + top_depth)");
             sw.WriteLine("\t\tLINE TO CLOSE");
             sw.WriteLine("\tREGION 2 ! Material");
+            sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\teps = eps_0 * eps_r");
             sw.WriteLine("\t\tSTART (-ly / 2, -lz)");
 	        sw.WriteLine("\t\tLINE TO (-ly / 2, 0) TO (ly / 2, 0) TO (ly / 2, -lz) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tREGION 3 ! PMMA Layer");
+            sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\teps = eps_0 * eps_pmma");
 	        sw.WriteLine("\t\tSTART (-ly / 2, 0)");
             sw.WriteLine("\t\tLINE TO (-ly / 2, pmma_depth) TO (ly / 2, pmma_depth) TO (ly / 2, 0) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tREGION 4 ! Left split gate");
+            sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\teps = eps_0");
 	        sw.WriteLine("\t\tSTART(-ly / 2, 0)");
 	        // left split gate voltate
@@ -191,6 +209,7 @@ namespace TwoD_ThomasFermiPoisson
 	        sw.WriteLine("\t\tLINE TO (-ly / 2, gate_depth) TO (-split_width / 2, gate_depth) TO (-split_width / 2, 0) TO CLOSE");
 	        sw.WriteLine();
             sw.WriteLine("\tREGION 5 ! Right split gate");
+            sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\teps = eps_0");
             sw.WriteLine("\t\tSTART(ly / 2, 0)");
             // right split gate voltage
@@ -198,6 +217,7 @@ namespace TwoD_ThomasFermiPoisson
 	        sw.WriteLine("\t\tLINE TO (ly / 2, gate_depth) TO (split_width / 2, gate_depth) TO (split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tREGION 6 ! Top gate");
+            sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\teps = eps_0");
 	        sw.WriteLine("\t\tSTART(ly / 2, pmma_depth)");
             // top gate voltage
@@ -205,14 +225,16 @@ namespace TwoD_ThomasFermiPoisson
 	        sw.WriteLine("\t\tLINE TO (ly / 2, pmma_depth + top_depth) TO (-ly / 2, pmma_depth + top_depth) TO (-ly / 2, pmma_depth) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tREGION 7 ! Quantum well");
+            sw.WriteLine("\t\trho = TABLE(\'" + well_dens_filename + "\', x, y)");
 	        sw.WriteLine("\t\teps = eps_0 * eps_r");
 	        sw.WriteLine("\t\tSTART(ly / 2, -well_depth)");
-	        sw.WriteLine("\t\tLINE TO (ly / 2, -well_depth - well_width) TO (-ly / 2, -well_depth - well_width) TO (-ly / 2, well_depth) TO CLOSE");
+	        sw.WriteLine("\t\tLINE TO (ly / 2, -lz) TO (-ly / 2, -lz) TO (-ly / 2, -well_depth) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tREGION 8 ! Dopent layer");
+            sw.WriteLine("\t\trho = TABLE(\'" + dopent_dens_filename + "\', x, y)");
 	        sw.WriteLine("\t\teps = eps_0 * eps_r");
 	        sw.WriteLine("\t\tSTART(ly / 2, -dopent_depth)");
-	        sw.WriteLine("\t\tLINE TO (ly / 2, -dopent_depth - dopent_width) TO (-ly / 2, -dopent_depth - dopent_width) TO (-ly / 2, dopent_depth) TO CLOSE");
+	        sw.WriteLine("\t\tLINE TO (ly / 2, -dopent_depth - dopent_width) TO (-ly / 2, -dopent_depth - dopent_width) TO (-ly / 2, -dopent_depth) TO CLOSE");
             sw.WriteLine();
             //{REGION 8 {Substrate}
 	        //eps = eps_0 * eps_r
@@ -225,9 +247,10 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(rho)");
             sw.WriteLine("\tCONTOUR(u)");
-            sw.WriteLine("\tCONTOUR(u) ZOOM (-ly / 2, -well_depth - well_width, ly, well_width) EXPORT(ny, nz) FORMAT \'#1\' FILE = \'pot.dat\'");
-	        sw.WriteLine("\tELEVATION(u) FROM (-lx / 2, -well_depth - well_width / 2) TO (lx / 2, well_depth - well_width / 2)");
-        	sw.WriteLine("\tELEVATION(u) FROM (0, 0) TO (0, -ly)");
+            sw.WriteLine("\tCONTOUR(u) ZOOM (-ly / 2, -lz, ly, lz) EXPORT(ny, nz) FORMAT \'#1\' FILE = \'pot.dat\'");
+	        sw.WriteLine("\tELEVATION(u) FROM (-ly / 2, -well_depth - well_width / 2) TO (ly / 2, -well_depth - well_width / 2)");
+            sw.WriteLine("\tELEVATION(u) FROM (0, 0) TO (0, -lz)");
+            sw.WriteLine("\tELEVATION(rho) FROM (0, 0) TO (0, -lz)");
             sw.WriteLine("END");
 
             // and close the file writer

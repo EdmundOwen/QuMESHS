@@ -17,7 +17,8 @@ namespace Solver_Bases
         Al03GaAs,
         AlAs,
         In075GaAs,
-        InAs
+        InAs,
+        PMMA
     }
 
     public enum Dopent

@@ -16,6 +16,7 @@ namespace Solver_Bases
         double acceptor_conc, donor_conc;
         double acceptor_energy, donor_energy;
         double temperature;
+        double max_density = 1.0;
 
         /// <summary>
         /// this value is used as temporary storage of the chemical potential for the root-finding method in order
@@ -55,7 +56,14 @@ namespace Solver_Bases
             double acceptor_holes = acceptor_conc * 2.0 * Physics_Base.Get_Dopent_Fermi_Function(-1.0 * (-0.5 * band_gap + acceptor_energy), -mu, temperature);
             double valence_holes = Get_Valence_Electron_Density(mu);
 
-            return Physics_Base.q_e * (donor_nuclei - acceptor_nuclei + acceptor_holes + valence_holes - conductance_electrons - donor_electrons);
+            double density = Physics_Base.q_e * (donor_nuclei - acceptor_nuclei + acceptor_holes + valence_holes - conductance_electrons - donor_electrons);
+
+            if (density > max_density)
+                return max_density;
+            else if (-1.0 * density > max_density)
+                return -1.0 * max_density;
+            else
+                return density;
         }
 
         public double Get_Equilibrium_Chemical_Potential()

@@ -15,14 +15,16 @@ namespace Solver_Bases
         protected double dx, dy, dz;
 
         protected bool flexPDE;
+        protected string flexpde_location;
         protected string flexpde_inputfile;
 
         protected bool freeze_out_dopents;
 
         protected double tol;
         private bool converged;
+        private double convergence_factor = double.MaxValue;
 
-        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, bool using_flexPDE, string flexPDE_input, bool freeze_out_dopents, double tol)
+        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
         {
             this.nx = nx; this.ny = ny; this.nz = nz;
             this.dx = dx; this.dy = dy; this.dz = dz;
@@ -30,7 +32,10 @@ namespace Solver_Bases
             // check whether using flexPDE
             flexPDE = using_flexPDE;
             if (using_flexPDE)
+            {
                 this.flexpde_inputfile = flexPDE_input;
+                this.flexpde_location = flexPDE_location;
+            }
 
             // whether the dopents are frozen out or not
             this.freeze_out_dopents = freeze_out_dopents;
@@ -52,10 +57,10 @@ namespace Solver_Bases
 
             // run the flexPDE program as a process (quietly)
             //Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
-            Process.Start("C:\\FlexPDE5\\FlexPDE5.exe", "-Q " + flexpde_inputfile);
+            Process.Start(flexpde_location, "-Q " + flexpde_inputfile);
             while (!File.Exists("pot.dat"))
                 Thread.Sleep(10);
-            Thread.Sleep(10);
+            Thread.Sleep(1000);
 
             string[] lines = File.ReadAllLines("pot.dat");
 
@@ -67,7 +72,7 @@ namespace Solver_Bases
                     first_line = i + 1;
                     break;
                 }
-
+            
             // return band energy using E_c = - q_e * phi
             return -1.0 * Physics_Base.q_e * Parse_Potential(lines, first_line);
         }
@@ -87,6 +92,8 @@ namespace Solver_Bases
                 if (energy_diff[i] < tol)
                     converged_test[i] = 1;
             }
+
+            convergence_factor = energy_diff.Sum();
 
             if (converged_test.Sum() == energy_diff.Length)
                 return true;
@@ -111,6 +118,8 @@ namespace Solver_Bases
                 if (energy_diff[i] < tol)
                     converged_test[i] = 1;
             }
+
+            convergence_factor = energy_diff.Sum();
 
             if (converged_test.Sum() == energy_diff.Length)
                 return true;
@@ -189,7 +198,12 @@ namespace Solver_Bases
             get { return converged; }
         }
 
-        protected abstract void Save_Density(Band_Data density, string filename);
+        public double Convergence_Factor
+        {
+            get { return convergence_factor; }
+        }
+
+        public abstract void Save_Density(Band_Data density, string filename);
         protected abstract Band_Data Parse_Potential(string[] data, int first_line);
         protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] band_layer_depths);
     }

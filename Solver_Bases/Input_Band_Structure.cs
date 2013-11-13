@@ -74,7 +74,8 @@ namespace Solver_Bases
                 // add concentration to result with a factor of 10^-21 to convert from cm^-3 to nm^-3
                 concentration[i] = conc * 1e-21;
                 // and get the dopent energy
-                energy[i] = Get_Dopent_Energy(band_structure[layer - 1], dopent);
+                if (concentration[i] != 0.0)
+                    energy[i] = Get_Dopent_Energy(band_structure[layer - 1], dopent);
             }
         }
 
@@ -152,6 +153,9 @@ namespace Solver_Bases
                     
                     goto default;
 
+                case "PMMA":
+                    return Materials.PMMA;
+
                 default:
                     throw new NotImplementedException("Error - Material properties not known for " + input_file_entry[0]);
             }
@@ -168,6 +172,8 @@ namespace Solver_Bases
                     return 1420.0;
                 case Materials.Al03GaAs:
                     return 1800.0;
+                case Materials.PMMA:
+                    return 4400.0;
 
                 default:
                     throw new NotImplementedException("Error - no material details for " + materials.ToString());

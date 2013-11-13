@@ -9,7 +9,7 @@ using Solver_Bases;
 
 namespace OneD_ThomasFermiPoisson
 {
-    class Experiment : Experiment_Base
+    public class Experiment : Experiment_Base
     {
         SpinResolved_DoubleVector charge_density;
 
@@ -38,14 +38,14 @@ namespace OneD_ThomasFermiPoisson
             double bottom_bc = dens_solv.Get_Chemical_Potential(nz - 1);
 
             // initialise potential solver
-            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, top_bc, bottom_bc, layer_depths, using_flexPDE, flexdPDE_input, freeze_dopents, tol);
+            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, top_bc, bottom_bc, layer_depths, using_flexPDE, flexPDE_input, flexPDE_location, freeze_dopents, tol);
             // initialise the band energy as the solution with zero density
             band_offset = new Band_Data(pois_solv.Get_Band_Energy(new DoubleVector(nz, 0.0)));
 
             int count = 0;
             while (!pois_solv.Converged)
             {
-                Console.WriteLine("Iteration:\t" + count.ToString());
+                Console.WriteLine("Iteration:\t" + count.ToString() + "\tConvergence factor:\t" + pois_solv.Convergence_Factor.ToString());
 
                 // calculate the total charge density for this band offset
                 charge_density = dens_solv.Get_OneD_ChargeDensity(band_offset.vec);
@@ -78,6 +78,9 @@ namespace OneD_ThomasFermiPoisson
             density.Spin_Up = solver.OptimalX;
             potential.vec = pois_solv.Get_Potential(density.Spin_Summed_Vector);
             */
+
+            // save final density out
+            pois_solv.Save_Density(new Band_Data(charge_density.Spin_Summed_Vector), "dens_1D.dat");
 
             dens_solv.Output(charge_density, "charge_density.dat");
             pois_solv.Output(new Band_Data(band_structure / 2.0 - band_offset.vec), "potential.dat");

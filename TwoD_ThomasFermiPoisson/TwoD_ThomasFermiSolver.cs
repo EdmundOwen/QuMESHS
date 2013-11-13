@@ -57,7 +57,12 @@ namespace TwoD_ThomasFermiPoisson
 
         public double Get_Chemical_Potential(int location)
         {
-            ZeroD_Density chem_pot_cal = new ZeroD_Density(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature);
+            return Get_Chemical_Potential(location, temperature);
+        }
+
+        public double Get_Chemical_Potential(int location, double temperature_input)
+        {
+            ZeroD_Density chem_pot_cal = new ZeroD_Density(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature_input);
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }

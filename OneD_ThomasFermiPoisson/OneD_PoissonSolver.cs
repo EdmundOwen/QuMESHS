@@ -15,15 +15,15 @@ namespace OneD_ThomasFermiPoisson
     {
         double top_bc, bottom_bc;
         // this is where the density will be saved out to
-        string dens_filename = "dens.dat";
+        string dens_filename = "dens_1D.dat";
 
         // parameters for regular grid solve
         DoubleMatrix laplacian;
         DoubleLUFact lu_fact;
 
         // 
-        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, bool freeze_out_dopents, double tol)
-            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, freeze_out_dopents, tol)
+        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
+            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, flexPDE_location, freeze_out_dopents, tol)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // (as phi = E_c / (-1.0 * q_e)
@@ -35,8 +35,8 @@ namespace OneD_ThomasFermiPoisson
                 laplacian = Generate_Laplacian();
                 lu_fact = new DoubleLUFact(laplacian);
             }
-            else
-                Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
+
+            Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
         }
 
         public DoubleVector Get_Band_Energy(DoubleVector density)
@@ -49,7 +49,7 @@ namespace OneD_ThomasFermiPoisson
                 return Get_BandEnergy_On_Regular_Grid(density);
         }
 
-        protected override void Save_Density(Band_Data density, string filename)
+        public override void Save_Density(Band_Data density, string filename)
         {
             // check that the dimension of the density is correct
             if (density.Dimension != 1)
@@ -61,13 +61,13 @@ namespace OneD_ThomasFermiPoisson
             // save out positions
             sw.WriteLine("x " + nz.ToString());
             for (int i = 0; i < nz;i++)
-                sw.Write(((float)(i * dz)).ToString() + '\t');
+                sw.WriteLine(((float)(i * dz)).ToString());
 
             // save out densities
             sw.WriteLine();
             sw.WriteLine("data");
             for (int i = 0; i < nz; i++)
-                sw.Write(((float)density.vec[i]).ToString() + '\t');
+                sw.WriteLine(((float)density.vec[i]).ToString());
 
             sw.Close();
         }
@@ -165,10 +165,6 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\tnx = " + nz.ToString());
             // size of the sample
             sw.WriteLine("\tlx = " + (nz * dz).ToString());
-            // device dimensions
-            sw.WriteLine("\tdopent_depth = " + dopent_depth.ToString());
-            sw.WriteLine("\tdopent_width = " + dopent_width.ToString());
-            sw.WriteLine("\twell_depth = " + well_depth.ToString());
             // the top boundary condition on the surface of the sample
             sw.WriteLine("\t! Boundary conditions");
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
