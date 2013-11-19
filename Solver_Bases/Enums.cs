@@ -11,19 +11,27 @@ namespace Solver_Bases
         Down = 1
     }
 
-    public enum Materials
+    public enum Material
     {
         GaAs,
         Al03GaAs,
+        AlGaAs,
         AlAs,
         In075GaAs,
         InAs,
-        PMMA
+        PMMA,
+        Air,
+        Substrate
     }
 
     public enum Dopent
     {
         donor,
         acceptor
+    }
+
+    public enum Geometry_Type
+    {
+        Slab
     }
 }

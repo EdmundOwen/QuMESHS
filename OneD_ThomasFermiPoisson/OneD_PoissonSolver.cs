@@ -8,20 +8,19 @@ using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Matrix;
 using Solver_Bases;
 using System.Threading;
+using Solver_Bases.Layers;
 
 namespace OneD_ThomasFermiPoisson
 {
     class OneD_PoissonSolver : Potential_Base
     {
         double top_bc, bottom_bc;
-        // this is where the density will be saved out to
-        string dens_filename = "dens_1D.dat";
 
         // parameters for regular grid solve
         DoubleMatrix laplacian;
         DoubleLUFact lu_fact;
 
-        // 
+        /*
         public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
             : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, flexPDE_location, freeze_out_dopents, tol)
         {
@@ -36,9 +35,26 @@ namespace OneD_ThomasFermiPoisson
                 lu_fact = new DoubleLUFact(laplacian);
             }
 
+            this.dens_filename = "dens_1D.dat";
+
             Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
         }
+        */
 
+        public OneD_PoissonSolver(double dz, int nz, ILayer[] layers, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
+            : base(1.0, 1.0, dz, 1, 1, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol)
+        {
+            // generate Laplacian matrix (spin-resolved)
+            if (!flexPDE)
+            {
+                laplacian = Generate_Laplacian();
+                lu_fact = new DoubleLUFact(laplacian);
+            }
+
+            this.dens_filename = "dens_1D.dat";
+        }
+
+        /*
         public DoubleVector Get_Band_Energy(DoubleVector density)
         {
             if (flexPDE)
@@ -48,6 +64,7 @@ namespace OneD_ThomasFermiPoisson
                 // calculate band energies using a potential calculated on a regular grid (not ideal, or scalable)
                 return Get_BandEnergy_On_Regular_Grid(density);
         }
+        */
 
         public override void Save_Density(Band_Data density, string filename)
         {
@@ -60,8 +77,8 @@ namespace OneD_ThomasFermiPoisson
 
             // save out positions
             sw.WriteLine("x " + nz.ToString());
-            for (int i = 0; i < nz;i++)
-                sw.WriteLine(((float)(i * dz)).ToString());
+            for (int i = 0; i < nz; i++)
+                sw.WriteLine(((float)(i * dz + zmin)).ToString());
 
             // save out densities
             sw.WriteLine();
@@ -86,14 +103,14 @@ namespace OneD_ThomasFermiPoisson
             return result;
         }
 
-        DoubleVector Get_BandEnergy_On_Regular_Grid(DoubleVector density)
+        protected override Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density)
         {
             // set the top and bottom boundary conditions
             double factor = -1.0 * Physics_Base.epsilon / (dz * dz);
-            density[0] = top_bc * factor; density[density.Length - 1] = bottom_bc * factor;
+            density.vec[0] = top_bc * factor; density.vec[density.Length - 1] = bottom_bc * factor;
 
             // solve Poisson's equation
-            DoubleVector potential = lu_fact.Solve(density);
+            Band_Data potential = new Band_Data(lu_fact.Solve(density.vec));
             
             // return band energy
             return -1.0 * Physics_Base.q_e * potential;
@@ -126,6 +143,7 @@ namespace OneD_ThomasFermiPoisson
             return result;
         }
 
+        /*
         /// <summary>
         /// creates an input file for flexPDE to solve a 1D poisson equation
         /// </summary>
@@ -223,6 +241,84 @@ namespace OneD_ThomasFermiPoisson
 
             // and close the file writer
             sw.Close();
+        }
+        */
+
+        protected override void Create_FlexPDE_Input_File(string flexPDE_input, ILayer[] layers)
+        {
+            // check if an input file already exists and delete it
+            if (File.Exists(flexPDE_input))
+                File.Delete(flexPDE_input);
+
+            // open up a new streamwriter to create the input file
+            StreamWriter sw = new StreamWriter(flexPDE_input);
+
+            // write the file
+            sw.WriteLine("TITLE \'Band Structure\'");
+            sw.WriteLine("COORDINATES cartesian1");
+            sw.WriteLine("VARIABLES");
+            sw.WriteLine("\tu");
+            sw.WriteLine("SELECT");
+            // gives the flexPDE tolerance for the finite element solve
+            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("DEFINITIONS");
+            // this is where the density variable
+            sw.WriteLine("\trho\t! density");
+            // number of lattice sites that the density needs to be output to
+            sw.WriteLine("\tnx = " + nz.ToString());
+            // size of the sample
+            sw.WriteLine("\tlx = " + (nz * dz).ToString());
+            // the top boundary condition on the surface of the sample
+            sw.WriteLine("\t! Boundary conditions");
+            sw.WriteLine("\ttop_V = " + top_bc.ToString());
+            sw.WriteLine("\tbottom_V = " + bottom_bc.ToString());
+            sw.WriteLine();
+            sw.WriteLine("\t! Electrical permitivities");
+            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
+            // relative permitivity of materials
+            sw.WriteLine("\teps_r = " + Physics_Base.epsilon_r.ToString());
+            sw.WriteLine("\teps_PMMA = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\teps");
+            sw.WriteLine();
+            sw.WriteLine("EQUATIONS");
+            // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
+            sw.WriteLine("\tu: div(eps * grad(u)) = rho\t! Poisson's equation");
+            sw.WriteLine();
+            // the boundary definitions for the differnet layers
+            sw.WriteLine("BOUNDARIES");
+
+            // cycle through layers
+            for (int i = 1; i < layers.Length; i++)
+            {
+                sw.WriteLine("\tREGION " + layers[i].Layer_No.ToString());
+                sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
+                sw.WriteLine("\t\teps = " + Get_Permitivity(layers[i].Material));
+                sw.WriteLine("\t\tSTART(" + layers[i].Zmin.ToString() + ")");
+                if (i == 1)
+                    sw.WriteLine("\t\tPOINT VALUE(u) = top_V");
+                sw.WriteLine("\t\tLINE TO (" + layers[i].Zmax.ToString() + ")");
+                if (i == layers.Length - 1)
+                    sw.WriteLine("\t\tPOINT VALUE(u) = bottom_V");
+                sw.WriteLine();
+            }
+
+            sw.WriteLine("PLOTS");
+            sw.WriteLine("\tELEVATION(rho) FROM (" + zmin.ToString() + ") TO (" + (zmin + nz * dz).ToString() + ")");
+            sw.WriteLine("\tELEVATION(u) FROM (" + zmin.ToString() + ") TO (" + (zmin + nz * dz).ToString() + ") EXPORT(nx) FORMAT \'#1\' FILE=\'pot.dat\'");
+            sw.WriteLine("END");
+
+            // and close the file writer
+            sw.Close();
+        }
+
+        public void Set_Boundary_Conditions(ILayer[] layers, double top_bc, double bottom_bc)
+        {
+            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
+            // (as phi = E_c / (-1.0 * q_e)
+            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
+
+            if (flexpde_inputfile != null)
+                Create_FlexPDE_Input_File(flexpde_inputfile, layers);
         }
     }
 }

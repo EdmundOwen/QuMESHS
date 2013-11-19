@@ -1,17 +1,19 @@
 # test comment
-surface schottky=0.6 v1
+#surface schottky=0.9 v1
 #
-## High density shallow HEMT
+## High density shallow HEMT (eg W0626)
 #
-GaAs t=10
-AlGaAs t=40 x=.3 Nd=0.63e18
-AlGaAs t=40 x=.3
-GaAs t=410
+mat=PMMA t=200
+surface=true
+mat=GaAs t=10
+mat=AlGaAs t=40 x=.3 Nd=0.63e18
+mat=AlGaAs t=40 x=.3
+mat=GaAs t=410
 #
-## Low density deep HEMT
+## Low density deep HEMT (eg W0616)
 #
 #GaAs t=10
-#AlGaAs t=200 x=.3 Nd=0.4e17
+#AlGaAs t=200 x=.3 Nd=4e16
 #AlGaAs t=75 x=.3
 #GaAs t=215 Nd=1e10
 #
@@ -19,7 +21,7 @@ GaAs t=410
 #
 #GaAs t=24 Na=1e14
 #AlGaAs t=36 x=.3 Nd=0.63e18
-#AlGaAs t=10 x=.3 Na=1e14
-#GaAs t=50 Nd=1e14
+#AlGaAs t=10 x=.3 
+#GaAs t=50 
 #
-substrate
+mat=substrate

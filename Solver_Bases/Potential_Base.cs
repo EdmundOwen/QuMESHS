@@ -6,28 +6,42 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using CenterSpace.NMath.Core;
+using Solver_Bases.Layers;
+using Solver_Bases.Geometry;
 
 namespace Solver_Bases
 {
     public abstract class Potential_Base
     {
         protected int nx, ny, nz;
+        protected double xmin, ymin, zmin;
         protected double dx, dy, dz;
+        protected int dim;
+
+        /// this is where the density will be saved out to
+        protected string dens_filename;
 
         protected bool flexPDE;
         protected string flexpde_location;
         protected string flexpde_inputfile;
 
-        protected bool freeze_out_dopents;
-
         protected double tol;
         private bool converged;
         private double convergence_factor = double.MaxValue;
 
-        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
+        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, ILayer[] layers, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
         {
             this.nx = nx; this.ny = ny; this.nz = nz;
             this.dx = dx; this.dy = dy; this.dz = dz;
+            this.xmin = Geom_Tool.Get_Xmin(layers); this.ymin = Geom_Tool.Get_Ymin(layers); this.zmin = Geom_Tool.Get_Zmin(layers);
+
+            // check how many actual dimensions are present
+            if (nx != 1)
+                dim = 3;
+            else if (ny != 1)
+                dim = 2;
+            else
+                dim = 1;
 
             // check whether using flexPDE
             flexPDE = using_flexPDE;
@@ -37,10 +51,18 @@ namespace Solver_Bases
                 this.flexpde_location = flexPDE_location;
             }
 
-            // whether the dopents are frozen out or not
-            this.freeze_out_dopents = freeze_out_dopents;
             // get the tolerance needed for the potential before saying it's good enough
             this.tol = tol;
+        }
+
+        public Band_Data Get_Band_Energy(Band_Data density)
+        {
+            if (flexPDE)
+                // calculate band energy using a potential found by calling FlexPDE
+                return Get_BandEnergy_From_FlexPDE(density, dens_filename);
+            else
+                // calculate band energies using a potential calculated on a regular grid (not ideal, or scalable)
+                return Get_BandEnergy_On_Regular_Grid(density);
         }
 
         /// <summary>
@@ -54,6 +76,9 @@ namespace Solver_Bases
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
             try { File.Delete("pot.dat"); }
             catch (Exception) { }
+
+            if (!File.Exists(flexpde_inputfile))
+                throw new Exception("Error - there is no input file for flexpde!");
 
             // run the flexPDE program as a process (quietly)
             //Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
@@ -193,6 +218,24 @@ namespace Solver_Bases
             band_energy = band_energy - blending_energy;
         }
 
+        protected string Get_Permitivity(Material material)
+        {
+            switch (material)
+            {
+                case Material.GaAs:
+                    return "eps_r * eps_0";
+                case Material.AlGaAs:
+                    return "eps_r * eps_0";
+                case Material.PMMA:
+                    return "eps_pmma * eps_0";
+                case Material.Air:
+                    return "eps_0";
+                default:
+                    throw new NotImplementedException("Error - Cannot find electrical permitivity for material: " + material.ToString());
+
+            }
+        }
+
         public bool Converged
         {
             get { return converged; }
@@ -205,6 +248,8 @@ namespace Solver_Bases
 
         public abstract void Save_Density(Band_Data density, string filename);
         protected abstract Band_Data Parse_Potential(string[] data, int first_line);
-        protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] band_layer_depths);
+        //protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] band_layer_depths);
+        protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, ILayer[] layers);
+        protected abstract Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density);
     }
 }

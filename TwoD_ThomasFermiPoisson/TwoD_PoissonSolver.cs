@@ -7,24 +7,21 @@ using System.Text;
 using System.Threading;
 using CenterSpace.NMath.Core;
 using Solver_Bases;
+using Solver_Bases.Layers;
 
 namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_PoissonSolver : Potential_Base
     {
-        string dens_filename = "dens_2D.dat";
         double bottom_bc;
 
-        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
-            : base(1.0, dy, dz, 1, ny, nz, using_flexPDE, flexPDE_input, flexPDE_location, freeze_out_dopents, tol)
+        public TwoD_PoissonSolver(double dy, double dz, int ny, int nz, ILayer[] layers, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
+            : base(1.0, dy, dz, 1, ny, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol)
         {
-            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // (as phi = E_c / (-1.0 * q_e))
-            this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
-
-            Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
+            this.dens_filename = "dens_2D.dat";
         }
 
+        /*
         public DoubleMatrix Get_Band_Energy(DoubleMatrix density)
         {
             if (flexPDE)
@@ -34,6 +31,7 @@ namespace TwoD_ThomasFermiPoisson
                 // calculate potential on a regular grid (not ideal, or scalable)
                 throw new NotImplementedException();
         }
+        */ 
 
         public override void Save_Density(Band_Data density, string filename)
         {
@@ -90,7 +88,7 @@ namespace TwoD_ThomasFermiPoisson
             return result;
         }
 
-        
+        /*
         /// <summary>
         /// creates an input file for flexPDE to solve a 2D poisson equation (not yet implemented)
         /// </summary>
@@ -255,6 +253,124 @@ namespace TwoD_ThomasFermiPoisson
 
             // and close the file writer
             sw.Close();
+        }
+        */
+
+        /// <summary>
+        /// creates an input file for flexPDE to solve a 2D poisson equation (not yet implemented)
+        /// </summary>
+        protected override void Create_FlexPDE_Input_File(string flexPDE_input, ILayer[] layers)
+        {
+            // check if an input file already exists and delete it
+            if (File.Exists(flexPDE_input))
+                File.Delete(flexPDE_input);
+
+            // open up a new streamwriter to create the input file
+            StreamWriter sw = new StreamWriter(flexPDE_input);
+
+            sw.WriteLine("TITLE \'Split Gate\'");
+            sw.WriteLine("COORDINATES cartesian2");
+            sw.WriteLine("VARIABLES");
+            sw.WriteLine("\tu");
+            sw.WriteLine("SELECT");
+            // gives the flexPDE tolerance for the finite element solve
+            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("DEFINITIONS");
+            // this is where the density variable
+            sw.WriteLine("\trho");
+            sw.WriteLine();
+            // lattice dimensions for outputting the potential for the density solver
+            sw.WriteLine("\tny = " + ny.ToString());
+            sw.WriteLine("\tnz = " + nz.ToString());
+            // simulation dimension
+            sw.WriteLine("\tly = " + (dy * ny).ToString());
+            sw.WriteLine("\tlz = " + (dz * nz).ToString());
+            sw.WriteLine();
+            // boundary conditions
+            sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
+            sw.WriteLine("\tsplit_V = " + split_V.ToString());
+            sw.WriteLine("\ttop_V = " + top_V.ToString());
+            sw.WriteLine();
+            sw.WriteLine("\t! Electrical permitivities");
+            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
+            // relative permitivity of materials
+            sw.WriteLine("\teps_r = " + Physics_Base.epsilon_r.ToString());
+            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\teps");
+            sw.WriteLine();
+            sw.WriteLine("EQUATIONS");
+            // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
+            sw.WriteLine("\tu: div(eps * grad(u)) = rho\t! Poisson's equation");
+            sw.WriteLine();
+            // the boundary definitions for the differnet layers
+            sw.WriteLine("BOUNDARIES");
+
+            // cycle through layers
+            for (int i = 1; i < layers.Length; i++)
+            {
+                sw.WriteLine("\tREGION " + layers[i].Layer_No.ToString());
+                sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
+                sw.WriteLine("\t\teps = " + Get_Permitivity(layers[i].Material));
+                sw.WriteLine("\t\tSTART(ly / 2, " + layers[i].Zmin.ToString() + ")");
+                sw.WriteLine("\t\tLINE TO (ly / 2, " + layers[i].Zmax.ToString() + ")");
+                // set top gate here
+                if (i == layers.Length - 1)
+                    sw.WriteLine("\t\tVALUE(u) = top_V");
+                sw.WriteLine("\t\tLINE TO (-ly / 2, " + layers[i].Zmax.ToString() + ")");
+                sw.WriteLine("\t\tNATURAL(u) = 0 LINE TO (-ly / 2, " + layers[i].Zmin.ToString() + ")");
+                // set bottom boundary condition
+                if (i == 1)
+                    sw.WriteLine("\t\tVALUE(u) = bottom_bc");
+                sw.WriteLine("\t\tLINE TO CLOSE");
+                sw.WriteLine();
+            }
+
+            sw.WriteLine("\tREGION " + layers.Length.ToString() + " ! Left split gate");
+            sw.WriteLine("\t\trho = 0");
+            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\tSTART(-ly / 2, 0)");
+            // left split gate voltate
+            sw.WriteLine("\t\tVALUE(u) = split_V");
+            sw.WriteLine("\t\tLINE TO (-ly / 2, 10) TO (-600 / 2, 10) TO (-600 / 2, 0) TO CLOSE");
+            sw.WriteLine();
+            sw.WriteLine("\tREGION 5 " + (layers.Length + 1).ToString() + "! Right split gate");
+            sw.WriteLine("\t\trho = 0");
+            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\tSTART(ly / 2, 0)");
+            // right split gate voltage
+            sw.WriteLine("\t\tVALUE(u) = split_V");
+            sw.WriteLine("\t\tLINE TO (ly / 2, 10) TO (600 / 2, 10) TO (600 / 2, 0) TO CLOSE");
+            sw.WriteLine();
+
+            // and finally, write the gates
+
+            sw.WriteLine("PLOTS");
+            sw.WriteLine("\tCONTOUR(rho)");
+            sw.WriteLine("\tCONTOUR(u)");
+            sw.WriteLine("\tCONTOUR(u) ZOOM (-ly / 2, -lz, ly, lz) EXPORT(ny, nz) FORMAT \'#1\' FILE = \'pot.dat\'");
+            sw.WriteLine("\tELEVATION(u) FROM (0, 0) TO (0, -lz)");
+            sw.WriteLine("\tELEVATION(rho) FROM (0, 0) TO (0, -lz)");
+            sw.WriteLine("END");
+
+            // and close the file writer
+            sw.Close();
+        }
+
+        double top_V, split_V;
+        public void Set_Boundary_Conditions(ILayer[] layers, double top_V, double split_V, double bottom_bc)
+        {
+            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
+            // (as phi = E_c / (-1.0 * q_e)
+            this.top_V = top_V; this.split_V = split_V;
+            this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
+
+            if (flexpde_inputfile != null)
+                Create_FlexPDE_Input_File(flexpde_inputfile, layers);
+        }
+
+        protected override Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density)
+        {
+            throw new NotImplementedException();
         }
     }
 }

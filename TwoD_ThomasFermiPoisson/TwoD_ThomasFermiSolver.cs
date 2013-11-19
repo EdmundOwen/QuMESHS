@@ -4,20 +4,18 @@ using System.Linq;
 using System.Text;
 using CenterSpace.NMath.Core;
 using Solver_Bases;
+using Solver_Bases.Layers;
 
 namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_ThomasFermiSolver : Density_Base
     {
+        /*
         DoubleVector band_gap;
         SpinResolved_DoubleMatrix dopent_concentration;
         DoubleVector acceptor_concentration, donor_concentration;
         DoubleVector acceptor_energy_above_Ev, donor_energy_below_Ec;
-
-        // redundant integration parameters
-        //double dE = 1.0;
-        //double no_kB_T_above_Ef = 100.0;
-
+        
         public TwoD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
                                         double temperature, double dy, double dz, int ny, int nz) 
             : base(temperature, 1.0, dy, dz, 1, ny, nz)
@@ -34,7 +32,14 @@ namespace TwoD_ThomasFermiPoisson
             this.donor_energy_below_Ec = band_gap / 2.0 - donor_energy;
             this.acceptor_energy_above_Ev = band_gap / 2.0 - acceptor_energy;
         }
+        */
 
+        public TwoD_ThomasFermiSolver(double temperature, double dy, double dz, int ny, int nz, double ymin, double zmin)
+            : base(temperature, 1.0, dy, dz, 1, ny, nz, 1, ymin, zmin)
+        {
+        }
+
+        /*
         public SpinResolved_DoubleMatrix Get_TwoD_ChargeDensity(DoubleMatrix chem_pot)
         {
             // spin-resolved density
@@ -54,7 +59,32 @@ namespace TwoD_ThomasFermiPoisson
 
             return charge_density;
         }
+        */ 
 
+        public void Get_TwoD_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        {
+            for (int i = 0; i < ny; i++)
+                for (int j = 0; j < nz; j++)
+                {
+                    double y = dy * i + ymin;
+                    double z = dz * j + zmin;
+                    
+                    // get the relevant layer and if it's frozen out, don't recalculate the charge
+                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z);
+                    if (current_Layer.Dopents_Frozen_Out(temperature))
+                        continue;
+
+                    // calculate the density at the given point
+                    ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
+                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot.mat[i, j]);
+
+                    // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                    density.Spin_Down.mat[i, j] = 0.5 * local_charge_density;
+                    density.Spin_Up.mat[i, j] = 0.5 * local_charge_density;
+                }
+        }
+
+        /*
         public double Get_Chemical_Potential(int location)
         {
             return Get_Chemical_Potential(location, temperature);
@@ -63,6 +93,19 @@ namespace TwoD_ThomasFermiPoisson
         public double Get_Chemical_Potential(int location, double temperature_input)
         {
             ZeroD_Density chem_pot_cal = new ZeroD_Density(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature_input);
+
+            return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
+        }
+        */ 
+
+        public double Get_Chemical_Potential(ILayer[] layers, double y, double z)
+        {
+            return Get_Chemical_Potential(layers, y, z, temperature);
+        }
+
+        public double Get_Chemical_Potential(ILayer[] layers, double y, double z, double temperature_input)
+        {
+            ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z), temperature_input);
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }

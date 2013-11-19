@@ -32,8 +32,6 @@ namespace TwoD_ThomasFermiPoisson
             exp.Initialise_Experiment(inputs);
             exp.Run();
             Console.WriteLine("Experiment complete");
-
-
         }
     }
 }

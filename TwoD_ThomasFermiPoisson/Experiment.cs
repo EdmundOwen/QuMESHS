@@ -17,16 +17,7 @@ namespace TwoD_ThomasFermiPoisson
 
     public class Experiment : Experiment_Base
     {
-        SpinResolved_DoubleMatrix charge_density;
-
-        double dy, dz;
-        int ny, nz; 
-
-        Density_Method calculation_method = Density_Method.by_ThomasFermi;
-
-        public Experiment()
-        {
-        }
+        double top_V, split_V;
 
         public void Initialise_Experiment(Dictionary<string, object> input_dict)
         {
@@ -39,15 +30,23 @@ namespace TwoD_ThomasFermiPoisson
             if (input_dict.ContainsKey("nz")) this.nz = (int)(double)input_dict["nz"]; else throw new KeyNotFoundException("No nz in input dictionary!");
             
             // physics parameters are done by the base method
-            base.Initialise(input_dict, dz, nz);
-            
+            base.Initialise(input_dict);
+
+            // gate voltages
+            top_V = (double)input_dict["top_V"];
+            split_V = (double)input_dict["split_V"];
+            ymin = -0.5 * dy * ny;
+
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
-            if (input_dict.ContainsKey("SpinResolved_Density")) this.charge_density = (SpinResolved_DoubleMatrix)input_dict["SpinResolved_Density"]; else this.charge_density = new SpinResolved_DoubleMatrix(ny, nz);
+            if (input_dict.ContainsKey("SpinResolved_Density")) this.charge_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
+            else this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny, nz)), new Band_Data(new DoubleMatrix(ny, nz)));
+
             if (input_dict.ContainsKey("Potential")) this.band_offset = new Band_Data((DoubleMatrix)input_dict["Potential"]); else this.band_offset = new Band_Data(new DoubleMatrix(ny, nz));
             
             Console.WriteLine("Experimental parameters initialised");
         }
 
+        /*
         public override void Run()
         {
             Console.WriteLine("Creating density calculation class");
@@ -137,6 +136,55 @@ namespace TwoD_ThomasFermiPoisson
             pois_solv.Save_Density(expanded_density, "dopents_frozen_dens_2D.dat");
 
             return expanded_density;
+        }
+        */
+
+        public override void Run()
+        {
+            // get temperatures to run the experiment at
+            double[] run_temps = { 4.0 };// Freeze_Out_Temperatures();
+
+            for (int i = 0; i < run_temps.Length; i++)
+            {
+                double current_temperature = run_temps[i];
+
+                // create charge density solver and calculate boundary conditions
+                TwoD_ThomasFermiSolver dens_solv = new TwoD_ThomasFermiSolver(current_temperature, dy, dz, ny, nz, ymin, zmin);
+                double top_bc = 0;// dens_solv.Get_Chemical_Potential(0);
+                double bottom_bc = dens_solv.Get_Chemical_Potential(layers, 0.0, zmin);
+
+                // initialise potential solver
+                TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+                pois_solv.Set_Boundary_Conditions(layers, top_V, split_V, bottom_bc);
+
+                // initialise the band energy as the solution with zero density
+                band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
+
+                int count = 0;
+                while (!pois_solv.Converged)
+                {
+                    Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + current_temperature.ToString() + "\tConvergence factor: " + pois_solv.Convergence_Factor.ToString());
+
+                    // calculate the total charge density for this band offset
+                    dens_solv.Get_TwoD_ChargeDensity(layers, ref charge_density, band_offset);
+
+                    // solve the band energy for the givencharge  density and mix in with the old band energy
+                    Band_Data new_band_energy = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
+                    pois_solv.Blend(ref band_offset, new_band_energy, alpha);
+
+                    count++;
+                }
+            }
+
+            // initialise output solvers
+            TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(temperature, dy, dz, ny, nz, ymin, zmin);
+            TwoD_PoissonSolver final_pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+
+            // save final density out
+            final_pois_solv.Save_Density(charge_density.Spin_Summed_Data, "dens_2D.dat");
+
+            final_dens_solv.Output(charge_density, "charge_density.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy, dz, ny, nz, ymin, zmin) - band_offset, "potential.dat");
         }
     }
 }

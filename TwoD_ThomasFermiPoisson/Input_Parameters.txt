@@ -18,7 +18,7 @@
 % dy = 20
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 100
+% nz = 140
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
 % dz = 5
@@ -41,6 +41,11 @@
 ## FlexPDE file executable location
 % FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
 #
+# Top gate voltage
+% top_V = 0.0
+#
+## Split gate voltage
+% split_V = -1.0
 #
 ############## Generic density solver details #########################
 #

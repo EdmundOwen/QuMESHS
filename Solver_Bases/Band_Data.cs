@@ -147,7 +147,7 @@ namespace Solver_Bases
 
         public static Band_Data operator /(Band_Data data, double scalar)
         {
-            return (1 / scalar) * data;
+            return (1.0 / scalar) * data;
         }
 
         public int Dimension

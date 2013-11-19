@@ -8,6 +8,7 @@ using Solver_Bases;
 
 namespace TwoD_ThomasFermiPoisson
 {
+    /*
     class TwoD_DensitySolver : Density_Base
     {
         DoubleComplexMatrix H;
@@ -259,4 +260,5 @@ namespace TwoD_ThomasFermiPoisson
             throw new NotImplementedException();
         }
     }
+    */
 }

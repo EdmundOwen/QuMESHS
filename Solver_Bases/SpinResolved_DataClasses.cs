@@ -230,4 +230,90 @@ namespace Solver_Bases
             set { spin_matrix[1] = value; }
         }
     }
+
+    public class SpinResolved_Data
+    {
+        Band_Data[] spin_data;
+
+        public SpinResolved_Data(Band_Data spin_up, Band_Data spin_down)
+        {
+            spin_data = new Band_Data[2];
+            spin_data[0] = spin_up; spin_data[1] = spin_down;
+        }
+
+        /// <summary>
+        /// Cast from Band_Data to SpinResolved_Data
+        /// Assumes equal spin contributions for up and down
+        /// </summary>
+        public static explicit operator SpinResolved_Data(Band_Data data)
+        {
+            SpinResolved_Data result = new SpinResolved_Data(data / 2.0, data / 2.0);
+
+            return result;
+        }
+
+        public static SpinResolved_Data operator *(double scalar, SpinResolved_Data data)
+        {
+            data.Spin_Up *= scalar; data.Spin_Down *= scalar;
+
+            return data;
+        }
+
+        public static SpinResolved_Data operator *(SpinResolved_Data mat, double scalar)
+        {
+            return scalar * mat;
+        }
+
+        public static SpinResolved_Data operator +(SpinResolved_Data data_1, SpinResolved_Data data_2)
+        {
+            // check if lengths are the same
+            if (data_1.Length != data_2.Length || data_1.Spin_Up.Dimension != data_2.Spin_Up.Dimension)
+                throw new ArrayTypeMismatchException();
+
+            return new SpinResolved_Data(data_1.Spin_Up + data_2.Spin_Up, data_1.Spin_Down + data_2.Spin_Down);
+        }
+
+        public static SpinResolved_Data operator -(SpinResolved_Data data_1, SpinResolved_Data data_2)
+        {
+            // check if lengths are the same
+            if (data_1.Length != data_2.Length || data_1.Spin_Up.Dimension != data_2.Spin_Up.Dimension)
+                throw new ArrayTypeMismatchException();
+
+            return new SpinResolved_Data(data_1.Spin_Up - data_2.Spin_Up, data_1.Spin_Down - data_2.Spin_Down);
+        }
+
+        /// <summary>
+        /// returns the DoubleMatrix for the given spin
+        /// </summary>
+        public Band_Data Spin_Data(Spin spin)
+        {
+            if (spin == Spin.Up)
+                return spin_data[0];
+            else
+                return spin_data[1];
+        }
+
+        public Band_Data Spin_Summed_Data
+        {
+            get { return spin_data[0] + spin_data[1]; }
+        }
+
+        public Band_Data Spin_Up
+        {
+            get { return spin_data[0]; }
+            set { spin_data[0] = value; }
+        }
+
+        public Band_Data Spin_Down
+        {
+            get { return spin_data[1]; }
+            set { spin_data[1] = value; }
+        }
+
+        public int Length
+        {
+            get { return spin_data[0].Length + spin_data[1].Length; }
+        }
+    }
+
 }

@@ -12,7 +12,7 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 140
+% nz = 101
 #
 ## Spacing of lattice sites for the density calculation
 % dz = 5
@@ -50,6 +50,6 @@
 ############## Physical parameters ####################################
 #
 ## Temperature
-% T = 100
+% T = 4
 #
 

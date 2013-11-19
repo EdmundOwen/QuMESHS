@@ -5,11 +5,13 @@ using System.Text;
 using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Analysis;
 using Solver_Bases;
+using Solver_Bases.Layers;
 
 namespace OneD_ThomasFermiPoisson
 {
     class OneD_ThomasFermiSolver : Density_Base
     {
+        /*
         DoubleVector band_gap;
         SpinResolved_DoubleVector dopent_concentration;
         DoubleVector acceptor_concentration, donor_concentration;
@@ -20,9 +22,9 @@ namespace OneD_ThomasFermiPoisson
         // redundent integration parameter
         double dE = 1.0;
 
-        public OneD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
+        /*public OneD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
                                         double temperature, double dz, int nz) 
-            : base( temperature, 1.0, 1.0, dz, 1, 1, nz)
+            : base(temperature, 1.0, 1.0, dz, 1, 1, nz, 0.0, 0.0, zmin)
         {
             // set band profile with spin-degeneracy
             this.band_gap = band_gap;
@@ -36,6 +38,11 @@ namespace OneD_ThomasFermiPoisson
             // and set relative dopent energies to the conduction band
             this.donor_energy_below_Ec = band_gap / 2.0 - donor_energy;
             this.acceptor_energy_above_Ev = band_gap / 2.0 - acceptor_energy;
+        }*/
+
+        public OneD_ThomasFermiSolver(double temperature, double dz, int nz, double zmin)
+            : base(temperature, 1.0, 1.0, dz, 1, 1, nz, 0.0, 0.0, zmin)
+        {
         }
 
         /*public SpinResolved_DoubleVector Get_OneD_Density(DoubleVector conduction_band_energy)
@@ -53,7 +60,7 @@ namespace OneD_ThomasFermiPoisson
 
             // return total density (for 1D; hence the divide-by-lattice-spacing)
             return -1.0 * Physics_Base.q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
-        }*/
+        }
 
         public SpinResolved_DoubleVector Get_OneD_ChargeDensity(DoubleVector chem_pot)
         {
@@ -73,7 +80,30 @@ namespace OneD_ThomasFermiPoisson
 
             return charge_density;
         }
+        */
 
+        public void Get_OneD_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        {
+                for (int i = 0; i < nz; i++)
+                {
+                    double z = dz * i + zmin;
+
+                    // get the relevant layer and if it's frozen out, don't recalculate the charge
+                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
+                    if (current_Layer.Dopents_Frozen_Out(temperature))
+                        continue;
+
+                    // calculate the density at the given point
+                    ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
+                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot.vec[i]);
+
+                    // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                    density.Spin_Down.vec[i] = 0.5 * local_charge_density;
+                    density.Spin_Up.vec[i] = 0.5 * local_charge_density;
+                }
+        }
+
+        /*
         /// <summary>
         /// calculates the conduction band profile (spin-resolved) as a function of depth using a given conduction band energy
         /// </summary>
@@ -149,6 +179,19 @@ namespace OneD_ThomasFermiPoisson
         public double Get_Chemical_Potential(int location)
         {
             ZeroD_Density chem_pot_cal = new ZeroD_Density(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature);
+
+            return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
+        }
+        */
+          
+        public double Get_Chemical_Potential(ILayer[] layers, double z)
+        {
+            return Get_Chemical_Potential(layers, z, temperature);
+        }
+
+        public double Get_Chemical_Potential(ILayer[] layers, double z, double temperature_input)
+        {
+            ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z), temperature_input);
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }

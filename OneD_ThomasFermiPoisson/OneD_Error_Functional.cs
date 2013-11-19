@@ -7,6 +7,7 @@ using Solver_Bases;
 
 namespace OneD_ThomasFermiPoisson
 {
+    /*
     class OneD_Error_Functional : DoubleFunctional
     {
         OneD_PoissonSolver pot_solv;
@@ -23,6 +24,7 @@ namespace OneD_ThomasFermiPoisson
             this.nz = nz;
         }
 
+        /*
         /// <summary>
         /// returns the error between the given density and a new density calculated from the potential due to this density
         /// </summary>
@@ -37,11 +39,12 @@ namespace OneD_ThomasFermiPoisson
 
             return error;
         }
-
+        
 
         public double Laplacian(DoubleVector x)
         {
             throw new NotImplementedException();
         }
     }
+    */
 }

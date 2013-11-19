@@ -9,15 +9,28 @@ namespace Solver_Bases
     public abstract class Density_Base
     {
         protected double temperature;
-        protected double dx, dy, dz;
-        protected int nx, ny, nz;
-        protected double fermi_Energy = 0.0;
 
-        public Density_Base(double temperature, double dx, double dy, double dz, int nx, int ny, int nz)
+        protected double dx, dy, dz;
+        protected double xmin, ymin, zmin;
+        protected int nx, ny, nz;
+
+        protected double fermi_Energy = 0.0;
+        protected int dim;
+
+        public Density_Base(double temperature, double dx, double dy, double dz, int nx, int ny, int nz, double xmin, double ymin, double zmin)
         {
             this.temperature = temperature;
             this.dx = dx; this.dy = dy; this.dz = dz;
             this.nx = nx; this.ny = ny; this.nz = nz;
+            this.xmin = xmin; this.ymin = ymin; this.zmin = zmin;
+
+            // check how many actual dimensions are present
+            if (nx != 1)
+                dim = 3;
+            else if (ny != 1)
+                dim = 2;
+            else
+                dim = 1;
         }
 
         /// <summary>
@@ -56,7 +69,7 @@ namespace Solver_Bases
         public void Output(SpinResolved_DoubleMatrix data, string filename)
         {
             StreamWriter sw = new StreamWriter(filename);
-            sw.WriteLine("Warning - Ordering compared to PotentialData objects is not guaranteed!");
+            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
             
             // output the charge density
             for (int i = 0; i < data.Nx; i++)
@@ -69,13 +82,27 @@ namespace Solver_Bases
         public void Output(SpinResolved_DoubleMatrix[] data, string filename)
         {
             StreamWriter sw = new StreamWriter(filename);
-            sw.WriteLine("Warning - Ordering compared to PotentialData objects is not guaranteed!");
+            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
 
             // output the charge density
             for (int i = 0; i < data[0].Nx; i++)
                 for (int j = 0; j < data[0].Ny; j++)
                     for (int k = 0; k < data.Length; k++)
                         sw.WriteLine(data[k].Spin_Summed_Matrix[i, j].ToString());
+
+            sw.Close();
+        }
+
+        public void Output(SpinResolved_Data data, string filename)
+        {
+            StreamWriter sw = new StreamWriter(filename);
+            sw.WriteLine("Warning - The data has been written out serially and there is no information as to which order the dimensions come in.");
+            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
+
+            // output the charge density
+            Band_Data tot_charge = data.Spin_Summed_Data;
+            for (int i = 0; i < tot_charge.Length; i++)
+                sw.WriteLine(tot_charge[i].ToString());
 
             sw.Close();
         }
