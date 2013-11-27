@@ -117,7 +117,7 @@ namespace OneD_ThomasFermiPoisson
         }
 
         /// <summary>
-        /// Generates a spin-resolved laplacian matrix in one-dimension on a regular grid with Dirichlet BCs
+        /// Generates a laplacian matrix in one-dimension on a regular grid with Dirichlet BCs
         /// </summary>
         DoubleMatrix Generate_Laplacian()
         {

@@ -32,6 +32,7 @@ namespace Solver_Bases
 
     public enum Geometry_Type
     {
-        Slab
+        slab,
+        sheet
     }
 }

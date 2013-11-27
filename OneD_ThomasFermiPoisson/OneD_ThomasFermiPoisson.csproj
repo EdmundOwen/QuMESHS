@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experiment.cs" />
+    <Compile Include="OneD_DFTSolver.cs" />
     <Compile Include="OneD_Error_Functional.cs" />
     <Compile Include="OneD_PoissonSolver.cs" />
     <Compile Include="OneD_ThomasFermiSolver.cs" />

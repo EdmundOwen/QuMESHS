@@ -6,13 +6,13 @@ using System.Text;
 namespace Solver_Bases.Geometry
 {
     /// <summary>
-    /// A horizontal slab
+    /// A special class of "Slab" which has a minimal width
     /// </summary>
-    class Slab : Geom_Base, IGeom
+    class Sheet : Geom_Base, IGeom
     {
-        public Slab(double zmin, double zmax)
+        public Sheet(double z)
         {
-            this.zmin = zmin; this.zmax = zmax;
+            this.zmin = z - double.MinValue; this.zmax = z;
         }
 
         public bool InLayer(double z)
@@ -32,7 +32,7 @@ namespace Solver_Bases.Geometry
 
         public Geometry_Type Get_Geometry
         {
-            get { return Geometry_Type.slab; }
+            get { return Geometry_Type.sheet; }
         }
     }
 }

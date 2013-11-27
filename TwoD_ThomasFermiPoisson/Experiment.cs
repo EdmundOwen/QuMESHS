@@ -151,7 +151,7 @@ namespace TwoD_ThomasFermiPoisson
                 // create charge density solver and calculate boundary conditions
                 TwoD_ThomasFermiSolver dens_solv = new TwoD_ThomasFermiSolver(current_temperature, dy, dz, ny, nz, ymin, zmin);
                 double top_bc = 0;// dens_solv.Get_Chemical_Potential(0);
-                double bottom_bc = dens_solv.Get_Chemical_Potential(layers, 0.0, zmin);
+                double bottom_bc = dens_solv.Get_Chemical_Potential(0.0, zmin, layers);
 
                 // initialise potential solver
                 TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
@@ -166,7 +166,7 @@ namespace TwoD_ThomasFermiPoisson
                     Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + current_temperature.ToString() + "\tConvergence factor: " + pois_solv.Convergence_Factor.ToString());
 
                     // calculate the total charge density for this band offset
-                    dens_solv.Get_TwoD_ChargeDensity(layers, ref charge_density, band_offset);
+                    dens_solv.Get_ChargeDensity(layers, ref charge_density, band_offset);
 
                     // solve the band energy for the givencharge  density and mix in with the old band energy
                     Band_Data new_band_energy = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);

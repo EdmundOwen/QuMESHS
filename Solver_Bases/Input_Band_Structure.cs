@@ -64,14 +64,18 @@ namespace Solver_Bases
             // get various necessary properties from this list
             Material mat = GetMaterial((string)data["mat"]);
             Geometry_Type geom_type;
-            if (data.ContainsKey("geom")) { geom_type = GetGeometryType((string)data["geom"]); } else geom_type = Geometry_Type.Slab;
+            if (data.ContainsKey("geom")) { geom_type = GetGeometryType((string)data["geom"]); } else geom_type = Geometry_Type.slab;
 
             // set geometry
             IGeom geom;
             switch (geom_type)
             {
-                case Geometry_Type.Slab:
+                case Geometry_Type.slab:
                     geom = new Slab((double)data["zmin"], (double)data["zmax"]);
+                    break;
+
+                case Geometry_Type.sheet:
+                    geom = new Sheet((double)data["zmin"]);
                     break;
 
                 default:
@@ -205,8 +209,11 @@ namespace Solver_Bases
         {
             switch (geometry_type)
             {
-                case "Slab":
-                    return Geometry_Type.Slab;
+                case "slab":
+                    return Geometry_Type.slab;
+
+                case "sheet":
+                    return Geometry_Type.sheet;
 
                 default:
                     throw new NotImplementedException("Error - Geometry not known");
@@ -226,7 +233,7 @@ namespace Solver_Bases
             // calculate where the keyword "substrate" is... this indicates the end of the band structure part of the file
             int end_of_band_structure = 0;
             for (int i = 0; i < raw_input.Length; i++)
-                if (raw_input[i].Trim() == "mat=substrate")
+                if (raw_input[i].Split(' ')[0].Trim() == "mat=substrate")
                 {
                     end_of_band_structure = i + 1;
                     break;

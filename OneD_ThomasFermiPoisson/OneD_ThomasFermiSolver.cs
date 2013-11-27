@@ -82,7 +82,7 @@ namespace OneD_ThomasFermiPoisson
         }
         */
 
-        public void Get_OneD_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
                 for (int i = 0; i < nz; i++)
                 {
@@ -183,17 +183,17 @@ namespace OneD_ThomasFermiPoisson
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }
         */
-          
-        public double Get_Chemical_Potential(ILayer[] layers, double z)
-        {
-            return Get_Chemical_Potential(layers, z, temperature);
-        }
 
-        public double Get_Chemical_Potential(ILayer[] layers, double z, double temperature_input)
+        public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
         {
             ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z), temperature_input);
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
+        }
+
+        public override void Close()
+        {
+            Console.WriteLine("Closing density solver");
         }
     }
 }

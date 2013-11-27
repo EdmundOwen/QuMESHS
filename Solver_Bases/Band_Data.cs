@@ -65,7 +65,7 @@ namespace Solver_Bases
                     throw new NotImplementedException();
             }
 
-            private set
+            set
             {
                 if (Dimension == 1)
                     vec[i] = value;

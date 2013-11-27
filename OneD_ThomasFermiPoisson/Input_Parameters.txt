@@ -47,9 +47,23 @@
 % No_kB_T_Above_E_f = 0.0
 #
 #
+############## DFT density solver detials #############################
+#
+## Whether to use dft at the final temperature or not
+% dft = true
+#
+## Number of data points over which to calculate the density using dft
+% nz_dft = 30
+#
+## Lattice spacing for dft calculations
+% dz_dft = 2.0
+#
+## Minimum z value of the dft calculation domain
+% zmin_dft = -145.0
+#
+#
 ############## Physical parameters ####################################
 #
 ## Temperature
 % T = 4
 #
-

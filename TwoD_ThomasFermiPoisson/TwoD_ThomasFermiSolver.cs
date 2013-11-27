@@ -35,7 +35,7 @@ namespace TwoD_ThomasFermiPoisson
         */
 
         public TwoD_ThomasFermiSolver(double temperature, double dy, double dz, int ny, int nz, double ymin, double zmin)
-            : base(temperature, 1.0, dy, dz, 1, ny, nz, 1, ymin, zmin)
+            : base(temperature, 1.0, dy, dz, 1, ny, nz, 0.0, ymin, zmin)
         {
         }
 
@@ -61,7 +61,7 @@ namespace TwoD_ThomasFermiPoisson
         }
         */ 
 
-        public void Get_TwoD_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
@@ -96,16 +96,11 @@ namespace TwoD_ThomasFermiPoisson
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }
-        */ 
+        */
 
-        public double Get_Chemical_Potential(ILayer[] layers, double y, double z)
+        public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
         {
-            return Get_Chemical_Potential(layers, y, z, temperature);
-        }
-
-        public double Get_Chemical_Potential(ILayer[] layers, double y, double z, double temperature_input)
-        {
-            ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z), temperature_input);
+            ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z), temperature_input);
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }
@@ -206,5 +201,10 @@ namespace TwoD_ThomasFermiPoisson
             return result;
         }
         */
+
+        public override void Close()
+        {
+            Console.WriteLine("Closing density solver");
+        }
     }
 }

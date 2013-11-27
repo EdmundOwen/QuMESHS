@@ -246,6 +246,15 @@ namespace Solver_Bases
             get { return convergence_factor; }
         }
 
+        /// <summary>
+        /// resets the state of the poisson solver
+        /// </summary>
+        public void Reset()
+        {
+            Console.WriteLine("Resetting convergence criteria for the potential solver");
+            converged = false; convergence_factor = double.MaxValue;
+        }
+
         public abstract void Save_Density(Band_Data density, string filename);
         protected abstract Band_Data Parse_Potential(string[] data, int first_line);
         //protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] band_layer_depths);

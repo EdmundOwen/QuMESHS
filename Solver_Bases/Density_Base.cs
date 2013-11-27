@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Solver_Bases.Layers;
 
 namespace Solver_Bases
 {
-    public abstract class Density_Base
+    public abstract class Density_Base : IDensity_Solve
     {
         protected double temperature;
 
@@ -55,7 +56,7 @@ namespace Solver_Bases
                 return 2.0 / (Math.Exp((energy - fermi_Energy) / (Physics_Base.kB * T)) + 2.0);
         }
 
-        public void Output(SpinResolved_DoubleVector data, string filename)
+        /*public void Output(SpinResolved_DoubleVector data, string filename)
         {
             StreamWriter sw = new StreamWriter(filename);
 
@@ -91,7 +92,7 @@ namespace Solver_Bases
                         sw.WriteLine(data[k].Spin_Summed_Matrix[i, j].ToString());
 
             sw.Close();
-        }
+        }*/
 
         public void Output(SpinResolved_Data data, string filename)
         {
@@ -122,5 +123,40 @@ namespace Solver_Bases
         {
             return Physics_Base.Get_Dopent_Fermi_Function(energy, fermi_Energy, temperature);
         }
+
+        public virtual double Get_Chemical_Potential(double z, ILayer[] layers)
+        {
+            return Get_Chemical_Potential(z, layers, temperature);
+        }
+
+        public virtual double Get_Chemical_Potential(double y, double z, ILayer[] layers)
+        {
+            return Get_Chemical_Potential(y, z, layers, temperature);
+        }
+
+        public virtual double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers)
+        {
+            return Get_Chemical_Potential(x, y, z, layers, temperature);
+        }
+
+        /// <summary>
+        /// set the default chemical potential to be calculated at (0,0,z).  Everything else requires this method to be overridden
+        /// </summary>
+        public virtual double Get_Chemical_Potential(double z, ILayer[] layers, double temperature_input)
+        {
+            return Get_Chemical_Potential(0.0, 0.0, z, layers, temperature_input);
+        }
+
+        /// <summary>
+        /// set the default chemical potential to be calculated at (0,y,z).  Everything else requires this method to be overridden
+        /// </summary>
+        public virtual double Get_Chemical_Potential(double y, double z, ILayer[] layers, double temperature_input)
+        {
+            return Get_Chemical_Potential(0.0, y, z, layers, temperature_input);
+        }
+
+        public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot);
+        public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
+        public abstract void Close();
     }
 }
