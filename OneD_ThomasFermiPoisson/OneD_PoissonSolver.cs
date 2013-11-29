@@ -105,9 +105,9 @@ namespace OneD_ThomasFermiPoisson
 
         protected override Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density)
         {
-            // set the top and bottom boundary conditions
+            // set the top and bottom boundary conditions where [0] is the bottom of the device
             double factor = -1.0 * Physics_Base.epsilon / (dz * dz);
-            density.vec[0] = top_bc * factor; density.vec[density.Length - 1] = bottom_bc * factor;
+            density.vec[0] = bottom_bc * factor; density.vec[density.Length - 1] = top_bc * factor;
 
             // solve Poisson's equation
             Band_Data potential = new Band_Data(lu_fact.Solve(density.vec));

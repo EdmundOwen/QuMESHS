@@ -12,10 +12,10 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 101
+% nz = 251
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 5
+% dz = 2
 #
 #
 ############## Poisson solver details #################################
@@ -53,13 +53,13 @@
 % dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dft = 30
+% nz_dft = 40
 #
 ## Lattice spacing for dft calculations
 % dz_dft = 2.0
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dft = -145.0
+% zmin_dft = -150.0
 #
 #
 ############## Physical parameters ####################################

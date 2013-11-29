@@ -94,11 +94,14 @@ namespace Solver_Bases
             sw.Close();
         }*/
 
-        public void Output(SpinResolved_Data data, string filename)
+        public void Output(SpinResolved_Data data, string filename, bool with_warnings)
         {
             StreamWriter sw = new StreamWriter(filename);
-            sw.WriteLine("Warning - The data has been written out serially and there is no information as to which order the dimensions come in.");
-            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
+            if (with_warnings)
+            {
+                sw.WriteLine("Warning - The data has been written out serially and there is no information as to which order the dimensions come in.");
+                sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
+            }
 
             // output the charge density
             Band_Data tot_charge = data.Spin_Summed_Data;
@@ -107,6 +110,9 @@ namespace Solver_Bases
 
             sw.Close();
         }
+
+        public void Output(SpinResolved_Data data, string filename)
+        { Output(data, filename, true); }
 
         /// <summary>
         /// Gets the fermi function at a given energy using the default temperature and fermi energy

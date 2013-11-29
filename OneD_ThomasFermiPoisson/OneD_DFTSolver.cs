@@ -12,7 +12,7 @@ namespace OneD_ThomasFermiPoisson
 {
     class OneD_DFTSolver : Density_Base
     {
-        double no_kb_T = 10;    // number of kb_T to integrate to
+        double no_kb_T = 20;    // number of kb_T to integrate to
         double t;
 
         int tmp_zval;
@@ -88,11 +88,12 @@ namespace OneD_ThomasFermiPoisson
                 result[i + 1, i] = t; result[i, i + 1] = t;
             }
 
+            double[] potential = new double[nz];
             // set diagonal elements
             for (int i = 0; i < nz; i++)
             {
-                double potential = chem_pot.vec[i];
-                result[i, i] = -2.0 * t + Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i]) + potential;
+                potential[i] = chem_pot.vec[i];
+                result[i, i] = -2.0 * t + potential[i];
             }
 
             return result;
@@ -100,7 +101,7 @@ namespace OneD_ThomasFermiPoisson
 
         double Density_Of_States(double E)
         {
-            return Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI) * Get_Fermi_Function(tmp_eigval - E)
+            return Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI) * Get_Fermi_Function(E)
                         * DoubleComplex.Norm(tmp_eigvec[tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_zval]);
         }
     }
