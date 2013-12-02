@@ -87,6 +87,7 @@
     <Compile Include="Layers\GaAs_Layer.cs" />
     <Compile Include="Layers\ILayer.cs" />
     <Compile Include="Layers\Layer.cs" />
+    <Compile Include="Layers\Layer_Tool.cs" />
     <Compile Include="Layers\PMMA_Layer.cs" />
     <Compile Include="Layers\Substrate_Layer.cs" />
     <Compile Include="Physics_Base.cs" />

@@ -71,7 +71,12 @@ namespace Solver_Bases
         protected Band_Data Get_BandEnergy_From_FlexPDE(Band_Data density, string dens_filename)
         {
             // save density to file in a FlexPDE "TABLE" format
-            Save_Density(density, dens_filename);
+            if (dim == 1)
+                density.Save_1D_Data(dens_filename, dz, zmin);
+            if (dim == 2)
+                density.Save_2D_Data(dens_filename, dy, dz, ymin, zmin);
+            if (dim == 3)
+                density.Save_3D_Data(dens_filename, dx, dy, dz, xmin, ymin, zmin);
 
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
             try { File.Delete("pot.dat"); }
@@ -218,24 +223,6 @@ namespace Solver_Bases
             band_energy = band_energy - blending_energy;
         }
 
-        protected string Get_Permitivity(Material material)
-        {
-            switch (material)
-            {
-                case Material.GaAs:
-                    return "eps_r * eps_0";
-                case Material.AlGaAs:
-                    return "eps_r * eps_0";
-                case Material.PMMA:
-                    return "eps_pmma * eps_0";
-                case Material.Air:
-                    return "eps_0";
-                default:
-                    throw new NotImplementedException("Error - Cannot find electrical permitivity for material: " + material.ToString());
-
-            }
-        }
-
         public bool Converged
         {
             get { return converged; }
@@ -255,7 +242,6 @@ namespace Solver_Bases
             converged = false; convergence_factor = double.MaxValue;
         }
 
-        public abstract void Save_Density(Band_Data density, string filename);
         protected abstract Band_Data Parse_Potential(string[] data, int first_line);
         //protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] band_layer_depths);
         protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, ILayer[] layers);

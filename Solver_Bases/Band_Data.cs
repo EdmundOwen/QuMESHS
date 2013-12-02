@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using CenterSpace.NMath.Core;
@@ -148,6 +149,77 @@ namespace Solver_Bases
         public static Band_Data operator /(Band_Data data, double scalar)
         {
             return (1.0 / scalar) * data;
+        }
+
+        public void Save_1D_Data(string filename, double dz, double zmin)
+        {
+            // check that the dimension of the density is correct
+            if (this.Dimension != 1)
+                throw new RankException();
+
+            // open stream
+            StreamWriter sw = new StreamWriter(filename);
+
+            int nz = this.vec.Length;
+
+            // save out positions
+            sw.WriteLine("x " + nz.ToString());
+            for (int i = 0; i < nz; i++)
+                sw.WriteLine(((float)(i * dz + zmin)).ToString());
+
+            // save out densities
+            sw.WriteLine();
+            sw.WriteLine("data");
+            for (int i = 0; i < nz; i++)
+                sw.WriteLine(((float)this.vec[i]).ToString());
+
+            sw.Close();
+        }
+            
+        public void Save_2D_Data(string filename, double dy, double dz, double ymin, double zmin)
+        {
+            // check that the dimension of the density is correct
+            if (this.Dimension != 2)
+                throw new RankException();
+
+            // open stream
+            StreamWriter sw = new StreamWriter(filename);
+
+            int ny = this.mat.Cols;
+            int nz = this.mat.Rows;
+
+            // save out positions
+            sw.WriteLine("x " + ny.ToString());
+            for (int i = 0; i < ny; i++)
+                //for (int j = 0; j < nz; j++)
+                sw.Write(((float)(i - ny / 2) * dy + ymin).ToString() + '\t');
+
+            sw.WriteLine();
+            sw.WriteLine();
+            sw.WriteLine("y " + nz.ToString());
+            for (int j = 0; j < nz; j++)
+                sw.Write(((float)(j * dz + zmin)).ToString() + '\t');
+
+            // save out densities
+            sw.WriteLine();
+            sw.WriteLine("data");
+            for (int i = 0; i < nz; i++)
+            {
+                for (int j = 0; j < ny; j++)
+                    if (Math.Abs(this.mat[i, j]) < 1e-20)
+                        sw.Write("0\t");
+                    else
+                        // note that the ordering is y first, then z -- this is FlexPDE specific
+                        sw.Write(((float)this.mat[i, j]).ToString() + '\t');
+                sw.WriteLine();
+            }
+
+            sw.Close();
+        }
+
+        public void Save_3D_Data(string filename, double dx, double dy, double dz, double xmin, double ymin, double zmin)
+        {
+            throw new NotImplementedException();
         }
 
         public int Dimension

@@ -62,7 +62,7 @@ namespace Solver_Bases
         static ILayer Create_Layer(Dictionary<string, object> data)
         {
             // get various necessary properties from this list
-            Material mat = GetMaterial((string)data["mat"]);
+            Material mat = Layer_Tool.GetMaterial((string)data["mat"]);
             Geometry_Type geom_type;
             if (data.ContainsKey("geom")) { geom_type = GetGeometryType((string)data["geom"]); } else geom_type = Geometry_Type.slab;
 
@@ -182,27 +182,6 @@ namespace Solver_Bases
                 }
                 else
                     tmp_position = (double)data[i]["zmax"];
-        }
-
-        static Material GetMaterial(string material)
-        {
-            switch (material)
-            {
-                case "gaas":
-                    return Material.GaAs;
-
-                case "algaas":
-                    return Material.AlGaAs;
-
-                case "pmma":
-                    return Material.PMMA;
-
-                case "substrate":
-                    return Material.Substrate;
-
-                default:
-                    throw new NotImplementedException("Error - Material properties not known");
-            }
         }
 
         static Geometry_Type GetGeometryType(string geometry_type)

@@ -36,6 +36,24 @@ namespace Solver_Bases.Geometry
             return result;
         }
 
+        public static int Find_Layer_Below_Surface(ILayer[] layers)
+        {
+            for (int i = 0; i < layers.Length; i++)
+                if (layers[i].Zmax == 0.0)
+                    return i;
+
+            throw new Exception("Error - cannot find the layer immediately below the surface");
+        }
+
+        public static int Find_Layer_Above_Surface(ILayer[] layers)
+        {
+            for (int i = 0; i < layers.Length; i++)
+                if (layers[i].Zmin == 0.0)
+                    return i;
+
+            throw new Exception("Error - cannot find the layer immediately below the surface");
+        }
+
         public static double Get_Xmin(ILayer[] layers)
         {
             double result = double.MaxValue;
