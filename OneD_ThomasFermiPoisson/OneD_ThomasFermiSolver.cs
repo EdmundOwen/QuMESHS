@@ -9,7 +9,7 @@ using Solver_Bases.Layers;
 
 namespace OneD_ThomasFermiPoisson
 {
-    class OneD_ThomasFermiSolver : Density_Base
+    public class OneD_ThomasFermiSolver : Density_Base
     {
         /*
         DoubleVector band_gap;

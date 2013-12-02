@@ -181,7 +181,7 @@ namespace TwoD_ThomasFermiPoisson
             TwoD_PoissonSolver final_pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
-            final_pois_solv.Save_Density(charge_density.Spin_Summed_Data, "dens_2D.dat");
+            charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dy, dz, ymin, zmin);
 
             final_dens_solv.Output(charge_density, "charge_density.dat");
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy, dz, ny, nz, ymin, zmin) - band_offset, "potential.dat");

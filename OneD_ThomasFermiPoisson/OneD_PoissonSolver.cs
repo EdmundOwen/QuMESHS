@@ -66,29 +66,6 @@ namespace OneD_ThomasFermiPoisson
         }
         */
 
-        public override void Save_Density(Band_Data density, string filename)
-        {
-            // check that the dimension of the density is correct
-            if (density.Dimension != 1)
-                throw new RankException();
-
-            // open stream
-            StreamWriter sw = new StreamWriter(filename);
-
-            // save out positions
-            sw.WriteLine("x " + nz.ToString());
-            for (int i = 0; i < nz; i++)
-                sw.WriteLine(((float)(i * dz + zmin)).ToString());
-
-            // save out densities
-            sw.WriteLine();
-            sw.WriteLine("data");
-            for (int i = 0; i < nz; i++)
-                sw.WriteLine(((float)density.vec[i]).ToString());
-
-            sw.Close();
-        }
-
         protected override Band_Data Parse_Potential(string[] data, int first_line)
         {
             // and check that there is the right number of data points back
@@ -292,7 +269,7 @@ namespace OneD_ThomasFermiPoisson
             {
                 sw.WriteLine("\tREGION " + layers[i].Layer_No.ToString());
                 sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
-                sw.WriteLine("\t\teps = " + Get_Permitivity(layers[i].Material));
+                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(layers[i].Material));
                 sw.WriteLine("\t\tSTART(" + layers[i].Zmin.ToString() + ")");
                 if (i == 1)
                     sw.WriteLine("\t\tPOINT VALUE(u) = top_V");

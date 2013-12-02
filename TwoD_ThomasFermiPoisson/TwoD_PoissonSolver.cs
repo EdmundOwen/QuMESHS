@@ -33,45 +33,6 @@ namespace TwoD_ThomasFermiPoisson
         }
         */ 
 
-        public override void Save_Density(Band_Data density, string filename)
-        {
-            // check that the dimension of the density is correct
-            if (density.Dimension != 2)
-                throw new RankException();
-
-            // open stream
-            StreamWriter sw = new StreamWriter(filename);
-
-            // save out positions
-            sw.WriteLine("x " + ny.ToString());
-            for (int i = 0; i < ny; i++)
-                //for (int j = 0; j < nz; j++)
-                sw.Write(((float)(i - ny / 2) * dy).ToString() + '\t');
-
-            sw.WriteLine();
-            sw.WriteLine();
-            sw.WriteLine("y " + nz.ToString());
-            for (int j = nz - 1; j >= 0; j--)
-            //for (int j = 0; j < nz; j++)
-                sw.Write(((float)(-j * dz)).ToString() + '\t');
-
-            // save out densities
-            sw.WriteLine();
-            sw.WriteLine("data");
-            //for (int i = 0; i < nz; i++)
-            for (int i = nz - 1; i >= 0; i--)
-            {
-                for (int j = 0; j < ny; j++)
-                    if (Math.Abs(density.mat[j, i]) < 1e-20)
-                        sw.Write("0\t");
-                    else
-                        // note that the ordering is y first, then z -- this is FlexPDE specific
-                        sw.Write(((float)density.mat[j, i]).ToString() + '\t');
-                sw.WriteLine();
-            }
-
-            sw.Close();
-        }
 
         protected override Band_Data Parse_Potential(string[] data, int first_line)
         {
@@ -310,7 +271,7 @@ namespace TwoD_ThomasFermiPoisson
             {
                 sw.WriteLine("\tREGION " + layers[i].Layer_No.ToString());
                 sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
-                sw.WriteLine("\t\teps = " + Get_Permitivity(layers[i].Material));
+                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(layers[i].Material));
                 sw.WriteLine("\t\tSTART(ly / 2, " + layers[i].Zmin.ToString() + ")");
                 sw.WriteLine("\t\tLINE TO (ly / 2, " + layers[i].Zmax.ToString() + ")");
                 // set top gate here
