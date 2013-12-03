@@ -3,13 +3,13 @@
 #
 ## High density shallow HEMT (eg W0626)
 #
-#mat=PMMA t=200
-#surface=true
-#mat=GaAs t=10
-#mat=AlGaAs t=40 x=.3 Nd=0.63e18
-#mat=AlGaAs t=40 x=.3
-#mat=GaAs t=210
-#mat=GaAs t=200
+mat=PMMA t=200
+surface=true
+mat=GaAs t=10
+mat=AlGaAs t=40 x=.3 Nd=0.63e18
+mat=AlGaAs t=40 x=.3
+mat=GaAs t=210
+mat=GaAs t=200
 #
 ## Low density deep HEMT (eg W0616)
 #
@@ -27,14 +27,14 @@
 #
 ## Double well structure to show negative compressibility
 #
-surface=true
-mat=AlGaAs t=10
-mat=AlGaAs t=40 x=.3
-mat=AlGaAs t=40 x=.3
-mat=GaAs t=10
-mat=AlGaAs t=30
-mat=GaAs t=10
-mat=AlGaAs t=360
+#surface=true
+#mat=AlGaAs t=10
+#mat=AlGaAs t=40 x=.3
+#mat=AlGaAs t=40 x=.3
+#mat=GaAs t=10
+#mat=AlGaAs t=30
+#mat=GaAs t=10
+#mat=AlGaAs t=360
 #
 #
 mat=substrate

@@ -15,6 +15,7 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.AlGaAs;
+            permitivity = Physics_Base.epsilon_r_AlGaAs * Physics_Base.epsilon_0;
 
             // set the AlGaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
             this.band_gap = 1800.0;

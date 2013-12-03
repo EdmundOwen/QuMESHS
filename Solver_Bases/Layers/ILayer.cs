@@ -27,6 +27,7 @@ namespace Solver_Bases.Layers
         #region Layer_Properties
         int Layer_No { get; }
         Material Material { get; }
+        double Permitivity { get; }
         double Band_Gap { get; }
         double Donor_Energy { get; }
         double Acceptor_Energy { get; }

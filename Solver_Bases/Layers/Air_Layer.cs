@@ -15,6 +15,7 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.Air;
+            permitivity = Physics_Base.epsilon_0;
 
             // ok, so this is the actual band gap for air... may as well be infinite but that's the way I'm doing this
             this.band_gap = 500000000.0;

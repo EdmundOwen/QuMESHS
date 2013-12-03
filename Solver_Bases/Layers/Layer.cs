@@ -11,6 +11,7 @@ namespace Solver_Bases.Layers
         // layer information
         IGeom geom;
         protected Material material;
+        protected double permitivity;
         int layer_no;
 
         // material parameters
@@ -37,6 +38,7 @@ namespace Solver_Bases.Layers
             this.acceptor_concentration = acceptor_concentration; this.donor_concentration = donor_concentration;
             Set_Freeze_Out_Temperature();
         }
+        public double Permitivity { get { return permitivity; } }
         public Material Material { get { return material; } }
         internal abstract void Set_Freeze_Out_Temperature();
         internal void Set_Freeze_Out_Temperature(double freeze_out_T)

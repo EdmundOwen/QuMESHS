@@ -190,6 +190,29 @@ namespace OneD_ThomasFermiPoisson
                 count++;
             }
 
+            /*
+            // Calculate the required surface charge needed to screen the dopents.
+            // This will generate zero electric field above the structure
+            double surface_charge = pois_solv.Get_Surface_Charge(band_offset, layers);
+            // generate a new charge distribution
+            SpinResolved_Data charge_w_surface = new SpinResolved_Data(new Band_Data(new DoubleVector(141)), new Band_Data(new DoubleVector(141)));
+            for (int i = 1; i < 101; i++)
+            {
+                charge_w_surface.Spin_Up[i] = charge_density.Spin_Up[i];
+                charge_w_surface.Spin_Down[i] = charge_density.Spin_Down[i];
+            }
+            charge_w_surface.Spin_Down[100] = surface_charge;
+
+            pois_solv.Reset();
+
+            // initialise output solvers
+            OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(temperature, dz, nz, zmin);
+            OneD_PoissonSolver final_pois_solv = new OneD_PoissonSolver(dz, nz + 40, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+
+            Band_Data new_band_offset = final_pois_solv.Get_Band_Energy(charge_w_surface.Spin_Summed_Data);
+           final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz, nz+40, zmin) - new_band_offset, "pot_wsurface.dat");
+             * */
+
             pois_solv.Reset();
 
             // initialise output solvers

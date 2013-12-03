@@ -15,6 +15,8 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.PMMA;
+            permitivity = Physics_Base.epsilon_pmma * Physics_Base.epsilon_0;
+
             // set the PMMA band gap
             this.band_gap = 4400.0;
         }

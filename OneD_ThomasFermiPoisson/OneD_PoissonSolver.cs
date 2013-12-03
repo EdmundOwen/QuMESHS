@@ -9,10 +9,11 @@ using CenterSpace.NMath.Matrix;
 using Solver_Bases;
 using System.Threading;
 using Solver_Bases.Layers;
+using Solver_Bases.Geometry;
 
 namespace OneD_ThomasFermiPoisson
 {
-    class OneD_PoissonSolver : Potential_Base
+    public class OneD_PoissonSolver : Potential_Base
     {
         double top_bc, bottom_bc;
 
@@ -47,7 +48,7 @@ namespace OneD_ThomasFermiPoisson
             // generate Laplacian matrix (spin-resolved)
             if (!flexPDE)
             {
-                laplacian = Generate_Laplacian();
+                laplacian = Generate_Laplacian(layers);
                 lu_fact = new DoubleLUFact(laplacian);
             }
 
@@ -94,7 +95,7 @@ namespace OneD_ThomasFermiPoisson
         }
 
         /// <summary>
-        /// Generates a laplacian matrix in one-dimension on a regular grid with Dirichlet BCs
+        /// Generates a laplacian matrix in one-dimension on a regular grid with Dirichlet BCs and assuming constant permitivity
         /// </summary>
         DoubleMatrix Generate_Laplacian()
         {
@@ -118,6 +119,56 @@ namespace OneD_ThomasFermiPoisson
             result[nz - 1, nz - 2] = 0.0;
 
             return result;
+        }
+
+        /// <summary>
+        /// Generates a laplacian matrix in one-dimension on a regular grid with Dirichlet BCs wot varying permitivity
+        /// </summary>
+        DoubleMatrix Generate_Laplacian(ILayer[] layers)
+        {
+            DoubleMatrix result = new DoubleMatrix(nz, nz);
+            double factor;
+
+            // cycle through the structure and fill in the Laplacian with the correct permittivities
+            double zmin = Geom_Tool.Get_Zmin(layers);
+            for (int i = 1; i < nz - 1; i++)
+            {
+                double eps = Geom_Tool.GetLayer(layers, i * dz + zmin).Permitivity;
+
+                // the factor which multiplies the Laplace equation
+                factor = -1.0 * eps / (dz * dz);
+
+                // on-diagonal term
+                result[i, i] = 2.0 * factor;
+                // off-diagonal
+                result[i, i - 1] = -1.0 * factor;
+                result[i, i + 1] = -1.0 * factor;
+            }
+
+            // and fix boundary conditions
+            factor = -1.0 * Geom_Tool.GetLayer(layers, zmin).Permitivity / (dz * dz);
+            result[0, 0] = 1.0 * factor;
+            result[0, 1] = 0.0;
+            factor = -1.0 * Geom_Tool.GetLayer(layers, (nz - 1) * dz + zmin).Permitivity / (dz * dz);
+            result[nz - 1, nz - 1] = 1.0 * factor;
+            result[nz - 1, nz - 2] = 0.0;
+
+            return result;
+        }
+
+        public double Get_Surface_Charge(Band_Data band_offset, ILayer[] layers)
+        {
+            // calculate the electric field just below the surface
+            int surface = (int)(-1.0 * Math.Floor(Geom_Tool.Get_Zmin(layers) / dz));
+            double eps = layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Permitivity;
+            // by Gauss' theorem, rho = - epsilon_0 * epsilon_r * dV/dz
+            double surface_charge = eps * (band_offset[surface] - band_offset[surface - 1]) / dz;
+            // divide by q_e to convert the band energy into a potential
+            surface_charge /= Physics_Base.q_e;
+            // and divide by dz to give a density
+            surface_charge /= dz;
+
+            return surface_charge;
         }
 
         /*

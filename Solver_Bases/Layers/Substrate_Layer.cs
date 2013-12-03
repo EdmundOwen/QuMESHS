@@ -15,6 +15,7 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.Substrate;
+            permitivity = Physics_Base.epsilon_r_GaAs * Physics_Base.epsilon_0;
 
             // set the GaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
             this.band_gap = 1420.0;
