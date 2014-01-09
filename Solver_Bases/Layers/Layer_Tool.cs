@@ -12,9 +12,9 @@ namespace Solver_Bases.Layers
             switch (material)
             {
                 case Material.GaAs:
-                    return "eps_r * eps_0";
+                    return "eps_r_GaAs * eps_0";
                 case Material.AlGaAs:
-                    return "eps_r * eps_0";
+                    return "eps_r_AlGaAs * eps_0";
                 case Material.PMMA:
                     return "eps_pmma * eps_0";
                 case Material.Air:

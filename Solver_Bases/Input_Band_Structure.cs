@@ -133,7 +133,7 @@ namespace Solver_Bases
         {
             for (int i = 0; i < data.Count; i++)
             {
-                string[] raw_layer_data = ((string)data[i]["raw_data"]).Split(' ');
+                string[] raw_layer_data = ((string)data[i]["raw_data"]).Trim().Split(' ');
                 for (int j = 0; j < raw_layer_data.Length; j++)
                 {
                     string tmp_key = raw_layer_data[j].Split('=')[0].ToLower();

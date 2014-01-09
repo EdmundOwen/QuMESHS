@@ -185,14 +185,14 @@ namespace Solver_Bases
             // open stream
             StreamWriter sw = new StreamWriter(filename);
 
-            int ny = this.mat.Cols;
-            int nz = this.mat.Rows;
+            int ny = this.mat.Rows;
+            int nz = this.mat.Cols;
 
             // save out positions
             sw.WriteLine("x " + ny.ToString());
             for (int i = 0; i < ny; i++)
                 //for (int j = 0; j < nz; j++)
-                sw.Write(((float)(i - ny / 2) * dy + ymin).ToString() + '\t');
+                sw.Write((i * dy + ymin).ToString() + '\t');
 
             sw.WriteLine();
             sw.WriteLine();
@@ -206,11 +206,11 @@ namespace Solver_Bases
             for (int i = 0; i < nz; i++)
             {
                 for (int j = 0; j < ny; j++)
-                    if (Math.Abs(this.mat[i, j]) < 1e-20)
+                    if (Math.Abs(this.mat[j, i]) < 1e-20)
                         sw.Write("0\t");
                     else
                         // note that the ordering is y first, then z -- this is FlexPDE specific
-                        sw.Write(((float)this.mat[i, j]).ToString() + '\t');
+                        sw.Write(((float)this.mat[j, i]).ToString() + '\t');
                 sw.WriteLine();
             }
 

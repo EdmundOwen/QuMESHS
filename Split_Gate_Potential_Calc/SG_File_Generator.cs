@@ -29,7 +29,7 @@ namespace Split_Gate_Potential_Calc
             bottom_bc = dens_solv.Get_Chemical_Potential(Geom_Tool.Get_Zmin(layers), layers);
         }
 
-        internal void Generate_2D_FlexPDE_File()
+        internal void Generate_2D_FlexPDE_File(double surface)
         {
             string output_file = "split_gate_2d.pde";
 
@@ -77,6 +77,7 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine();
             // boundary conditions
             sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
+            sw.WriteLine("\tsurface_bc = " + (-1.0 * surface).ToString());
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in V)");
             sw.WriteLine("\tsplit_V = 0");
@@ -92,7 +93,8 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine("\t! Electrical permitivities");
             sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
             // relative permitivity of materials
-            sw.WriteLine("\teps_r = " + Physics_Base.epsilon_r.ToString());
+            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
+            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
             sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
             sw.WriteLine("\teps");
             sw.WriteLine();
@@ -102,7 +104,7 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine("EQUATIONS");
             // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
             sw.WriteLine("\tu: div(eps * grad(u)) = rho\t! Poisson's equation");
-            sw.WriteLine("\tE: E = -1000.0 * q_e * u + 0.5 * band_gap");
+            sw.WriteLine("\tE: E = q_e * u + 0.5 * band_gap");
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
@@ -112,7 +114,7 @@ namespace Split_Gate_Potential_Calc
             {
                 sw.WriteLine("\tREGION " + layers[i].Layer_No.ToString());
                 if (layers[i].Acceptor_Conc != 0.0 || layers[i].Donor_Conc != 0.0)
-                    sw.WriteLine("\t\trho = TABLE(\'dens_2D.dat\', x)");
+                    sw.WriteLine("\t\trho = TABLE(\'dens_2D.dat\', x, y)");
                 else
                     sw.WriteLine("\t\trho = 0.0");
                 sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(layers[i].Material));
@@ -122,6 +124,13 @@ namespace Split_Gate_Potential_Calc
                 // set top gate here
                 if (i == layers.Length - 1)
                     sw.WriteLine("\t\tVALUE(u) = top_V");
+                // or surface condition
+                if (i == Geom_Tool.Find_Layer_Below_Surface(layers))
+                {
+                    sw.WriteLine("\t\tLINE TO (-split_width / 2, " + layers[i].Zmax.ToString() + ")");
+                    sw.WriteLine("\t\tNATURAL(u) = surface_bc");
+                    sw.WriteLine("\t\tLINE TO (split_width / 2, " + layers[i].Zmax.ToString() + ")");
+                }
                 sw.WriteLine("\t\tLINE TO (-ly / 2, " + layers[i].Zmax.ToString() + ")");
                 sw.WriteLine("\t\tNATURAL(u) = 0 LINE TO (-ly / 2, " + layers[i].Zmin.ToString() + ")");
                 // set bottom boundary condition
@@ -151,14 +160,18 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine("\t\tVALUE(u) = split_V");
             sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
-            sw.WriteLine("\tREGION " + (layers.Length + 2).ToString() + "! Surface charges");
-            sw.WriteLine("\t\trho = TABLE(\'dens_surface.dat\', x, y)");
-            sw.WriteLine("\t\tband_gap = " + layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Band_Gap.ToString());
-            sw.WriteLine("\t\teps = eps_0");
-            sw.WriteLine("\t\tSTART(-split_width / 2, -0.1) TO (-split_width / 2, 0.1) TO (split_width / 2, 0.1) TO (split_width / 2, -0.1) TO CLOSE");
-            sw.WriteLine();
+            //sw.WriteLine("\tREGION " + (layers.Length + 2).ToString() + "! Surface charges");
+            //sw.WriteLine("\t\trho = TABLE(\'dens_surface.dat\', x, y)");
+            //sw.WriteLine("\t\tband_gap = " + layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Band_Gap.ToString());
+            //sw.WriteLine("\t\teps = eps_0");
+            //sw.WriteLine("\t\tSTART(-split_width / 2, -0.1) LINE TO (-split_width / 2, 0.1) TO (split_width / 2, 0.1) TO (split_width / 2, -0.1) TO CLOSE");
+            //sw.WriteLine();
 
             // write out plotting routines
+
+            sw.WriteLine("MONITORS");
+            sw.WriteLine("\tCONTOUR(rho)");
+            sw.WriteLine("\tCONTOUR(E)");
 
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(rho)");
@@ -166,6 +179,12 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine("\tELEVATION(E) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(E) FROM (0, 0) TO (0, -lz)");
             sw.WriteLine("\tELEVATION(rho) FROM (0, 0) TO (0, -lz)");
+
+            // and transfer the data to a file for reloading and replotting later
+            sw.WriteLine();
+            sw.WriteLine("\tTRANSFER (rho, u, E) FILE=\"data_file.dat\"");
+            sw.WriteLine();
+
             sw.WriteLine("END");
 
             // and close the file writer

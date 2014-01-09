@@ -16,6 +16,7 @@ namespace OneD_ThomasFermiPoisson
     public class OneD_PoissonSolver : Potential_Base
     {
         double top_bc, bottom_bc;
+        double top_eps, bottom_eps;
 
         // parameters for regular grid solve
         DoubleMatrix laplacian;
@@ -81,15 +82,15 @@ namespace OneD_ThomasFermiPoisson
             return result;
         }
 
-        protected override Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density)
+        protected override Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data charge_density)
         {
             // set the top and bottom boundary conditions where [0] is the bottom of the device
-            double factor = -1.0 * Physics_Base.epsilon / (dz * dz);
-            density.vec[0] = bottom_bc * factor; density.vec[density.Length - 1] = top_bc * factor;
+            charge_density.vec[0] = bottom_bc * -1.0 * bottom_eps / (dz * dz);
+            charge_density.vec[charge_density.Length - 1] = top_bc * -1.0 * top_eps / (dz * dz);
 
             // solve Poisson's equation
-            Band_Data potential = new Band_Data(lu_fact.Solve(density.vec));
-            
+            Band_Data potential = new Band_Data(lu_fact.Solve(charge_density.vec));
+
             // return band energy
             return -1.0 * Physics_Base.q_e * potential;
         }
@@ -127,26 +128,28 @@ namespace OneD_ThomasFermiPoisson
         DoubleMatrix Generate_Laplacian(ILayer[] layers)
         {
             DoubleMatrix result = new DoubleMatrix(nz, nz);
-            double factor;
+            double factor_plus, factor_minus;
 
             // cycle through the structure and fill in the Laplacian with the correct permittivities
             double zmin = Geom_Tool.Get_Zmin(layers);
             for (int i = 1; i < nz - 1; i++)
             {
-                double eps = Geom_Tool.GetLayer(layers, i * dz + zmin).Permitivity;
+                double eps_plus = Geom_Tool.GetLayer(layers, i * dz + 0.5 * dz + zmin).Permitivity;
+                double eps_minus = Geom_Tool.GetLayer(layers, i * dz - 0.5 * dz + zmin).Permitivity;
 
                 // the factor which multiplies the Laplace equation
-                factor = -1.0 * eps / (dz * dz);
+                factor_plus = -1.0 * eps_plus / (dz * dz);
+                factor_minus = -1.0 * eps_minus / (dz * dz);
 
                 // on-diagonal term
-                result[i, i] = 2.0 * factor;
+                result[i, i] = factor_minus + factor_plus;
                 // off-diagonal
-                result[i, i - 1] = -1.0 * factor;
-                result[i, i + 1] = -1.0 * factor;
+                result[i, i - 1] = -1.0 * factor_minus;
+                result[i, i + 1] = -1.0 * factor_plus;
             }
 
             // and fix boundary conditions
-            factor = -1.0 * Geom_Tool.GetLayer(layers, zmin).Permitivity / (dz * dz);
+            double factor = -1.0 * Geom_Tool.GetLayer(layers, zmin).Permitivity / (dz * dz);
             result[0, 0] = 1.0 * factor;
             result[0, 1] = 0.0;
             factor = -1.0 * Geom_Tool.GetLayer(layers, (nz - 1) * dz + zmin).Permitivity / (dz * dz);
@@ -339,11 +342,15 @@ namespace OneD_ThomasFermiPoisson
             sw.Close();
         }
 
-        public void Set_Boundary_Conditions(ILayer[] layers, double top_bc, double bottom_bc)
+        public void Set_Boundary_Conditions(ILayer[] layers, double top_bc, double bottom_bc, double top_pos, double bottom_pos)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // (as phi = E_c / (-1.0 * q_e)
             this.top_bc = top_bc / (-1.0 * Physics_Base.q_e); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
+
+            // and get the corresponding permittivities
+            top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;
+            bottom_eps = Geom_Tool.GetLayer(layers, bottom_pos).Permitivity;
 
             if (flexpde_inputfile != null)
                 Create_FlexPDE_Input_File(flexpde_inputfile, layers);

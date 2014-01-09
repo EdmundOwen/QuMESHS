@@ -64,8 +64,12 @@ namespace Split_Gate_Potential_Calc
             charge_dens_2d.Save_2D_Data("dens_2D.dat", dy, dz, ymin, zmin);
 
             // create a poisson solver and get the possible surface charge
+            Band_Data band_offset = exp.Band_Offset;
             OneD_PoissonSolver tmp_pois_solv = new OneD_PoissonSolver(dz, nz, layers, false, "", "", 0.0);
-            double surface_charge = tmp_pois_solv.Get_Surface_Charge(charge_dens_1d.Spin_Summed_Data, layers);
+            double surface_charge = tmp_pois_solv.Get_Surface_Charge(band_offset, layers);
+
+            charge_dens_1d.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz, zmin);
+            
             Band_Data surface_dens_2d = new Band_Data(new CenterSpace.NMath.Core.DoubleMatrix(ny, nz));
             int zsurface_index = (int)Math.Floor((layers[Geom_Tool.Find_Layer_Above_Surface(layers)].Zmin - Geom_Tool.Get_Zmin(layers)) / dz);
             for (int i = 0; i < ny; i++)
@@ -73,8 +77,8 @@ namespace Split_Gate_Potential_Calc
             surface_dens_2d.Save_2D_Data("dens_surface.dat", dy, dz, ymin, zmin);
 
             // delete unnecessary files
-            if (File.Exists("dens_1D.dat"))
-                File.Delete("dens_1D.dat");
+            //if (File.Exists("dens_1D.dat"))
+            //    File.Delete("dens_1D.dat");
             if (File.Exists("charge_density.dat"))
                 File.Delete("charge_density.dat");
             if (File.Exists("potential.dat"))
@@ -82,7 +86,7 @@ namespace Split_Gate_Potential_Calc
 
             // create split gate FlexPDE file (for the moment, only in one dimension)
             SG_File_Generator sg_file_gen = new SG_File_Generator(input);
-            sg_file_gen.Generate_2D_FlexPDE_File();
+            sg_file_gen.Generate_2D_FlexPDE_File(surface_charge * dz);
         }
     }
 }

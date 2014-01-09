@@ -120,7 +120,7 @@ namespace OneD_ThomasFermiPoisson
                 double bottom_bc = dens_solv.Get_Chemical_Potential(zmin, layers);
 
                 // set the boundary conditions
-                pois_solv.Set_Boundary_Conditions(layers, top_bc, bottom_bc);
+                pois_solv.Set_Boundary_Conditions(layers, top_bc, bottom_bc, Geom_Tool.Get_Zmin(layers) + dz * nz, Geom_Tool.Get_Zmin(layers));
 
                 // initialise the band energy as the solution with zero density
                 band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
