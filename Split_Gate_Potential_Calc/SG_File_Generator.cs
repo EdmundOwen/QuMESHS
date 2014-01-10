@@ -15,6 +15,7 @@ namespace Split_Gate_Potential_Calc
         ILayer[] layers;
         double ly, lz;
         double bottom_bc;
+        string rbf_fit;
 
         public SG_File_Generator(Dictionary<string, object> input)
         {
@@ -27,6 +28,35 @@ namespace Split_Gate_Potential_Calc
             // Calculate the bottom boundary condition
             OneD_ThomasFermiPoisson.OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiPoisson.OneD_ThomasFermiSolver((double)input["T"], (double)input["dz"], (int)(double)input["nz"], (double)input["zmin"]);
             bottom_bc = dens_solv.Get_Chemical_Potential(Geom_Tool.Get_Zmin(layers), layers);
+
+            // get the donor densities and positions
+            Fit_Donor_Level_RBF(input);
+        }
+
+        void Fit_Donor_Level_RBF(Dictionary<string, object> input)
+        {
+            // find the donor layer
+            int[] donor_layer = Layer_Tool.Get_Donor_Layers(layers);
+            if (donor_layer.Length != 1) throw new NotImplementedException("Error - at the moment there can only be one donor layer in the sample!");
+
+            // and get some of its parameters
+            double donor_layer_width = layers[donor_layer[0]].Zmax - layers[donor_layer[0]].Zmin;
+            int no_pos = (int)Math.Round(donor_layer_width / (double)input["dz"]);
+            int donor_base_index = (int)(Math.Round(layers[donor_layer[0]].Zmin - Geom_Tool.Get_Zmin(layers)) / (double)input["dz"]);
+
+            // calculate the positions and densities to make the RBF fit to
+            double[] positions = new double[no_pos];
+            double[] donor_dens = new double[no_pos];
+            for (int i = 0; i < no_pos; i++)
+            {
+                positions[i] = layers[donor_layer[0]].Zmin + i * (double)input["dz"];
+                donor_dens[i] = ((CenterSpace.NMath.Core.DoubleVector)input["oned_dens_data"])[donor_base_index + i];
+            }
+
+            // and do the fit here
+            OneD_ThomasFermiPoisson.OneD_RBF_Fit rbf_fitter = new OneD_ThomasFermiPoisson.OneD_RBF_Fit(positions, 3.0 * (double)input["dz"]);
+            rbf_fitter.Get_RBF_Weights(donor_dens);
+            rbf_fit = rbf_fitter.Get_RBF_Equation("donor_dens", "y");
         }
 
         internal void Generate_2D_FlexPDE_File(double surface)
@@ -62,7 +92,6 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine("COORDINATES cartesian2");
             sw.WriteLine("VARIABLES");
             sw.WriteLine("\tu");
-            sw.WriteLine("\tE");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
             sw.WriteLine("\tERRLIM=1e-5");
@@ -101,6 +130,9 @@ namespace Split_Gate_Potential_Calc
             // other physical parameters
             sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
             sw.WriteLine();
+            // and the donor density functional fit
+            sw.WriteLine(rbf_fit);
+            sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
             sw.WriteLine("\tu: div(eps * grad(u)) = -rho\t! Poisson's equation");
@@ -113,7 +145,8 @@ namespace Split_Gate_Potential_Calc
             {
                 sw.WriteLine("\tREGION " + layers[i].Layer_No.ToString());
                 if (layers[i].Acceptor_Conc != 0.0 || layers[i].Donor_Conc != 0.0)
-                    sw.WriteLine("\t\trho = TABLE(\'dens_2D.dat\', x, y)");
+                    //sw.WriteLine("\t\trho = TABLE(\'dens_2D.dat\', x, y)");
+                    sw.WriteLine("\t\trho = donor_dens");
                 else
                     sw.WriteLine("\t\trho = 0.0");
                 sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(layers[i].Material));
@@ -140,7 +173,6 @@ namespace Split_Gate_Potential_Calc
             }
 
             // write in surface and gates
-
             sw.WriteLine("\tREGION " + layers.Length.ToString() + " ! Left split gate");
             sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\tband_gap = 0");

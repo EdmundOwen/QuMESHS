@@ -68,7 +68,9 @@ namespace Split_Gate_Potential_Calc
             OneD_PoissonSolver tmp_pois_solv = new OneD_PoissonSolver(dz, nz, layers, false, "", "", 0.0);
             double surface_charge = tmp_pois_solv.Get_Surface_Charge(band_offset, layers);
 
+            // save the 1D data
             charge_dens_1d.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz, zmin);
+            input.Add("oned_dens_data", charge_dens_1d.Spin_Summed_Data.vec);
             
             Band_Data surface_dens_2d = new Band_Data(new CenterSpace.NMath.Core.DoubleMatrix(ny, nz));
             int zsurface_index = (int)Math.Floor((layers[Geom_Tool.Find_Layer_Above_Surface(layers)].Zmin - Geom_Tool.Get_Zmin(layers)) / dz);

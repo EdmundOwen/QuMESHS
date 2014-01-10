@@ -70,6 +70,7 @@
     <Compile Include="OneD_DFTSolver.cs" />
     <Compile Include="OneD_Error_Functional.cs" />
     <Compile Include="OneD_PoissonSolver.cs" />
+    <Compile Include="OneD_RBF_Fit.cs" />
     <Compile Include="OneD_ThomasFermiSolver.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

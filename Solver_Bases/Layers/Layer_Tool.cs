@@ -44,5 +44,17 @@ namespace Solver_Bases.Layers
                     throw new NotImplementedException("Error - Material properties not known");
             }
         }
+
+        /// <summary>
+        /// gets the layer numbers which have non-zero donor concentrations
+        /// </summary>
+        public static int[] Get_Donor_Layers(ILayer[] layers)
+        {
+            int[] result = (from item in layers
+                               where item.Acceptor_Conc != 0.0 || item.Donor_Conc != 0.0
+                               select item.Layer_No).ToArray();
+
+            return result;
+        }
     }
 }
