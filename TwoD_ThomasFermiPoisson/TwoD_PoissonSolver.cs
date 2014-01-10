@@ -130,8 +130,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\teps");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
-            // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
-            sw.WriteLine("\tu: div(eps * grad(u)) = rho\t! Poisson's equation");
+            // Poisson's equation
+            sw.WriteLine("\tu: div(eps * grad(u)) = -rho\t! Poisson's equation");
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
@@ -260,8 +260,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\teps");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
-            // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
-            sw.WriteLine("\tu: div(eps * grad(u)) = rho\t! Poisson's equation");
+            // Poisson's equation
+            sw.WriteLine("\tu: div(eps * grad(u)) = -rho\t! Poisson's equation");
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");

@@ -77,7 +77,7 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine();
             // boundary conditions
             sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
-            sw.WriteLine("\tsurface_bc = " + (-1.0 * surface).ToString());
+            sw.WriteLine("\tsurface_bc = " + surface.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in V)");
             sw.WriteLine("\tsplit_V = 0");
@@ -102,9 +102,8 @@ namespace Split_Gate_Potential_Calc
             sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
-            // Poisson's equation (not too happy about this... shouldn't it be -1.0 * rho?!)
-            sw.WriteLine("\tu: div(eps * grad(u)) = rho\t! Poisson's equation");
-            sw.WriteLine("\tE: E = q_e * u + 0.5 * band_gap");
+            // Poisson's equation
+            sw.WriteLine("\tu: div(eps * grad(u)) = -rho\t! Poisson's equation");
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
@@ -171,18 +170,18 @@ namespace Split_Gate_Potential_Calc
 
             sw.WriteLine("MONITORS");
             sw.WriteLine("\tCONTOUR(rho)");
-            sw.WriteLine("\tCONTOUR(E)");
+            sw.WriteLine("\tCONTOUR(-q_e * u + 0.5 * band_gap)");
 
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(rho)");
-            sw.WriteLine("\tCONTOUR(E)");
-            sw.WriteLine("\tELEVATION(E) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
-            sw.WriteLine("\tELEVATION(E) FROM (0, 0) TO (0, -lz)");
+            sw.WriteLine("\tCONTOUR(-q_e * u + 0.5 * band_gap)");
+            sw.WriteLine("\tELEVATION(-q_e * u + 0.5 * band_gap) FROM (-ly / 2, -well_depth) TO (ly / 2, -well_depth)");
+            sw.WriteLine("\tELEVATION(-q_e * u + 0.5 * band_gap) FROM (0, 0) TO (0, -lz)");
             sw.WriteLine("\tELEVATION(rho) FROM (0, 0) TO (0, -lz)");
 
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
-            sw.WriteLine("\tTRANSFER (rho, u, E) FILE=\"data_file.dat\"");
+            sw.WriteLine("\tTRANSFER (rho, u, -q_e * u + 0.5 * band_gap) FILE=\"data_file.dat\"");
             sw.WriteLine();
 
             sw.WriteLine("END");
