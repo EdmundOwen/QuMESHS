@@ -413,18 +413,18 @@ namespace Solver_Bases
         }
 
         /// <summary>
-        /// returns a DoubleMatrix with the given band structure planarised in the transverse direction
+        /// returns a DoubleMatrix with the given band structure planarised in the growth direction
         /// </summary>
         public static Band_Data Expand_BandStructure(DoubleVector structure, int nx, int ny)
         {
-            DoubleMatrix[] result = new DoubleMatrix[nx];
+            DoubleMatrix[] result = new DoubleMatrix[structure.Length];
 
-            for (int i = 0; i < nx; i++)
+            for (int i = 0; i < structure.Length; i++)
             {
-                result[i] = new DoubleMatrix(ny, structure.Length);
-                for (int j = 0; j < ny; j++)
-                    for (int k = 0; k < structure.Length; k++)
-                        result[i][j, k] = structure[k];
+                result[i] = new DoubleMatrix(nx, ny);
+                for (int j = 0; j < nx; j++)
+                    for (int k = 0; k < ny; k++)
+                        result[i][j, k] = structure[i];
             }
 
             return new Band_Data(result);

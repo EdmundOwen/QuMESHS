@@ -219,7 +219,51 @@ namespace Solver_Bases
 
         public void Save_3D_Data(string filename, double dx, double dy, double dz, double xmin, double ymin, double zmin)
         {
-            throw new NotImplementedException();
+            // check that the dimension of the density is correct
+            if (this.Dimension != 3)
+                throw new RankException();
+
+            // open stream
+            StreamWriter sw = new StreamWriter(filename);
+
+            int nz = this.vol.Length;
+            int nx = this.vol[0].Rows;
+            int ny = this.vol[0].Cols;
+
+            // save out positions
+            sw.WriteLine("x " + nx.ToString());
+            for (int i = 0; i < nx; i++)
+                //for (int j = 0; j < nz; j++)
+                sw.Write((i * dx + xmin).ToString() + '\t');
+
+            sw.WriteLine();
+            sw.WriteLine();
+            sw.WriteLine("y " + ny.ToString());
+            for (int j = 0; j < ny; j++)
+                sw.Write(((float)(j * dy + ymin)).ToString() + '\t');
+
+            sw.WriteLine();
+            sw.WriteLine();
+            sw.WriteLine("z " + nz.ToString());
+            for (int j = 0; j < nz; j++)
+                sw.Write(((float)(j * dz + zmin)).ToString() + '\t');
+
+            // save out densities
+            sw.WriteLine();
+            sw.WriteLine("data");
+            for (int i = 0; i < nz; i++)
+                for (int j = 0; j < ny; j++)
+                {
+                    for (int k = 0; k < nx; k++)
+                        if (Math.Abs(this.vol[i][j, k]) < 1e-20)
+                            sw.Write("0\t");
+                        else
+                            // note that the ordering is x first, then y, then z -- this is FlexPDE specific
+                            sw.Write(((float)this.vol[i][k, j]).ToString() + '\t');
+                    sw.WriteLine();
+                }
+
+            sw.Close();
         }
 
         public int Dimension

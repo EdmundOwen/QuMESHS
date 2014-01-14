@@ -22,10 +22,10 @@
 ## y-parameters are mostly for working out ly = dy * ny
 #
 ## Number of lattice sites in the transverse direction
-% ny = 150
+% ny = 15
 #
 ## Spacing of lattice sites in the transverse direction
-% dy = 10
+% dy = 100
 #
 #
 ############## Physical parameters ####################################
@@ -43,3 +43,15 @@
 % tolerance = 10e-5
 #
 #
+############## 3D Parameters ##########################################
+#
+## whether to do this in 2D or not
+% is_2D = false
+#
+## x-parameters are mostly for working out lx = dx * nx
+#
+## Number of lattice sites in the longitudinal direction
+% nx = 15
+#
+## Spacing of lattice sites in the longitudinal direction
+% dx = 100

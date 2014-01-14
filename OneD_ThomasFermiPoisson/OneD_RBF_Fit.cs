@@ -111,7 +111,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             // and add the final value
-            result += weights[weights.Length].ToString() + " * " + Get_RBF_String(input_variable, weights.Length);
+            result += weights[weights.Length - 1].ToString() + " * " + Get_RBF_String(input_variable, weights.Length - 1);
 
             return result;
         }
