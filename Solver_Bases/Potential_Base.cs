@@ -13,11 +13,6 @@ namespace Solver_Bases
 {
     public abstract class Potential_Base
     {
-        protected int nx, ny, nz;
-        protected double xmin, ymin, zmin;
-        protected double dx, dy, dz;
-        protected int dim;
-
         /// this is where the density will be saved out to
         protected string dens_filename;
 
@@ -29,20 +24,8 @@ namespace Solver_Bases
         private bool converged;
         private double convergence_factor = double.MaxValue;
 
-        public Potential_Base(double dx, double dy, double dz, int nx, int ny, int nz, ILayer[] layers, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
+        public Potential_Base(bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
         {
-            this.nx = nx; this.ny = ny; this.nz = nz;
-            this.dx = dx; this.dy = dy; this.dz = dz;
-            this.xmin = Geom_Tool.Get_Xmin(layers); this.ymin = Geom_Tool.Get_Ymin(layers); this.zmin = Geom_Tool.Get_Zmin(layers);
-
-            // check how many actual dimensions are present
-            if (nx != 1)
-                dim = 3;
-            else if (ny != 1)
-                dim = 2;
-            else
-                dim = 1;
-
             // check whether using flexPDE
             flexPDE = using_flexPDE;
             if (using_flexPDE)
@@ -71,12 +54,7 @@ namespace Solver_Bases
         protected Band_Data Get_BandEnergy_From_FlexPDE(Band_Data density, string dens_filename)
         {
             // save density to file in a FlexPDE "TABLE" format
-            if (dim == 1)
-                density.Save_1D_Data(dens_filename, dz, zmin);
-            if (dim == 2)
-                density.Save_2D_Data(dens_filename, dy, dz, ymin, zmin);
-            if (dim == 3)
-                density.Save_3D_Data(dens_filename, dx, dy, dz, xmin, ymin, zmin);
+            Save_Density_Data(density, dens_filename);
 
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
             try { File.Delete("pot.dat"); }
@@ -102,9 +80,17 @@ namespace Solver_Bases
                     first_line = i + 1;
                     break;
                 }
-            
+
+            // trim off the first lines which contain no data
+            string[] data = new string[lines.Length - first_line];
+            for (int i = first_line; i < lines.Length; i++)
+                data[i - first_line] = lines[i];
+
+            // and trim all of the empty lines
+            //string[] data = (from items in tmp where items != "" select items).ToArray();
+
             // return band energy using E_c = - q_e * phi
-            return -1.0 * Physics_Base.q_e * Parse_Potential(lines, first_line);
+            return -1.0 * Physics_Base.q_e * Parse_Potential(data);
         }
 
         /// <summary>
@@ -242,9 +228,8 @@ namespace Solver_Bases
             converged = false; convergence_factor = double.MaxValue;
         }
 
-        protected abstract Band_Data Parse_Potential(string[] data, int first_line);
-        //protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, string dens_filename, double[] band_layer_depths);
-        protected abstract void Create_FlexPDE_Input_File(string flexPDE_input, ILayer[] layers);
+        protected abstract Band_Data Parse_Potential(string[] data);
         protected abstract Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density);
+        protected abstract void Save_Density_Data(Band_Data density, string input_file_name);
     }
 }

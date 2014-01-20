@@ -8,183 +8,109 @@ using Solver_Bases;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    enum Density_Method
-    {
-        by_k,
-        by_E,
-        by_ThomasFermi
-    }
-
     public class Experiment : Experiment_Base
     {
-        double top_V, split_V;
+        double top_V, split_V, surface_charge;
+
+        TwoD_ThomasFermiSolver dens_solv;
+        TwoD_PoissonSolver pois_solv;
 
         public void Initialise_Experiment(Dictionary<string, object> input_dict)
         {
             Console.WriteLine("Initialising Experiment");
-
-            // simulation domain inputs
-            if (input_dict.ContainsKey("dy")) this.dy = (double)input_dict["dy"]; else throw new KeyNotFoundException("No dy in input dictionary!");
-            if (input_dict.ContainsKey("ny")) this.ny = (int)(double)input_dict["ny"]; else throw new KeyNotFoundException("No ny in input dictionary!");
-            if (input_dict.ContainsKey("dz")) this.dz = (double)input_dict["dz"]; else throw new KeyNotFoundException("No dz in input dictionary!");
-            if (input_dict.ContainsKey("nz")) this.nz = (int)(double)input_dict["nz"]; else throw new KeyNotFoundException("No nz in input dictionary!");
             
+            // simulation domain inputs
+            Get_From_Dictionary<double>(input_dict, "dy", ref dy_dens); dy_pot = dy_dens;
+            Get_From_Dictionary<double>(input_dict, "dz", ref dz_dens); dz_pot = dz_dens;
+
+            Get_From_Dictionary(input_dict, "ny", ref ny_dens); ny_pot = ny_dens;
+            Get_From_Dictionary(input_dict, "nz", ref nz_dens); nz_pot = nz_dens;
+
+            // but try to get the specific values
+            Get_From_Dictionary<double>(input_dict, "dy_dens", ref dy_dens, true);
+            Get_From_Dictionary<double>(input_dict, "dz_dens", ref dz_dens, true);
+            Get_From_Dictionary<double>(input_dict, "dy_pot", ref dy_pot, true);
+            Get_From_Dictionary<double>(input_dict, "dz_pot", ref dz_pot, true);
+
+            Get_From_Dictionary(input_dict, "ny_dens", ref ny_dens, true);
+            Get_From_Dictionary(input_dict, "nz_dens", ref nz_dens, true);
+            Get_From_Dictionary(input_dict, "ny_pot", ref ny_pot, true);
+            Get_From_Dictionary(input_dict, "nz_pot", ref nz_pot, true);
+
             // physics parameters are done by the base method
             base.Initialise(input_dict);
-
+            
             // gate voltages
-            top_V = (double)input_dict["top_V"];
-            split_V = (double)input_dict["split_V"];
-            ymin = -0.5 * dy * ny;
+            Get_From_Dictionary<double>(input_dict, "top_V", ref top_V);
+            Get_From_Dictionary<double>(input_dict, "split_V", ref split_V);
+            Get_From_Dictionary<double>(input_dict, "surface_charge", ref surface_charge);
 
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
-            if (input_dict.ContainsKey("SpinResolved_Density")) this.charge_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
-            else this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny, nz)), new Band_Data(new DoubleMatrix(ny, nz)));
+            if (input_dict.ContainsKey("SpinResolved_Density"))
+            {
+                this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny_dens, nz_dens)), new Band_Data(new DoubleMatrix(ny_dens, nz_dens)));
+                SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
 
-            if (input_dict.ContainsKey("Potential")) this.band_offset = new Band_Data((DoubleMatrix)input_dict["Potential"]); else this.band_offset = new Band_Data(new DoubleMatrix(ny, nz));
-            
+                int offset_min = (int)Math.Round((zmin_dens - zmin_pot) / dz_pot);
+
+                for (int i = 0; i  < ny_dens; i++)
+                    for (int j = 0; j < nz_dens; j++)
+                    {
+                        charge_density.Spin_Up.mat[i, j] = tmp_1d_density.Spin_Up.vec[offset_min + j];
+                        charge_density.Spin_Down.mat[i, j] = tmp_1d_density.Spin_Down.vec[offset_min + j];
+                    }
+            }
+            else
+                this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny_dens, nz_dens)), new Band_Data(new DoubleMatrix(ny_dens, nz_dens)));
+
+            if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
+            if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
+
+            // create charge density solver and calculate boundary conditions
+            dens_solv = new TwoD_ThomasFermiSolver(temperature, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens);
+            double bottom_bc = dens_solv.Get_Chemical_Potential(0.0, zmin_pot, layers);
+
+            // initialise potential solver
+            pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            pois_solv.Set_Boundary_Conditions(top_V, split_V, bottom_bc, surface_charge);
+
+            // initialise the band energy as the solution from the input density
+            //if (input_dict.ContainsKey("Band_Offset"))
+            //{ Band_Data tmp_1d_bandoffset = (Band_Data)input_dict["Band_Offset"]; this.band_offset = Input_Band_Structure.Expand_BandStructure(tmp_1d_bandoffset.vec, ny_dens); }
+            //else 
+                //band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data); 
+
             Console.WriteLine("Experimental parameters initialised");
         }
 
-        /*
         public override void Run()
         {
-            Console.WriteLine("Creating density calculation class");
-            // create classes and initialise
-            TwoD_ThomasFermiSolver dens_solv = new TwoD_ThomasFermiSolver(band_structure, acceptor_conc, donor_conc, acceptor_energy, donor_energy, temperature, dy, dz, ny, nz);
-            double bottom_bc = dens_solv.Get_Chemical_Potential(nz - 1);
-            Console.WriteLine("Density calculation class completed");
-
-            Console.WriteLine("Creating potential solving class");
-            TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, bottom_bc, layer_depths, using_flexPDE, flexPDE_input, flexPDE_location, freeze_dopents, tol);
-            Console.WriteLine("Potential solving class completed");
-
-            // initialise dopents and band energies
-            DoubleMatrix dopent_charge_density;
-            if (freeze_dopents)
-            {
-                dopent_charge_density = Create_Dopent_Density_File(pois_solv).mat;
-                // and use this density to calculate the initial band offset
-                Console.WriteLine("Calculating initial band offset using dopent density");
-                band_offset = new Band_Data(pois_solv.Get_Band_Energy(dopent_charge_density));
-            }
-            else
-            {
-                // but if there is no such density, start from no charge
-                Console.WriteLine("Calculating initial band offset from scratch");
-                band_offset = new Band_Data(pois_solv.Get_Band_Energy(new DoubleMatrix(ny, nz, 0.0)));
-            }
-
-            // run self consistent loop
-            Console.WriteLine("Starting self-consistent density-potential solver loop");
             int count = 0;
-            while (!pois_solv.Converged)
+            while (!dens_solv.Converged)
             {
-                Console.WriteLine("Iteration:\t" + count.ToString() + "\tConvergence factor:\t" + pois_solv.Convergence_Factor.ToString());
+                Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
 
-                // calculate the total charge density for this band offset
-                charge_density = dens_solv.Get_TwoD_ChargeDensity(band_offset.mat);
+                // solve the band energy for the given charge  density and mix in with the old band energy
+                band_offset = -1.0 * pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
 
-                // solve the band energy for the given charge density and mix in with the old band energy
-                Band_Data new_band_energy = new Band_Data(pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Matrix));
-                pois_solv.Blend(ref band_offset, new_band_energy, alpha);
+                // find the density for this new band offset and blend
+                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, charge_density, band_offset);
+                dens_solv.Blend(ref charge_density, new_density, alpha, tol);
 
-                // change the potential mixing parameter
-                //if ((count + 1) % potential_mixing_rate == 0)
-                //    alpha = pois_solv.Renew_Mixing_Parameter(potential, new_potential, alpha_prime, alpha);
+                //pois_solv.Blend(ref band_offset, new_band_energy, alpha);
 
-                // transfer new potential array to potential array
-                //potential = new_potential;
                 count++;
             }
 
-            dens_solv.Output(charge_density, "charge_density.dat");
-            pois_solv.Output(Input_Band_Structure.Expand_BandStructure(band_structure, ny) / 2.0 - band_offset, "potential.dat");
-        }
-
-        /// <summary>
-        /// Finds whether there is a dopent density file created by the 1D band structure calculation and expands it into a 2D band_structure
-        /// </summary>
-        private Band_Data Create_Dopent_Density_File(TwoD_PoissonSolver pois_solv)
-        {
-            string[] raw_data;
-            DoubleVector density;
-
-            // check for dens.dat files
-            if (File.Exists("dens_1D.dat"))
-            {
-                raw_data = File.ReadAllLines("dens_1D.dat");
-
-                // separate the data into coordinate and density parts
-                int no_points = int.Parse(raw_data[0].Split(' ')[1]);
-                // take this data and save to density vector
-                density = new DoubleVector(no_points);
-                for (int i = 0; i < no_points; i++)
-                    density[i] = float.Parse(raw_data[no_points + i + 3]);
-
-                // check that the lattice spacing in the growth direction is the same
-                double dz_data = double.Parse(raw_data[2]) - double.Parse(raw_data[1]);
-                if (Math.Abs(dz - dz_data) > tol)
-                    throw new Exception("Error - dz from input file is " + dz.ToString() + " whilst dz from 1d density is " + dz_data.ToString());
-            }
-            else
-                throw new Exception("Error - trying to save out a 1D band structure to 2D failed... maybe the system is too cold?");
-
-            // save the density into a specific file for the frozen dopent density
-            Band_Data expanded_density = Input_Band_Structure.Expand_BandStructure(density, ny);
-            pois_solv.Save_Density(expanded_density, "dens_2D.dat");
-            pois_solv.Save_Density(expanded_density, "dopents_frozen_dens_2D.dat");
-
-            return expanded_density;
-        }
-        */
-
-        public override void Run()
-        {
-            // get temperatures to run the experiment at
-            double[] run_temps = { 4.0 };// Freeze_Out_Temperatures();
-
-            for (int i = 0; i < run_temps.Length; i++)
-            {
-                double current_temperature = run_temps[i];
-
-                // create charge density solver and calculate boundary conditions
-                TwoD_ThomasFermiSolver dens_solv = new TwoD_ThomasFermiSolver(current_temperature, dy, dz, ny, nz, ymin, zmin);
-                double top_bc = 0;// dens_solv.Get_Chemical_Potential(0);
-                double bottom_bc = dens_solv.Get_Chemical_Potential(0.0, zmin, layers);
-
-                // initialise potential solver
-                TwoD_PoissonSolver pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
-                pois_solv.Set_Boundary_Conditions(layers, top_V, split_V, bottom_bc);
-
-                // initialise the band energy as the solution with zero density
-                band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
-
-                int count = 0;
-                while (!pois_solv.Converged)
-                {
-                    Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + current_temperature.ToString() + "\tConvergence factor: " + pois_solv.Convergence_Factor.ToString());
-
-                    // calculate the total charge density for this band offset
-                    dens_solv.Get_ChargeDensity(layers, ref charge_density, band_offset);
-
-                    // solve the band energy for the givencharge  density and mix in with the old band energy
-                    Band_Data new_band_energy = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
-                    pois_solv.Blend(ref band_offset, new_band_energy, alpha);
-
-                    count++;
-                }
-            }
-
             // initialise output solvers
-            TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(temperature, dy, dz, ny, nz, ymin, zmin);
-            TwoD_PoissonSolver final_pois_solv = new TwoD_PoissonSolver(dy, dz, ny, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(temperature, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens);
+            TwoD_PoissonSolver final_pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
-            charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dy, dz, ymin, zmin);
+            charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dy_dens, dz_dens, ymin_dens, zmin_dens);
 
             final_dens_solv.Output(charge_density, "charge_density.dat");
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy, dz, ny, nz, ymin, zmin) - band_offset, "potential.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - band_offset, "potential.dat");
         }
     }
 }

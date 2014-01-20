@@ -13,35 +13,29 @@ namespace OneD_ThomasFermiPoisson
 {
     public class Experiment : Experiment_Base
     {
-        int nz_dft;
-        double zmin_dft, dz_dft;
-        bool TF_only = false;       // only run Thomas-Fermi density calculations (i.e. no DFT, Green's functions etc...)
-
         public new void Initialise(Dictionary<string, object> input_dict)
         {
             // simulation domain inputs
-            if (input_dict.ContainsKey("dz")) this.dz = (double)input_dict["dz"]; else throw new KeyNotFoundException("No dz in input dictionary!");
-            if (input_dict.ContainsKey("nz")) this.nz = (int)(double)input_dict["nz"]; else throw new KeyNotFoundException("No nz in input dictionary!");
+            Get_From_Dictionary<double>(input_dict, "dz", ref dz_dens); dz_pot = dz_dens;
+            Get_From_Dictionary(input_dict, "nz", ref nz_dens); nz_pot = nz_dens;
 
-            // dft inputs
-            if (input_dict.ContainsKey("dft"))
-                if (bool.Parse((string)input_dict["dft"]))
-                {
-                    if (input_dict.ContainsKey("dz_dft")) this.dz_dft = (double)input_dict["dz_dft"]; else throw new KeyNotFoundException("No dz for dft calculation in input dictionary!");
-                    if (input_dict.ContainsKey("nz_dft")) this.nz_dft = (int)(double)input_dict["nz_dft"]; else throw new KeyNotFoundException("No nz for dft calculation in input dictionary!");
-                    if (input_dict.ContainsKey("zmin_dft")) this.zmin_dft = (double)input_dict["zmin_dft"]; else throw new KeyNotFoundException("No minimum z value for dft calculation in input dictionary!");
-                }
+            // but try to get the specific values
+            Get_From_Dictionary<double>(input_dict, "dz_dens", ref dz_dens, true);
+            Get_From_Dictionary<double>(input_dict, "dz_pot", ref dz_pot, true);
+            Get_From_Dictionary(input_dict, "nz_dens", ref nz_dens, true);
+            Get_From_Dictionary(input_dict, "nz_pot", ref nz_pot, true);
 
             // physics parameters are done by the base method
             base.Initialise(input_dict);
 
             // try to get the band offset and the charge density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.charge_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
-            else this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+            else this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_dens)), new Band_Data(new DoubleVector(nz_dens)));
 
-            if (input_dict.ContainsKey("Band_Offset")) this.band_offset = new Band_Data((DoubleVector)input_dict["Potential"]); else band_offset = new Band_Data(new DoubleVector(nz));
+            if (input_dict.ContainsKey("Band_Offset")) this.band_offset = new Band_Data((DoubleVector)input_dict["Potential"]); else band_offset = new Band_Data(new DoubleVector(nz_dens));
 
-            if (input_dict.ContainsKey("TF_only")) this.TF_only = (bool)input_dict["TF_only"];
+            if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
+            if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
         }
 
         /*
@@ -108,19 +102,19 @@ namespace OneD_ThomasFermiPoisson
             double[] run_temps = Freeze_Out_Temperatures();
 
             // initialise potential solver
-            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(dz, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
             
             for (int i = 0; i < run_temps.Length; i++)
             {
                 double current_temperature = run_temps[i];
 
                 // create charge density solver and calculate boundary conditions
-                OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz, nz, zmin);
+                OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz_pot, nz_pot, zmin_pot);
                 double top_bc = 0.0;// dens_solv.Get_Chemical_Potential(0);
-                double bottom_bc = dens_solv.Get_Chemical_Potential(zmin, layers);
+                double bottom_bc = dens_solv.Get_Chemical_Potential(zmin_pot, layers);
 
                 // set the boundary conditions
-                pois_solv.Set_Boundary_Conditions(layers, top_bc, bottom_bc, Geom_Tool.Get_Zmin(layers) + dz * nz, Geom_Tool.Get_Zmin(layers));
+                pois_solv.Set_Boundary_Conditions(layers, top_bc, bottom_bc, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
 
                 // initialise the band energy as the solution with zero density
                 band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
@@ -128,7 +122,8 @@ namespace OneD_ThomasFermiPoisson
                 count = 0;
                 while (!pois_solv.Converged)
                 {
-                    Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + current_temperature.ToString() + "\tConvergence factor: " + pois_solv.Convergence_Factor.ToString());
+                    if (count % 100 == 0)
+                        Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + current_temperature.ToString() + "\tConvergence factor: " + pois_solv.Convergence_Factor.ToString());
 
                     // calculate the total charge density for this band offset
                     dens_solv.Get_ChargeDensity(layers, ref charge_density, band_offset);
@@ -147,8 +142,8 @@ namespace OneD_ThomasFermiPoisson
                 return;
 
             // and then run the DFT solver at the base temperature over a limited range
-            OneD_DFTSolver dft_solv = new OneD_DFTSolver(temperature, dz_dft, nz_dft, zmin_dft);
-            SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_dft)), new Band_Data(new DoubleVector(nz_dft)));
+            OneD_DFTSolver dft_solv = new OneD_DFTSolver(temperature, dz_dens, nz_dens, zmin_dens);
+            SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_dens)), new Band_Data(new DoubleVector(nz_dens)));
             // but with a smaller mixing parameter
             Console.WriteLine("Renewing mixing parameter for DFT calculation");
             alpha /= 10.0;
@@ -157,17 +152,18 @@ namespace OneD_ThomasFermiPoisson
             count = 0;
             while (!pois_solv.Converged)
             {
-                Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + run_temps[run_temps.Length - 1].ToString() + "\tConvergence factor: " + pois_solv.Convergence_Factor.ToString());
+                if (count % 100 == 0)
+                    Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + run_temps[run_temps.Length - 1].ToString() + "\tConvergence factor: " + pois_solv.Convergence_Factor.ToString());
 
                 // calculate the total charge density for this band offset
-                Band_Data dft_band_offset = new Band_Data(new DoubleVector(nz_dft));
+                Band_Data dft_band_offset = new Band_Data(new DoubleVector(nz_dens));
                 Interpolate_DFT_Grid(ref dft_dens, ref dft_band_offset, charge_density, band_offset);
                 Get_Potential(ref dft_band_offset, layers);
                 dft_solv.Get_ChargeDensity(layers, ref dft_dens, dft_band_offset);
 
                 // find the top and bottom of the dft solution domain for charge_density
-                int offset_min = (int)Math.Round((zmin_dft - zmin) / dz);
-                int offset_max = (int)Math.Round((zmin_dft + nz_dft * dz_dft - zmin) / dz);
+                int offset_min = (int)Math.Round((zmin_dens - zmin_pot) / dz_pot);
+                int offset_max = (int)Math.Round((zmin_dens + nz_dens * dz_dens - zmin_pot) / dz_pot);
 
                 // and insert the dft density into charge_density
                 for (int i = offset_min; i < offset_max; i++)
@@ -175,9 +171,9 @@ namespace OneD_ThomasFermiPoisson
                     // calculate the index in the dft array for the spatial positions of charge_density
                     int dft_index;
                     if (i == offset_max - 1)
-                        dft_index = (int)Math.Floor((i - offset_min) * dz / dz_dft);
+                        dft_index = (int)Math.Floor((i - offset_min) * dz_pot / dz_dens);
                     else
-                        dft_index = (int)Math.Round((i - offset_min) * dz / dz_dft);
+                        dft_index = (int)Math.Round((i - offset_min) * dz_pot / dz_dens);
 
                     charge_density.Spin_Up[i] = dft_dens.Spin_Up[dft_index];
                     charge_density.Spin_Down[i] = dft_dens.Spin_Down[dft_index];
@@ -216,21 +212,21 @@ namespace OneD_ThomasFermiPoisson
             pois_solv.Reset();
 
             // initialise output solvers
-            OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(temperature, dz, nz, zmin);
-            OneD_PoissonSolver final_pois_solv = new OneD_PoissonSolver(dz, nz, layers, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(temperature, dz_dens, nz_dens, zmin_dens);
+            OneD_PoissonSolver final_pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
-            charge_density.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz, zmin);
+            charge_density.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz_dens, zmin_dens);
 
             final_dens_solv.Output(charge_density, "charge_density.dat");
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz, nz, zmin) - band_offset, "potential.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_dens, nz_dens, zmin_dens) - band_offset, "potential.dat");
         }
 
         void Get_Potential(ref Band_Data dft_band_offset, ILayer[] layers)
         {
-            for (int i = 0; i < nz_dft; i++)
+            for (int i = 0; i < nz_dens; i++)
             {
-                double pos = zmin_dft + i * dz_dft;
+                double pos = zmin_dens + i * dz_dens;
                 double band_gap = Geom_Tool.GetLayer(layers, pos).Band_Gap;
                 dft_band_offset[i] = 0.5 * band_gap - dft_band_offset[i];
             }
@@ -238,14 +234,15 @@ namespace OneD_ThomasFermiPoisson
 
         void Interpolate_DFT_Grid(ref SpinResolved_Data dft_dens, ref Band_Data dft_band_offset, SpinResolved_Data charge_density, Band_Data band_offset)
         {
-            for (int i = 0; i < nz_dft; i++)
+            for (int i = 0; i < nz_dens; i++)
             {
-                double dft_pos = zmin_dft + i * dz_dft;
-                int init_index = (int)Math.Floor((i * dz_dft - zmin + zmin_dft) / dz); // index for the initial domain (ie. for charge_density and band_offset)
+                double dft_pos = zmin_dens + i * dz_dens;
+                int init_index = (int)Math.Floor((i * dz_dens - zmin_pot + zmin_dens) / dz_pot); // index for the initial domain (ie. for charge_density and band_offset)
 
-                dft_dens.Spin_Up[i] = charge_density.Spin_Up[init_index] + (charge_density.Spin_Up[init_index + 1] - charge_density.Spin_Up[init_index]) * (dft_pos - Math.Floor(dft_pos / dz) * dz) / dz;
-                dft_dens.Spin_Down[i] = charge_density.Spin_Down[init_index] + (charge_density.Spin_Down[init_index + 1] - charge_density.Spin_Down[init_index]) * (dft_pos - Math.Floor(dft_pos / dz) * dz) / dz;
-                dft_band_offset[i] = band_offset[init_index] + (band_offset[init_index + 1] - band_offset[init_index]) * (dft_pos - Math.Floor(dft_pos / dz) * dz) / dz;
+                // no interpolation (it doesn't work...)
+                dft_dens.Spin_Up[i] = charge_density.Spin_Up[init_index];// +(charge_density.Spin_Up[init_index + 1] - charge_density.Spin_Up[init_index]) * (dft_pos - Math.Floor(dft_pos / dz_pot) * dz_pot) / dz_pot;
+                dft_dens.Spin_Down[i] = charge_density.Spin_Down[init_index];// +(charge_density.Spin_Down[init_index + 1] - charge_density.Spin_Down[init_index]) * (dft_pos - Math.Floor(dft_pos / dz_pot) * dz_pot) / dz_pot;
+                dft_band_offset[i] = band_offset[init_index];// +(band_offset[init_index + 1] - band_offset[init_index]) * (dft_pos - Math.Floor(dft_pos / dz_pot) * dz_pot) / dz_pot;
             }
         }
     }

@@ -68,6 +68,15 @@ namespace OneD_ThomasFermiPoisson
             charge_density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
         }
 
+        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
+        {
+            SpinResolved_Data new_density = new SpinResolved_Data(new Band_Data(density.Spin_Up.vec.DeepenThisCopy()), new Band_Data(density.Spin_Down.vec.DeepenThisCopy()));
+
+            Get_ChargeDensity(layers, ref new_density, chem_pot);
+
+            return new_density;
+        }
+
         public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
         {
             throw new NotImplementedException();

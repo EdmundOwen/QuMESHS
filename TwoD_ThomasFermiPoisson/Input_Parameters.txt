@@ -27,7 +27,7 @@
 ############## Poisson solver details #################################
 #
 ## Potential mixing parameter
-% alpha = 0.01
+% alpha = 0.05
 #
 ## File name with band structure in
 % BandStructure_File = band_structure.txt
@@ -45,12 +45,16 @@
 % top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -1.0
+% split_V = -1.5
+#
+## Minimum of simulation domain in the transverse direction
+% ymin_pot = -1000.0
+#
 #
 ############## Generic density solver details #########################
 #
 ## Final solution tolerance
-% tolerance = 10e-5
+% tolerance = 1e-5
 #
 ## Fermi energy
 % E_f = 0.0
@@ -61,22 +65,16 @@
 ## Temperature
 % T = 4
 #
+## Minimum of simulation domain in the transverse direction
+% ymin_dens = -1000.0
+#
+## Minimum of simulation domain in the growth direction
+% zmin_dens = -120.0
+#
+## Lattice spacing in the growth direction
+% dz_dens = 5.0
+#
+## Number of lattice points in growth direction
+% nz_dens = 8
 #
 #
-#
-#
-#
-############## Momentum density solver details ########################
-#
-## Spacing in momentum space
-% dk = 1
-#
-#
-#
-############## Energy density solver details ##########################
-#
-## Initial energy level to start from
-% Lowest_Energy = 0
-#
-## Spacing between energy levels
-% dE = 0.1

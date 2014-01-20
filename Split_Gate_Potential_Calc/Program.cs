@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 using Solver_Bases;
 using Solver_Bases.Layers;
-using OneD_ThomasFermiPoisson;
 using Solver_Bases.Geometry;
+using OneD_ThomasFermiPoisson;
 
 namespace Split_Gate_Potential_Calc
 {
@@ -47,7 +47,7 @@ namespace Split_Gate_Potential_Calc
             input.Add("Layers", layers);
 
             // calculate 1D potentials
-            input.Add("TF_only", true);             // only to Thomas-Fermi calculations for finding split gate potentials
+            input.Add("TF_only", "true");             // only to Thomas-Fermi calculations for finding split gate potentials
             input["use_FlexPDE"] = "false";
             Experiment exp = new Experiment();
             exp.Initialise(input);
@@ -57,7 +57,7 @@ namespace Split_Gate_Potential_Calc
             double dz = (double)input["dz"]; int nz = (int)(double)input["nz"];
             double zmin = Solver_Bases.Geometry.Geom_Tool.Get_Zmin(layers);
             Band_Data band_offset = exp.Band_Offset;
-            OneD_PoissonSolver tmp_pois_solv = new OneD_PoissonSolver(dz, nz, layers, false, "", "", 0.0);
+            OneD_PoissonSolver tmp_pois_solv = new OneD_PoissonSolver(exp, false, "", "", 0.0);
             double surface_charge = tmp_pois_solv.Get_Surface_Charge(band_offset, layers);
 
             // save the 1D data
@@ -88,7 +88,10 @@ namespace Split_Gate_Potential_Calc
                 charge_dens_2d.Save_2D_Data("dens_2D.dat", dy, dz, ymin, zmin);
 
                 // create split gate FlexPDE file (for the moment, only in one dimension)
-                sg_file_gen.Generate_2D_FlexPDE_File(surface_charge * dz);
+                TwoD_ThomasFermiPoisson.Experiment exp_2d = new TwoD_ThomasFermiPoisson.Experiment();
+                exp_2d.Initialise_Experiment(input);
+
+                sg_file_gen.Generate_2D_FlexPDE_File(exp_2d, surface_charge * dz);
             }
             else
             {

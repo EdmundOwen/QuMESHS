@@ -71,7 +71,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Density_Base.cs" />
-    <Compile Include="Density_Server.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Experiment_Base.cs" />
     <Compile Include="Geometry\Geom_Base.cs" />

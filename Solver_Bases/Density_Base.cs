@@ -18,6 +18,9 @@ namespace Solver_Bases
         protected double fermi_Energy = 0.0;
         protected int dim;
 
+        private bool converged = false;
+        private double convergence_factor = double.MaxValue;
+
         public Density_Base(double temperature, double dx, double dy, double dz, int nx, int ny, int nz, double xmin, double ymin, double zmin)
         {
             this.temperature = temperature;
@@ -161,7 +164,95 @@ namespace Solver_Bases
             return Get_Chemical_Potential(0.0, y, z, layers, temperature_input);
         }
 
+        /// <summary>
+        /// returns an array containing |density1 - density2| elements
+        /// </summary>
+        double[] Get_Array_of_Absolute_Differences(SpinResolved_Data density1, SpinResolved_Data density2)
+        {
+            double[] result = new double[density1.Length];
+            for (int i = 0; i < density1.Spin_Summed_Data.Length; i++)
+                result[i] = Math.Abs(density1.Spin_Summed_Data[i] - density2.Spin_Summed_Data[i]);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Checks whether the density has converged by calculating the absolute value of the blended band energies
+        /// and determining whether every term is zero within a given tolerance
+        /// </summary>
+        public bool Check_Convergence(SpinResolved_Data blending_density, double tol)
+        {
+            double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
+            for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
+                density_diff[i] = Math.Abs(blending_density.Spin_Summed_Data[i]);
+
+            int[] converged_test = new int[density_diff.Length];
+            for (int i = 0; i < density_diff.Length; i++)
+            {
+                converged_test[i] = 0;
+                if (density_diff[i] < tol)
+                    converged_test[i] = 1;
+            }
+
+            convergence_factor = density_diff.Sum();
+
+            if (converged_test.Sum() == density_diff.Length)
+                return true;
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// Checks whether the density has converged by comparing old and new densities
+        /// and determining whether every term is the same within a given tolerance
+        /// </summary>
+        public bool Check_Convergence(SpinResolved_Data band_density, SpinResolved_Data new_band_density, double tol)
+        {
+            double[] density_diff = Get_Array_of_Absolute_Differences(band_density, new_band_density);
+
+            int[] converged_test = new int[density_diff.Length];
+            for (int i = 0; i < density_diff.Length; i++)
+            {
+                converged_test[i] = 0;
+                if (density_diff[i] < tol)
+                    converged_test[i] = 1;
+            }
+
+            convergence_factor = density_diff.Sum();
+
+            if (converged_test.Sum() == density_diff.Length)
+                return true;
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// blends the old and new densities based on a parameter using a simple (I think it's a Newton) scheme
+        /// rho_new = (1 - alpha) * rho_old + alpha * rho_calc
+        /// ALSO: checks for convergence here
+        /// </summary>
+        public void Blend(ref SpinResolved_Data band_density, SpinResolved_Data new_band_density, double blend_parameter, double tol)
+        {
+            SpinResolved_Data blending_density = blend_parameter * (band_density - new_band_density);
+
+            // check for convergence
+            converged = Check_Convergence(blending_density, tol);
+
+            band_density = band_density - blending_density;
+        }
+
+        public bool Converged
+        {
+            get { return converged; }
+        }
+
+        public double Convergence_Factor
+        {
+            get { return convergence_factor; }
+        }
+
         public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot);
+        public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot);
         public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
         public abstract void Close();
     }

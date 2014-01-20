@@ -430,6 +430,22 @@ namespace Solver_Bases
             return new Band_Data(result);
         }
 
+        public static SpinResolved_Data Expand_BandStructure(SpinResolved_Data data, int ny)
+        {
+            Band_Data spin_up = Expand_BandStructure(data.Spin_Up.vec, ny);
+            Band_Data spin_down = Expand_BandStructure(data.Spin_Down.vec, ny);
+
+            return new SpinResolved_Data(spin_up, spin_down);
+        }
+
+        public static SpinResolved_Data Expand_BandStructure(SpinResolved_Data data, int nx, int ny)
+        {
+            Band_Data spin_up = Expand_BandStructure(data.Spin_Up.vec, nx, ny);
+            Band_Data spin_down = Expand_BandStructure(data.Spin_Down.vec, nx, ny);
+
+            return new SpinResolved_Data(spin_up, spin_down);
+        }
+
         public static Band_Data Get_BandStructure_Grid(ILayer[] layers, double dz, int nz, double zmin)
         {
             DoubleVector result = new DoubleVector(nz);

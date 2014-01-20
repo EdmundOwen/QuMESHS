@@ -84,23 +84,32 @@ namespace OneD_ThomasFermiPoisson
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
-                for (int i = 0; i < nz; i++)
-                {
-                    double z = dz * i + zmin;
+            for (int i = 0; i < nz; i++)
+            {
+                double z = dz * i + zmin;
 
-                    // get the relevant layer and if it's frozen out, don't recalculate the charge
-                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
-                    if (current_Layer.Dopents_Frozen_Out(temperature))
-                        continue;
+                // get the relevant layer and if it's frozen out, don't recalculate the charge
+                ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
+                if (current_Layer.Dopents_Frozen_Out(temperature))
+                    continue;
 
-                    // calculate the density at the given point
-                    ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
-                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot.vec[i]);
+                // calculate the density at the given point
+                ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
+                double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot.vec[i]);
 
-                    // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
-                    density.Spin_Down.vec[i] = 0.5 * local_charge_density;
-                    density.Spin_Up.vec[i] = 0.5 * local_charge_density;
-                }
+                // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                density.Spin_Down.vec[i] = 0.5 * local_charge_density;
+                density.Spin_Up.vec[i] = 0.5 * local_charge_density;
+            }
+        }
+
+        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
+        {
+            SpinResolved_Data new_density = new SpinResolved_Data(new Band_Data(density.Spin_Up.vec.DeepenThisCopy()), new Band_Data(density.Spin_Down.vec.DeepenThisCopy()));
+
+            Get_ChargeDensity(layers, ref new_density, chem_pot);
+
+            return new_density;
         }
 
         /*

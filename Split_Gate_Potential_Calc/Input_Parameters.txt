@@ -14,10 +14,10 @@
 ## NOTE! (dz * nz) should be the same as the distance from the surface to the substrate in the band structure input file
 #
 ## Number of lattice sites in the growth direction
-% nz = 251
+% nz = 501
 #
 ## Spacing of lattice sites in the growth direction
-% dz = 2
+% dz = 1
 #
 ## y-parameters are mostly for working out ly = dy * ny
 #
@@ -46,7 +46,7 @@
 ############## 3D Parameters ##########################################
 #
 ## whether to do this in 2D or not
-% is_2D = false
+% is_2D = true
 #
 ## x-parameters are mostly for working out lx = dx * nx
 #

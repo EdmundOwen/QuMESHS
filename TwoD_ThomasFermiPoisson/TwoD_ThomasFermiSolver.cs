@@ -84,6 +84,27 @@ namespace TwoD_ThomasFermiPoisson
                 }
         }
 
+        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
+        {
+            // artificially deepen the copies of spin up and spin down
+            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(density.Spin_Up.mat.Rows, density.Spin_Up.mat.Cols));
+            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(density.Spin_Down.mat.Rows, density.Spin_Down.mat.Cols));
+
+            for (int i = 0; i < density.Spin_Up.mat.Rows; i++)
+                for (int j = 0; j < density.Spin_Up.mat.Cols; j++)
+                {
+                    tmp_spinup.mat[i, j] = density.Spin_Up.mat[i, j];
+                    tmp_spindown.mat[i, j] = density.Spin_Down.mat[i, j];
+                }
+
+            SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
+
+            // finally, get the charge density and send it to this new array
+            Get_ChargeDensity(layers, ref new_density, chem_pot);
+
+            return new_density;
+        }
+
         /*
         public double Get_Chemical_Potential(int location)
         {
