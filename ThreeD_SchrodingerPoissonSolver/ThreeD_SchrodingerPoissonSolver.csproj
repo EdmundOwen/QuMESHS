@@ -5,14 +5,33 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{3044FD64-D8C2-4A47-9F23-23571D8AD070}</ProjectGuid>
+    <ProjectGuid>{E3499505-85C9-46F8-B419-E9841CDD3399}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Split_Gate_Potential_Calc</RootNamespace>
-    <AssemblyName>Split_Gate_Potential_Calc</AssemblyName>
+    <RootNamespace>ThreeD_SchrodingerPoissonSolver</RootNamespace>
+    <AssemblyName>ThreeD_SchrodingerPoissonSolver</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -31,6 +50,9 @@
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NMathPremium, Version=5.3.0.2, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
@@ -46,9 +68,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Experiment.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SG_File_Generator.cs" />
+    <Compile Include="ThreeD_PoissonSolver.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Band_Structure.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Input_Parameters.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Input_Parameters_1D.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneD_ThomasFermiPoisson\OneD_ThomasFermiPoisson.csproj">
@@ -59,22 +93,10 @@
       <Project>{E50D4360-27F2-442C-AD4D-4D267C273CBE}</Project>
       <Name>Solver_Bases</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ThreeD_SchrodingerPoissonSolver\ThreeD_SchrodingerPoissonSolver.csproj">
-      <Project>{E3499505-85C9-46F8-B419-E9841CDD3399}</Project>
-      <Name>ThreeD_SchrodingerPoissonSolver</Name>
-    </ProjectReference>
     <ProjectReference Include="..\TwoD_ThomasFermiPoisson\TwoD_ThomasFermiPoisson.csproj">
       <Project>{E8F5B43E-FEC4-40B5-B1F2-C91A7249EC43}</Project>
       <Name>TwoD_ThomasFermiPoisson</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Band_Structure.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Input_Parameters.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

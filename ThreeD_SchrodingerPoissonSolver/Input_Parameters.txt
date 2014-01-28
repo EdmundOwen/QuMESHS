@@ -11,6 +11,12 @@
 #
 ############## Simulation domain details ##############################
 #
+## Number of lattice sites in the longitudinal direction for the density calculation
+% nx = 100
+#
+## Spacing of lattice sites in the longitudinal direction for the density calculation
+% dx = 20
+#
 ## Number of lattice sites in the transverse direction for the density calculation
 % ny = 100
 #
@@ -25,6 +31,9 @@
 #
 #
 ############## Poisson solver details #################################
+#
+## Potential mixing parameter
+% alpha = 0.3
 #
 ## File name with band structure in
 % BandStructure_File = band_structure.txt
@@ -44,14 +53,20 @@
 ## Split gate voltage
 % split_V = -1.5
 #
+## Width of the split gate (in the transverse direction)
+% split_width = 600
+#
+## Length of the split gate (in the longitudinal direction)
+% split_length = 400
+#
+## Minimum of simulation domain in the longitudinal direction
+% xmin_pot = -1000.0
+#
 ## Minimum of simulation domain in the transverse direction
 % ymin_pot = -1000.0
 #
 #
 ############## Generic density solver details #########################
-#
-## Density mixing parameter
-% alpha = 0.1
 #
 ## Final solution tolerance
 % tolerance = 1e-5
@@ -65,6 +80,9 @@
 ## Temperature
 % T = 4
 #
+## Minimum of simulation domain in the longitudinal direction
+% xmin_dens = -1000.0
+#
 ## Minimum of simulation domain in the transverse direction
 % ymin_dens = -1000.0
 #
@@ -75,6 +93,6 @@
 % dz_dens = 5.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 8
+% nz_dens = 10
 #
 #

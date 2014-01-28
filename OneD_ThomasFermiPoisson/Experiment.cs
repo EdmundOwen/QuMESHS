@@ -111,7 +111,7 @@ namespace OneD_ThomasFermiPoisson
                 // create charge density solver and calculate boundary conditions
                 OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz_pot, nz_pot, zmin_pot);
                 double top_bc = 0.0;// dens_solv.Get_Chemical_Potential(0);
-                double bottom_bc = dens_solv.Get_Chemical_Potential(zmin_pot, layers);
+                this.bottom_bc = dens_solv.Get_Chemical_Potential(zmin_pot, layers);
 
                 // set the boundary conditions
                 pois_solv.Set_Boundary_Conditions(layers, top_bc, bottom_bc, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));

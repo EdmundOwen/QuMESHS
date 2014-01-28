@@ -266,6 +266,58 @@ namespace Solver_Bases
             sw.Close();
         }
 
+        /// <summary>
+        /// saves out the 2d density data with a modulation in the z direction given by dens_z
+        /// </summary>
+        public void Save_3D_Data(string filename, DoubleVector dens_z, double dx, double dy, double dz, double xmin, double ymin, double zmin)
+        {
+            // check that the dimension of the density is correct
+            if (this.Dimension != 2)
+                throw new RankException();
+
+            // open stream
+            StreamWriter sw = new StreamWriter(filename);
+
+            int nx = this.mat.Cols;
+            int ny = this.mat.Rows;
+            int nz = dens_z.Length;
+
+            // save out positions
+            sw.WriteLine("x " + nx.ToString());
+            for (int i = 0; i < nx; i++)
+                //for (int j = 0; j < nz; j++)
+                sw.Write((i * dx + xmin).ToString() + '\t');
+
+            sw.WriteLine();
+            sw.WriteLine();
+            sw.WriteLine("y " + ny.ToString());
+            for (int j = 0; j < ny; j++)
+                sw.Write(((float)(j * dy + ymin)).ToString() + '\t');
+
+            sw.WriteLine();
+            sw.WriteLine();
+            sw.WriteLine("z " + nz.ToString());
+            for (int j = 0; j < nz; j++)
+                sw.Write(((float)(j * dz + zmin)).ToString() + '\t');
+
+            // save out densities
+            sw.WriteLine();
+            sw.WriteLine("data");
+            for (int i = 0; i < nz; i++)
+                for (int j = 0; j < ny; j++)
+                {
+                    for (int k = 0; k < nx; k++)
+                        if (Math.Abs(this.mat[j, k]) < 1e-20)
+                            sw.Write("0\t");
+                        else
+                            // note that the ordering is x first, then y, then z -- this is FlexPDE specific
+                            sw.Write(((float)this.mat[k, j] * (float)dens_z[i]).ToString() + '\t');
+                    sw.WriteLine();
+                }
+
+            sw.Close();
+        }
+
         public int Dimension
         {
             get { return dim; }

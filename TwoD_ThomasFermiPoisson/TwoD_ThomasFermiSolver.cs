@@ -8,8 +8,9 @@ using Solver_Bases.Layers;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    class TwoD_ThomasFermiSolver : Density_Base
+    public class TwoD_ThomasFermiSolver : Density_Base
     {
+
         /*
         DoubleVector band_gap;
         SpinResolved_DoubleMatrix dopent_concentration;
@@ -82,6 +83,36 @@ namespace TwoD_ThomasFermiPoisson
                     density.Spin_Down.mat[i, j] = 0.5 * local_charge_density;
                     density.Spin_Up.mat[i, j] = 0.5 * local_charge_density;
                 }
+        }
+
+        public SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot, double well_depth)
+        {
+            // artificially deepen the copies of spin up and spin down
+            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(density.Spin_Up.mat.Rows, density.Spin_Up.mat.Cols));
+            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(density.Spin_Down.mat.Rows, density.Spin_Down.mat.Cols));
+            SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
+
+            for (int i = 0; i < ny; i++)
+                for (int j = 0; j < nz; j++)
+                {
+                    double y = dy * i + ymin;
+                    double z = dz * j + zmin;
+
+                    // get the relevant layer and if it's frozen out, don't recalculate the charge
+                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z, well_depth);
+                    if (current_Layer.Dopents_Frozen_Out(temperature))
+                        continue;
+
+                    // calculate the density at the given point
+                    ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
+                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot.mat[i, j]);
+
+                    // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                    new_density.Spin_Down.mat[i, j] = 0.5 * local_charge_density;
+                    new_density.Spin_Up.mat[i, j] = 0.5 * local_charge_density;
+                }
+
+            return new_density;
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
@@ -226,6 +257,20 @@ namespace TwoD_ThomasFermiPoisson
         public override void Close()
         {
             Console.WriteLine("Closing density solver");
+        }
+
+        public void Write_Out_Density(SpinResolved_Data h, string outfile)
+        {
+            System.IO.StreamWriter sw = new System.IO.StreamWriter(outfile);
+            for (int i = 0; i < h.Spin_Summed_Data.mat.Cols; i++)
+                for (int j = 0; j < h.Spin_Summed_Data.mat.Rows; j++)
+                {
+                    sw.Write(h.Spin_Summed_Data.mat[j, i].ToString() + '\t');
+                    if (j == h.Spin_Summed_Data.mat.Rows - 1)
+                        sw.WriteLine();
+                }
+
+            sw.Close();
         }
     }
 }

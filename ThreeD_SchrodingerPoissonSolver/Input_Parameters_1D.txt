@@ -1,5 +1,5 @@
 ﻿############################################################################
-#### Input parameter file for TwoD_ThomasFermiPoisson calculator...	####
+#### Input parameter file for OneD_ThomasFermiPoisson calculator...	########
 ############################################################################
 #
 # Any line not starting with % is commented out.
@@ -11,50 +11,41 @@
 #
 ############## Simulation domain details ##############################
 #
-## Number of lattice sites in the transverse direction for the density calculation
-% ny = 100
+## Number of lattice sites for the density calculation
+% nz = 101
 #
-## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 20
-#
-## Number of lattice sites in the growth direction for the density calculation
-% nz = 140
-#
-## Spacing of lattice sites in the growth direction for the density calculation
+## Spacing of lattice sites for the density calculation
 % dz = 5
+#
+## Number of lattice sites in the transverse direction to save to
+% ny_1d = 10
+#
+## Number of lattice sites in the transverse direction to save to
+% nx_1d = 10
 #
 #
 ############## Poisson solver details #################################
 #
+## Potential mixing parameter
+% alpha = 0.01
+#
 ## File name with band structure in
-% BandStructure_File = band_structure.txt
+% BandStructure_File = Band_Structure.txt
 #
 ## Use FlexPDE?
-% use_FlexPDE = true
+% use_FlexPDE = false
 #
 ## FlexPDE input file
-% FlexPDE_file = split_gate.pde
+% FlexPDE_file = band_structure.pde
 #
 ## FlexPDE file executable location
 % FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
 #
-# Top gate voltage
-% top_V = -1.0
-#
-## Split gate voltage
-% split_V = -1.5
-#
-## Minimum of simulation domain in the transverse direction
-% ymin_pot = -1000.0
-#
 #
 ############## Generic density solver details #########################
 #
-## Density mixing parameter
-% alpha = 0.1
-#
 ## Final solution tolerance
-% tolerance = 1e-5
+% tolerance = 10e-5
 #
 ## Fermi energy
 % E_f = 0.0
@@ -62,19 +53,25 @@
 ## Number of k_B T to calculate above the Fermi energy
 % No_kB_T_Above_E_f = 0.0
 #
+#
+############## DFT density solver detials #############################
+#
+## Whether to use dft at the final temperature or not
+% dft = true
+#
+## Number of data points over which to calculate the density using dft
+% nz_dft = 30
+#
+## Lattice spacing for dft calculations
+% dz_dft = 2.0
+#
+## Minimum z value of the dft calculation domain
+% zmin_dft = -130.0
+#
+#
+############## Physical parameters ####################################
+#
 ## Temperature
 % T = 4
 #
-## Minimum of simulation domain in the transverse direction
-% ymin_dens = -1000.0
-#
-## Minimum of simulation domain in the growth direction
-% zmin_dens = -120.0
-#
-## Lattice spacing in the growth direction
-% dz_dens = 5.0
-#
-## Number of lattice points in growth direction
-% nz_dens = 8
-#
-#
+

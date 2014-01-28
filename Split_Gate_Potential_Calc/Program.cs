@@ -103,7 +103,11 @@ namespace Split_Gate_Potential_Calc
                 charge_dens_3d.Save_3D_Data("dens_3D.dat", dx, dy, dz, xmin, ymin, zmin);
 
                 // create split gate FlexPDE file (for the moment, only in one dimension)
-                sg_file_gen.Generate_3D_FlexPDE_File(surface_charge * dz);
+                ThreeD_SchrodingerPoissonSolver.Experiment exp_3d = new ThreeD_SchrodingerPoissonSolver.Experiment();
+                exp_3d.Initialise_Experiment(input);
+
+                // create split gate FlexPDE file (for the moment, only in one dimension)
+                sg_file_gen.Generate_3D_FlexPDE_File(exp_3d, surface_charge * dz);
             }
         }
     }

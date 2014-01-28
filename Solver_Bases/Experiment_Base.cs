@@ -15,6 +15,8 @@ namespace Solver_Bases
         protected Band_Data band_offset;
         protected ILayer[] layers;
 
+        protected double bottom_bc;
+
         // parameters for the density domain
         protected double dx_dens, dy_dens, dz_dens;
         protected double xmin_dens, ymin_dens, zmin_dens = -1.0;
@@ -143,9 +145,20 @@ namespace Solver_Bases
         {
             get { return band_offset; }
         }
+
         public ILayer[] Layers
         {
             get { return layers; }
+        }
+
+        public double Temperature
+        {
+            get { return temperature; }
+        }
+
+        public double Bottom_BC
+        {
+            get { return bottom_bc; }
         }
 
         public int Nx_Dens

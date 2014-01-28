@@ -50,7 +50,7 @@ namespace OneD_ThomasFermiPoisson
                     tmp_zval = j;
 
                     // and integrate the density of states at this position for this eigenvector from the minimum energy to
-                    // (by default) 10 * k_b * T above mu = 0
+                    // (by default) 20 * k_b * T above mu = 0
                     dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
                 }
 

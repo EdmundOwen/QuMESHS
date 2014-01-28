@@ -67,7 +67,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in V)");
             sw.WriteLine("\tsplit_V = " + split_V.ToString());
-            sw.WriteLine("\ttop_V = 0");
+            sw.WriteLine("\ttop_V = " + top_V.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
             sw.WriteLine("\tsplit_width = 600");
