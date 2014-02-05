@@ -100,7 +100,7 @@ namespace OneD_ThomasFermiPoisson
             Band_Data potential = new Band_Data(lu_fact.Solve(charge_density.vec));
 
             // return band energy
-            return -1.0 * Physics_Base.q_e * potential;
+            return -1.0 * Physics_Base.q_e * potential * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
         }
 
         /// <summary>
@@ -302,10 +302,11 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
             sw.WriteLine("\trho\t! density");
+            sw.WriteLine("\tband_gap");
             // number of lattice sites that the density needs to be output to
-            sw.WriteLine("\tnx = " + exp.Nz_Pot.ToString());
+            sw.WriteLine("\tnz = " + exp.Nz_Pot.ToString());
             // size of the sample
-            sw.WriteLine("\tlx = " + (exp.Nz_Pot * exp.Dz_Pot).ToString());
+            sw.WriteLine("\tlz = " + (exp.Nz_Pot * exp.Dz_Pot).ToString());
             // the top boundary condition on the surface of the sample
             sw.WriteLine("\t! Boundary conditions");
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
@@ -314,9 +315,13 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\t! Electrical permitivities");
             sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
             // relative permitivity of materials
-            sw.WriteLine("\teps_r = " + Physics_Base.epsilon_r.ToString());
-            sw.WriteLine("\teps_PMMA = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
+            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
+            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
             sw.WriteLine("\teps");
+            sw.WriteLine();
+            // other physical parameters
+            sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
@@ -331,6 +336,7 @@ namespace OneD_ThomasFermiPoisson
                 sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
                 sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
                 sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
                 sw.WriteLine("\t\tSTART(" + exp.Layers[i].Zmin.ToString() + ")");
                 if (i == 1)
                     sw.WriteLine("\t\tPOINT VALUE(u) = top_V");
@@ -341,8 +347,9 @@ namespace OneD_ThomasFermiPoisson
             }
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tELEVATION(rho) FROM (" + exp.Zmin_Pot.ToString() + ") TO (" + (exp.Zmin_Pot + exp.Nz_Pot * exp.Dz_Pot).ToString() + ")");
-            sw.WriteLine("\tELEVATION(u) FROM (" + exp.Zmin_Pot.ToString() + ") TO (" + (exp.Zmin_Pot + exp.Nz_Pot * exp.Dz_Pot).ToString() + ") EXPORT(nx) FORMAT \'#1\' FILE=\'pot.dat\'");
+            sw.WriteLine("\tELEVATION(-q_e * u + 0.5 * band_gap) FROM (-lz) TO (0)");
+            sw.WriteLine("\tELEVATION(rho) FROM (-lz) TO (0)");
+            sw.WriteLine("\tELEVATION(u) FROM (" + exp.Zmin_Pot.ToString() + ") TO (" + (exp.Zmin_Pot + exp.Nz_Pot * exp.Dz_Pot).ToString() + ") EXPORT(nz) FORMAT \'#1\' FILE=\'pot.dat\'");
             sw.WriteLine("END");
 
             // and close the file writer

@@ -60,10 +60,10 @@
 % dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dens = 16
+% nz_dens = 14
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dens = -130.0
+% zmin_dens = -100.0
 #
 #
 ############## Physical parameters ####################################

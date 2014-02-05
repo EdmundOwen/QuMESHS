@@ -90,7 +90,7 @@ namespace Solver_Bases
             //string[] data = (from items in tmp where items != "" select items).ToArray();
 
             // return band energy using E_c = - q_e * phi
-            return -1.0 * Physics_Base.q_e * Parse_Potential(data);
+            return -1.0 * Physics_Base.q_e * Parse_Potential(data) * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
         }
 
         /// <summary>
