@@ -29,8 +29,9 @@ namespace ThreeD_SchrodingerPoissonSolver
             Get_From_Dictionary<double>(input_dict, "dy", ref dy_dens); dy_pot = dy_dens;
             Get_From_Dictionary<double>(input_dict, "dz", ref dz_dens); dz_pot = dz_dens;
 
-            Get_From_Dictionary(input_dict, "nx", ref nx_dens); nx_pot = nx_dens;
-            Get_From_Dictionary(input_dict, "ny", ref ny_dens); ny_pot = ny_dens;
+
+            Get_From_Dictionary(input_dict, "nx", ref nx_dens); nx_pot = nx_dens - 1;// subtract one from the number of potential points as this is only used to calculate the size of the domain using
+            Get_From_Dictionary(input_dict, "ny", ref ny_dens); ny_pot = ny_dens - 1;// lx = nx * dx so on a grid, this is one too many
             Get_From_Dictionary(input_dict, "nz", ref nz_dens); nz_pot = nz_dens;
 
             // but try to get the specific values
@@ -121,12 +122,14 @@ namespace ThreeD_SchrodingerPoissonSolver
             if (TF_only)
                 return;
 
-            /*
-            // and then run the DFT solver at the base temperature over a limited range
-            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+            pois_solv.Reset();
+
+            
+            // and then run the DFT solver at the base temperature over a limited range and with a reduced mixing constant
+            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this.Temperature, 1.0, Dx_Dens, Dy_Dens, 1, Nx_Dens, Ny_Dens, double.MaxValue, Xmin_Dens, Ymin_Dens);
+            alpha /= 3.0;
 
             count = 0;
-            alpha /= 10.0;
             while (!dft_solv.Converged)
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
@@ -141,7 +144,6 @@ namespace ThreeD_SchrodingerPoissonSolver
 
                 count++;
             }
-            */
 
             // initialise output solvers
             TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(temperature, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens);
@@ -164,7 +166,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                     double pos_x = xmin_dens + i * dx_dens;
                     double pos_y = ymin_dens + j * dy_dens;
 
-                    double band_gap = Geom_Tool.GetLayer(layers, pos_x, pos_y).Band_Gap;
+                    double band_gap = Geom_Tool.GetLayer(layers, pos_x, pos_y, (layers[1].Zmax - 1)).Band_Gap;
                     band_offset.mat[i, j] = 0.5 * band_gap - band_offset.mat[i, j];
                 }
         }

@@ -9,7 +9,7 @@ using CenterSpace.NMath.Matrix;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    class TwoD_DFTSolver : Density_Base
+    public class TwoD_DFTSolver : Density_Base
     {
         Experiment exp;
 
@@ -27,6 +27,13 @@ namespace TwoD_ThomasFermiPoisson
         {
             this.exp = exp;
 
+            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+            tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
+        }
+
+        public TwoD_DFTSolver(double temperature, double dx, double dy, double dz, int nx, int ny, int nz, double xmin, double ymin, double zmin)
+            : base(temperature, dx, dy, dz, nx, ny, nz, xmin, ymin, zmin)
+        {
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
             tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }
@@ -60,7 +67,8 @@ namespace TwoD_ThomasFermiPoisson
 
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 20 * k_b * T above mu = 0
-                        dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
+                        dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
+                            //dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
                     }
 
                     // just share the densities (there is no spin polarisation)
@@ -74,7 +82,8 @@ namespace TwoD_ThomasFermiPoisson
             //    Console.WriteLine(charge_density.Spin_Summed_Data[i].ToString() + "\t" + (-1.0 * Physics_Base.q_e * (dens_up[i] + dens_down[i])).ToString() + "\t" + (chem_pot.vec[i] + Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i])).ToString());
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            //density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            density = new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
@@ -162,6 +171,20 @@ namespace TwoD_ThomasFermiPoisson
                 {
                     sw.Write(h.Spin_Summed_Data.mat[j, i].ToString() + '\t');
                     if (j == h.Spin_Summed_Data.mat.Rows - 1)
+                        sw.WriteLine();
+                }
+
+            sw.Close();
+        }
+
+        public void Write_Out_Potential(double[,] potential, string outfile)
+        {
+            System.IO.StreamWriter sw = new System.IO.StreamWriter(outfile);
+            for (int i = 0; i < ny; i++)
+                for (int j = 0; j < nz; j++)
+                {
+                    sw.Write(potential[j, i].ToString() + '\t');
+                    if (j == ny - 1)
                         sw.WriteLine();
                 }
 

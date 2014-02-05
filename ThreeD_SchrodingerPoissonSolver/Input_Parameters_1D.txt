@@ -60,13 +60,10 @@
 % dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dft = 30
-#
-## Lattice spacing for dft calculations
-% dz_dft = 2.0
+% nz_dens = 16
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dft = -130.0
+% zmin_dens = -130.0
 #
 #
 ############## Physical parameters ####################################

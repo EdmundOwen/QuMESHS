@@ -1,5 +1,5 @@
 ﻿############################################################################
-#### Input parameter file for TwoD_ThomasFermiPoisson calculator...	####
+#### Input parameter file for ThreeD_SchrodingerPoisson calculator...	####
 ############################################################################
 #
 # Any line not starting with % is commented out.
@@ -12,16 +12,16 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the longitudinal direction for the density calculation
-% nx = 100
+% nx = 26
 #
 ## Spacing of lattice sites in the longitudinal direction for the density calculation
-% dx = 20
+% dx = 80
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 100
+% ny = 26
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 20
+% dy = 80
 #
 ## Number of lattice sites in the growth direction for the density calculation
 % nz = 140
@@ -48,16 +48,16 @@
 % FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
 #
 # Top gate voltage
-% top_V = -1.0
+% top_V = -2.0
 #
 ## Split gate voltage
-% split_V = -1.5
+% split_V = -2.0
 #
 ## Width of the split gate (in the transverse direction)
-% split_width = 600
+% split_width = 800
 #
 ## Length of the split gate (in the longitudinal direction)
-% split_length = 400
+% split_length = 800
 #
 ## Minimum of simulation domain in the longitudinal direction
 % xmin_pot = -1000.0
@@ -91,6 +91,12 @@
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 5.0
+#
+## Number of lattice points in longitudinal direction
+% nx_dens = 26
+#
+## Number of lattice points in transverse direction
+% ny_dens = 26
 #
 ## Number of lattice points in growth direction
 % nz_dens = 10

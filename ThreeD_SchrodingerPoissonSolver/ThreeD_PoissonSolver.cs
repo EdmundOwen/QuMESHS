@@ -157,10 +157,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\t\tLINE TO (split_width / 2, split_length / 2) TO (split_width / 2, -split_length / 2) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(rho) ON x = 0");
+            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth");
+            sw.WriteLine("\tCONTOUR(u) ON z = well_depth");
             sw.WriteLine("\tCONTOUR(u) ON x = 0");
             sw.WriteLine("\tCONTOUR(u) ON y = 0");
-            sw.WriteLine("\tCONTOUR(u) ON z = well_depth");
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(rho) ON x = 0");
             sw.WriteLine("\tCONTOUR(u) ON x = 0");

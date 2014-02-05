@@ -30,9 +30,9 @@ namespace OneD_ThomasFermiPoisson
 
             // try to get the band offset and the charge density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.charge_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
-            else this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_dens)), new Band_Data(new DoubleVector(nz_dens)));
+            else this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
 
-            if (input_dict.ContainsKey("Band_Offset")) this.band_offset = new Band_Data((DoubleVector)input_dict["Potential"]); else band_offset = new Band_Data(new DoubleVector(nz_dens));
+            if (input_dict.ContainsKey("Band_Offset")) this.band_offset = new Band_Data((DoubleVector)input_dict["Potential"]); else band_offset = new Band_Data(new DoubleVector(nz_pot));
 
             if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
             if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
@@ -145,9 +145,7 @@ namespace OneD_ThomasFermiPoisson
             OneD_DFTSolver dft_solv = new OneD_DFTSolver(temperature, dz_dens, nz_dens, zmin_dens);
             SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_dens)), new Band_Data(new DoubleVector(nz_dens)));
             // but with a smaller mixing parameter
-            Console.WriteLine("Renewing mixing parameter for DFT calculation");
-            alpha /= 10.0;
-
+            Console.WriteLine("Starting DFT calculation");
 
             count = 0;
             while (!pois_solv.Converged)
@@ -219,7 +217,7 @@ namespace OneD_ThomasFermiPoisson
             charge_density.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz_dens, zmin_dens);
 
             final_dens_solv.Output(charge_density, "charge_density.dat");
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_dens, nz_dens, zmin_dens) - band_offset, "potential.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - band_offset, "potential.dat");
         }
 
         void Get_Potential(ref Band_Data dft_band_offset, ILayer[] layers)

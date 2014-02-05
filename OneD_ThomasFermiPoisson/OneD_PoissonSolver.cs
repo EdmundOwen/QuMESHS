@@ -54,8 +54,8 @@ namespace OneD_ThomasFermiPoisson
             if (!flexPDE)
             {
                 // first check whether the grids for the potential and the density are the same
-                if (exp.Nz_Dens != exp.Nz_Pot || exp.Dz_Dens != exp.Dz_Pot || exp.Zmin_Dens != exp.Zmin_Pot)
-                    throw new Exception("Error - when not using flexPDE, the density and potential grids must be the same!");
+                //if (exp.Nz_Dens != exp.Nz_Pot || exp.Dz_Dens != exp.Dz_Pot || exp.Zmin_Dens != exp.Zmin_Pot)
+                //    throw new Exception("Error - when not using flexPDE, the density and potential grids must be the same!");
 
                 laplacian = Generate_Laplacian(exp.Layers);
                 lu_fact = new DoubleLUFact(laplacian);
