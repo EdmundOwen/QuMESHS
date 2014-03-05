@@ -186,7 +186,7 @@ namespace TwoD_ThomasFermiPoisson
                 Create_FlexPDE_File(surface, bottom_bc, flexpde_inputfile);
         }
 
-        protected override Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density)
+        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
         {
             throw new NotImplementedException();
         }

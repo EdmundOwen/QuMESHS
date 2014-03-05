@@ -166,15 +166,15 @@ namespace OneD_ThomasFermiPoisson
             return result;
         }
 
-        public double Get_Surface_Charge(Band_Data band_offset, ILayer[] layers)
+        public double Get_Surface_Charge(Band_Data chem_pot, ILayer[] layers)
         {
             // calculate the electric field just below the surface
             int surface = (int)(-1.0 * Math.Floor(Geom_Tool.Get_Zmin(layers) / exp.Dz_Pot));
             double eps = layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Permitivity;
             // by Gauss' theorem, rho = - epsilon_0 * epsilon_r * dV/dz
-            double surface_charge = -1.0 * eps * (band_offset[surface] - band_offset[surface - 1]) / exp.Dz_Pot;
-            // divide by q_e * 6.24 to convert the chemical potential into a potential (remember that the 6.24 is the conversion from meV to zC V)
-            surface_charge /= Physics_Base.q_e * 6.2415093;
+            double surface_charge = -1.0 * eps * (chem_pot[surface] - chem_pot[surface - 1]) / exp.Dz_Pot;
+            // divide by - q_e * 6.24 to convert the chemical potential into a potential (remember that the 6.24 is the conversion from meV to zC V)
+            surface_charge /= -1.0 * Physics_Base.q_e * 6.2415093;
             // and divide by dz to give a density
             surface_charge /= exp.Dz_Pot;
 
