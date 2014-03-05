@@ -67,7 +67,8 @@ namespace TwoD_ThomasFermiPoisson
 
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 20 * k_b * T above mu = 0
-                        dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
+                        //dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
+                        dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * Get_OneD_DoS(tmp_eigval);
                             //dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
                     }
 
@@ -82,8 +83,21 @@ namespace TwoD_ThomasFermiPoisson
             //    Console.WriteLine(charge_density.Spin_Summed_Data[i].ToString() + "\t" + (-1.0 * Physics_Base.q_e * (dens_up[i] + dens_down[i])).ToString() + "\t" + (chem_pot.vec[i] + Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i])).ToString());
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            //density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
-            density = new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            //density = new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+        }
+
+        /// <summary>
+        /// returns the pre-integrated density of states in the translationally invariant direction (assumes T=0)
+        /// </summary>
+        double Get_OneD_DoS(double tmp_eigval)
+        {
+            // set dx = 1.0 to make the longitudinal direction look continuous
+            dx = 1.0;
+            if (tmp_eigval > 0)
+                return 0.0;
+            else
+                return 2.0 / (Math.PI * dx) * Math.Acos(1 - Math.Min(2.0, -1.0 * Physics_Base.mass * dx * dx * tmp_eigval / (Physics_Base.hbar * Physics_Base.hbar)));
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)

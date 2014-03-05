@@ -14,6 +14,8 @@ namespace Split_Gate_Potential_Calc
     {
         static void Main(string[] args)
         {
+            // set nmath license key
+
             // Input simulation data
             string input_file;
             if (args.Length == 0)

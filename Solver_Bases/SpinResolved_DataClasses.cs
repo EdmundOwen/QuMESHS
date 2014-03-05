@@ -259,6 +259,13 @@ namespace Solver_Bases
             return data;
         }
 
+        public static SpinResolved_Data operator /(SpinResolved_Data data, double scalar)
+        {
+            data.Spin_Up /= scalar; data.Spin_Down /= scalar;
+
+            return data;
+        }
+
         public static SpinResolved_Data operator *(SpinResolved_Data mat, double scalar)
         {
             return scalar * mat;

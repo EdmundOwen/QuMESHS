@@ -93,7 +93,7 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
 
                 // solve the band energy for the given charge  density and mix in with the old band energy
-                band_offset = -1.0 * pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
+                band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
 
                 // find the density for this new band offset and blend
                 SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, charge_density, band_offset);
@@ -117,7 +117,7 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
                 // solve the band energy for the given charge  density and mix in with the old band energy
-                band_offset = -1.0 * pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
+                band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
 
                 // find the density for this new band offset and blend
                 Get_Potential(ref band_offset, layers);

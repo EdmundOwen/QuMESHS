@@ -36,7 +36,7 @@
 % FlexPDE_file = band_structure.pde
 #
 ## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
+% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 #
 ############## Generic density solver details #########################

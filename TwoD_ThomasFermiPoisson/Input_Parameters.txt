@@ -36,13 +36,13 @@
 % FlexPDE_file = split_gate.pde
 #
 ## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
+% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 # Top gate voltage
-% top_V = -1.0
+% top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -1.5
+% split_V = -0.3
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_pot = -1000.0
@@ -51,10 +51,10 @@
 ############## Generic density solver details #########################
 #
 ## Density mixing parameter
-% alpha = 0.1
+% alpha = 0.01
 #
 ## Final solution tolerance
-% tolerance = 1e-5
+% tolerance = 1e-7
 #
 ## Fermi energy
 % E_f = 0.0

@@ -85,6 +85,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\teps");
             sw.WriteLine();
             sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
+            sw.WriteLine("\tfactor = " + (6.2415093).ToString() + " ! this is the factor for converting zC V to meV");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             sw.WriteLine("\tu: div(eps * grad(u)) = - rho	! Poisson's equation");
@@ -166,11 +167,11 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tCONTOUR(u) ON x = 0");
             sw.WriteLine("\tCONTOUR(u) ON y = 0");
             sw.WriteLine("\tCONTOUR(rho) ON z = well_depth");
-            sw.WriteLine("\tCONTOUR(-q_e * u + 0.5 * band_gap) ON z = well_depth");
+            sw.WriteLine("\tCONTOUR(-factor * q_e * u + 0.5 * band_gap) ON z = well_depth");
             sw.WriteLine("\tELEVATION(rho) FROM (0,0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + ") TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + ")");
-            sw.WriteLine("\tELEVATION(-q_e * u + 0.5 * band_gap) FROM (0, 0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + ") TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + ")");
-            sw.WriteLine("\tELEVATION(-q_e * u + 0.5 * band_gap) FROM (0, -ly / 2, well_depth) TO (0, ly / 2, well_depth)");
-            sw.WriteLine("\tELEVATION(-q_e * u + 0.5 * band_gap) FROM (-lx/2, 0, well_depth) TO (lx / 2, 0, well_depth)");
+            sw.WriteLine("\tELEVATION(-factor * q_e * u + 0.5 * band_gap) FROM (0, 0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + ") TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + ")");
+            sw.WriteLine("\tELEVATION(-factor * q_e * u + 0.5 * band_gap) FROM (0, -ly / 2, well_depth) TO (0, ly / 2, well_depth)");
+            sw.WriteLine("\tELEVATION(-factor * q_e * u + 0.5 * band_gap) FROM (-lx/2, 0, well_depth) TO (lx / 2, 0, well_depth)");
             sw.WriteLine();
             sw.WriteLine("\tCONTOUR(u) ON z = well_depth EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ") FILE = \"pot.dat\"");
             //sw.WriteLine("TRANSFER (rho, u) FILE=\"data_file.dat\"");

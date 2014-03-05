@@ -115,10 +115,10 @@ namespace OneD_ThomasFermiPoisson
             for (int i = 0; i < exp.Nz_Pot - 1; i++)
             {
                 // on-diagonal term
-                result[i, i] = 2.0 * factor;
+                result[i, i] = -2.0 * factor;
                 // off-diagonal
-                result[i + 1, i] = -1.0 * factor;
-                result[i, i + 1] = -1.0 * factor;
+                result[i + 1, i] = 1.0 * factor;
+                result[i, i + 1] = 1.0 * factor;
             }
 
             // and fix boundary conditions
@@ -149,10 +149,10 @@ namespace OneD_ThomasFermiPoisson
                 factor_minus = -1.0 * eps_minus / (exp.Dz_Pot * exp.Dz_Pot);
 
                 // on-diagonal term
-                result[i, i] = factor_minus + factor_plus;
+                result[i, i] = -1.0 * factor_minus + -1.0 * factor_plus;
                 // off-diagonal
-                result[i, i - 1] = -1.0 * factor_minus;
-                result[i, i + 1] = -1.0 * factor_plus;
+                result[i, i - 1] = 1.0 * factor_minus;
+                result[i, i + 1] = 1.0 * factor_plus;
             }
 
             // and fix boundary conditions
@@ -172,9 +172,9 @@ namespace OneD_ThomasFermiPoisson
             int surface = (int)(-1.0 * Math.Floor(Geom_Tool.Get_Zmin(layers) / exp.Dz_Pot));
             double eps = layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Permitivity;
             // by Gauss' theorem, rho = - epsilon_0 * epsilon_r * dV/dz
-            double surface_charge = eps * (band_offset[surface] - band_offset[surface - 1]) / exp.Dz_Pot;
-            // divide by q_e to convert the band energy into a potential
-            surface_charge /= Physics_Base.q_e;
+            double surface_charge = -1.0 * eps * (band_offset[surface] - band_offset[surface - 1]) / exp.Dz_Pot;
+            // divide by -1.0 * q_e * 6.24 to convert the band energy into a potential (remember that the 6.24 is the conversion from meV to zC V)
+            surface_charge /= -1.0 * Physics_Base.q_e * 6.2415093;
             // and divide by dz to give a density
             surface_charge /= exp.Dz_Pot;
 
@@ -321,11 +321,12 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
-            sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
+            sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + " ! charge of electron in zC");
+            sw.WriteLine("\tfactor = " + (6.2415093).ToString() + " ! this is the factor for converting zC V to meV");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
-            sw.WriteLine("\tu: div(eps * grad(u)) = -rho\t! Poisson's equation");
+            sw.WriteLine("\tu: div(eps * grad(u)) = - rho\t! Poisson's equation");
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
@@ -347,7 +348,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tELEVATION(-q_e * u + 0.5 * band_gap) FROM (-lz) TO (0)");
+            sw.WriteLine("\tELEVATION(- factor * q_e * u + 0.5 * band_gap) FROM (-lz) TO (0)");
             sw.WriteLine("\tELEVATION(rho) FROM (-lz) TO (0)");
             sw.WriteLine("\tELEVATION(u) FROM (" + exp.Zmin_Pot.ToString() + ") TO (" + (exp.Zmin_Pot + exp.Nz_Pot * exp.Dz_Pot).ToString() + ") EXPORT(nz) FORMAT \'#1\' FILE=\'pot.dat\'");
             sw.WriteLine("END");
@@ -359,8 +360,8 @@ namespace OneD_ThomasFermiPoisson
         public void Set_Boundary_Conditions(ILayer[] layers, double top_bc, double bottom_bc, double top_pos, double bottom_pos)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // (as phi = E_c / (-1.0 * q_e)
-            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
+            // (as phi = E_c / (-1.0 * q_e) with a factor of 6.24 to convert from meV to zC V
+            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e * 6.2415093); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e * 6.2415093);
 
             // and get the corresponding permittivities
             top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;
@@ -372,7 +373,7 @@ namespace OneD_ThomasFermiPoisson
 
         protected override void Save_Density_Data(Band_Data density, string input_file_name)
         {
-            density.Save_1D_Data(input_file_name, exp.Dz_Dens, exp.Zmin_Dens);
+            density.Save_1D_Data(input_file_name, exp.Dz_Pot, exp.Zmin_Pot);
         }
     }
 }

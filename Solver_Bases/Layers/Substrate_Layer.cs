@@ -15,7 +15,7 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.Substrate;
-            Material specific_material = Material.AlGaAs;
+            Material specific_material = Material.GaAs;
 
             if (specific_material == Material.GaAs)
             {

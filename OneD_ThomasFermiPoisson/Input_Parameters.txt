@@ -12,7 +12,7 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 140
+% nz = 101
 #
 ## Spacing of lattice sites for the density calculation
 % dz = 5
@@ -27,15 +27,17 @@
 % BandStructure_File = Band_Structure.txt
 #
 ## Use FlexPDE?
-% use_FlexPDE = true
+% use_FlexPDE = false
 #
 ## FlexPDE input file
 % FlexPDE_file = band_structure.pde
 #
 ## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
+% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 ############## Generic density solver details #########################
+#
+% TF_only = false
 #
 ## Final solution tolerance
 % tolerance = 10e-5
@@ -53,13 +55,13 @@
 % dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dens = 140
+% nz_dens = 14
 #
 ## Lattice spacing for dft calculations
 % dz_dens = 5.0
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dens = -500.0
+% zmin_dens = -130.0
 #
 #
 ############## Physical parameters ####################################

@@ -10,6 +10,8 @@ namespace OneD_ThomasFermiPoisson
     {
         static void Main(string[] args)
         {
+            // set nmath license key
+
             Dictionary<string,object> input = new Dictionary<string,object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref input, "Input_Parameters.txt");
 

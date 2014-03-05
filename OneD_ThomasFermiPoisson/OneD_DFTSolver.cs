@@ -14,6 +14,7 @@ namespace OneD_ThomasFermiPoisson
     {
         double no_kb_T = 20;    // number of kb_T to integrate to
         double t;
+        int max_wavefunction = 0;
 
         int tmp_zval;
         Double tmp_eigval;
@@ -31,7 +32,7 @@ namespace OneD_ThomasFermiPoisson
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
-            int max_wavefunction = (from val in eig_decomp.EigenValues
+            max_wavefunction = (from val in eig_decomp.EigenValues
                                     where val < no_kb_T * Physics_Base.kB * temperature
                                     select val).ToArray().Length;
 
@@ -112,6 +113,11 @@ namespace OneD_ThomasFermiPoisson
         {
             return Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI) * Get_Fermi_Function(E)
                         * DoubleComplex.Norm(tmp_eigvec[tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_zval]);
+        }
+
+        public int No_Wavefunctions
+        {
+            get { return max_wavefunction; }
         }
     }
 }

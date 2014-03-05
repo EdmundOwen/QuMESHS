@@ -135,10 +135,20 @@ namespace Solver_Bases
 
         public static Band_Data operator *(double scalar, Band_Data data)
         {
-            for (int i = 0; i < data.Length; i++)
-                data[i] *= scalar;
+            if (data.Dimension == 1)
+                return new Band_Data(scalar * data.vec);
+            else if (data.Dimension == 2)
+                return new Band_Data(scalar * data.mat);
+            else if (data.Dimension == 3)
+            {
+                Band_Data result = new Band_Data(new DoubleMatrix[data.vol.Length]);
+                for (int i = 0; i < data.vol.Length; i++)
+                    result.vol[i] = scalar * data.vol[i];
 
-            return data;
+                return result;
+            }
+            else
+                throw new NotImplementedException();
         }
 
         public static Band_Data operator *(Band_Data data, double scalar)

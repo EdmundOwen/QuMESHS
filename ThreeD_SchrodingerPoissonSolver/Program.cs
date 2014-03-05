@@ -11,6 +11,8 @@ namespace ThreeD_SchrodingerPoissonSolver
     {
         static void Main(string[] args)
         {
+            // set nmath license key
+
             Console.WriteLine("Program starting");
 
             Console.WriteLine("Loading input parameters from file");
