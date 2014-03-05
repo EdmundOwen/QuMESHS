@@ -58,9 +58,9 @@ namespace Split_Gate_Potential_Calc
             // create a poisson solver and get the possible surface charge
             double dz = (double)input["dz"]; int nz = (int)(double)input["nz"];
             double zmin = Solver_Bases.Geometry.Geom_Tool.Get_Zmin(layers);
-            Band_Data band_offset = exp.Band_Offset;
+            Band_Data chem_pot = exp.Chemical_Potential;
             OneD_PoissonSolver tmp_pois_solv = new OneD_PoissonSolver(exp, false, "", "", 0.0);
-            double surface_charge = tmp_pois_solv.Get_Surface_Charge(band_offset, layers);
+            double surface_charge = tmp_pois_solv.Get_Surface_Charge(chem_pot, layers);
 
             // save the 1D data
             SpinResolved_Data charge_dens_1d = exp.Charge_Density;

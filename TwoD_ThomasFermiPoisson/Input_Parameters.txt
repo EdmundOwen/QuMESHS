@@ -51,7 +51,7 @@
 ############## Generic density solver details #########################
 #
 ## Density mixing parameter
-% alpha = 0.01
+% alpha = 0.1
 #
 ## Final solution tolerance
 % tolerance = 1e-7

@@ -107,11 +107,11 @@ namespace ThreeD_SchrodingerPoissonSolver
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
 
-                // solve the band energy for the given charge  density and mix in with the old band energy
-                band_offset = pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
+                // solve the chemical potential for the given charge density
+                chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
 
-                // find the density for this new band offset and blend
-                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, charge_density, band_offset, well_depth);
+                // find the density for this new chemical potential and blend
+                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, charge_density, chem_pot, well_depth);
                 dens_solv.Blend(ref charge_density, new_density, alpha, tol);
 
                 //pois_solv.Blend(ref band_offset, new_band_energy, alpha);
@@ -134,12 +134,12 @@ namespace ThreeD_SchrodingerPoissonSolver
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
-                // solve the band energy for the given charge  density and mix in with the old band energy
-                band_offset = -1.0 * pois_solv.Get_Band_Energy(charge_density.Spin_Summed_Data);
+                // solve the chemical potential for the given charge density
+                chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
 
-                // find the density for this new band offset and blend
-                Get_Potential(ref band_offset, layers);
-                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, charge_density, band_offset);
+                // find the density for this new chemical potential and blend
+                Get_Potential(ref chem_pot, layers);
+                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, charge_density, chem_pot);
                 dft_solv.Blend(ref charge_density, new_density, alpha, tol);
 
                 count++;
@@ -153,7 +153,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dx_dens, dy_dens, xmin_dens, ymin_dens);
 
             final_dens_solv.Output(charge_density, "charge_density.dat");
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens) - band_offset, "potential.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens) + chem_pot, "potential.dat");
 
             throw new NotImplementedException();
         }

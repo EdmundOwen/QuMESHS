@@ -12,7 +12,7 @@ namespace Solver_Bases
     public abstract class Experiment_Base
     {
         protected SpinResolved_Data charge_density;
-        protected Band_Data band_offset;
+        protected Band_Data chem_pot;
         protected ILayer[] layers;
 
         protected double bottom_bc;
@@ -141,9 +141,9 @@ namespace Solver_Bases
         {
             get { return charge_density; }
         }
-        public Band_Data Band_Offset
+        public Band_Data Chemical_Potential
         {
-            get { return band_offset; }
+            get { return chem_pot; }
         }
 
         public ILayer[] Layers

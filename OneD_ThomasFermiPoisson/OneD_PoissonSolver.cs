@@ -90,7 +90,7 @@ namespace OneD_ThomasFermiPoisson
             return result;
         }
 
-        protected override Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data charge_density)
+        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data charge_density)
         {
             // set the top and bottom boundary conditions where [0] is the bottom of the device
             charge_density.vec[0] = bottom_bc * -1.0 * bottom_eps / (exp.Dz_Pot * exp.Dz_Pot);
@@ -99,8 +99,8 @@ namespace OneD_ThomasFermiPoisson
             // solve Poisson's equation
             Band_Data potential = new Band_Data(lu_fact.Solve(charge_density.vec));
 
-            // return band energy
-            return -1.0 * Physics_Base.q_e * potential * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
+            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
+            return Physics_Base.q_e * potential * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
         }
 
         /// <summary>
@@ -173,8 +173,8 @@ namespace OneD_ThomasFermiPoisson
             double eps = layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Permitivity;
             // by Gauss' theorem, rho = - epsilon_0 * epsilon_r * dV/dz
             double surface_charge = -1.0 * eps * (band_offset[surface] - band_offset[surface - 1]) / exp.Dz_Pot;
-            // divide by -1.0 * q_e * 6.24 to convert the band energy into a potential (remember that the 6.24 is the conversion from meV to zC V)
-            surface_charge /= -1.0 * Physics_Base.q_e * 6.2415093;
+            // divide by q_e * 6.24 to convert the chemical potential into a potential (remember that the 6.24 is the conversion from meV to zC V)
+            surface_charge /= Physics_Base.q_e * 6.2415093;
             // and divide by dz to give a density
             surface_charge /= exp.Dz_Pot;
 

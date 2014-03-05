@@ -38,20 +38,20 @@ namespace Solver_Bases
             this.tol = tol;
         }
 
-        public Band_Data Get_Band_Energy(Band_Data density)
+        public Band_Data Get_Chemical_Potential(Band_Data density)
         {
             if (flexPDE)
-                // calculate band energy using a potential found by calling FlexPDE
-                return Get_BandEnergy_From_FlexPDE(density, dens_filename);
+                // calculate chemical potential using a potential found by calling FlexPDE
+                return Get_ChemPot_From_FlexPDE(density, dens_filename);
             else
-                // calculate band energies using a potential calculated on a regular grid (not ideal, or scalable)
-                return Get_BandEnergy_On_Regular_Grid(density);
+                // calculate chemical potential using a potential calculated on a regular grid (not ideal, or scalable)
+                return Get_ChemPot_On_Regular_Grid(density);
         }
 
         /// <summary>
         /// gets the band energies for the given charge distribution using flexPDE
         /// </summary>
-        protected Band_Data Get_BandEnergy_From_FlexPDE(Band_Data density, string dens_filename)
+        protected Band_Data Get_ChemPot_From_FlexPDE(Band_Data density, string dens_filename)
         {
             // save density to file in a FlexPDE "TABLE" format
             Save_Density_Data(density, dens_filename);
@@ -89,8 +89,8 @@ namespace Solver_Bases
             // and trim all of the empty lines
             //string[] data = (from items in tmp where items != "" select items).ToArray();
 
-            // return band energy using E_c = - q_e * phi
-            return -1.0 * Physics_Base.q_e * Parse_Potential(data) * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
+            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
+            return Physics_Base.q_e * Parse_Potential(data) * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
         }
 
         /// <summary>
@@ -229,7 +229,7 @@ namespace Solver_Bases
         }
 
         protected abstract Band_Data Parse_Potential(string[] data);
-        protected abstract Band_Data Get_BandEnergy_On_Regular_Grid(Band_Data density);
+        protected abstract Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density);
         protected abstract void Save_Density_Data(Band_Data density, string input_file_name);
     }
 }

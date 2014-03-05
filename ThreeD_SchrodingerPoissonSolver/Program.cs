@@ -27,13 +27,13 @@ namespace ThreeD_SchrodingerPoissonSolver
             exp_init.Initialise(inputs_init);
             exp_init.Run();
             inputs.Add("SpinResolved_Density", exp_init.Charge_Density);
-            inputs.Add("Band_Offset", exp_init.Band_Offset);
+            inputs.Add("Band_Offset", exp_init.Chemical_Potential);
             Console.WriteLine("Calculated 1D density for dopents");
 
-            Band_Data band_offset = exp_init.Band_Offset;
+            Band_Data chem_pot = exp_init.Chemical_Potential;
             ILayer[] layers = exp_init.Layers;
             OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
-            inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers) * (double)inputs_init["dz"]);
+            inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(chem_pot, layers) * (double)inputs_init["dz"]);
             inputs.Add("bottom_bc", exp_init.Bottom_BC);
 
             Console.WriteLine("Starting experiment");
