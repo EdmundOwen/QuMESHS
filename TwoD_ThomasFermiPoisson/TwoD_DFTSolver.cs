@@ -38,6 +38,15 @@ namespace TwoD_ThomasFermiPoisson
             tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }
 
+        /// <summary>
+        /// Calculate the charge density for this potential
+        /// NOTE!!! that the boundary potential is (essentially) set to infty by ringing the density with a set of zeros.
+        ///         this prevents potential solvers from extrapolating any residual density at the edge of the eigenstate
+        ///         solution out of the charge density calculation domain
+        /// </summary>
+        /// <param name="layers"></param>
+        /// <param name="density"></param>
+        /// <param name="pot"></param>
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data pot)
         {
             DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, density, pot);
@@ -57,6 +66,10 @@ namespace TwoD_ThomasFermiPoisson
                 {
                     double dens_val = 0.0;
 
+                    // do not add anything to the density if on the edge of the domain
+                    //if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                    //    continue;
+
                     for (int k = 0; k < max_wavefunction; k++)
                     {
                         // set temporary eigenvalue and eigenvector
@@ -68,7 +81,7 @@ namespace TwoD_ThomasFermiPoisson
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 20 * k_b * T above mu = 0
                         //dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
-                        dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * Get_OneD_DoS(tmp_eigval);
+                        dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval])*Get_OneD_DoS(tmp_eigval);
                             //dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
                     }
 
@@ -93,7 +106,7 @@ namespace TwoD_ThomasFermiPoisson
         double Get_OneD_DoS(double tmp_eigval)
         {
             // set dx = 1.0 to make the longitudinal direction look continuous
-            dx = 1.0;
+            dx = 0.1;
             if (tmp_eigval > 0)
                 return 0.0;
             else
@@ -136,13 +149,19 @@ namespace TwoD_ThomasFermiPoisson
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(ny * nz);
 
             // set off diagonal elements 
-            for (int i = 0; i < ny - 1; i++)
-                for (int j = 0; j < nz - 1; j++)
+            for (int i = 0; i < ny; i++)
+                for (int j = 0; j < nz; j++)
                 {
                     // coupling sites in the growth direction
-                    result[i * nz + j + nz, i * nz + j] = ty; result[i * nz + j, i * nz + j + nz] = ty;
+                    if (i != 0)
+                        result[i * nz + j, i * nz + j - nz] = ty; 
+                    if (i != ny - 1)
+                        result[i * nz + j, i * nz + j + nz] = ty;
                     // coupling sites in the transverse direction
-                    result[i * nz + j + 1, i * nz + j] = tz; result[i * nz + j, i * nz + j + 1] = tz;
+                    if (j != 0)
+                        result[i * nz + j, i * nz + j - 1] = tz;
+                    if (j != nz - 1)
+                        result[i * nz + j, i * nz + j + 1] = tz;
                 }
 
             double[,] potential = new double[ny, nz];
@@ -197,8 +216,8 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
                 {
-                    sw.Write(potential[j, i].ToString() + '\t');
-                    if (j == ny - 1)
+                    sw.Write(potential[i, j].ToString() + '\t');
+                    if (j == nz - 1)
                         sw.WriteLine();
                 }
 

@@ -51,6 +51,7 @@ namespace TwoD_ThomasFermiPoisson
             if (input_dict.ContainsKey("SpinResolved_Density"))
             {
                 this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny_dens, nz_dens)), new Band_Data(new DoubleMatrix(ny_dens, nz_dens)));
+
                 SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
 
                 int offset_min = (int)Math.Round((zmin_dens - zmin_pot) / dz_pot);
@@ -88,6 +89,7 @@ namespace TwoD_ThomasFermiPoisson
         public override void Run()
         {
             int count = 0;
+            
             while (!dens_solv.Converged)
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
