@@ -186,12 +186,12 @@ namespace Solver_Bases
         /// </summary>
         public Band_Data Blend(Band_Data band_energy, Band_Data new_band_energy, double blend_parameter)
         {
-            Band_Data blending_energy = blend_parameter * (band_energy - new_band_energy);
+            Band_Data blending_energy = band_energy - new_band_energy;
 
             // check for convergence
             converged = Check_Convergence(blending_energy, tol);
 
-            return band_energy - blending_energy;
+            return band_energy - blend_parameter * blending_energy;
         }
 
         /// <summary>
@@ -201,12 +201,12 @@ namespace Solver_Bases
         /// </summary>
         public void Blend(ref Band_Data band_energy, Band_Data new_band_energy, double blend_parameter)
         {
-            Band_Data blending_energy = blend_parameter * (band_energy - new_band_energy);
+            Band_Data blending_energy = band_energy - new_band_energy;
 
             // check for convergence
             converged = Check_Convergence(blending_energy, tol);
 
-            band_energy = band_energy - blending_energy;
+            band_energy = band_energy - blend_parameter * blending_energy;
         }
 
         public bool Converged

@@ -12,13 +12,14 @@ namespace TwoD_ThomasFermiPoisson
     public class TwoD_DFTSolver : Density_Base
     {
         Experiment exp;
+        double[] oneD_DoS;
 
-        double dos_cutoff = 100;    // density of states cutoff to prevent divergences at the band edges
-        double no_kb_T = 20;        // number of kb_T to integrate to
+        double no_kb_T = 50.0;          // number of kb_T to integrate to
+        int no_DoS_interations = 1000;  // number of points in this range to integrate
 
-        int tmp_yval, tmp_zval;
-        Double tmp_eigval;
-        DoubleComplexVector tmp_eigvec;
+        //int tmp_yval, tmp_zval;
+        //Double tmp_eigval;
+        //DoubleComplexVector tmp_eigvec;
 
         double ty, tz;
 
@@ -59,7 +60,7 @@ namespace TwoD_ThomasFermiPoisson
 
             DoubleMatrix dens_up = new DoubleMatrix(ny, nz, 0.0);
             DoubleMatrix dens_down = new DoubleMatrix(ny, nz, 0.0);
-            OneVariableFunction dens_of_states = new OneVariableFunction(new Func<double, double>(Density_Of_States));
+            //OneVariableFunction dens_of_states = new OneVariableFunction(new Func<double, double>(Density_Of_States));
 
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
@@ -67,21 +68,22 @@ namespace TwoD_ThomasFermiPoisson
                     double dens_val = 0.0;
 
                     // do not add anything to the density if on the edge of the domain
-                    //if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
-                    //    continue;
+                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                        continue;
 
                     for (int k = 0; k < max_wavefunction; k++)
                     {
                         // set temporary eigenvalue and eigenvector
-                        tmp_eigval = eig_decomp.EigenValue(k); tmp_eigvec = eig_decomp.EigenVector(k);
+                        //tmp_eigval = eig_decomp.EigenValue(k); tmp_eigvec = eig_decomp.EigenVector(k);
                         // and position
-                        tmp_yval = i;
-                        tmp_zval = j;
+                        //tmp_yval = i;
+                        //tmp_zval = j;
 
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 20 * k_b * T above mu = 0
                         //dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
-                        dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval])*Get_OneD_DoS(tmp_eigval);
+                        //dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval])*Get_OneD_DoS(tmp_eigval);
+                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k));
                             //dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
                     }
 
@@ -106,11 +108,38 @@ namespace TwoD_ThomasFermiPoisson
         double Get_OneD_DoS(double tmp_eigval)
         {
             // set dx = 1.0 to make the longitudinal direction look continuous
-            dx = 0.1;
-            if (tmp_eigval > 0)
+            dx = 20;
+            if (tmp_eigval > 0.5 * no_kb_T * temperature)
                 return 0.0;
+            //else if (tmp_eigval < -0.5 * no_kb_T * temperature)
+            //    return 2.0 / (Math.PI * dx) * Math.Acos(1 - Math.Min(2.0, -1.0 * Physics_Base.mass * dx * dx * tmp_eigval / (Physics_Base.hbar * Physics_Base.hbar)));
             else
-                return 2.0 / (Math.PI * dx) * Math.Acos(1 - Math.Min(2.0, -1.0 * Physics_Base.mass * dx * dx * tmp_eigval / (Physics_Base.hbar * Physics_Base.hbar)));
+            {
+                // calculate the density of states integral directly
+                double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
+                double beta = 1.0 / (Physics_Base.kB * temperature);
+                GaussKronrodIntegrator integrator = new GaussKronrodIntegrator();
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - tmp_eigval) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
+                return alpha * integrator.Integrate(dos_integrand, tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
+            }
+        }
+
+        double[] Generate_DoS()
+        {
+            double[] result = new double[no_DoS_interations];
+            double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
+            double beta = 1.0 / (Physics_Base.kB * temperature);
+            GaussKronrodIntegrator integrator = new GaussKronrodIntegrator();
+
+            for (int i = 0; i < no_DoS_interations; i++)
+            {
+                double E_c = i * no_kb_T * Physics_Base.kB * temperature / no_DoS_interations - 0.5 * no_kb_T * Physics_Base.kB * temperature;
+
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - E_c) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
+                result[i] = alpha * integrator.Integrate(dos_integrand, E_c, no_kb_T * Physics_Base.kB * temperature);
+            }
+
+            return result;
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
@@ -176,11 +205,11 @@ namespace TwoD_ThomasFermiPoisson
             return result;
         }
 
-        double Density_Of_States(double E)
-        {
-            return Math.Min(Math.Sqrt(Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * E * Math.PI * Math.PI)) * Get_Fermi_Function(E)
-                        * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]), dos_cutoff);
-        }
+        //double Density_Of_States(double E)
+        //{
+        //    return Math.Min(Math.Sqrt(Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * E * Math.PI * Math.PI)) * Get_Fermi_Function(E)
+        //                * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]), dos_cutoff);
+        //}
 
         public void Write_Out_Hamiltonian(DoubleHermitianMatrix h)
         {

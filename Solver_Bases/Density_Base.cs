@@ -233,12 +233,12 @@ namespace Solver_Bases
         /// </summary>
         public void Blend(ref SpinResolved_Data band_density, SpinResolved_Data new_band_density, double blend_parameter, double tol)
         {
-            SpinResolved_Data blending_density = blend_parameter * (band_density - new_band_density);
+            SpinResolved_Data blending_density = band_density - new_band_density;
 
             // check for convergence
             converged = Check_Convergence(blending_density, tol);
 
-            band_density = band_density - blending_density;
+            band_density = band_density - blend_parameter * blending_density;
         }
 
         public bool Converged

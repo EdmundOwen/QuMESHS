@@ -113,7 +113,6 @@ namespace TwoD_ThomasFermiPoisson
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
 
             count = 0;
-            alpha /= 10.0;
             while (!dft_solv.Converged)
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
@@ -122,8 +121,8 @@ namespace TwoD_ThomasFermiPoisson
                 chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
 
                 // find the density for this new chemical potential and blend
-                Get_Potential(ref chem_pot, layers);
-                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, charge_density, chem_pot);
+                Band_Data dft_chem_pot = Get_Potential(ref chem_pot, layers);
+                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, charge_density, dft_chem_pot);
                 dft_solv.Blend(ref charge_density, new_density, alpha, tol);
                 
                 count++;
@@ -140,8 +139,10 @@ namespace TwoD_ThomasFermiPoisson
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) + chem_pot, "potential.dat");
         }
 
-        void Get_Potential(ref Band_Data band_offset, ILayer[] layers)
+        Band_Data Get_Potential(ref Band_Data chem_pot, ILayer[] layers)
         {
+            Band_Data result = new Band_Data(new DoubleMatrix(ny_dens, nz_dens));
+
             for (int i = 0; i < ny_dens; i++)
                 for (int j = 0; j < nz_dens; j++)
                 {
@@ -149,8 +150,10 @@ namespace TwoD_ThomasFermiPoisson
                     double pos_z = zmin_dens + j * dz_dens;
 
                     double band_gap = Geom_Tool.GetLayer(layers, pos_y, pos_z).Band_Gap;
-                    band_offset.mat[i, j] = 0.5 * band_gap - band_offset.mat[i, j];
+                    result.mat[i, j] = 0.5 * band_gap - chem_pot.mat[i, j];
                 }
+
+            return result;
         }
     }
 }
