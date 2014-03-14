@@ -70,7 +70,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\ttop_V = " + top_V.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
-            sw.WriteLine("\tsplit_width = 600");
+            sw.WriteLine("\tsplit_width = 400");
             sw.WriteLine("\tsplit_depth = 10\t! depth of the split gate metal material");
             sw.WriteLine();
             sw.WriteLine("\t! WELL DEPTH (in nm)");
@@ -86,7 +86,6 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // other physical parameters
             sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
-            sw.WriteLine("\tfactor = " + (6.2415093).ToString() + " ! this is the factor for converting zC V to meV");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
@@ -152,14 +151,14 @@ namespace TwoD_ThomasFermiPoisson
 
             sw.WriteLine("MONITORS");
             sw.WriteLine("\tCONTOUR(rho)");
-            sw.WriteLine("\tCONTOUR(-factor * q_e * u + 0.5 * band_gap)");
-            sw.WriteLine("\tELEVATION(-factor * q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
+            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(rho) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tELEVATION(-factor * q_e * u + 0.5 * band_gap) FROM (0, 0) TO (0, -lz)");
-            sw.WriteLine("\tELEVATION(-factor * q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
-            sw.WriteLine("\tCONTOUR(-factor * q_e * u + 0.5 * band_gap)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, 0) TO (0, -lz)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
+            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap)");
             sw.WriteLine("\tCONTOUR(rho)");
             sw.WriteLine("\tELEVATION(rho) FROM (0, 0) TO (0, -lz)");
             sw.WriteLine("\tELEVATION(rho) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
@@ -167,7 +166,7 @@ namespace TwoD_ThomasFermiPoisson
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
             sw.WriteLine("\tTABLE(u) ZOOM ("+ exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"pot.dat\"");
-            sw.WriteLine("\tTRANSFER (rho, u, factor * q_e * u + 0.5 * band_gap) FILE=\"data_file.dat\"");
+            sw.WriteLine("\tTRANSFER (rho, u, - q_e * u + 0.5 * band_gap) FILE=\"data_file.dat\"");
             sw.WriteLine();
 
             sw.WriteLine("END");

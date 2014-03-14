@@ -100,7 +100,7 @@ namespace OneD_ThomasFermiPoisson
             Band_Data potential = new Band_Data(lu_fact.Solve(charge_density.vec));
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * potential * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
+            return Physics_Base.q_e * potential;
         }
 
         /// <summary>
@@ -173,8 +173,8 @@ namespace OneD_ThomasFermiPoisson
             double eps = layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Permitivity;
             // by Gauss' theorem, rho = - epsilon_0 * epsilon_r * dV/dz
             double surface_charge = -1.0 * eps * (chem_pot[surface] - chem_pot[surface - 1]) / exp.Dz_Pot;
-            // divide by - q_e * 6.24 to convert the chemical potential into a potential (remember that the 6.24 is the conversion from meV to zC V)
-            surface_charge /= -1.0 * Physics_Base.q_e * 6.2415093;
+            // divide by - q_e to convert the chemical potential into a potential
+            surface_charge /= -1.0 * Physics_Base.q_e;
             // and divide by dz to give a density
             surface_charge /= exp.Dz_Pot;
 
@@ -322,7 +322,6 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine();
             // other physical parameters
             sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + " ! charge of electron in zC");
-            sw.WriteLine("\tfactor = " + (6.2415093).ToString() + " ! this is the factor for converting zC V to meV");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
@@ -348,7 +347,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tELEVATION(- factor * q_e * u + 0.5 * band_gap) FROM (-lz) TO (0)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-lz) TO (0)");
             sw.WriteLine("\tELEVATION(rho) FROM (-lz) TO (0)");
             sw.WriteLine("\tELEVATION(u) FROM (" + exp.Zmin_Pot.ToString() + ") TO (" + (exp.Zmin_Pot + exp.Nz_Pot * exp.Dz_Pot).ToString() + ") EXPORT(nz) FORMAT \'#1\' FILE=\'pot.dat\'");
             sw.WriteLine("END");
@@ -360,8 +359,8 @@ namespace OneD_ThomasFermiPoisson
         public void Set_Boundary_Conditions(ILayer[] layers, double top_bc, double bottom_bc, double top_pos, double bottom_pos)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // (as phi = E_c / (-1.0 * q_e) with a factor of 6.24 to convert from meV to zC V
-            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e * 6.2415093); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e * 6.2415093);
+            // (as phi = E_c / (-1.0 * q_e) with a factor to convert from V to meV zC^-1
+            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
 
             // and get the corresponding permittivities
             top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;

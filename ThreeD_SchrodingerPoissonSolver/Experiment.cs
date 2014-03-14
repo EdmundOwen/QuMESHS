@@ -153,7 +153,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dx_dens, dy_dens, xmin_dens, ymin_dens);
 
             final_dens_solv.Output(charge_density, "charge_density.dat");
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens) + chem_pot, "potential.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens) - chem_pot, "potential.dat");
 
             throw new NotImplementedException();
         }

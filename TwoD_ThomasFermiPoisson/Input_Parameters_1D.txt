@@ -12,10 +12,10 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 101
+% nz = 501
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 5
+% dz = 1
 #
 ## Number of lattice sites in the transverse direction to save to
 % ny_1d = 10

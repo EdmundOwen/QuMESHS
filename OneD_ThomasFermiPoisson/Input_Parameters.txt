@@ -12,10 +12,10 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 101
+% nz = 120
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 5
+% dz = 1
 #
 #
 ############## Poisson solver details #################################
@@ -37,7 +37,6 @@
 #
 ############## Generic density solver details #########################
 #
-% TF_only = false
 #
 ## Final solution tolerance
 % tolerance = 10e-5
@@ -52,7 +51,7 @@
 ############## DFT density solver detials #############################
 #
 ## Whether to use dft at the final temperature or not
-% dft = true
+% dft = false
 #
 ## Number of data points over which to calculate the density using dft
 % nz_dens = 14

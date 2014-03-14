@@ -122,8 +122,8 @@ namespace TwoD_ThomasFermiPoisson
 
                 // find the density for this new chemical potential and blend
                 Band_Data dft_chem_pot = Get_Potential(ref chem_pot, layers);
-                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, charge_density, dft_chem_pot);
-                dft_solv.Blend(ref charge_density, new_density, alpha, tol);
+                SpinResolved_Data new_charge_density = dft_solv.Get_ChargeDensity(layers, charge_density, dft_chem_pot);
+                dft_solv.Blend(ref charge_density, new_charge_density, alpha, tol);
                 
                 count++;
             }
@@ -136,7 +136,7 @@ namespace TwoD_ThomasFermiPoisson
             charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dy_dens, dz_dens, ymin_dens, zmin_dens);
 
             final_dens_solv.Output(charge_density, "charge_density.dat");
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) + chem_pot, "potential.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot, "potential.dat");
         }
 
         Band_Data Get_Potential(ref Band_Data chem_pot, ILayer[] layers)

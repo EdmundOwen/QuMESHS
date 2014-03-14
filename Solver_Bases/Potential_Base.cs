@@ -90,7 +90,7 @@ namespace Solver_Bases
             //string[] data = (from items in tmp where items != "" select items).ToArray();
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * Parse_Potential(data) * 6.2415093;  // the factor of 6.24 is because 1 zC V = 6.24 meV
+            return Physics_Base.q_e * Parse_Potential(data);
         }
 
         /// <summary>

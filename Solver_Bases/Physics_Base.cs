@@ -12,6 +12,8 @@ namespace Solver_Bases
         public const double q_e = 160.217646;                   // (zC) is positive as in these definitions it is the elementary charge
         public const double m_e = 5.68562958e-3;                // (meV) (ps)^2 (nm)^-2 of the free electron mass
         public const double mass = 0.067 * m_e;                 // (meV) (ps)^2 (nm)^-2 with GaAs effective mass
+        public const double energy_zCV_to_meV = 6.2415093;      // conversion factor from zC V to meV
+        public const double energy_V_to_meVpzC = 0.160217646;   // conversion factor from V to meV per zC
         public const double epsilon_0 = 1.41859713;             // (zC)^2 (nm)^-1 (meV)^-1 for vacuum
         public const double epsilon_r = 13.0;                   // relative permittivity for vacuum -> GaAs
         public const double epsilon_r_GaAs = 12.9;              // relative permittivity for vacuum -> GaAs

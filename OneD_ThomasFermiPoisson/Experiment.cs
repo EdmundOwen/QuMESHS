@@ -154,7 +154,7 @@ namespace OneD_ThomasFermiPoisson
             Console.WriteLine("Starting DFT calculation");
 
             // reset boundary conditions
-            double tmp_bc = top_V * (Physics_Base.q_e * 6.2415093);
+            double tmp_bc = top_V * (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
             pois_solv.Set_Boundary_Conditions(layers, tmp_bc, bottom_bc, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
 
             count = 0;
@@ -232,7 +232,7 @@ namespace OneD_ThomasFermiPoisson
             //final_dens_solv.Output(charge_density / Physics_Base.q_e, "density.dat", false);
 
             final_dens_solv.Output(charge_density, "charge_density.dat", false);
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) + chem_pot, "potential.dat");
+            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot, "potential.dat");
         }
 
         void Get_Potential(ref Band_Data dft_band_offset, ILayer[] layers)
