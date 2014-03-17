@@ -56,7 +56,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             Get_From_Dictionary<double>(input_dict, "top_V", ref top_V);
             Get_From_Dictionary<double>(input_dict, "split_V", ref split_V);
             Get_From_Dictionary<double>(input_dict, "surface_charge", ref surface_charge);
-            Get_From_Dictionary<double>(input_dict, "bottom_bc", ref bottom_bc);
+            Get_From_Dictionary<double>(input_dict, "bottom_bc", ref bottom_V);
 
             // and split gate dimensions
             Get_From_Dictionary<double>(input_dict, "split_width", ref split_width);
@@ -95,7 +95,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             // initialise potential solver
             pois_solv = new ThreeD_PoissonSolver(this, dens_1d, using_flexPDE, flexPDE_input, flexPDE_location, tol);
-            pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, split_length, bottom_bc, surface_charge);
+            pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, split_length, bottom_V, surface_charge);
 
             Console.WriteLine("Experimental parameters initialised");
         }

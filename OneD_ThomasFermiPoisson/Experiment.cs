@@ -115,11 +115,12 @@ namespace OneD_ThomasFermiPoisson
 
                 // create charge density solver and calculate boundary conditions
                 OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz_pot, nz_pot, zmin_pot);
-                double top_bc = 0.0;// dens_solv.Get_Chemical_Potential(0);
-                this.bottom_bc = dens_solv.Get_Chemical_Potential(zmin_pot, layers);
+                double tmp_V = 0.0;// dens_solv.Get_Chemical_Potential(0);
+                if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature))
+                    this.bottom_V = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
 
                 // set the boundary conditions
-                pois_solv.Set_Boundary_Conditions(layers, top_bc, bottom_bc, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
+                pois_solv.Set_Boundary_Conditions(layers, tmp_V, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
 
                 // initialise the chemical potential as the solution with zero density
                 chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
@@ -154,8 +155,7 @@ namespace OneD_ThomasFermiPoisson
             Console.WriteLine("Starting DFT calculation");
 
             // reset boundary conditions
-            double tmp_bc = top_V * (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
-            pois_solv.Set_Boundary_Conditions(layers, tmp_bc, bottom_bc, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
+            pois_solv.Set_Boundary_Conditions(layers, top_V, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
 
             count = 0;
             while (!pois_solv.Converged)

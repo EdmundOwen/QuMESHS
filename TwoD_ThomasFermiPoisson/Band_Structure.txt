@@ -5,17 +5,17 @@
 #
 mat=PMMA t=200
 surface=true
-mat=GaAs t=24
-mat=AlGaAs t=36 x=.3 Nd=0.1e18
-mat=AlGaAs t=10 x=.3
-mat=GaAs t=430
+#mat=GaAs t=10
+#mat=AlGaAs t=40 x=.3 Nd=0.63e18
+#mat=AlGaAs t=40 x=.3
+#mat=GaAs t=410
 #
 ## Low density deep HEMT (eg W0616)
 #
-#GaAs t=10
-#AlGaAs t=200 x=.3 Nd=4e16
-#AlGaAs t=75 x=.3
-#GaAs t=215 Nd=1e10
+mat=GaAs t=10
+mat=AlGaAs t=200 x=.3 Nd=4e16
+mat=AlGaAs t=75 x=.3
+mat=GaAs t=715 Na=1e14
 #
 ## Masato's wafer
 #

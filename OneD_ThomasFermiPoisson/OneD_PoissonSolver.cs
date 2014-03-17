@@ -308,7 +308,7 @@ namespace OneD_ThomasFermiPoisson
             // size of the sample
             sw.WriteLine("\tlz = " + (exp.Nz_Pot * exp.Dz_Pot).ToString());
             // the top boundary condition on the surface of the sample
-            sw.WriteLine("\t! Boundary conditions");
+            sw.WriteLine("\t! Boundary conditions (in meV zC^-1)");
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine("\tbottom_V = " + bottom_bc.ToString());
             sw.WriteLine();
@@ -356,11 +356,12 @@ namespace OneD_ThomasFermiPoisson
             sw.Close();
         }
 
-        public void Set_Boundary_Conditions(ILayer[] layers, double top_bc, double bottom_bc, double top_pos, double bottom_pos)
+        public void Set_Boundary_Conditions(ILayer[] layers, double top_V, double bottom_V, double top_pos, double bottom_pos)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // (as phi = E_c / (-1.0 * q_e) with a factor to convert from V to meV zC^-1
-            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
+            // with a factor to convert from V to meV zC^-1
+            this.top_bc = top_V * Physics_Base.energy_V_to_meVpzC; 
+            this.bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
 
             // and get the corresponding permittivities
             top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;

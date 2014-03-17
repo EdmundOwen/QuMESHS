@@ -65,9 +65,9 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
             sw.WriteLine("\tsurface_bc = " + surface.ToString());
             sw.WriteLine();
-            sw.WriteLine("\t! GATE VOLTAGE INPUTS (in V)");
-            sw.WriteLine("\tsplit_V = " + split_V.ToString());
-            sw.WriteLine("\ttop_V = " + top_V.ToString());
+            sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
+            sw.WriteLine("\tsplit_V = " + split_bc.ToString());
+            sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
             sw.WriteLine("\tsplit_width = 400");
@@ -175,13 +175,14 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
-        double top_V, split_V;
-        public void Set_Boundary_Conditions(double top_V, double split_V, double bottom_bc, double surface)
+        double top_bc, split_bc;
+        public void Set_Boundary_Conditions(double top_V, double split_V, double bottom_V, double surface)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // (as phi = E_c / (-1.0 * q_e)
-            this.top_V = top_V; this.split_V = split_V;
-            this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
+            // with a factor to convert from V to meV zC^-1
+            this.top_bc = top_V * Physics_Base.energy_V_to_meVpzC; 
+            this.split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
+            this.bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
 
             if (flexpde_inputfile != null)
                 Create_FlexPDE_File(surface, bottom_bc, flexpde_inputfile);

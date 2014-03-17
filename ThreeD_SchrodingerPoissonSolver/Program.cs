@@ -36,6 +36,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(chem_pot, layers) * (double)inputs_init["dz"]);
             inputs.Add("bottom_bc", exp_init.Bottom_BC);
 
+            double tot_dens = (from val in exp_init.Charge_Density.Spin_Summed_Data.vec
+                               where val < 0.0
+                               select -1.0e14 * val * 5.0 / Physics_Base.q_e).ToArray().Sum();
+
             Console.WriteLine("Starting experiment");
             Experiment exp = new Experiment();
             Console.WriteLine("Created experiment");

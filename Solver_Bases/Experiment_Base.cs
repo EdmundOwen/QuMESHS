@@ -15,7 +15,7 @@ namespace Solver_Bases
         protected Band_Data chem_pot;
         protected ILayer[] layers;
 
-        protected double bottom_bc;
+        protected double bottom_V;
 
         // parameters for the density domain
         protected double dx_dens, dy_dens, dz_dens;
@@ -158,7 +158,7 @@ namespace Solver_Bases
 
         public double Bottom_BC
         {
-            get { return bottom_bc; }
+            get { return bottom_V; }
         }
 
         public int Nx_Dens
