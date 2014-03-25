@@ -68,7 +68,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density"))
             {
-                this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
+                this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
                 SpinResolved_Data tmp_charge_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
                 dens_1d = new DoubleVector(nz_dens);
                 int z_offset = (int)Math.Abs((Zmin_Pot - Zmin_Dens) / Dz_Pot);
@@ -80,12 +80,12 @@ namespace ThreeD_SchrodingerPoissonSolver
                 for (int i = 0; i < nx_dens; i++)
                     for (int j = 0; j < ny_dens; j++)
                     {
-                        charge_density.Spin_Up.mat[i, j] = 0.5;
-                        charge_density.Spin_Down.mat[i, j] = 0.5;
+                        carrier_density.Spin_Up.mat[i, j] = 0.5;
+                        carrier_density.Spin_Down.mat[i, j] = 0.5;
                     }
             }
             else
-                this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
+                this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
 
             if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
             if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
@@ -108,11 +108,11 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge density
-                chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
 
                 // find the density for this new chemical potential and blend
-                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, charge_density, chem_pot, well_depth);
-                dens_solv.Blend(ref charge_density, new_density, alpha, tol);
+                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, carrier_density, chem_pot, well_depth);
+                dens_solv.Blend(ref carrier_density, new_density, alpha, tol);
 
                 //pois_solv.Blend(ref band_offset, new_band_energy, alpha);
 
@@ -135,12 +135,12 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge density
-                chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
 
                 // find the density for this new chemical potential and blend
                 Get_Potential(ref chem_pot, layers);
-                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, charge_density, chem_pot);
-                dft_solv.Blend(ref charge_density, new_density, alpha, tol);
+                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, carrier_density, chem_pot);
+                dft_solv.Blend(ref carrier_density, new_density, alpha, tol);
 
                 count++;
             }
@@ -150,9 +150,9 @@ namespace ThreeD_SchrodingerPoissonSolver
             ThreeD_PoissonSolver final_pois_solv = new ThreeD_PoissonSolver(this, dens_1d, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
-            charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dx_dens, dy_dens, xmin_dens, ymin_dens);
+            carrier_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dx_dens, dy_dens, xmin_dens, ymin_dens);
 
-            final_dens_solv.Output(charge_density, "charge_density.dat");
+            final_dens_solv.Output(carrier_density, "carrier_density.dat");
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens) - chem_pot, "potential.dat");
 
             throw new NotImplementedException();

@@ -241,6 +241,21 @@ namespace Solver_Bases
             band_density = band_density - blend_parameter * blending_density;
         }
 
+        /// <summary>
+        /// uses a three step blending to calculate a "damped" mixture of the densities... see notes
+        /// </summary>
+        public void Blend(ref SpinResolved_Data band_density, ref SpinResolved_Data old_band_density, SpinResolved_Data new_band_density, double alpha, double zeta, double tol)
+        {
+            SpinResolved_Data tmp_density = band_density.DeepenThisCopy();
+            band_density = ((2 - alpha * alpha) * tmp_density - (1 - zeta * alpha) * old_band_density + (alpha * alpha) * new_band_density) / (1 + zeta * alpha);
+
+            // check for convergence
+            converged = Check_Convergence(old_band_density - band_density, tol);
+
+            // and reset the "old_band_density" to the new previous time step
+            old_band_density = tmp_density;
+        }
+
         public bool Converged
         {
             get { return converged; }

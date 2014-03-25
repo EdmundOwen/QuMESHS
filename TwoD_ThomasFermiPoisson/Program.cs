@@ -28,12 +28,12 @@ namespace TwoD_ThomasFermiPoisson
             OneD_ThomasFermiPoisson.Experiment exp_init = new OneD_ThomasFermiPoisson.Experiment();
             exp_init.Initialise(inputs_init);
             exp_init.Run();
-            inputs.Add("SpinResolved_Density", exp_init.Charge_Density);
+            inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
             inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
             Console.WriteLine("Calculated 1D density for dopents");
 
-            Input_Band_Structure.Expand_BandStructure(exp_init.Charge_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D_donors.dat", (double)inputs["dy"] * (double)inputs["ny"] / (double)inputs_init["ny_1d"], (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * (double)inputs["ny"] / 2.0, Geom_Tool.Get_Zmin(exp_init.Layers));
-            Input_Band_Structure.Expand_BandStructure(exp_init.Charge_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D.dat", (double)inputs["dy"] * (double)inputs["ny"] / (double)inputs_init["ny_1d"], (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * (double)inputs["ny"] / 2.0, Geom_Tool.Get_Zmin(exp_init.Layers));
+            Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D_dopents.dat", (double)inputs["dy"] * (double)inputs["ny"] / (double)inputs_init["ny_1d"], (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * (double)inputs["ny"] / 2.0, Geom_Tool.Get_Zmin(exp_init.Layers));
+            Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D.dat", (double)inputs["dy"] * (double)inputs["ny"] / (double)inputs_init["ny_1d"], (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * (double)inputs["ny"] / 2.0, Geom_Tool.Get_Zmin(exp_init.Layers));
             Console.WriteLine("Saved 1D dopent density");
 
             Band_Data band_offset = exp_init.Chemical_Potential;
@@ -45,6 +45,9 @@ namespace TwoD_ThomasFermiPoisson
             Experiment exp = new Experiment();
             Console.WriteLine("Created experiment");
             exp.Initialise_Experiment(inputs);
+            // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
+            if (exp_init.Dz_Pot != exp.Dz_Pot)
+                throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
             exp.Run();
             Console.WriteLine("Experiment complete");
         }

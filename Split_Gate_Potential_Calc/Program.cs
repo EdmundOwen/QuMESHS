@@ -63,15 +63,15 @@ namespace Split_Gate_Potential_Calc
             double surface_charge = tmp_pois_solv.Get_Surface_Charge(chem_pot, layers);
 
             // save the 1D data
-            SpinResolved_Data charge_dens_1d = exp.Charge_Density;
-            charge_dens_1d.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz, zmin);
-            input.Add("oned_dens_data", charge_dens_1d.Spin_Summed_Data.vec);
+            SpinResolved_Data carrier_dens_1d = exp.Carrier_Density;
+            carrier_dens_1d.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz, zmin);
+            input.Add("oned_dens_data", carrier_dens_1d.Spin_Summed_Data.vec);
             
             // delete unnecessary files
             //if (File.Exists("dens_1D.dat"))
             //    File.Delete("dens_1D.dat");
-            if (File.Exists("charge_density.dat"))
-                File.Delete("charge_density.dat");
+            if (File.Exists("carrier_density.dat"))
+                File.Delete("carrier_density.dat");
             if (File.Exists("potential.dat"))
                 File.Delete("potential.dat");
 
@@ -86,8 +86,8 @@ namespace Split_Gate_Potential_Calc
             // create relevant flexpde file
             if (bool.Parse((string)input["is_2D"]))
             {
-                Band_Data charge_dens_2d = Input_Band_Structure.Expand_BandStructure(charge_dens_1d.Spin_Summed_Data.vec, ny);
-                charge_dens_2d.Save_2D_Data("dens_2D.dat", dy, dz, ymin, zmin);
+                Band_Data carrier_dens_2d = Input_Band_Structure.Expand_BandStructure(carrier_dens_1d.Spin_Summed_Data.vec, ny);
+                carrier_dens_2d.Save_2D_Data("dens_2D.dat", dy, dz, ymin, zmin);
 
                 // create split gate FlexPDE file (for the moment, only in one dimension)
                 TwoD_ThomasFermiPoisson.Experiment exp_2d = new TwoD_ThomasFermiPoisson.Experiment();
@@ -101,8 +101,8 @@ namespace Split_Gate_Potential_Calc
                 double xmin = -0.5 * nx * dx;
                 input.Add("xmin", xmin);
 
-                Band_Data charge_dens_3d = Input_Band_Structure.Expand_BandStructure(charge_dens_1d.Spin_Summed_Data.vec, nx, ny);
-                charge_dens_3d.Save_3D_Data("dens_3D.dat", dx, dy, dz, xmin, ymin, zmin);
+                Band_Data carrier_dens_3d = Input_Band_Structure.Expand_BandStructure(carrier_dens_1d.Spin_Summed_Data.vec, nx, ny);
+                carrier_dens_3d.Save_3D_Data("dens_3D.dat", dx, dy, dz, xmin, ymin, zmin);
 
                 // create split gate FlexPDE file (for the moment, only in one dimension)
                 ThreeD_SchrodingerPoissonSolver.Experiment exp_3d = new ThreeD_SchrodingerPoissonSolver.Experiment();

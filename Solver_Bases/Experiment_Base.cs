@@ -11,7 +11,8 @@ namespace Solver_Bases
 {
     public abstract class Experiment_Base
     {
-        protected SpinResolved_Data charge_density;
+        protected SpinResolved_Data carrier_density;
+        protected SpinResolved_Data dopent_density;
         protected Band_Data chem_pot;
         protected ILayer[] layers;
 
@@ -137,10 +138,16 @@ namespace Solver_Bases
             Get_From_Dictionary<T>(input, key, ref default_value, true);
         }
 
-        public SpinResolved_Data Charge_Density
+        public SpinResolved_Data Carrier_Density
         {
-            get { return charge_density; }
+            get { return carrier_density; }
         }
+
+        public SpinResolved_Data Dopent_Density
+        {
+            get { return dopent_density; }
+        }
+
         public Band_Data Chemical_Potential
         {
             get { return chem_pot; }

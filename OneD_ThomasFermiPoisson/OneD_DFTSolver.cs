@@ -12,7 +12,7 @@ namespace OneD_ThomasFermiPoisson
 {
     class OneD_DFTSolver : Density_Base
     {
-        double no_kb_T = 20;    // number of kb_T to integrate to
+        double no_kb_T = 50;    // number of kb_T to integrate to
         double t;
         int max_wavefunction = 0;
 
@@ -46,13 +46,14 @@ namespace OneD_ThomasFermiPoisson
                 for (int i = 0; i < max_wavefunction; i++)
                 {
                     // set temporary eigenvalue and eigenvector
-                    tmp_eigval = eig_decomp.EigenValue(i); tmp_eigvec = eig_decomp.EigenVector(i);
+                    //tmp_eigval = eig_decomp.EigenValue(i); tmp_eigvec = eig_decomp.EigenVector(i);
                     // and position
-                    tmp_zval = j;
+                    //tmp_zval = j;
 
                     // and integrate the density of states at this position for this eigenvector from the minimum energy to
-                    // (by default) 20 * k_b * T above mu = 0
-                    dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
+                    // (by default) 50 * k_b * T above mu = 0
+                    //dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
+                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Get_TwoD_DoS(eig_decomp.EigenValue(i));
                 }
 
                 // just share the densities (there is no spin polarisation)
@@ -67,6 +68,16 @@ namespace OneD_ThomasFermiPoisson
 
             // and multiply the density by -e to get the charge density (as these are electrons)
             charge_density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+        }
+
+        double Get_TwoD_DoS(double tmp_eigval)
+        {
+            // calculate the density of states integral directly
+            double alpha = Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
+            double beta = 1.0 / (Physics_Base.kB * temperature);
+            GaussKronrodIntegrator integrator = new GaussKronrodIntegrator();
+            OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => 1.0 / (Math.Exp(beta * E) + 1)));
+            return alpha * integrator.Integrate(dos_integrand, tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)

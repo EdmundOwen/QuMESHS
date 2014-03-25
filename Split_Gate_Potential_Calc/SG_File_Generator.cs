@@ -65,11 +65,13 @@ namespace Split_Gate_Potential_Calc
         internal void Generate_2D_FlexPDE_File(TwoD_ThomasFermiPoisson.Experiment exp, double surface)
         {
             string output_file = "split_gate_2d.pde";
-            
+
             Check_Output_Filename(ref output_file);
 
-            TwoD_ThomasFermiPoisson.TwoD_PoissonSolver temp_poissolv = new TwoD_ThomasFermiPoisson.TwoD_PoissonSolver(exp, true, output_file, null, 0.0);
-            temp_poissolv.Create_FlexPDE_File(surface, bottom_bc, output_file);
+            throw new NotImplementedException();
+
+            //TwoD_ThomasFermiPoisson.TwoD_PoissonSolver temp_poissolv = new TwoD_ThomasFermiPoisson.TwoD_PoissonSolver(exp, true, output_file, null, 0.0);
+            //temp_poissolv.Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file);
         }
 
         public void Generate_3D_FlexPDE_File(ThreeD_SchrodingerPoissonSolver.Experiment exp, double surface)

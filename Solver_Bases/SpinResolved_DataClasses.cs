@@ -254,21 +254,17 @@ namespace Solver_Bases
 
         public static SpinResolved_Data operator *(double scalar, SpinResolved_Data data)
         {
-            data.Spin_Up *= scalar; data.Spin_Down *= scalar;
-
-            return data;
+            return new SpinResolved_Data(scalar * data.Spin_Up, scalar * data.Spin_Down);
         }
 
         public static SpinResolved_Data operator /(SpinResolved_Data data, double scalar)
         {
-            data.Spin_Up /= scalar; data.Spin_Down /= scalar;
-
-            return data;
+            return (1.0 / scalar) * data;
         }
 
-        public static SpinResolved_Data operator *(SpinResolved_Data mat, double scalar)
+        public static SpinResolved_Data operator *(SpinResolved_Data data, double scalar)
         {
-            return scalar * mat;
+            return scalar * data;
         }
 
         public static SpinResolved_Data operator +(SpinResolved_Data data_1, SpinResolved_Data data_2)
@@ -287,6 +283,21 @@ namespace Solver_Bases
                 throw new ArrayTypeMismatchException();
 
             return new SpinResolved_Data(data_1.Spin_Up - data_2.Spin_Up, data_1.Spin_Down - data_2.Spin_Down);
+        }
+
+        public SpinResolved_Data DeepenThisCopy()
+        {
+            int dim = this.Spin_Down.Dimension;
+            
+            if (dim == 1)
+                return new SpinResolved_Data(new Band_Data(this.Spin_Up.vec.DeepenThisCopy()), new Band_Data(this.Spin_Down.vec.DeepenThisCopy()));
+            else if (dim == 2)
+                return new SpinResolved_Data(new Band_Data(this.Spin_Up.mat.DeepenThisCopy()), new Band_Data(this.Spin_Down.mat.DeepenThisCopy()));
+            else if (dim == 3)
+                throw new NotImplementedException();
+                //return new SpinResolved_Data(new Band_Data(this.Spin_Up.vol.DeepenThisCopy()), new Band_Data(this.Spin_Down.vol.DeepenThisCopy()));
+            else
+                throw new NotImplementedException();
         }
 
         /// <summary>

@@ -26,7 +26,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             OneD_ThomasFermiPoisson.Experiment exp_init = new OneD_ThomasFermiPoisson.Experiment();
             exp_init.Initialise(inputs_init);
             exp_init.Run();
-            inputs.Add("SpinResolved_Density", exp_init.Charge_Density);
+            inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
             inputs.Add("Band_Offset", exp_init.Chemical_Potential);
             Console.WriteLine("Calculated 1D density for dopents");
 
@@ -35,11 +35,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
             inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(chem_pot, layers) * (double)inputs_init["dz"]);
             inputs.Add("bottom_bc", exp_init.Bottom_BC);
-
-            double tot_dens = (from val in exp_init.Charge_Density.Spin_Summed_Data.vec
-                               where val < 0.0
-                               select -1.0e14 * val * 5.0 / Physics_Base.q_e).ToArray().Sum();
-
+            
             Console.WriteLine("Starting experiment");
             Experiment exp = new Experiment();
             Console.WriteLine("Created experiment");
@@ -48,8 +44,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             int nx_init = (int)(double)inputs_init["nx_1d"]; int ny_init = (int)(double)inputs_init["ny_1d"];
             double dx_init = exp.Nx_Pot * exp.Dx_Pot / nx_init; double dy_init = exp.Ny_Pot * exp.Dy_Pot / ny_init;
             
-            Input_Band_Structure.Expand_BandStructure(exp_init.Charge_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_donors.dat", dx_init, dy_init, exp.Dz_Pot, exp.Xmin_Pot, exp.Ymin_Pot, exp.Zmin_Pot);
-            Input_Band_Structure.Expand_BandStructure(exp_init.Charge_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init, exp.Dz_Pot, exp.Xmin_Pot, exp.Ymin_Pot, exp.Zmin_Pot);
+            Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_dopents.dat", dx_init, dy_init, exp.Dz_Pot, exp.Xmin_Pot, exp.Ymin_Pot, exp.Zmin_Pot);
+            Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init, exp.Dz_Pot, exp.Xmin_Pot, exp.Ymin_Pot, exp.Zmin_Pot);
             Console.WriteLine("Saved 1D dopent density");
 
             exp.Run();

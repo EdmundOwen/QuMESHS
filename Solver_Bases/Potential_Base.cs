@@ -8,6 +8,7 @@ using System.Threading;
 using CenterSpace.NMath.Core;
 using Solver_Bases.Layers;
 using Solver_Bases.Geometry;
+using System.Threading.Tasks;
 
 namespace Solver_Bases
 {
@@ -48,6 +49,13 @@ namespace Solver_Bases
                 return Get_ChemPot_On_Regular_Grid(density);
         }
 
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern int GetForegroundWindow();
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern int SetForegroundWindow(int handle);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern int LockSetForegroundWindow(int handle);
+
         /// <summary>
         /// gets the band energies for the given charge distribution using flexPDE
         /// </summary>
@@ -65,7 +73,23 @@ namespace Solver_Bases
 
             // run the flexPDE program as a process (quietly)
             //Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
-            Process.Start(flexpde_location, "-Q " + flexpde_inputfile);
+            int handle = GetForegroundWindow();
+            Process pot_process = new Process();
+            pot_process.StartInfo = new ProcessStartInfo(flexpde_location, "-Q " + flexpde_inputfile);
+            pot_process.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
+            
+            //AutoResetEvent ev = new AutoResetEvent(false);
+            //Task.Factory.StartNew(() => { pot_process.Start(); ev.Set(); });
+            //while (!ev.WaitOne(0))
+            //{
+            //    SetForegroundWindow(handle);
+            //    Thread.Sleep(0);
+            //}
+            int report = SetForegroundWindow(1);
+            pot_process.Start();
+            report = SetForegroundWindow(2);
+
+            //Process.Start(flexpde_location, "-Q " + flexpde_inputfile);
             while (!File.Exists("pot.dat"))
                 Thread.Sleep(10);
             Thread.Sleep(1000);

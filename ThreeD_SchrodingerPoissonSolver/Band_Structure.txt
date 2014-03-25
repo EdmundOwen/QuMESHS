@@ -13,9 +13,9 @@ surface=true
 ## Low density deep HEMT (eg W0616)
 #
 mat=GaAs t=10
-mat=AlGaAs t=200 x=.3 Nd=4e16
+mat=AlGaAs t=200 x=.3 Nd=8e16
 mat=AlGaAs t=75 x=.3
-mat=GaAs t=915 Nd=1e14
+mat=GaAs t=1605 Nd=1e14
 #
 ## Masato's wafer
 #
@@ -24,4 +24,5 @@ mat=GaAs t=915 Nd=1e14
 #AlGaAs t=10 x=.3 
 #GaAs t=50 
 #
-mat=substrate Nd=1e14
+mat=substrate 
+#Nd=1e14

@@ -41,7 +41,7 @@ namespace TwoD_ThomasFermiPoisson
             return result;
         }
 
-        public void Create_FlexPDE_File(double surface, double bottom_bc, string output_file)
+        public void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -57,6 +57,10 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\trho");
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
+            // and the tables for carrier and donor densities
+            sw.WriteLine("\trho_carrier = TABLE(\'" + dens_filename + "\', x, y)");
+            sw.WriteLine("\trho_dopent = TABLE(\'dens_2D_dopents.dat\', x, y)");
+            sw.WriteLine();
             // simulation dimension
             sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
             sw.WriteLine("\tlz = " + (exp.Dz_Pot * exp.Nz_Pot).ToString());
@@ -70,7 +74,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
-            sw.WriteLine("\tsplit_width = 400");
+            sw.WriteLine("\tsplit_width = " + split_width.ToString());
             sw.WriteLine("\tsplit_depth = 10\t! depth of the split gate metal material");
             sw.WriteLine();
             sw.WriteLine("\t! WELL DEPTH (in nm)");
@@ -98,14 +102,18 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 1; i < exp.Layers.Length; i++)
             {
                 sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
-                if (exp.Layers[i].Acceptor_Conc != 0.0 || exp.Layers[i].Donor_Conc != 0.0 || exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
-                    sw.WriteLine("\t\trho = TABLE(\'dens_2D_donors.dat\', x, y)");
-                else if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
-                    sw.WriteLine("\t\trho = TABLE(\'dens_2D.dat\', x, y)");
+                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
+                    sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
                 else
                     sw.WriteLine("\t\trho = 0.0");
                 sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
                 sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
+
+                // HACK!
+                if (i == 1)
+                    sw.WriteLine("mesh_density=0.07*exp(-0.0001*(y-well_depth)^2)");
+
+
                 sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + ")");
                 sw.WriteLine("\t\tLINE TO (ly / 2, " + exp.Layers[i].Zmax.ToString() + ")");
                 // set top gate here
@@ -175,17 +183,16 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
-        double top_bc, split_bc;
-        public void Set_Boundary_Conditions(double top_V, double split_V, double bottom_V, double surface)
+        public void Set_Boundary_Conditions(double top_V, double split_V, double split_width, double bottom_V, double surface)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // with a factor to convert from V to meV zC^-1
-            this.top_bc = top_V * Physics_Base.energy_V_to_meVpzC; 
-            this.split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
-            this.bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
+            double top_bc = top_V * Physics_Base.energy_V_to_meVpzC; 
+            double split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
+            double bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
 
             if (flexpde_inputfile != null)
-                Create_FlexPDE_File(surface, bottom_bc, flexpde_inputfile);
+                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile);
         }
 
         protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)

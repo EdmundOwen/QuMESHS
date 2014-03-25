@@ -76,6 +76,36 @@ namespace Solver_Bases
                 return density;
         }
 
+        public double Get_DopentDensity(double mu)
+        {
+            // calculate the densities due to the various components for a given chemical potential
+            // factor of 2.0 here is for spin degeneracy of the dopents
+            // also, exponential factor for donors is (E_d - mu)
+            double donor_electrons = donor_conc * 2.0 * Physics_Base.Get_Dopent_Fermi_Function(donor_energy, mu, temperature);//(0.5 * band_gap - donor_energy, mu, temperature);
+            double donor_nuclei = donor_conc;
+            double acceptor_nuclei = acceptor_conc;
+            // and exponential factor for acceptors is (mu - E_a)
+            double acceptor_holes = acceptor_conc * 2.0 * Physics_Base.Get_Dopent_Fermi_Function(-acceptor_energy, -mu, temperature);//(-1.0 * (-0.5 * band_gap + acceptor_energy), -mu, temperature);
+
+            return Physics_Base.q_e * (donor_nuclei - acceptor_nuclei + acceptor_holes - donor_electrons);
+        }
+
+        public double Get_CarrierDensity(double mu)
+        {
+            // calculate the densities due to the various components for a given chemical potential
+            double conductance_electrons = Get_Conductance_Electron_Density(mu);
+            double valence_holes = Get_Valence_Electron_Density(mu);
+
+            double density = Physics_Base.q_e * (valence_holes - conductance_electrons);
+
+            if (density > max_density)
+                return max_density;
+            else if (-1.0 * density > max_density)
+                return -1.0 * max_density;
+            else
+                return density;
+        }
+
         public double Get_Equilibrium_Chemical_Potential()
         {
             OneVariableFunction charge_func = new OneVariableFunction(new Func<double, double>(Get_ChargeDensity));

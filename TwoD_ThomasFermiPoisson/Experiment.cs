@@ -13,6 +13,7 @@ namespace TwoD_ThomasFermiPoisson
     public class Experiment : Experiment_Base
     {
         double top_V, split_V, surface_charge;
+        double split_width;
 
         TwoD_ThomasFermiSolver dens_solv;
         TwoD_PoissonSolver pois_solv;
@@ -47,10 +48,13 @@ namespace TwoD_ThomasFermiPoisson
             Get_From_Dictionary<double>(input_dict, "split_V", ref split_V);
             Get_From_Dictionary<double>(input_dict, "surface_charge", ref surface_charge);
 
+            // and split gate dimensions
+            Get_From_Dictionary<double>(input_dict, "split_width", ref split_width);
+
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density"))
             {
-                this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny_dens, nz_dens)), new Band_Data(new DoubleMatrix(ny_dens, nz_dens)));
+                this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny_dens, nz_dens)), new Band_Data(new DoubleMatrix(ny_dens, nz_dens)));
 
                 SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
 
@@ -59,12 +63,18 @@ namespace TwoD_ThomasFermiPoisson
                 for (int i = 0; i  < ny_dens; i++)
                     for (int j = 0; j < nz_dens; j++)
                     {
-                        charge_density.Spin_Up.mat[i, j] = tmp_1d_density.Spin_Up.vec[offset_min + j];
-                        charge_density.Spin_Down.mat[i, j] = tmp_1d_density.Spin_Down.vec[offset_min + j];
+                        // do not add anything to the density if on the edge of the domain
+                        if (i == 0 || i == ny_dens - 1 || j == 0 || j == nz_dens - 1)
+                            continue;
+
+                        // linearly interpolate
+                        int j_init = (int)Math.Floor(j * Dz_Dens / Dz_Pot);
+                        carrier_density.Spin_Up.mat[i, j] = tmp_1d_density.Spin_Up.vec[offset_min + j_init] + (tmp_1d_density.Spin_Up.vec[offset_min + j_init + 1] - tmp_1d_density.Spin_Up.vec[offset_min + j_init]) * Dz_Dens / Dz_Pot;
+                        carrier_density.Spin_Down.mat[i, j] = tmp_1d_density.Spin_Down.vec[offset_min + j_init] + (tmp_1d_density.Spin_Down.vec[offset_min + j_init + 1] - tmp_1d_density.Spin_Down.vec[offset_min + j_init]) * Dz_Dens / Dz_Pot;
                     }
             }
             else
-                this.charge_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny_dens, nz_dens)), new Band_Data(new DoubleMatrix(ny_dens, nz_dens)));
+                this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny_dens, nz_dens)), new Band_Data(new DoubleMatrix(ny_dens, nz_dens)));
 
             if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
             if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
@@ -75,7 +85,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // initialise potential solver
             pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
-            pois_solv.Set_Boundary_Conditions(top_V, split_V, bottom_bc, surface_charge);
+            pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_bc, surface_charge);
 
             // initialise the band energy as the solution from the input density
             //if (input_dict.ContainsKey("Band_Offset"))
@@ -90,40 +100,46 @@ namespace TwoD_ThomasFermiPoisson
         {
             int count = 0;
             
+            /*
             while (!dens_solv.Converged)
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge  density and mix in with the old chemical potential
-                chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
 
                 // find the density for this new chemical potential and blend
-                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, charge_density, chem_pot);
-                dens_solv.Blend(ref charge_density, new_density, alpha, tol);
+                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, carrier_density, chem_pot);
+                dens_solv.Blend(ref carrier_density, new_density, alpha, tol);
 
                 //pois_solv.Blend(ref band_offset, new_band_energy, alpha);
 
                 count++;
             }
-
+            */
+            
             if (TF_only)
                 return;
 
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
 
+            alpha = 0.01;
+            double zeta = 2.0;// +100.0 / (double)(i + 1);
+            SpinResolved_Data old_density = carrier_density.DeepenThisCopy();
+
             count = 0;
-            while (!dft_solv.Converged)
+            while (!dft_solv.Converged || count < 10)
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge  density
-                chem_pot = pois_solv.Get_Chemical_Potential(charge_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Get_Chemical_Potential(old_density.Spin_Summed_Data);
 
                 // find the density for this new chemical potential and blend
                 Band_Data dft_chem_pot = Get_Potential(ref chem_pot, layers);
-                SpinResolved_Data new_charge_density = dft_solv.Get_ChargeDensity(layers, charge_density, dft_chem_pot);
-                dft_solv.Blend(ref charge_density, new_charge_density, alpha, tol);
+                SpinResolved_Data new_charge_density = dft_solv.Get_ChargeDensity(layers, carrier_density, dft_chem_pot);
+                dft_solv.Blend(ref carrier_density, ref old_density, new_charge_density, alpha, zeta, tol);
                 
                 count++;
             }
@@ -133,9 +149,9 @@ namespace TwoD_ThomasFermiPoisson
             TwoD_PoissonSolver final_pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
-            charge_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dy_dens, dz_dens, ymin_dens, zmin_dens);
+            carrier_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dy_dens, dz_dens, ymin_dens, zmin_dens);
 
-            final_dens_solv.Output(charge_density, "charge_density.dat");
+            final_dens_solv.Output(carrier_density, "carrier_density.dat");
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot, "potential.dat");
         }
 

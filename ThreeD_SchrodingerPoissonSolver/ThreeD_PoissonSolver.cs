@@ -58,6 +58,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\trho = 0.0");
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
+            // and the tables for carrier and donor densities
+            sw.WriteLine("\trho_carrier = TABLE(\'" + dens_filename + "\', x, y)");
+            sw.WriteLine("\trho_dopent = TABLE(\'dens_3D_dopents.dat\', x, y)");
+            sw.WriteLine();
             sw.WriteLine("\tlx = " + (exp.Dx_Pot * exp.Nx_Pot).ToString());
             sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
             sw.WriteLine();
@@ -116,10 +120,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             for (int i = 1; i < exp.Layers.Length + 1; i++)
             {
                 sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\"");
-                if (exp.Layers[layercount].Acceptor_Conc != 0.0 || exp.Layers[layercount].Donor_Conc != 0.0 || exp.Layers[layercount].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
-                    sw.WriteLine("\t\trho = TABLE(\'dens_3D_donors.dat\', x, y)");
-                else if (exp.Layers[layercount].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
-                    sw.WriteLine("\t\trho = TABLE(\'dens_3D.dat\', x, y)");
+                if (exp.Layers[layercount].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
+                    sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
                 else
                     sw.WriteLine("\t\trho = 0.0");
                 sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[layercount].Material));
