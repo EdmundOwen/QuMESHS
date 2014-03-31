@@ -89,6 +89,11 @@
     <Compile Include="Layers\Layer_Tool.cs" />
     <Compile Include="Layers\PMMA_Layer.cs" />
     <Compile Include="Layers\Substrate_Layer.cs" />
+    <Compile Include="Mixing_Schedulers\Constant_Scheduler.cs" />
+    <Compile Include="Mixing_Schedulers\File_Defined_Scheduler.cs" />
+    <Compile Include="Mixing_Schedulers\IScheduler.cs" />
+    <Compile Include="Mixing_Schedulers\Mixing_Scheduler.cs" />
+    <Compile Include="Mixing_Schedulers\Scheduler_Base.cs" />
     <Compile Include="Physics_Base.cs" />
     <Compile Include="Potential_Base.cs" />
     <Compile Include="Band_Data.cs" />

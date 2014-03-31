@@ -60,7 +60,7 @@ namespace Solver_Bases
                     int y = (int)((i - x) / vol[0].Cols);
                     int z = (int)((i - index1) / matsize);
 
-                    return (double)vol[z][y,x];
+                    return (double)vol[z][y, x];
                 }
                 else
                     throw new NotImplementedException();
@@ -326,6 +326,77 @@ namespace Solver_Bases
                 }
 
             sw.Close();
+        }
+
+        /// <summary>
+        /// saves the data contained within the class as an unstructured list of data points
+        /// </summary>
+        /// <param name="filename"></param>
+        public void Save_Data(string filename)
+        {
+            StreamWriter sw = new StreamWriter(filename);
+            if (dim == 1)
+                for (int i = 0; i < Length; i++)
+                    sw.WriteLine(this[i]);
+            else if (dim == 2)
+                for (int i = 0; i < mat.Cols; i++)
+                    for (int j = 0; j < mat.Rows; j++)
+                        sw.WriteLine(mat[j, i]);
+            else if (dim == 3)
+                throw new NotImplementedException();
+            else
+                throw new NotImplementedException();
+            sw.Close();
+        }
+
+        public static Band_Data Parse_Band_Data(string[] input_data, int nz)
+        {
+            // and check that there is the right number of data points back
+            if (input_data.Length != nz)
+                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
+
+            // and parse these values into a DoubleVector
+            Band_Data result = new Band_Data(new DoubleVector(nz));
+            for (int i = 0; i < nz; i++)
+                result.vec[i] = double.Parse(input_data[i]);
+
+            return result;
+        }
+
+        public static Band_Data Parse_Band_Data(string[] input_data, int ny, int nz)
+        {
+            // and check that there is the right number of data points back
+            if (input_data.Length != ny * nz)
+                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
+
+            // and parse these values into a DoubleVector
+            Band_Data result = new Band_Data(new DoubleMatrix(ny, nz));
+            for (int i = 0; i < ny; i++)
+            {
+                for (int j = 0; j < nz; j++)
+                    result.mat[i, j] = double.Parse(input_data[j * ny + i]);
+            }
+
+            return result;
+        }
+
+        public static Band_Data Parse_Band_Data(string[] input_data, int nx, int ny, int nz)
+        {
+            // and check that there is the right number of data points back
+            if (input_data.Length != nx * ny * nz)
+                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
+
+            // and parse these values into a DoubleVector
+            Band_Data result = new Band_Data(new DoubleMatrix[nx]);
+            for (int i = 0; i < nx; i++)
+            {
+                result.vol[i] = new DoubleMatrix(ny, nz);
+                for (int j = 0; j < ny; j++)
+                    for (int k = 0; k < nz; k++)
+                        result.vol[i][j, k] = double.Parse(input_data[k * ny * nz + j * ny + i]);
+            }
+
+            return result;
         }
 
         public int Dimension

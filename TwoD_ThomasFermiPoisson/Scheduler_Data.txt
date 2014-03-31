@@ -1,0 +1,20 @@
+﻿#
+# % type = none
+# % type = constant
+#
+#
+#
+% type = file_defined
+#
+#
+#
+## here is the schedule
+{
+i=0 alpha=0.03 zeta=3.0
+i=20 alpha=0.01 zeta=3.0
+i=200 alpha=0.01 zeta=3.0
+i=1000 alpha=0.003 zeta=3.0
+i=5000 alpha=0.001 zeta=3.0
+i=10000 alpha=0 zeta=3.0
+i=10005 alpha=0 zeta=3.0
+}

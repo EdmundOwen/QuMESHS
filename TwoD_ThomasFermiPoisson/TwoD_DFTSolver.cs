@@ -12,10 +12,8 @@ namespace TwoD_ThomasFermiPoisson
     public class TwoD_DFTSolver : Density_Base
     {
         Experiment exp;
-        double[] oneD_DoS;
 
         double no_kb_T = 50.0;          // number of kb_T to integrate to
-        int no_DoS_interations = 1000;  // number of points in this range to integrate
 
         //int tmp_yval, tmp_zval;
         //Double tmp_eigval;
@@ -46,11 +44,11 @@ namespace TwoD_ThomasFermiPoisson
         ///         solution out of the charge density calculation domain
         /// </summary>
         /// <param name="layers"></param>
-        /// <param name="density"></param>
+        /// <param name="charge_density"></param>
         /// <param name="pot"></param>
-        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data pot)
+        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data pot)
         {
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, density, pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
@@ -98,21 +96,17 @@ namespace TwoD_ThomasFermiPoisson
             //    Console.WriteLine(charge_density.Spin_Summed_Data[i].ToString() + "\t" + (-1.0 * Physics_Base.q_e * (dens_up[i] + dens_down[i])).ToString() + "\t" + (chem_pot.vec[i] + Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i])).ToString());
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            charge_density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
             //density = new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
         }
 
         /// <summary>
-        /// returns the pre-integrated density of states in the translationally invariant direction (assumes T=0)
+        /// returns the integrated density of states in the translationally invariant direction 
         /// </summary>
         double Get_OneD_DoS(double tmp_eigval)
         {
-            // set dx = 1.0 to make the longitudinal direction look continuous
-            dx = 20;
-            if (tmp_eigval > 0.5 * no_kb_T * temperature)
+            if (tmp_eigval > no_kb_T * Physics_Base.kB * temperature)
                 return 0.0;
-            //else if (tmp_eigval < -0.5 * no_kb_T * temperature)
-            //    return 2.0 / (Math.PI * dx) * Math.Acos(1 - Math.Min(2.0, -1.0 * Physics_Base.mass * dx * dx * tmp_eigval / (Physics_Base.hbar * Physics_Base.hbar)));
             else
             {
                 // calculate the density of states integral directly
@@ -124,7 +118,7 @@ namespace TwoD_ThomasFermiPoisson
             }
         }
 
-        double[] Generate_DoS()
+        /*double[] Generate_DoS()
         {
             double[] result = new double[no_DoS_interations];
             double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
@@ -141,6 +135,7 @@ namespace TwoD_ThomasFermiPoisson
 
             return result;
         }
+        */
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
         {

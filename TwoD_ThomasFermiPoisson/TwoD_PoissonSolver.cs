@@ -14,7 +14,6 @@ namespace TwoD_ThomasFermiPoisson
 {
     public class TwoD_PoissonSolver : Potential_Base
     {
-        double bottom_bc;
         Experiment exp;
 
         public TwoD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
@@ -26,19 +25,7 @@ namespace TwoD_ThomasFermiPoisson
 
         protected override Band_Data Parse_Potential(string[] data)
         {
-            // and check that there is the right number of data points back
-            if (data.Length != exp.Ny_Dens * exp.Nz_Dens)
-                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
-
-            // and parse these values into a DoubleVector
-            Band_Data result = new Band_Data(new DoubleMatrix(exp.Ny_Dens, exp.Nz_Dens));
-            for (int i = 0; i < exp.Ny_Dens; i++)
-            {
-                for (int j = 0; j < exp.Nz_Dens; j++)
-                    result.mat[i, j] = double.Parse(data[j * exp.Ny_Dens + i]);
-            }
-
-            return result;
+            return Band_Data.Parse_Band_Data(data, exp.Ny_Dens, exp.Nz_Dens);
         }
 
         public void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
@@ -164,12 +151,12 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tELEVATION(rho) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, 0) TO (0, -lz)");
-            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, " + (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens).ToString() + ") TO (0, " + (exp.Zmin_Dens - 2.0 * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
             sw.WriteLine("\tCONTOUR(rho)");
-            sw.WriteLine("\tELEVATION(rho) FROM (0, 0) TO (0, -lz)");
-            sw.WriteLine("\tELEVATION(rho) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
+            sw.WriteLine("\tELEVATION(rho) FROM (0, " + (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens).ToString() +") TO (0, " + (exp.Zmin_Dens - 2.0 * exp.Dz_Dens).ToString()  + ")");
+            sw.WriteLine("\tELEVATION(rho) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
 
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();

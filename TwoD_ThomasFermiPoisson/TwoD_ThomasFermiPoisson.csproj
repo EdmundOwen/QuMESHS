@@ -89,6 +89,9 @@
     <Content Include="Input_Parameters_1D.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scheduler_Data.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneD_ThomasFermiPoisson\OneD_ThomasFermiPoisson.csproj">

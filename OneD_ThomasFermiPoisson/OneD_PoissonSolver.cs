@@ -78,16 +78,7 @@ namespace OneD_ThomasFermiPoisson
 
         protected override Band_Data Parse_Potential(string[] data)
         {
-            // and check that there is the right number of data points back
-            if (data.Length != exp.Nz_Pot)
-                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
-
-            // and parse these values into a DoubleVector
-            Band_Data result = new Band_Data(new DoubleVector(exp.Nz_Pot));
-            for (int i = 0; i < exp.Nz_Pot; i++)
-                result.vec[i] = double.Parse(data[i]);
-
-            return result;
+            return Band_Data.Parse_Band_Data(data, exp.Nz_Dens);
         }
 
         protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data charge_density)

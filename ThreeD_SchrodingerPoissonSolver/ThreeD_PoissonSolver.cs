@@ -26,19 +26,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         protected override Band_Data Parse_Potential(string[] data)
         {
-            // and check that there is the right number of data points back
-            if (data.Length != exp.Nx_Dens * exp.Ny_Dens)
-                throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
-
-            // and parse these values into a DoubleVector
-            Band_Data result = new Band_Data(new DoubleMatrix(exp.Nx_Dens, exp.Ny_Dens));
-            for (int i = 0; i < exp.Nx_Dens; i++)
-            {
-                for (int j = 0; j < exp.Ny_Dens; j++)
-                    result.mat[i, j] = double.Parse(data[j * exp.Nx_Dens + i]);
-            }
-
-            return result;
+            return Band_Data.Parse_Band_Data(data, exp.Nx_Dens, exp.Ny_Dens);
         }
 
         public void Create_FlexPDE_File(double split_width, double split_length, double surface, double bottom_bc, string output_file)

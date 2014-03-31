@@ -177,7 +177,7 @@ namespace Solver_Bases
         }
 
         /// <summary>
-        /// Checks whether the density has converged by calculating the absolute value of the blended band energies
+        /// Checks whether the density has converged by calculating the absolute value of the blended densitiies
         /// and determining whether every term is zero within a given tolerance
         /// </summary>
         public bool Check_Convergence(SpinResolved_Data blending_density, double tol)
@@ -203,12 +203,19 @@ namespace Solver_Bases
         }
 
         /// <summary>
-        /// Checks whether the density has converged by comparing old and new densities
-        /// and determining whether every term is the same within a given tolerance
+        /// Checks whether the density has converged by calculating the fractional absolute value of the blended densities
+        /// and determining whether every term is zero within a given tolerance
         /// </summary>
-        public bool Check_Convergence(SpinResolved_Data band_density, SpinResolved_Data new_band_density, double tol)
+        public bool Check_Convergence_Fraction(SpinResolved_Data blending_density, SpinResolved_Data density, double tol)
         {
-            double[] density_diff = Get_Array_of_Absolute_Differences(band_density, new_band_density);
+            double minval = 1e-5;   // minimum density where convergence is no longer checked
+
+            double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
+            for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
+                if (Math.Abs(density.Spin_Summed_Data[i]) > minval)
+                    density_diff[i] = Math.Abs(blending_density.Spin_Summed_Data[i]) / Math.Abs(density.Spin_Summed_Data[i]);
+                else
+                    density_diff[i] = 0;
 
             int[] converged_test = new int[density_diff.Length];
             for (int i = 0; i < density_diff.Length; i++)
@@ -246,14 +253,14 @@ namespace Solver_Bases
         /// </summary>
         public void Blend(ref SpinResolved_Data band_density, ref SpinResolved_Data old_band_density, SpinResolved_Data new_band_density, double alpha, double zeta, double tol)
         {
-            SpinResolved_Data tmp_density = band_density.DeepenThisCopy();
-            band_density = ((2 - alpha * alpha) * tmp_density - (1 - zeta * alpha) * old_band_density + (alpha * alpha) * new_band_density) / (1 + zeta * alpha);
+            SpinResolved_Data tmp_band_density = band_density.DeepenThisCopy();
+            band_density = ((2 - alpha * alpha) * tmp_band_density - (1 - zeta * alpha) * old_band_density + (alpha * alpha) * new_band_density) / (1 + zeta * alpha);
 
             // check for convergence
-            converged = Check_Convergence(old_band_density - band_density, tol);
+            converged = Check_Convergence_Fraction(old_band_density - band_density, band_density, tol);
 
             // and reset the "old_band_density" to the new previous time step
-            old_band_density = tmp_density;
+            old_band_density = tmp_band_density;
         }
 
         public bool Converged

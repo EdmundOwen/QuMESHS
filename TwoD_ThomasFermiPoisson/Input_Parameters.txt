@@ -18,7 +18,7 @@
 % dy = 20
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 268
+% nz = 418
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
 % dz = 5
@@ -39,10 +39,10 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 # Top gate voltage
-% top_V = 0.0
+% top_V = -0.03
 #
 ## Split gate voltage
-% split_V = -0.4
+% split_V = -0.7
 #
 ## Split gate width
 % split_width = 800
@@ -53,11 +53,14 @@
 #
 ############## Generic density solver details #########################
 #
+## Scheduler data file
+% scheduler_file = Scheduler_Data.txt
+#
 ## Density mixing parameter
 % alpha = 0.001
 #
 ## Final solution tolerance
-% tolerance = 1e-7
+% tolerance = 1e-3
 #
 ## Fermi energy
 % E_f = 0.0
@@ -69,20 +72,34 @@
 % T = 1
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -300.0
+% ymin_dens = -250.0
 #
 ## Lattice spacing in the transverse direction
 % dy_dens = 10.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 60
+% ny_dens = 50
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -295.0
+% zmin_dens = -318.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 2.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 30
+% nz_dens = 20
 #
+#
+############## Data transfer details ##############################
+#
+## Whether to start a simulation "hot" with previous data
+% hot_start = true
+#
+## File location for spin-up data
+% spin_up_file = dens_2D_up.dat
+#
+## File location for spin-down data
+% spin_down_file = dens_2D_down.dat
+#
+## File containing surface charge density
+% surface_charge_file = surface_charge.dat

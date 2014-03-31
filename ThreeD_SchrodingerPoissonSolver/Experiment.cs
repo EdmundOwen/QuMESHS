@@ -124,10 +124,11 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             pois_solv.Reset();
 
-            
             // and then run the DFT solver at the base temperature over a limited range and with a reduced mixing constant
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this.Temperature, 1.0, Dx_Dens, Dy_Dens, 1, Nx_Dens, Ny_Dens, double.MaxValue, Xmin_Dens, Ymin_Dens);
-            alpha /= 3.0;
+            alpha = 0.01;
+            double zeta = 2.0;
+            SpinResolved_Data old_carrier_density = carrier_density.DeepenThisCopy();
 
             count = 0;
             while (!dft_solv.Converged)
@@ -135,12 +136,12 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge density
-                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Get_Chemical_Potential(old_carrier_density.Spin_Summed_Data);
 
                 // find the density for this new chemical potential and blend
                 Get_Potential(ref chem_pot, layers);
-                SpinResolved_Data new_density = dft_solv.Get_ChargeDensity(layers, carrier_density, chem_pot);
-                dft_solv.Blend(ref carrier_density, new_density, alpha, tol);
+                SpinResolved_Data new_carrier_density = dft_solv.Get_ChargeDensity(layers, carrier_density, chem_pot);
+                dft_solv.Blend(ref carrier_density, ref old_carrier_density, new_carrier_density, alpha, zeta, tol);
 
                 count++;
             }
@@ -150,7 +151,9 @@ namespace ThreeD_SchrodingerPoissonSolver
             ThreeD_PoissonSolver final_pois_solv = new ThreeD_PoissonSolver(this, dens_1d, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
-            carrier_density.Spin_Summed_Data.Save_2D_Data("dens_2D.dat", dx_dens, dy_dens, xmin_dens, ymin_dens);
+            carrier_density.Spin_Summed_Data.Save_Data("dens_2D.dat");
+            carrier_density.Spin_Up.Save_Data("dens_2D_up.dat");
+            carrier_density.Spin_Down.Save_Data("dens_2D_down.dat");
 
             final_dens_solv.Output(carrier_density, "carrier_density.dat");
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens) - chem_pot, "potential.dat");

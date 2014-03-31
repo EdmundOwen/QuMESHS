@@ -75,7 +75,7 @@ namespace Solver_Bases
             //Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
             int handle = GetForegroundWindow();
             Process pot_process = new Process();
-            pot_process.StartInfo = new ProcessStartInfo(flexpde_location, "-Q " + flexpde_inputfile);
+            pot_process.StartInfo = new ProcessStartInfo(flexpde_location, "-S " + flexpde_inputfile);
             pot_process.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
             
             //AutoResetEvent ev = new AutoResetEvent(false);
