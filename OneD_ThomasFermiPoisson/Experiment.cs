@@ -30,6 +30,10 @@ namespace OneD_ThomasFermiPoisson
             // physics parameters are done by the base method
             base.Initialise(input_dict);
 
+            // check that the size of the domain [(nz_pot-1) * dz_pot] is not larger than the band structure
+            if (layers[layers.Length - 1].Zmax - layers[1].Zmin < (Nz_Pot - 1) * Dz_Pot)
+                throw new Exception("Error - the band structure provided is smaller than the simulation domain!\nUse nz = " + (int)Math.Ceiling((layers[layers.Length - 1].Zmax - layers[1].Zmin) / Dz_Pot) + " instead");
+
             // see whether there's a top gate voltage for determining top_bc
             Get_From_Dictionary<double>(input_dict, "top_V", ref top_V, true);
 

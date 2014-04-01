@@ -15,13 +15,13 @@
 % ny = 100
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 20
+% dy = 10
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 418
+% nz = 3045
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 5
+% dz = 2
 #
 #
 ############## Poisson solver details #################################
@@ -39,16 +39,16 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 # Top gate voltage
-% top_V = -0.03
+% top_V = -0.0
 #
 ## Split gate voltage
-% split_V = -0.7
+% split_V = -1.3
 #
 ## Split gate width
-% split_width = 800
+% split_width = 400
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_pot = -1000.0
+% ymin_pot = -500.0
 #
 #
 ############## Generic density solver details #########################
@@ -72,28 +72,28 @@
 % T = 1
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -250.0
+% ymin_dens = -150.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens = 10.0
+% dy_dens = 5.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 50
+% ny_dens = 60
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -318.0
+% zmin_dens = -110.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 2.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 20
+% nz_dens = 25
 #
 #
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = true
+% hot_start = false
 #
 ## File location for spin-up data
 % spin_up_file = dens_2D_up.dat

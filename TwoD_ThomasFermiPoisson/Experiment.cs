@@ -112,11 +112,11 @@ namespace TwoD_ThomasFermiPoisson
 
             // create charge density solver and calculate boundary conditions
             dens_solv = new TwoD_ThomasFermiSolver(temperature, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens);
-            double bottom_bc = dens_solv.Get_Chemical_Potential(0.0, zmin_pot, layers);
+            double bottom_V = dens_solv.Get_Chemical_Potential(0.0, zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
 
             // initialise potential solver
             pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
-            pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_bc, surface_charge);
+            pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
 
             // initialise the band energy as the solution from the input density
             //if (input_dict.ContainsKey("Band_Offset"))
@@ -184,6 +184,7 @@ namespace TwoD_ThomasFermiPoisson
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(surface_charge.ToString()); sw.Close();
 
             final_dens_solv.Output(carrier_density, "carrier_density.dat");
+            final_dens_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, Get_Potential(ref chem_pot, layers)), "density_error.dat");
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot, "potential.dat");
         }
 
