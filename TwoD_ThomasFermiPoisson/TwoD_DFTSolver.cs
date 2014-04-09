@@ -101,6 +101,16 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         /// <summary>
+        /// returns the eigen-energies for the given potential and charge density
+        /// </summary>
+        public DoubleVector Get_EnergyLevels(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
+        {
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, pot);
+            DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
+            return eig_decomp.EigenValues;
+        }
+
+        /// <summary>
         /// returns the integrated density of states in the translationally invariant direction 
         /// </summary>
         double Get_OneD_DoS(double tmp_eigval)

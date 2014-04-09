@@ -2,7 +2,7 @@
 #surface schottky=0.9 v1
 #
 #
-mat=PMMA t=20
+#mat=pmma t=200
 surface=true
 #
 #
@@ -15,16 +15,17 @@ surface=true
 #
 ## Low density deep HEMT (eg W0616)
 #
-#mat=GaAs t=10
-#mat=AlGaAs t=200 x=.3 Nd=8e16
-#mat=AlGaAs t=75 x=.3
-#mat=GaAs t=1605 Nd=1e14
+mat=GaAs t=10
+mat=AlGaAs t=200 x=.3 Nd=8e16
+mat=AlGaAs t=75 x=.3
+mat=GaAs t=1615
+#Na=1e14
 #
 ## Masato's wafer
 #
-mat=GaAs t=24
-mat=AlGaAs t=36 x=.3 Nd=6e17
-mat=AlGaAs t=10 x=.3 
-mat=GaAs t=6000 Na=1e14
+#mat=GaAs t=24
+#mat=AlGaAs t=36 x=.3 Nd=6e17
+#mat=AlGaAs t=10 x=.3 
+#mat=GaAs t=6000 Na=1e14
 #
 mat=substrate

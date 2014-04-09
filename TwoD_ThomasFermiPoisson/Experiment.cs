@@ -181,7 +181,15 @@ namespace TwoD_ThomasFermiPoisson
             carrier_density.Spin_Summed_Data.Save_Data("dens_2D.dat");
             carrier_density.Spin_Up.Save_Data("dens_2D_up.dat");
             carrier_density.Spin_Down.Save_Data("dens_2D_down.dat");
+
+            // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(surface_charge.ToString()); sw.Close();
+            // save eigen-energies
+            DoubleVector energies = dft_solv.Get_EnergyLevels(layers, carrier_density, Get_Potential(ref chem_pot, layers));
+            StreamWriter sw_e = new StreamWriter("energies.dat");
+            for (int i = 0; i < energies.Length; i++)
+                sw_e.WriteLine(energies[i]);
+            sw_e.Close();
 
             final_dens_solv.Output(carrier_density, "carrier_density.dat");
             final_dens_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, Get_Potential(ref chem_pot, layers)), "density_error.dat");

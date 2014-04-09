@@ -14,6 +14,7 @@ namespace OneD_ThomasFermiPoisson
     public class Experiment : Experiment_Base
     {
         double top_V = 0.0;
+        double top_V_cooldown;
 
         public new void Initialise(Dictionary<string, object> input_dict)
         {
@@ -36,6 +37,9 @@ namespace OneD_ThomasFermiPoisson
 
             // see whether there's a top gate voltage for determining top_bc
             Get_From_Dictionary<double>(input_dict, "top_V", ref top_V, true);
+            // set the cooldown voltage as this and if there is an extra parameter to allow for biased cooldowns then use this
+            top_V_cooldown = top_V;
+            Get_From_Dictionary<double>(input_dict, "top_V_cooldown", ref top_V_cooldown, true);
 
             // try to get the chemical potential and the carrier and dopent density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.carrier_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
@@ -121,12 +125,11 @@ namespace OneD_ThomasFermiPoisson
 
                 // create charge density solver and calculate boundary conditions
                 OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz_pot, nz_pot, zmin_pot);
-                double tmp_V = 0.0;// dens_solv.Get_Chemical_Potential(0);
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature))
                     this.bottom_V = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
 
                 // set the boundary conditions
-                pois_solv.Set_Boundary_Conditions(layers, tmp_V, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
+                pois_solv.Set_Boundary_Conditions(layers, top_V_cooldown, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
 
                 // initialise the chemical potential as the solution with zero density
                 chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);

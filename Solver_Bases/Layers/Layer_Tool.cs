@@ -28,6 +28,9 @@ namespace Solver_Bases.Layers
         {
             switch (material)
             {
+                case "air":
+                    return Material.Air;
+
                 case "gaas":
                     return Material.GaAs;
 

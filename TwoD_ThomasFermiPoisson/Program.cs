@@ -57,8 +57,7 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Experiment initialised");
             exp.Run();
             Console.WriteLine("Experiment complete");
-            
-            
+
             //Run_Multiple_SGs(exp, inputs);
         }
 
@@ -73,6 +72,7 @@ namespace TwoD_ThomasFermiPoisson
                 exp.Run();
                 File.Copy("dens_2D_up.dat", "dens_2D_up_sg07_tg" + i.ToString("00") + ".dat");
                 File.Copy("dens_2D_down.dat", "dens_2D_down_sg07_tg" + i.ToString("00") + ".dat");
+                File.Copy("energies.dat", "energies_sg07_tg" + i.ToString("00") + ".dat");
                 Console.WriteLine("Experiment complete");
             }
         }
@@ -83,11 +83,15 @@ namespace TwoD_ThomasFermiPoisson
             {
                 double sg = i * -0.01;
                 dict["split_V"] = sg;
+                dict["spin_up_file"] = "dens_2D_up_sg" + i.ToString("000") + "_tgnat.dat";
+                dict["spin_down_file"] = "dens_2D_down_sg" + i.ToString("000") + "_tgnat.dat";
+                
                 exp.Initialise_Experiment(dict);
                 Console.WriteLine("Experiment initialised for sg = " + sg.ToString() + "V");
                 exp.Run();
-                File.Copy("dens_2D_up.dat", "dens_2D_up_sg" + i.ToString("000") + "_tgnat.dat");
-                File.Copy("dens_2D_down.dat", "dens_2D_down_sg" + i.ToString("000") + "_tgnat.dat");
+                //File.Copy("dens_2D_up.dat", "dens_2D_up_sg" + i.ToString("000") + "_tgnat.dat");
+                //File.Copy("dens_2D_down.dat", "dens_2D_down_sg" + i.ToString("000") + "_tgnat.dat");
+                File.Copy("energies.dat", "energies_sg" + i.ToString("000") + "_tgnat.dat");
                 Console.WriteLine("Experiment complete");
             }
         }

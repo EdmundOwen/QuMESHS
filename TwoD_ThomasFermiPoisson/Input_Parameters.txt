@@ -12,13 +12,13 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 100
+% ny = 200
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
 % dy = 10
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 3045
+% nz = 1050
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
 % dz = 2
@@ -42,13 +42,13 @@
 % top_V = -0.0
 #
 ## Split gate voltage
-% split_V = -1.3
+% split_V = -0.7
 #
 ## Split gate width
-% split_width = 400
+% split_width = 800
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_pot = -500.0
+% ymin_pot = -1000.0
 #
 #
 ############## Generic density solver details #########################
@@ -72,16 +72,16 @@
 % T = 1
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -150.0
+% ymin_dens = -300.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens = 5.0
+% dy_dens = 10.0
 #
 ## Number of lattice points in transverse direction
 % ny_dens = 60
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -110.0
+% zmin_dens = -325.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 2.0

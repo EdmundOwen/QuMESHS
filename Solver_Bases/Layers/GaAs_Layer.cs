@@ -18,9 +18,9 @@ namespace Solver_Bases.Layers
             permitivity = Physics_Base.epsilon_r_GaAs * Physics_Base.epsilon_0;
 
             // set the GaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
-            this.band_gap = 1420.0;
+            this.band_gap = 1424.0;
             allow_donors = true;
-            this.acceptor_energy = -680.0; this.donor_energy = 704.0;
+            this.acceptor_energy = -682.0; this.donor_energy = 706.0;
         }
 
         internal override void Set_Freeze_Out_Temperature()

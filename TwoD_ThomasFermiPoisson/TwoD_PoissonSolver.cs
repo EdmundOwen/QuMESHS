@@ -106,6 +106,7 @@ namespace TwoD_ThomasFermiPoisson
                 // set top gate here
                 if (i == exp.Layers.Length - 1)
                     sw.WriteLine("\t\tVALUE(u) = top_V");
+                    //sw.WriteLine("\t\tnatural(u) = top_V\t!!!!!!!!!!!!!!! HACK!!!!!!!!!");
                 // or surface condition
                 if (i == Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
                 {

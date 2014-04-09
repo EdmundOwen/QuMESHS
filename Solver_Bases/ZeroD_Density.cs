@@ -26,7 +26,7 @@ namespace Solver_Bases
         /// </summary>
         double chem_pot = double.MaxValue;
 
-        int no_kB_T = 10;
+        int no_kB_T = 50;
 
         public ZeroD_Density(double band_gap, double acceptor_conc, double acceptor_energy, double donor_conc, double donor_energy, double temperature)
         {
