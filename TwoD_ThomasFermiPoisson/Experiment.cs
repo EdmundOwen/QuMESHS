@@ -160,7 +160,7 @@ namespace TwoD_ThomasFermiPoisson
             count = 0;
             while (!dft_solv.Converged || count < 25)
             {
-                Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
+                Console.WriteLine("Iteration: " + count.ToString() + "\tTemp: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge  density
                 chem_pot = pois_solv.Get_Chemical_Potential(old_carrier_density.Spin_Summed_Data);

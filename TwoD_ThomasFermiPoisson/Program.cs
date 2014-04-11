@@ -49,30 +49,30 @@ namespace TwoD_ThomasFermiPoisson
             }
 
             
-           // Console.WriteLine("Starting experiment");
-           // exp.Initialise_Experiment(inputs);
-           // // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
-           // if (!bool.Parse((string)inputs["hot_start"]) && exp_init.Dz_Pot != exp.Dz_Pot)
-           //     throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
-           // Console.WriteLine("Experiment initialised");
-           // exp.Run();
-           // Console.WriteLine("Experiment complete");
+            Console.WriteLine("Starting experiment");
+            exp.Initialise_Experiment(inputs);
+            // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
+            if (!bool.Parse((string)inputs["hot_start"]) && exp_init.Dz_Pot != exp.Dz_Pot)
+                throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
+            Console.WriteLine("Experiment initialised");
+            exp.Run();
+            Console.WriteLine("Experiment complete");
 
-            Run_Multiple_TGs(exp, inputs);
+            //Run_Multiple_SGs(exp, inputs);
         }
 
         static void Run_Multiple_TGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)
         {
-            for (int i = 1; i < 400; i++)
+            for (int i = 4; i < 46; i++)
             {
                 double tg = i * -0.01;
                 dict["top_V"] = tg;
                 exp.Initialise_Experiment(dict);
                 Console.WriteLine("Experiment initialised for tg = " + tg.ToString() + "V");
                 exp.Run();
-                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg13_tg" + i.ToString("000") + ".dat");
-                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg13_tg" + i.ToString("000") + ".dat");
-                File.Copy("energies.dat", "energies_sg13_tg" + i.ToString("000") + ".dat");
+                File.Copy("dens_2D_up.dat", "dens_2D_up_sg07_tg" + i.ToString("00") + ".dat");
+                File.Copy("dens_2D_down.dat", "dens_2D_down_sg07_tg" + i.ToString("00") + ".dat");
+                File.Copy("energies.dat", "energies_sg07_tg" + i.ToString("00") + ".dat");
                 Console.WriteLine("Experiment complete");
             }
         }

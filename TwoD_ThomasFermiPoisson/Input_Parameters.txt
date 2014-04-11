@@ -12,16 +12,16 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 200
+% ny = 100
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
 % dy = 10
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 1050
+% nz = 220
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 2
+% dz = 1
 #
 #
 ############## Poisson solver details #################################
@@ -42,13 +42,13 @@
 % top_V = -0.0
 #
 ## Split gate voltage
-% split_V = -0.7
+% split_V = -1.3
 #
 ## Split gate width
-% split_width = 800
+% split_width = 400
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_pot = -1000.0
+% ymin_pot = -500.0
 #
 #
 ############## Generic density solver details #########################
@@ -69,19 +69,19 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 1
+% T = 0.001
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -300.0
+% ymin_dens = -150.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens = 10.0
+% dy_dens = 5.0
 #
 ## Number of lattice points in transverse direction
 % ny_dens = 60
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -325.0
+% zmin_dens = -110.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 2.0
@@ -93,13 +93,13 @@
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = false
+% hot_start = true
 #
 ## File location for spin-up data
-% spin_up_file = dens_2D_up.dat
+% spin_up_file = dens_2D_up_raw.dat
 #
 ## File location for spin-down data
-% spin_down_file = dens_2D_down.dat
+% spin_down_file = dens_2D_down_raw.dat
 #
 ## File containing surface charge density
 % surface_charge_file = surface_charge.dat

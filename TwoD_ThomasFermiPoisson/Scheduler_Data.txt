@@ -9,24 +9,24 @@
 #
 #
 ## here is the schedule (from scratch)
-{
-i=0 alpha=0.1 zeta=5.0
-i=20 alpha=0.03 zeta=3.0
-i=1000 alpha=0.01 zeta=3.0
-i=5000 alpha=0.003 zeta=3.0
-i=10000 alpha=0.001 zeta=3.0
-i=20000 alpha=0 zeta=3.0
-i=20005 alpha=0 zeta=3.0
-}
+#{
+#i=0 alpha=0.1 zeta=5.0
+#i=20 alpha=0.03 zeta=3.0
+#i=1000 alpha=0.01 zeta=3.0
+#i=5000 alpha=0.003 zeta=3.0
+#i=10000 alpha=0.001 zeta=3.0
+#i=20000 alpha=0 zeta=3.0
+#i=20005 alpha=0 zeta=3.0
+#}
 #
 #
 ## here is the schedule (for a gate scan)
-#{
-#i=0 alpha=0.03 zeta=3.0
-#i=20 alpha=0.01 zeta=3.0
-#i=200 alpha=0.01 zeta=3.0
-#i=1000 alpha=0.003 zeta=3.0
-#i=5000 alpha=0.001 zeta=3.0
-#i=10000 alpha=0 zeta=3.0
-#i=10005 alpha=0 zeta=3.0
-#}
+{
+i=0 alpha=0.03 zeta=3.0
+i=20 alpha=0.01 zeta=3.0
+i=200 alpha=0.01 zeta=3.0
+i=1000 alpha=0.003 zeta=3.0
+i=5000 alpha=0.001 zeta=3.0
+i=10000 alpha=0 zeta=3.0
+i=10005 alpha=0 zeta=3.0
+}

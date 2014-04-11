@@ -113,18 +113,20 @@ namespace TwoD_ThomasFermiPoisson
         /// <summary>
         /// returns the integrated density of states in the translationally invariant direction 
         /// </summary>
-        double Get_OneD_DoS(double tmp_eigval)
+        double Get_OneD_DoS(double band_edge)
         {
-            if (tmp_eigval > no_kb_T * Physics_Base.kB * temperature)
+            if (band_edge > no_kb_T * Physics_Base.kB * temperature)
                 return 0.0;
+            else if (temperature == 0)
+                return 2.0 * Math.Sqrt(-2.0 * Physics_Base.mass * band_edge) / (Math.PI * Physics_Base.hbar);
             else
             {
                 // calculate the density of states integral directly
                 double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 GaussKronrodIntegrator integrator = new GaussKronrodIntegrator();
-                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - tmp_eigval) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
-                return alpha * integrator.Integrate(dos_integrand, tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
+                return alpha * integrator.Integrate(dos_integrand, band_edge, no_kb_T * Physics_Base.kB * temperature);
             }
         }
 
@@ -256,6 +258,52 @@ namespace TwoD_ThomasFermiPoisson
                 }
 
             sw.Close();
+        }
+
+        void Write_Out_Wavefunction_Densities(DoubleHermitianEigDecomp eig_decomp)
+        {
+            double min_eigval = eig_decomp.EigenValues.Min();
+            int max_wavefunction = (from val in eig_decomp.EigenValues
+                                    where val < no_kb_T * Physics_Base.kB * temperature
+                                    select val).ToArray().Length;
+
+            for (int k = 0; k < max_wavefunction; k++)
+            {
+                System.IO.StreamWriter sw = new System.IO.StreamWriter("dens_wavefunction_" + k.ToString("00"));
+                DoubleMatrix tmp = new DoubleMatrix(ny, nz, 0.0);
+
+                for (int i = 0; i < ny; i++)
+                    for (int j = 0; j < nz; j++)
+                    {
+                        // do not add anything to the density if on the edge of the domain
+                        if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                            continue;
+
+                        // set temporary eigenvalue and eigenvector
+                        //tmp_eigval = eig_decomp.EigenValue(k); tmp_eigvec = eig_decomp.EigenVector(k);
+                        // and position
+                        //tmp_yval = i;
+                        //tmp_zval = j;
+
+                        // and integrate the density of states at this position for this eigenvector from the minimum energy to
+                        // (by default) 20 * k_b * T above mu = 0
+                        //dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
+                        //dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval])*Get_OneD_DoS(tmp_eigval);
+                        tmp[i, j] = -1.0 * Physics_Base.q_e * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k));
+                        //dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
+
+                    }
+
+                for (int i = 0; i < ny; i++)
+                    for (int j = 0; j < nz; j++)
+                    {
+                        sw.Write(tmp[i, j].ToString() + '\t');
+                        if (j == nz - 1)
+                            sw.WriteLine();
+                    }
+
+                sw.Close();
+            }
         }
     }
 }
