@@ -162,7 +162,7 @@ namespace TwoD_ThomasFermiPoisson
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
             sw.WriteLine("\tTABLE(u) ZOOM ("+ exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"pot.dat\"");
-            sw.WriteLine("\tTRANSFER (rho, u, - q_e * u + 0.5 * band_gap) FILE=\"data_file.dat\"");
+            //sw.WriteLine("\tTRANSFER (rho, u, - q_e * u + 0.5 * band_gap) FILE=\"data_file.dat\"");
             sw.WriteLine();
 
             sw.WriteLine("END");

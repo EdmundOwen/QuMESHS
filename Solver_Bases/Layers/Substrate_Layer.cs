@@ -16,27 +16,28 @@ namespace Solver_Bases.Layers
         {
             material = Material.Substrate;
             Material specific_material = Material.GaAs;
+            ILayer tmp_layer;
 
             if (specific_material == Material.GaAs)
             {
+                // create a temporary gaas layer to obtain the material properties from
+                tmp_layer = new GaAs_Layer(new Slab(0.0, 0.0), -1);
                 permitivity = Physics_Base.epsilon_r_GaAs * Physics_Base.epsilon_0;
 
-                // set the GaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
-                this.band_gap = 1420.0;
-                allow_donors = true;
-                this.acceptor_energy = -680.0; this.donor_energy = 704.0;
             }
             else if (specific_material == Material.AlGaAs)
             {
+                // create a temporary gaas layer to obtain the material properties from
+                tmp_layer = new AlGaAs_Layer(new Slab(0.0, 0.0), -1);
                 permitivity = Physics_Base.epsilon_r_AlGaAs * Physics_Base.epsilon_0;
-
-                // set the AlGaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
-                this.band_gap = 1800.0;
-                allow_donors = true;
-                this.acceptor_energy = -859.0; this.donor_energy = 869.0;
             }
             else
                 throw new NotImplementedException();
+
+            // set the GaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
+            this.band_gap = tmp_layer.Band_Gap;
+            allow_donors = true;
+            this.acceptor_energy = tmp_layer.Acceptor_Energy; this.donor_energy = tmp_layer.Donor_Energy;
         }
 
         internal override void Set_Freeze_Out_Temperature()

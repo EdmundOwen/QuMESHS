@@ -178,9 +178,9 @@ namespace TwoD_ThomasFermiPoisson
             TwoD_PoissonSolver final_pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
-            carrier_density.Spin_Summed_Data.Save_Data("dens_2D.dat");
-            carrier_density.Spin_Up.Save_Data("dens_2D_up.dat");
-            carrier_density.Spin_Down.Save_Data("dens_2D_down.dat");
+            carrier_density.Spin_Summed_Data.Save_Data("dens_2D_raw.dat");
+            carrier_density.Spin_Up.Save_Data("dens_2D_up_raw.dat");
+            carrier_density.Spin_Down.Save_Data("dens_2D_down_raw.dat");
 
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(surface_charge.ToString()); sw.Close();
