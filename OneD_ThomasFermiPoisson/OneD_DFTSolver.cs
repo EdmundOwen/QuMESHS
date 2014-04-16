@@ -75,9 +75,9 @@ namespace OneD_ThomasFermiPoisson
             // calculate the density of states integral directly
             double alpha = Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
             double beta = 1.0 / (Physics_Base.kB * temperature);
-            GaussKronrodIntegrator integrator = new GaussKronrodIntegrator();
             OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => 1.0 / (Math.Exp(beta * E) + 1)));
-            return alpha * integrator.Integrate(dos_integrand, tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
+            dos_integrand.Integrator = new GaussKronrodIntegrator();
+            return alpha * dos_integrand.Integrate(tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
@@ -113,7 +113,7 @@ namespace OneD_ThomasFermiPoisson
             // set diagonal elements
             for (int i = 0; i < nz; i++)
             {
-                potential[i] = chem_pot.vec[i];
+                potential[i] = chem_pot.vec[i] + Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i]);
                 result[i, i] = -2.0 * t + potential[i];
             }
 

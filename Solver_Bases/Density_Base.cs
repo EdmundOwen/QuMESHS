@@ -225,7 +225,9 @@ namespace Solver_Bases
                     converged_test[i] = 1;
             }
 
-            convergence_factor = density_diff.Sum();
+            // the convergence factor is the sum of the absolute values of the density error defined by the
+            // difference between the current density and the ideal one for this potential
+            convergence_factor = blending_density.Spin_Summed_Data.mat.Select(x => Math.Abs(x)).ToList().Sum();
 
             if (converged_test.Sum() == density_diff.Length)
                 return true;

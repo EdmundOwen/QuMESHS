@@ -124,9 +124,9 @@ namespace TwoD_ThomasFermiPoisson
                 // calculate the density of states integral directly
                 double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
                 double beta = 1.0 / (Physics_Base.kB * temperature);
-                GaussKronrodIntegrator integrator = new GaussKronrodIntegrator();
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
-                return alpha * integrator.Integrate(dos_integrand, band_edge, no_kb_T * Physics_Base.kB * temperature);
+                dos_integrand.Integrator = new GaussKronrodIntegrator();
+                return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
             }
         }
 

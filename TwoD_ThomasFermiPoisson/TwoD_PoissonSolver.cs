@@ -38,7 +38,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-4");
+            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
             sw.WriteLine("\trho");
@@ -65,7 +66,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tsplit_depth = 10\t! depth of the split gate metal material");
             sw.WriteLine();
             sw.WriteLine("\t! WELL DEPTH (in nm)");
-            sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 1).ToString());
+            sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 5).ToString());
             sw.WriteLine();
             sw.WriteLine("\t! Electrical permitivities");
             sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());

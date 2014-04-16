@@ -128,6 +128,7 @@ namespace Solver_Bases
 
             // integrates the density for a given energy up to a given number of kB * T above the conduction band edge
             OneVariableFunction cond_elec_integrand = new OneVariableFunction(new Func<double, double>(Get_Conduction_Electron_Integrand));
+            cond_elec_integrand.Integrator = new GaussKronrodIntegrator();
             double result = cond_elec_integrand.Integrate(0.5 * band_gap, Math.Max(0.5 * band_gap, mu) + no_kB_T * Physics_Base.kB * temperature);
 
             // reset chem_pot
@@ -152,6 +153,7 @@ namespace Solver_Bases
 
             // integrates the density for a given energy up to a given number of kB * T below the valence band edge
             OneVariableFunction val_elec_integrand = new OneVariableFunction(new Func<double, double>(Get_Valence_Electron_Integrand));
+            val_elec_integrand.Integrator = new GaussKronrodIntegrator();
             double result = val_elec_integrand.Integrate(Math.Min(-0.5 * band_gap, mu) - no_kB_T * Physics_Base.kB * temperature, -0.5 * band_gap);
 
             // reset chem_pot
