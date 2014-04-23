@@ -24,8 +24,8 @@ surface=true
 ## Masato's wafer
 #
 mat=GaAs t=24
-mat=AlGaAs t=36 x=.3 Nd=6e17
+mat=AlGaAs t=36 x=.3 Nd=5.88e17
 mat=AlGaAs t=10 x=.3 
-mat=GaAs t=50 Na=1e14
+mat=GaAs t=5930 Na=1e14
 #
-mat=substrate Nd=1e14
+mat=substrate

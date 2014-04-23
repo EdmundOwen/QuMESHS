@@ -99,7 +99,7 @@ namespace TwoD_ThomasFermiPoisson
 
                 // HACK!
                 if (i == 1)
-                    sw.WriteLine("mesh_density=0.07*exp(-0.0001*(y-well_depth)^2)");
+                    sw.WriteLine("mesh_density=0.07*exp(-0.00001*(y-well_depth)^2)*exp(-0.000001*x^2)");
 
 
                 sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + ")");
@@ -111,9 +111,9 @@ namespace TwoD_ThomasFermiPoisson
                 // or surface condition
                 if (i == Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
                 {
-                    sw.WriteLine("\t\tLINE TO (-split_width / 2, " + exp.Layers[i].Zmax.ToString() + ")");
-                    sw.WriteLine("\t\tNATURAL(u) = surface_bc");
                     sw.WriteLine("\t\tLINE TO (split_width / 2, " + exp.Layers[i].Zmax.ToString() + ")");
+                    sw.WriteLine("\t\tNATURAL(u) = surface_bc");
+                    sw.WriteLine("\t\tLINE TO (-split_width / 2, " + exp.Layers[i].Zmax.ToString() + ")");
                 }
                 sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + ")");
                 sw.WriteLine("\t\tNATURAL(u) = 0 LINE TO (-ly / 2, " + exp.Layers[i].Zmin.ToString() + ")");

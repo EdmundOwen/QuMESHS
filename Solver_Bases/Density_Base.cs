@@ -259,7 +259,7 @@ namespace Solver_Bases
             band_density = ((2 - alpha * alpha) * tmp_band_density - (1 - zeta * alpha) * old_band_density + (alpha * alpha) * new_band_density) / (1 + zeta * alpha);
 
             // check for convergence
-            converged = Check_Convergence_Fraction(old_band_density - band_density, band_density, tol);
+            converged = Check_Convergence_Fraction(new_band_density - band_density, band_density, tol);
 
             // and reset the "old_band_density" to the new previous time step
             old_band_density = tmp_band_density;

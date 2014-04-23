@@ -163,7 +163,7 @@ namespace OneD_ThomasFermiPoisson
             int surface = (int)(-1.0 * Math.Floor(Geom_Tool.Get_Zmin(layers) / exp.Dz_Pot));
             double eps = layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Permitivity;
             // by Gauss' theorem, rho = - epsilon_0 * epsilon_r * dV/dz
-            double surface_charge = -1.0 * eps * (chem_pot[surface] - chem_pot[surface - 1]) / exp.Dz_Pot;
+            double surface_charge = -1.0 * eps * (chem_pot[surface-1] - chem_pot[surface - 2]) / exp.Dz_Pot;
             // divide by - q_e to convert the chemical potential into a potential
             surface_charge /= -1.0 * Physics_Base.q_e;
             // and divide by dz to give a density

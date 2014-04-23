@@ -12,16 +12,16 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 150
+% ny = 100
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 10
+% dy = 50
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 220
+% nz = 6000
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 1
+% dz = 2
 #
 #
 ############## Poisson solver details #################################
@@ -39,13 +39,13 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 # Top gate voltage
-% top_V = -6.0
+% top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -1.3
+% split_V = -1.43
 #
 ## Split gate width
-% split_width = 800
+% split_width = 400
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_pot = -500.0
@@ -72,10 +72,10 @@
 % T = 1
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -300.0
+% ymin_dens = -150.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens = 10.0
+% dy_dens = 5.0
 #
 ## Number of lattice points in transverse direction
 % ny_dens = 60

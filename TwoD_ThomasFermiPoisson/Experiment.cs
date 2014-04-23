@@ -163,12 +163,13 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Iteration: " + count.ToString() + "\tTemp: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge  density
-                chem_pot = pois_solv.Get_Chemical_Potential(old_carrier_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
 
                 // find the density for this new chemical potential and blend
                 Band_Data dft_chem_pot = Get_Potential(ref chem_pot, layers);
                 SpinResolved_Data new_carrier_density = dft_solv.Get_ChargeDensity(layers, carrier_density, dft_chem_pot);
-                dft_solv.Blend(ref carrier_density, ref old_carrier_density, new_carrier_density, scheduler.Get_Mixing_Parameter(count, "alpha"), scheduler.Get_Mixing_Parameter(count, "zeta"), tol);
+                alpha = scheduler.Get_Mixing_Parameter(count, "alpha"); double zeta = scheduler.Get_Mixing_Parameter(count, "zeta");
+                dft_solv.Blend(ref carrier_density, ref old_carrier_density, new_carrier_density, alpha, zeta, tol);
                 
                 count++;
             }
