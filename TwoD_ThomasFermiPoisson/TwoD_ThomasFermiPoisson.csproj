@@ -76,6 +76,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TwoD_DensitySolver.cs" />
     <Compile Include="TwoD_DFTSolver.cs" />
+    <Compile Include="TwoD_EffectiveBandSolver.cs" />
     <Compile Include="TwoD_PoissonSolver.cs" />
     <Compile Include="TwoD_ThomasFermiSolver.cs" />
   </ItemGroup>

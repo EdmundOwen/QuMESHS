@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Solver_Bases.Layers;
+using CenterSpace.NMath.Core;
 
 namespace Solver_Bases
 {
@@ -57,6 +58,26 @@ namespace Solver_Bases
                     return 1.0;
             else
                 return 2.0 / (Math.Exp((energy - fermi_Energy) / (Physics_Base.kB * T)) + 2.0);
+        }
+
+        /// <summary>
+        /// returns the integrated density of states in the translationally invariant direction 
+        /// </summary>
+        protected double Get_OneD_DoS(double band_edge, double no_kb_T)
+        {
+            if (band_edge > no_kb_T * Physics_Base.kB * temperature)
+                return 0.0;
+            else if (temperature == 0)
+                return 2.0 * Math.Sqrt(-2.0 * Physics_Base.mass * band_edge) / (Math.PI * Physics_Base.hbar);
+            else
+            {
+                // calculate the density of states integral directly
+                double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
+                double beta = 1.0 / (Physics_Base.kB * temperature);
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
+                dos_integrand.Integrator = new GaussKronrodIntegrator();
+                return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+            }
         }
 
         /*public void Output(SpinResolved_DoubleVector data, string filename)
@@ -208,7 +229,10 @@ namespace Solver_Bases
         /// </summary>
         public bool Check_Convergence_Fraction(SpinResolved_Data blending_density, SpinResolved_Data density, double tol)
         {
-            double minval = 1e-5;   // minimum density where convergence is no longer checked
+            // minimum density where convergence is no longer checked is equal to maximum fluctuation
+            double dens_max = Math.Abs(density.Spin_Summed_Data.mat.Min());
+            double dens_min = Math.Abs(density.Spin_Summed_Data.mat.Max());
+            double minval = Math.Abs(density.Spin_Summed_Data.mat.ToList().IndexOf(Math.Max(dens_min, dens_max)) * tol);
 
             double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
             for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
@@ -256,7 +280,8 @@ namespace Solver_Bases
         public void Blend(ref SpinResolved_Data band_density, ref SpinResolved_Data old_band_density, SpinResolved_Data new_band_density, double alpha, double zeta, double tol)
         {
             SpinResolved_Data tmp_band_density = band_density.DeepenThisCopy();
-            band_density = ((2 - alpha * alpha) * tmp_band_density - (1 - zeta * alpha) * old_band_density + (alpha * alpha) * new_band_density) / (1 + zeta * alpha);
+            //band_density = ((2 - alpha * alpha) * tmp_band_density - (1 - zeta * alpha) * old_band_density + (alpha * alpha) * new_band_density) / (1 + zeta * alpha);
+            band_density = (2 - zeta) * tmp_band_density - (1 - zeta) * old_band_density + (alpha * alpha) * (new_band_density - tmp_band_density);
 
             // check for convergence
             converged = Check_Convergence_Fraction(new_band_density - band_density, band_density, tol);

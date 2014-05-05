@@ -81,7 +81,7 @@ namespace TwoD_ThomasFermiPoisson
                         // (by default) 20 * k_b * T above mu = 0
                         //dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
                         //dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval])*Get_OneD_DoS(tmp_eigval);
-                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k));
+                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
                             //dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
                     }
 
@@ -108,26 +108,6 @@ namespace TwoD_ThomasFermiPoisson
             DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
             return eig_decomp.EigenValues;
-        }
-
-        /// <summary>
-        /// returns the integrated density of states in the translationally invariant direction 
-        /// </summary>
-        double Get_OneD_DoS(double band_edge)
-        {
-            if (band_edge > no_kb_T * Physics_Base.kB * temperature)
-                return 0.0;
-            else if (temperature == 0)
-                return 2.0 * Math.Sqrt(-2.0 * Physics_Base.mass * band_edge) / (Math.PI * Physics_Base.hbar);
-            else
-            {
-                // calculate the density of states integral directly
-                double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
-                double beta = 1.0 / (Physics_Base.kB * temperature);
-                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
-                dos_integrand.Integrator = new GaussKronrodIntegrator();
-                return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
-            }
         }
 
         /*double[] Generate_DoS()
@@ -289,7 +269,7 @@ namespace TwoD_ThomasFermiPoisson
                         // (by default) 20 * k_b * T above mu = 0
                         //dens_val += Get_Fermi_Function(tmp_eigval) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]);
                         //dens_val += DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_yval * nz + tmp_zval])*Get_OneD_DoS(tmp_eigval);
-                        tmp[i, j] = -1.0 * Physics_Base.q_e * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k));
+                        tmp[i, j] = -1.0 * Physics_Base.q_e * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
                         //dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
 
                     }

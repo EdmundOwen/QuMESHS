@@ -48,50 +48,79 @@ namespace TwoD_ThomasFermiPoisson
                 inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers) * (double)inputs_init["dz"]);
             }
 
-            
-            Console.WriteLine("Starting experiment");
-            exp.Initialise_Experiment(inputs);
-            // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
-            if (!bool.Parse((string)inputs["hot_start"]) && exp_init.Dz_Pot != exp.Dz_Pot)
-                throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
-            Console.WriteLine("Experiment initialised");
-            exp.Run();
-            Console.WriteLine("Experiment complete");
+            Run_Multiple_TGs(exp, inputs);
+
+            //Console.WriteLine("Starting experiment");
+            //exp.Initialise_Experiment(inputs);
+            //// check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
+            //if (!bool.Parse((string)inputs["hot_start"]) && exp_init.Dz_Pot != exp.Dz_Pot)
+            //    throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
+            //Console.WriteLine("Experiment initialised");
+            //exp.Run();
+            //Console.WriteLine("Experiment complete");
 
             //Run_Multiple_SGs(exp, inputs);
         }
 
         static void Run_Multiple_TGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)
         {
-            for (int i = 4; i < 46; i++)
+            int init = (int)Math.Abs((int)(double)dict["init_val"]);
+            int final = (int)Math.Abs((int)(double)dict["final_val"]);
+            double interval = (double)dict["interval"] * Math.Sign((double)dict["final_val"] - (double)dict["init_val"]);
+
+            for (int i = init; i < final; i++)
             {
-                double tg = i * -0.01;
+                double tg = i * interval;
                 dict["top_V"] = tg;
                 exp.Initialise_Experiment(dict);
                 Console.WriteLine("Experiment initialised for tg = " + tg.ToString() + "V");
                 exp.Run();
-                File.Copy("dens_2D_up.dat", "dens_2D_up_sg07_tg" + i.ToString("00") + ".dat");
-                File.Copy("dens_2D_down.dat", "dens_2D_down_sg07_tg" + i.ToString("00") + ".dat");
-                File.Copy("energies.dat", "energies_sg07_tg" + i.ToString("00") + ".dat");
+                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg05_tg" + i.ToString("000") + ".dat");
+                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg05_tg" + i.ToString("000") + ".dat");
+                File.Copy("energies.dat", "energies_sg05_tg" + i.ToString("000") + ".dat");
+                Console.WriteLine("Experiment complete");
+            }
+        }
+
+        static void Anneal_Multiple_TGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)
+        {
+            int init = (int)Math.Abs((int)(double)dict["init_val"]);
+            int final = (int)Math.Abs((int)(double)dict["final_val"]);
+            double interval = (double)dict["interval"] * Math.Sign((double)dict["final_val"] - (double)dict["init_val"]);
+
+            for (int i = init; i < final; i++)
+            {
+                File.Copy("..//dens_2D_up_sg05_tg" + i.ToString("000") + ".dat", "dens_2d_up_raw.dat", true);
+                File.Copy("..//dens_2D_down_sg05_tg" + i.ToString("000") + ".dat", "dens_2d_down_raw.dat", true);
+
+                double tg = i * interval;
+                dict["top_V"] = tg;
+                exp.Initialise_Experiment(dict);
+                Console.WriteLine("Experiment initialised for tg = " + tg.ToString() + "V");
+                exp.Run();
+                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg05_tg" + i.ToString("000") + ".dat");
+                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg05_tg" + i.ToString("000") + ".dat");
+                File.Copy("energies.dat", "energies_sg05_tg" + i.ToString("000") + ".dat");
                 Console.WriteLine("Experiment complete");
             }
         }
 
         static void Run_Multiple_SGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)
         {
-            for (int i = 131; i < 400; i++)
+            for (int i = 77; i > 50; i--)
             {
                 double sg = i * -0.01;
                 dict["split_V"] = sg;
-                dict["spin_up_file"] = "dens_2D_up_sg" + i.ToString("000") + "_tgnat.dat";
-                dict["spin_down_file"] = "dens_2D_down_sg" + i.ToString("000") + "_tgnat.dat";
+                //dict["spin_up_file"] = "dens_2D_up_sg" + i.ToString("000") + "_tg000.dat";
+                //dict["spin_down_file"] = "dens_2D_down_sg" + i.ToString("000") + "_tg000.dat";
                 
                 exp.Initialise_Experiment(dict);
                 Console.WriteLine("Experiment initialised for sg = " + sg.ToString() + "V");
                 exp.Run();
-                //File.Copy("dens_2D_up.dat", "dens_2D_up_sg" + i.ToString("000") + "_tgnat.dat");
-                //File.Copy("dens_2D_down.dat", "dens_2D_down_sg" + i.ToString("000") + "_tgnat.dat");
-                File.Copy("energies.dat", "energies_sg" + i.ToString("000") + "_tgnat.dat");
+
+                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + i.ToString("000") + "_tg000.dat");
+                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + i.ToString("000") + "_tg000.dat");
+                File.Copy("energies.dat", "energies_sg" + i.ToString("000") + "_tg000.dat");
                 Console.WriteLine("Experiment complete");
             }
         }

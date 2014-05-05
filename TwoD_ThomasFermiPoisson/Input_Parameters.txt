@@ -18,10 +18,10 @@
 % dy = 50
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 6000
+% nz = 2050
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 2
+% dz = 1
 #
 #
 ############## Poisson solver details #################################
@@ -36,16 +36,16 @@
 % FlexPDE_file = split_gate.pde
 #
 ## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
+% FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
 #
 # Top gate voltage
 % top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -1.43
+% split_V = -0.5
 #
 ## Split gate width
-% split_width = 400
+% split_width = 700
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_pot = -500.0
@@ -60,7 +60,7 @@
 % alpha = 0.001
 #
 ## Final solution tolerance
-% tolerance = 1e-3
+% tolerance = 1e-2
 #
 ## Fermi energy
 % E_f = 0.0
@@ -72,16 +72,16 @@
 % T = 1
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -150.0
+% ymin_dens = -600.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens = 5.0
+% dy_dens = 20.0
 #
 ## Number of lattice points in transverse direction
 % ny_dens = 60
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -110.0
+% zmin_dens = -325.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 2.0
@@ -103,3 +103,15 @@
 #
 ## File containing surface charge density
 % surface_charge_file = surface_charge.dat
+#
+#
+############## Run details #######################################
+#
+## 
+% init_val = 1
+#
+##
+% final_val = 100
+#
+##
+% interval = 0.1

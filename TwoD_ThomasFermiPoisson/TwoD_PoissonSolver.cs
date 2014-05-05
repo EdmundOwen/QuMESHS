@@ -38,7 +38,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("\tERRLIM=0.5e-5");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -158,7 +158,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
             sw.WriteLine("\tCONTOUR(rho)");
             sw.WriteLine("\tELEVATION(rho) FROM (0, " + (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens).ToString() +") TO (0, " + (exp.Zmin_Dens - 2.0 * exp.Dz_Dens).ToString()  + ")");
-            sw.WriteLine("\tELEVATION(rho) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
+            sw.WriteLine("\tELEVATION(-1.0e21*rho/q_e) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
 
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();

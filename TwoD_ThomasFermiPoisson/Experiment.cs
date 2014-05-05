@@ -129,36 +129,34 @@ namespace TwoD_ThomasFermiPoisson
 
         public override void Run()
         {
+            SpinResolved_Data old_carrier_density = carrier_density.DeepenThisCopy();
+
             int count = 0;
-            
-            /*
-            while (!dens_solv.Converged)
-            {
-                Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
 
-                // solve the chemical potential for the given charge  density and mix in with the old chemical potential
-                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-
-                // find the density for this new chemical potential and blend
-                SpinResolved_Data new_density = dens_solv.Get_ChargeDensity(layers, carrier_density, chem_pot);
-                dens_solv.Blend(ref carrier_density, new_density, alpha, tol);
-
-                //pois_solv.Blend(ref band_offset, new_band_energy, alpha);
-
-                count++;
-            }
-            */
-            
             if (TF_only)
-                return;
+            {
+                while (!dens_solv.Converged || count < 25)
+                {
+                    Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
+
+                    // solve the chemical potential for the given charge  density and mix in with the old chemical potential
+                    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+
+                    // find the density for this new chemical potential and blend
+                    SpinResolved_Data new_carrier_density = dens_solv.Get_ChargeDensity(layers, carrier_density, chem_pot);
+                    alpha = scheduler.Get_Mixing_Parameter(count, "alpha"); double zeta = scheduler.Get_Mixing_Parameter(count, "zeta");
+                    dens_solv.Blend(ref carrier_density, ref old_carrier_density, new_carrier_density, alpha, zeta, tol);
+
+                    count++;
+                }
+            }
 
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-
-            SpinResolved_Data old_carrier_density = carrier_density.DeepenThisCopy();
+            //TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
 
             count = 0;
-            while (!dft_solv.Converged || count < 25)
+            while ((!dft_solv.Converged || count < 25) && TF_only != true)
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\tTemp: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 

@@ -67,17 +67,19 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
                 {
+                    // do not add anything to the density if on the edge of the domain
+                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                        continue;
+
                     double y = dy * i + ymin;
                     double z = dz * j + zmin;
                     
-                    // get the relevant layer and if it's frozen out, don't recalculate the charge
+                    // get the relevant layer
                     ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z);
-                    if (current_Layer.Dopents_Frozen_Out(temperature))
-                        continue;
-
+                    
                     // calculate the density at the given point
                     ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
-                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot.mat[i, j]);
+                    double local_charge_density = charge_calc.Get_CarrierDensity(chem_pot.mat[i, j]);
 
                     // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
                     density.Spin_Down.mat[i, j] = 0.5 * local_charge_density;
@@ -98,14 +100,12 @@ namespace TwoD_ThomasFermiPoisson
                     double y = dy * i + ymin;
                     double z = dz * j + zmin;
 
-                    // get the relevant layer and if it's frozen out, don't recalculate the charge
+                    // get the relevant layer
                     ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z, well_depth);
-                    if (current_Layer.Dopents_Frozen_Out(temperature))
-                        continue;
 
                     // calculate the density at the given point
                     ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
-                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot.mat[i, j]);
+                    double local_charge_density = charge_calc.Get_CarrierDensity(chem_pot.mat[i, j]);
 
                     // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
                     new_density.Spin_Down.mat[i, j] = 0.5 * local_charge_density;

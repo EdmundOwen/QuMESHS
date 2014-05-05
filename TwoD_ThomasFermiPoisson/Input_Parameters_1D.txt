@@ -12,10 +12,10 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 3000
+% nz = 1900
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 2
+% dz = 1
 #
 ## Number of lattice sites in the transverse direction to save to
 % ny_1d = 10
@@ -57,10 +57,10 @@
 % dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dens = 35
+% nz_dens = 50
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dens = -100.0
+% zmin_dens = -325.0
 #
 #
 ############## Physical parameters ####################################
