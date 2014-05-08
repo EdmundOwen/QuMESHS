@@ -232,7 +232,7 @@ namespace Solver_Bases
             // minimum density where convergence is no longer checked is equal to maximum fluctuation
             double dens_max = Math.Abs(density.Spin_Summed_Data.mat.Min());
             double dens_min = Math.Abs(density.Spin_Summed_Data.mat.Max());
-            double minval = Math.Abs(density.Spin_Summed_Data.mat.ToList().IndexOf(Math.Max(dens_min, dens_max)) * tol);
+            double minval = Math.Abs(Math.Max(dens_min, dens_max) * tol);
 
             double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
             for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
@@ -284,7 +284,13 @@ namespace Solver_Bases
             band_density = (2 - zeta) * tmp_band_density - (1 - zeta) * old_band_density + (alpha * alpha) * (new_band_density - tmp_band_density);
 
             // check for convergence
-            converged = Check_Convergence_Fraction(new_band_density - band_density, band_density, tol);
+            //converged = Check_Convergence_Fraction(new_band_density - band_density, band_density, tol);
+
+            // absolute tolerance is the fractional tolerance (inputted) at the maximum density
+            double dens_max = Math.Abs(band_density.Spin_Summed_Data.mat.Min());
+            double dens_min = Math.Abs(band_density.Spin_Summed_Data.mat.Max());
+            double tmp_tol = Math.Abs(Math.Max(dens_min, dens_max) * tol);
+            converged = Check_Convergence(new_band_density - band_density, tmp_tol);
 
             // and reset the "old_band_density" to the new previous time step
             old_band_density = tmp_band_density;

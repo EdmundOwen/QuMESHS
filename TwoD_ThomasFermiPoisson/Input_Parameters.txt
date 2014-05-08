@@ -93,7 +93,7 @@
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = false
+% hot_start = true
 #
 ## File location for spin-up data
 % spin_up_file = dens_2D_up_raw.dat
@@ -108,10 +108,10 @@
 ############## Run details #######################################
 #
 ## 
-% init_val = 1
+% init_val = 5001
 #
 ##
-% final_val = 100
+% final_val = 10000
 #
 ##
-% interval = 0.1
+% interval = 0.0001
