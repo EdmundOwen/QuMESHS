@@ -134,6 +134,9 @@ namespace OneD_ThomasFermiPoisson
                 // initialise the chemical potential as the solution with zero density
                 chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
 
+                Band_Data carrier_density_deriv = new Band_Data(new DoubleVector(nz_pot));
+                Band_Data dopent_density_deriv = new Band_Data(new DoubleVector(nz_pot));
+
                 count = 0;
                 while (!pois_solv.Converged)
                 {
@@ -142,10 +145,21 @@ namespace OneD_ThomasFermiPoisson
 
                     // calculate the total charge density for this chemical_potential
                     dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                    dens_solv.Get_ChargeDensityDeriv(layers, ref carrier_density_deriv, ref dopent_density_deriv, chem_pot);
 
                     // solve the potential for the givencharge  density and mix in with the old chemical potential
                     Band_Data new_chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
-                    pois_solv.Blend(ref chem_pot, new_chem_pot, alpha);
+
+                    SpinResolved_Data tmp_car = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
+                    SpinResolved_Data tmp_dop = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
+                    Band_Data tmp_dcar = new Band_Data(new DoubleVector(nz_pot));
+                    Band_Data tmp_ddop = new Band_Data(new DoubleVector(nz_pot));
+
+                    dens_solv.Get_ChargeDensity(layers, ref tmp_car, ref tmp_dop, new_chem_pot);
+                    dens_solv.Get_ChargeDensityDeriv(layers, ref tmp_dcar, ref tmp_ddop, new_chem_pot);
+
+                    pois_solv.New_Blend(ref chem_pot, tmp_car.Spin_Summed_Data + tmp_dop.Spin_Summed_Data - carrier_density.Spin_Summed_Data - dopent_density.Spin_Summed_Data, carrier_density_deriv + dopent_density_deriv, this.layers, this.nz_pot, this.dz_pot, this.zmin_pot);
+                    //pois_solv.Blend(ref chem_pot, new_chem_pot, alpha);
 
                     count++;
                 }

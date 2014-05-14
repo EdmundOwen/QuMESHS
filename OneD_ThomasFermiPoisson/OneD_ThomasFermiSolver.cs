@@ -108,6 +108,28 @@ namespace OneD_ThomasFermiPoisson
             }
         }
 
+        public void Get_ChargeDensityDeriv(ILayer[] layers, ref Band_Data carrier_density_deriv, ref Band_Data dopent_density_deriv, Band_Data chem_pot)
+        {
+            for (int i = 0; i < nz; i++)
+            {
+                double z = dz * i + zmin;
+
+                // get the relevant layer and if it's frozen out, don't recalculate the dopent charge
+                ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
+
+                ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
+                if (!current_Layer.Dopents_Frozen_Out(temperature))
+                {
+                    double local_dopent_density_deriv = charge_calc.Get_DopentDensityDeriv(chem_pot.vec[i]);
+                    dopent_density_deriv.vec[i] = local_dopent_density_deriv;
+                }
+                else
+                    dopent_density_deriv.vec[i] = 0.0;
+
+                carrier_density_deriv.vec[i] = charge_calc.Get_CarrierDensityDeriv(chem_pot.vec[i]);
+            }
+        }
+
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
             throw new NotImplementedException();

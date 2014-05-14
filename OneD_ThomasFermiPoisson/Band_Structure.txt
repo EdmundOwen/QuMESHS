@@ -12,17 +12,17 @@ surface=true
 #
 ## Low density deep HEMT (eg W0616)
 #
-#mat=GaAs t=10
-#mat=AlGaAs t=200 x=.3 Nd=4e16
-#mat=AlGaAs t=75 x=.3
-#mat=GaAs t=215 Nd=1e10
+mat=GaAs t=1615 Na=1e14
+mat=AlGaAs t=75 x=.3
+mat=AlGaAs t=200 x=.3 Nd=4.7e16
+mat=GaAs t=10
 #
 ## Masato's wafer
 #
-mat=GaAs t=24
-mat=AlGaAs t=36 x=.3 Nd=0.63e18
-mat=AlGaAs t=10 x=.3 
-mat=GaAs t=50 
+#mat=GaAs t=24
+#mat=AlGaAs t=36 x=.3 Nd=0.63e18
+#mat=AlGaAs t=10 x=.3 
+#mat=GaAs t=50 
 #
 ## Double well structure to show negative compressibility
 #

@@ -12,10 +12,10 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 120
+% nz = 950
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 1
+% dz = 2
 #
 #
 ############## Poisson solver details #################################

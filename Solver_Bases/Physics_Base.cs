@@ -41,6 +41,27 @@ namespace Solver_Bases
         }
 
         /// <summary>
+        /// Calculates the derivative of the fermi function for arbitrary energy, E_f and T
+        /// </summary>
+        public static double Get_Fermi_Function_Derivative(double energy, double mu, double T)
+        {
+            if (T == 0)
+                if (energy == mu)
+                    return 1.0;
+                else
+                    return 0.0;
+            else
+            {
+                double exponent = (energy - mu) / kB * T;
+
+                if (double.IsInfinity(Math.Exp(exponent)))
+                    return 0.0;
+                else
+                    return Math.Exp(exponent) / (Math.Pow((Math.Exp(exponent) + 1.0), 2.0) * kB * T);
+            }
+        }
+
+        /// <summary>
         /// Calculates the spin-resolved fermi function for a dopent.
         /// This is different from the typical fermi function as double occupation of the donor is not allowed
         /// </summary>
@@ -53,6 +74,28 @@ namespace Solver_Bases
                     return 1.0;
             else
                 return 1.0 / (Math.Exp((energy - mu) / (kB * T)) + 2.0);
+        }
+
+        /// <summary>
+        /// Calculates the derivative of the spin-resolved fermi function for a dopent.
+        /// This is different from the typical fermi function as double occupation of the donor is not allowed
+        /// </summary>
+        public static double Get_Dopent_Fermi_Function_Derivative(double energy, double mu, double T)
+        {
+            if (T == 0)
+                if (energy == mu)
+                    return 1.0;
+                else
+                    return 0.0;
+            else
+            {
+                double exponent = (energy - mu) / kB * T;
+
+                if (double.IsInfinity(Math.Exp(exponent)))
+                    return 0.0;
+                else
+                    return Math.Exp(exponent) / (Math.Pow((Math.Exp(exponent) + 2.0), 2.0) * kB * T);
+            }
         }
 
         /// <summary>
