@@ -64,6 +64,39 @@ namespace Solver_Bases
             // save density to file in a FlexPDE "TABLE" format
             Save_Density_Data(density, dens_filename);
 
+            // run the code
+            Run_FlexPDE_Code();
+
+            string[] lines = File.ReadAllLines("pot.dat");
+            string[] data = Trim_Potential_File(lines);
+
+            // and trim all of the empty lines
+            //string[] data = (from items in tmp where items != "" select items).ToArray();
+
+            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
+            return Physics_Base.q_e * Parse_Potential(data);
+        }
+
+        protected static string[] Trim_Potential_File(string[] lines)
+        {
+            // work out where the data starts (this is flexPDE specific)
+            int first_line = 0;
+            for (int i = 0; i < lines.Length; i++)
+                if (lines[i].StartsWith("}"))
+                {
+                    first_line = i + 1;
+                    break;
+                }
+
+            // trim off the first lines which contain no data
+            string[] data = new string[lines.Length - first_line];
+            for (int i = first_line; i < lines.Length; i++)
+                data[i - first_line] = lines[i];
+            return data;
+        }
+
+        protected void Run_FlexPDE_Code()
+        {
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
             try { File.Delete("pot.dat"); }
             catch (Exception) { }
@@ -77,7 +110,7 @@ namespace Solver_Bases
             Process pot_process = new Process();
             pot_process.StartInfo = new ProcessStartInfo(flexpde_location, "-S " + flexpde_inputfile);
             pot_process.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
-            
+
             //AutoResetEvent ev = new AutoResetEvent(false);
             //Task.Factory.StartNew(() => { pot_process.Start(); ev.Set(); });
             //while (!ev.WaitOne(0))
@@ -93,28 +126,6 @@ namespace Solver_Bases
             while (!File.Exists("pot.dat"))
                 Thread.Sleep(10);
             Thread.Sleep(1000);
-
-            string[] lines = File.ReadAllLines("pot.dat");
-
-            // work out where the data starts (this is flexPDE specific)
-            int first_line = 0;
-            for (int i = 0; i < lines.Length; i++)
-                if (lines[i].StartsWith("}"))
-                {
-                    first_line = i + 1;
-                    break;
-                }
-
-            // trim off the first lines which contain no data
-            string[] data = new string[lines.Length - first_line];
-            for (int i = first_line; i < lines.Length; i++)
-                data[i - first_line] = lines[i];
-
-            // and trim all of the empty lines
-            //string[] data = (from items in tmp where items != "" select items).ToArray();
-
-            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * Parse_Potential(data);
         }
 
         /// <summary>

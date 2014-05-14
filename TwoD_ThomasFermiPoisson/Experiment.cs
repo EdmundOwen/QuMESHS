@@ -20,6 +20,10 @@ namespace TwoD_ThomasFermiPoisson
         TwoD_PoissonSolver pois_solv;
         IScheduler scheduler;
 
+        double max_dens_init;
+        Band_Data[] pois_results;
+        Band_Data pois_background;
+
         public void Initialise_Experiment(Dictionary<string, object> input_dict)
         {
             Console.WriteLine("Initialising Experiment");
@@ -118,6 +122,32 @@ namespace TwoD_ThomasFermiPoisson
             pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
             pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
 
+            // calculate what the maximum magnitude density is
+            max_dens_init = Math.Max(Math.Abs(carrier_density.Spin_Summed_Data.mat.Min()), carrier_density.Spin_Summed_Data.mat.Max());
+
+            Console.WriteLine("Calculating potentials");
+            pois_results = new Band_Data[ny_dens * nz_dens];
+            // calculate what the potential is with no charges
+            Band_Data pois_nocharge = pois_solv.Calculate_Point_Potential(top_V, split_V, split_width, bottom_V, surface_charge, 1, 1, 0.0);
+
+            // and calculate the background by setting the point charge magnitude to zero
+            pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
+            pois_background = pois_solv.Get_Chemical_Potential(0.0 * carrier_density.Spin_Summed_Data);
+
+            // and use this value as the magnitude of a delta function for the potential for each of the density points minus the external potential
+            for (int i = 0; i < ny_dens; i++)
+                for (int j = 0; j < nz_dens; j++)
+                {
+                    Band_Data tmp = pois_solv.Calculate_Point_Potential(top_V, split_V, split_width, bottom_V, surface_charge, i, j, max_dens_init);
+                    if (tmp != null)
+                        pois_results[i * nz_dens + j] = tmp - pois_nocharge;
+                    else
+                        pois_results[i * nz_dens + j] = null;
+                    Console.WriteLine("Potential " + (i * nz_dens + j).ToString() + "/" + (ny_dens * nz_dens).ToString() + " calculated");
+                }
+
+            Console.WriteLine("Potentials calculated");
+
             // initialise the band energy as the solution from the input density
             //if (input_dict.ContainsKey("Band_Offset"))
             //{ Band_Data tmp_1d_bandoffset = (Band_Data)input_dict["Band_Offset"]; this.band_offset = Input_Band_Structure.Expand_BandStructure(tmp_1d_bandoffset.vec, ny_dens); }
@@ -161,7 +191,7 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Iteration: " + count.ToString() + "\tTemp: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
 
                 // solve the chemical potential for the given charge  density
-                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Get_Chemical_Potential(pois_background, pois_results, carrier_density.Spin_Summed_Data, 1.0 / max_dens_init);
 
                 // find the density for this new chemical potential and blend
                 Band_Data dft_chem_pot = Get_Potential(ref chem_pot, layers);

@@ -25,10 +25,67 @@ namespace TwoD_ThomasFermiPoisson
 
         protected override Band_Data Parse_Potential(string[] data)
         {
-            return Band_Data.Parse_Band_Data(data, exp.Ny_Dens, exp.Nz_Dens);
+            string[] new_data = Trim_Potential_File(data);
+            return Band_Data.Parse_Band_Data(new_data, exp.Ny_Dens, exp.Nz_Dens);
         }
 
+        public Band_Data Calculate_Point_Potential(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, int i, int j, double U)
+        {
+            // don't bother if on the edge of the domain
+            if (i == 0 || i == exp.Ny_Dens - 1 || j == 0 || j == exp.Nz_Dens - 1)
+                return null;
+
+            double ypos = exp.Ymin_Dens + i * exp.Dy_Dens;
+            double zpos = exp.Zmin_Dens + j * exp.Dz_Dens;
+
+            string dens_line = "\trho_carrier = " + U.ToString() + " * min( (1 - abs(x - (" + ypos.ToString() + ")) / " + exp.Dy_Dens.ToString() + ") , "
+                                    + "(1 - abs(y  - (" + zpos.ToString() + ")) / " + exp.Dz_Dens.ToString() + ")) * "
+                                    + "upulse(x - (" + (ypos - exp.Dy_Dens).ToString() + "), x - (" + (ypos + exp.Dy_Dens).ToString() + ")) * "
+                                    + "upulse(y - (" + (zpos - exp.Dz_Dens).ToString() + "), y - (" + (zpos + exp.Dz_Dens).ToString() + "))"
+                                    + "\n\trho_dopent = 0";
+
+            // create flexPDE file for a point charge at (ypos, zpos)
+            Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile, dens_line);
+
+            // run the FlexPDE script
+            Run_FlexPDE_Code();
+
+            // Parse the potential, and then return Band_Data for this point
+            return Physics_Base.q_e * Parse_Potential(File.ReadAllLines("pot.dat"));
+        }
+
+        public Band_Data Get_Chemical_Potential(Band_Data background, Band_Data[] point_potentials, Band_Data carrier_densities, double norm)
+        {
+            Band_Data result = new Band_Data(new DoubleMatrix(exp.Ny_Dens, exp.Nz_Dens));
+
+            // cycle over each point and sum the potentials due to the point-wise carrier densities
+            for (int i = 0; i < exp.Ny_Dens; i++)
+                for (int j = 0; j < exp.Nz_Dens; j++)
+                {
+                    // add the background potential
+                    result.mat[i, j] = background.mat[i, j];
+
+                    for (int k = 0; k < exp.Ny_Dens * exp.Nz_Dens; k++)
+                    {
+                        // don't do anything if k is on the boundary (which means it's a null reference in point_potentials)
+                        if (point_potentials[k] == null)
+                            continue;
+
+                        // add a weighted value of the carrier density for this point
+                        result.mat[i, j] += norm * carrier_densities.mat[i, j] * point_potentials[k].mat[i, j];
+                    }
+                }
+        
+            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
+            return result;
+        }
+        
         public void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
+        {
+            Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file, "rho_carrier = TABLE(\'" + dens_filename + "\', x, y)" + "\t\nrho_dopent = TABLE(\'dens_2D_dopents.dat\', x, y)");
+        }
+
+        public void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, string dens_line)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -46,8 +103,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
             // and the tables for carrier and donor densities
-            sw.WriteLine("\trho_carrier = TABLE(\'" + dens_filename + "\', x, y)");
-            sw.WriteLine("\trho_dopent = TABLE(\'dens_2D_dopents.dat\', x, y)");
+            sw.WriteLine(dens_line);
             sw.WriteLine();
             // simulation dimension
             sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
@@ -171,7 +227,7 @@ namespace TwoD_ThomasFermiPoisson
             // and close the file writer
             sw.Close();
         }
-
+        
         public void Set_Boundary_Conditions(double top_V, double split_V, double split_width, double bottom_V, double surface)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
