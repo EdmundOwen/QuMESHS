@@ -21,7 +21,7 @@ namespace TwoD_ThomasFermiPoisson
         IScheduler scheduler;
 
         double max_dens_init;
-        Band_Data[] pois_results;
+        Band_Data[,] pois_results;
         Band_Data pois_background;
 
         public void Initialise_Experiment(Dictionary<string, object> input_dict)
@@ -126,7 +126,7 @@ namespace TwoD_ThomasFermiPoisson
             max_dens_init = Math.Max(Math.Abs(carrier_density.Spin_Summed_Data.mat.Min()), carrier_density.Spin_Summed_Data.mat.Max());
 
             Console.WriteLine("Calculating potentials");
-            pois_results = new Band_Data[ny_dens * nz_dens];
+            pois_results = new Band_Data[ny_dens, nz_dens];
             // calculate what the potential is with no charges
             Band_Data pois_nocharge = pois_solv.Calculate_Point_Potential(top_V, split_V, split_width, bottom_V, surface_charge, 1, 1, 0.0);
 
@@ -140,9 +140,9 @@ namespace TwoD_ThomasFermiPoisson
                 {
                     Band_Data tmp = pois_solv.Calculate_Point_Potential(top_V, split_V, split_width, bottom_V, surface_charge, i, j, max_dens_init);
                     if (tmp != null)
-                        pois_results[i * nz_dens + j] = tmp - pois_nocharge;
+                        pois_results[i, j] = tmp - pois_nocharge;
                     else
-                        pois_results[i * nz_dens + j] = null;
+                        pois_results[i, j] = null;
                     Console.WriteLine("Potential " + (i * nz_dens + j).ToString() + "/" + (ny_dens * nz_dens).ToString() + " calculated");
                 }
 

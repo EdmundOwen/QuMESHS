@@ -54,7 +54,7 @@ namespace TwoD_ThomasFermiPoisson
             return Physics_Base.q_e * Parse_Potential(File.ReadAllLines("pot.dat"));
         }
 
-        public Band_Data Get_Chemical_Potential(Band_Data background, Band_Data[] point_potentials, Band_Data carrier_densities, double norm)
+        public Band_Data Get_Chemical_Potential(Band_Data background, Band_Data[,] point_potentials, Band_Data carrier_densities, double norm)
         {
             Band_Data result = new Band_Data(new DoubleMatrix(exp.Ny_Dens, exp.Nz_Dens));
 
@@ -65,17 +65,18 @@ namespace TwoD_ThomasFermiPoisson
                     // add the background potential
                     result.mat[i, j] = background.mat[i, j];
 
-                    for (int k = 0; k < exp.Ny_Dens * exp.Nz_Dens; k++)
-                    {
-                        // don't do anything if k is on the boundary (which means it's a null reference in point_potentials)
-                        if (point_potentials[k] == null)
-                            continue;
+                    for (int k = 0; k < exp.Ny_Dens; k++)
+                        for (int l = 0; l < exp.Ny_Dens; k++)
+                        {
+                            // don't do anything if k is on the boundary (which means it's a null reference in point_potentials)
+                            if (point_potentials[k, l] == null)
+                                continue;
 
-                        // add a weighted value of the carrier density for this point
-                        result.mat[i, j] += norm * carrier_densities.mat[i, j] * point_potentials[k].mat[i, j];
-                    }
+                            // add a weighted value of the carrier density for this point
+                            result.mat[i, j] += norm * carrier_densities.mat[k, l] * point_potentials[k, l].mat[i, j];
+                        }
                 }
-        
+
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
             return result;
         }
