@@ -132,7 +132,15 @@ namespace OneD_ThomasFermiPoisson
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
-            throw new NotImplementedException();
+            SpinResolved_Data tmp_car = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+            SpinResolved_Data tmp_dop = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+            Get_ChargeDensity(layers, ref tmp_car, ref tmp_dop, chem_pot);
+
+            for (int i = 0; i < nz; i++)
+            {
+                density.Spin_Up.vec[i] = tmp_car.Spin_Up.vec[i] + tmp_dop.Spin_Up.vec[i];
+                density.Spin_Down.vec[i] = tmp_car.Spin_Down.vec[i] + tmp_dop.Spin_Down.vec[i];
+            }
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
