@@ -45,44 +45,7 @@ namespace OneD_ThomasFermiPoisson
         {
         }
 
-        /*public SpinResolved_DoubleVector Get_OneD_Density(DoubleVector conduction_band_energy)
-        {
-            // Find conduction band density
-            SpinResolved_DoubleVector conduction_density = Calculate_Conduction_Band_Density(conduction_band_energy);
-
-            // Find valence band density
-            DoubleVector valence_band = conduction_band_energy - band_gap;
-            SpinResolved_DoubleVector valence_density = Calculate_Valence_Band_Density(valence_band);
-
-            // Calculate donor occupation probability
-            SpinResolved_DoubleVector acceptor_density = Calculate_Dopent_Density(- valence_band, acceptor_concentration, acceptor_energy_above_Ev);
-            SpinResolved_DoubleVector donor_density = Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
-
-            // return total density (for 1D; hence the divide-by-lattice-spacing)
-            return -1.0 * Physics_Base.q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
-        }
-
-        public SpinResolved_DoubleVector Get_OneD_ChargeDensity(DoubleVector chem_pot)
-        {
-            // spin-resolved charge density
-            SpinResolved_DoubleVector charge_density = new SpinResolved_DoubleVector(nz);
-
-            for (int i = 0; i < nz; i++)
-            {
-                // calculate the charge density at the given point
-                ZeroD_Density charge_calc = new ZeroD_Density(band_gap[i], acceptor_concentration[i], acceptor_energy_above_Ev[i], donor_concentration[i], donor_energy_below_Ec[i], temperature);
-                double local_chargedensity = charge_calc.Get_ChargeDensity(chem_pot[i]);
-
-                // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
-                charge_density.Spin_Down[i] = 0.5 * local_chargedensity;
-                charge_density.Spin_Up[i] = 0.5 * local_chargedensity;
-            }
-
-            return charge_density;
-        }
-        */
-
-        public void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot)
+        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot)
         {
             for (int i = 0; i < nz; i++)
             {
@@ -108,28 +71,6 @@ namespace OneD_ThomasFermiPoisson
             }
         }
 
-        public void Get_ChargeDensityDeriv(ILayer[] layers, ref Band_Data carrier_density_deriv, ref Band_Data dopent_density_deriv, Band_Data chem_pot)
-        {
-            for (int i = 0; i < nz; i++)
-            {
-                double z = dz * i + zmin;
-
-                // get the relevant layer and if it's frozen out, don't recalculate the dopent charge
-                ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
-
-                ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
-                if (!current_Layer.Dopents_Frozen_Out(temperature))
-                {
-                    double local_dopent_density_deriv = charge_calc.Get_DopentDensityDeriv(chem_pot.vec[i]);
-                    dopent_density_deriv.vec[i] = local_dopent_density_deriv;
-                }
-                else
-                    dopent_density_deriv.vec[i] = 0.0;
-
-                carrier_density_deriv.vec[i] = charge_calc.Get_CarrierDensityDeriv(chem_pot.vec[i]);
-            }
-        }
-
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
             SpinResolved_Data tmp_car = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
@@ -143,9 +84,38 @@ namespace OneD_ThomasFermiPoisson
             }
         }
 
-        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
+        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot)
         {
-            throw new NotImplementedException();
+            Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+            return carrier_density + dopent_density;
+        }
+
+
+        public void Get_ChargeDensityDeriv(ILayer[] layers, ref SpinResolved_Data carrier_density_deriv, ref SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
+        {
+            for (int i = 0; i < nz; i++)
+            {
+                double z = dz * i + zmin;
+
+                // get the relevant layer and if it's frozen out, don't recalculate the dopent charge
+                ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
+
+                ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
+                if (!current_Layer.Dopents_Frozen_Out(temperature))
+                {
+                    double local_dopent_density_deriv = charge_calc.Get_DopentDensityDeriv(chem_pot.vec[i]);
+                    dopent_density_deriv.Spin_Up.vec[i] = 0.5 * local_dopent_density_deriv;
+                    dopent_density_deriv.Spin_Down.vec[i] = 0.5 * local_dopent_density_deriv;
+                }
+                else
+                {
+                    dopent_density_deriv.Spin_Up.vec[i] = 0.0;
+                    dopent_density_deriv.Spin_Down.vec[i] = 0.0;
+                }
+
+                carrier_density_deriv.Spin_Up.vec[i] = 0.5 * charge_calc.Get_CarrierDensityDeriv(chem_pot.vec[i]);
+                carrier_density_deriv.Spin_Down.vec[i] = 0.5 * charge_calc.Get_CarrierDensityDeriv(chem_pot.vec[i]);
+            }
         }
 
         /*

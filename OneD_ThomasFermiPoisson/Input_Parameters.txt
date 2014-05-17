@@ -51,16 +51,16 @@
 ############## DFT density solver detials #############################
 #
 ## Whether to use dft at the final temperature or not
-% dft = false
+% dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dens = 14
+% nz_dens = 30
 #
 ## Lattice spacing for dft calculations
-% dz_dens = 5.0
+% dz_dens = 2.0
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dens = -130.0
+% zmin_dens = -1630.0
 #
 #
 ############## Physical parameters ####################################

@@ -288,14 +288,36 @@ namespace Solver_Bases
         public SpinResolved_Data DeepenThisCopy()
         {
             int dim = this.Spin_Down.Dimension;
-            
+
             if (dim == 1)
-                return new SpinResolved_Data(new Band_Data(this.Spin_Up.vec.DeepenThisCopy()), new Band_Data(this.Spin_Down.vec.DeepenThisCopy()));
+            {
+                int nz = this.Spin_Down.vec.Length;
+                SpinResolved_Data result = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+                for (int i = 0; i < nz; i++)
+                {
+                    result.Spin_Down.vec[i] = this.Spin_Down.vec[i];
+                    result.Spin_Up.vec[i] = this.Spin_Up.vec[i];
+                }
+
+                return result;
+            }
             else if (dim == 2)
-                return new SpinResolved_Data(new Band_Data(this.Spin_Up.mat.DeepenThisCopy()), new Band_Data(this.Spin_Down.mat.DeepenThisCopy()));
+            {
+                int ny = this.Spin_Down.mat.Rows;
+                int nz = this.Spin_Down.mat.Cols;
+                SpinResolved_Data result = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny, nz)), new Band_Data(new DoubleMatrix(ny, nz)));
+                for (int i = 0; i < ny; i++)
+                    for (int j = 0; j < nz; j++)
+                    {
+                        result.Spin_Down.mat[i, j] = this.Spin_Down.mat[i, j];
+                        result.Spin_Up.mat[i, j] = this.Spin_Up.mat[i, j];
+                    }
+
+                return result;
+            }
             else if (dim == 3)
                 throw new NotImplementedException();
-                //return new SpinResolved_Data(new Band_Data(this.Spin_Up.vol.DeepenThisCopy()), new Band_Data(this.Spin_Down.vol.DeepenThisCopy()));
+            //return new SpinResolved_Data(new Band_Data(this.Spin_Up.vol.DeepenThisCopy()), new Band_Data(this.Spin_Down.vol.DeepenThisCopy()));
             else
                 throw new NotImplementedException();
         }

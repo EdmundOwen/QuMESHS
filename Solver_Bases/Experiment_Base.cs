@@ -13,8 +13,13 @@ namespace Solver_Bases
     {
         protected SpinResolved_Data carrier_density;
         protected SpinResolved_Data dopent_density;
+        protected SpinResolved_Data carrier_density_deriv;
+        protected SpinResolved_Data dopent_density_deriv;
         protected Band_Data chem_pot;
         protected ILayer[] layers;
+
+        // damping parameter for Bank-Rose convergence method
+        protected double t = 1.0;
 
         protected double bottom_V;
 
@@ -96,6 +101,38 @@ namespace Solver_Bases
         }
 
         public abstract void Run();
+
+        protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        {
+            double vp = 0.0;
+            Band_Data V_prime = new Band_Data(new DoubleVector(nz_pot));
+            
+            vp = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+
+            // search for best value of t
+            if (vp > 0.0)
+                while (calc_vp(2.0 * t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv) > 0.0)
+                    t = 2.0 * t;
+            else
+                while (calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv) < 0.0)
+                    t = 0.5 * t;
+
+            return t;
+        }
+
+        double calc_vp(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        {
+            double vp;
+
+            SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, band_energy + t * x);
+            Band_Data V_Prime = pois_solv.Calculate_Laplacian((band_energy + t * x) / Physics_Base.q_e) + tmp_dens.Spin_Summed_Data;
+
+            vp = 0.0;
+            for (int i = 0; i < x.Length; i++)
+                vp += V_Prime[i] * x[i];
+
+            return vp;
+        }
 
         /// <summary>
         /// returns a list of dopent freeze-out temperatures between the initial and final temperatures of the experiment

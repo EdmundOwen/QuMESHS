@@ -12,7 +12,8 @@ using System.Threading.Tasks;
 
 namespace Solver_Bases
 {
-    public abstract class Potential_Base
+    public abstract class Potential_Base : IPoisson_Solve
+
     {
         /// this is where the density will be saved out to
         protected string dens_filename;
@@ -266,5 +267,6 @@ namespace Solver_Bases
         protected abstract Band_Data Parse_Potential(string[] data);
         protected abstract Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density);
         protected abstract void Save_Density_Data(Band_Data density, string input_file_name);
+        public abstract Band_Data Calculate_Laplacian(Band_Data input_data);
     }
 }
