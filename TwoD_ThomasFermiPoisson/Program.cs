@@ -35,6 +35,7 @@ namespace TwoD_ThomasFermiPoisson
                 exp_init.Initialise(inputs_init);
                 exp_init.Run();
                 inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
+                inputs.Add("Dopent_Density", exp_init.Dopent_Density);
                 inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
                 Console.WriteLine("Calculated 1D density for dopents");
 

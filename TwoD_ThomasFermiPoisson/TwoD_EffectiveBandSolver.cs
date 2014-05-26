@@ -9,9 +9,8 @@ using CenterSpace.NMath.Matrix;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    public class TwoD_EffectiveBandSolver : Density_Base
+    public class TwoD_EffectiveBandSolver : TwoD_Density_Base
     {
-        Experiment exp;
         DoubleVector energies;
 
         double no_kb_T = 50.0;          // number of kb_T to integrate to
@@ -19,16 +18,18 @@ namespace TwoD_ThomasFermiPoisson
         double ty, tz;
 
         public TwoD_EffectiveBandSolver(Experiment exp)
-            : base(exp.Temperature, exp.Dx_Dens, exp.Dy_Dens, exp.Dz_Dens, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens, exp.Xmin_Dens, exp.Ymin_Dens, exp.Zmin_Dens)
+            : base(exp)
         {
-            this.exp = exp;
-
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
             tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
         {
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
             DoubleHermitianEigDecomp eig_decomp;
 
             double[] y_energy = new double[ny];
@@ -39,12 +40,12 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < ny; i++)
             {
                 // pull out the chemical potential for this slice
-                double[] z_chem_pot = new double[nz];
+                double[] z_dft_pot = new double[nz];
                 for (int j = 0; j < nz; j++)
-                    z_chem_pot[j] = chem_pot.mat[i, j];
+                    z_dft_pot[j] = dft_pot.mat[i, j];
 
                 // calculate its eigendecomposition
-                DoubleHermitianMatrix h_z = Create_Hamiltonian(z_chem_pot, tz, nz);
+                DoubleHermitianMatrix h_z = Create_Hamiltonian(z_dft_pot, tz, nz);
                 eig_decomp = new DoubleHermitianEigDecomp(h_z);
 
                 // insert the eigenstate into density and record the local confinement energy
@@ -110,37 +111,6 @@ namespace TwoD_ThomasFermiPoisson
                 result[i, i] = -2.0 * t + V[i];
                 
             return result;
-        }
-
-        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
-        {
-            // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(density.Spin_Up.mat.Rows, density.Spin_Up.mat.Cols));
-            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(density.Spin_Down.mat.Rows, density.Spin_Down.mat.Cols));
-
-            for (int i = 0; i < density.Spin_Up.mat.Rows; i++)
-                for (int j = 0; j < density.Spin_Up.mat.Cols; j++)
-                {
-                    tmp_spinup.mat[i, j] = density.Spin_Up.mat[i, j];
-                    tmp_spindown.mat[i, j] = density.Spin_Down.mat[i, j];
-                }
-
-            SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
-
-            // finally, get the charge density and send it to this new array
-            Get_ChargeDensity(layers, ref new_density, chem_pot);
-
-            return new_density;
-        }
-
-        public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void Close()
-        {
-            Console.WriteLine("Closing density solver");
         }
     }
 }

@@ -11,18 +11,14 @@ using CenterSpace.NMath.Analysis;
 
 namespace OneD_ThomasFermiPoisson
 {
-    class OneD_DFTSolver : Density_Base
+    class OneD_DFTSolver : OneD_Density_Base
     {
         double no_kb_T = 50;    // number of kb_T to integrate to
         double t;
         int max_wavefunction = 0;
 
-        int tmp_zval;
-        Double tmp_eigval;
-        DoubleComplexVector tmp_eigvec;
-
         public OneD_DFTSolver(double temperature, double dz, int nz, double zmin)
-            : base(temperature, 1.0, 1.0, dz, 1, 1, nz, 0.0, 0.0, zmin)
+            : base(temperature, dz, nz, zmin)
         {
             t = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }
@@ -45,18 +41,12 @@ namespace OneD_ThomasFermiPoisson
 
             DoubleVector dens_up = new DoubleVector(nz, 0.0);
             DoubleVector dens_down = new DoubleVector(nz, 0.0);
-            OneVariableFunction dens_of_states = new OneVariableFunction(new Func<double, double>(Density_Of_States));
 
             for (int j = 0; j < nz; j++)
             {
                 double dens_val = 0.0;
                 for (int i = 0; i < max_wavefunction; i++)
                 {
-                    // set temporary eigenvalue and eigenvector
-                    //tmp_eigval = eig_decomp.EigenValue(i); tmp_eigvec = eig_decomp.EigenVector(i);
-                    // and position
-                    //tmp_zval = j;
-
                     // and integrate the density of states at this position for this eigenvector from the minimum energy to
                     // (by default) 50 * k_b * T above mu = 0
                     //dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
@@ -72,14 +62,6 @@ namespace OneD_ThomasFermiPoisson
             dft_dens = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
 
             Insert_DFT_Charge(ref charge_density, dft_dens);
-        }
-
-        /// <summary>
-        /// DFT calculations assume that the dopents are frozen out
-        /// </summary>
-        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot)
-        {
-            Get_ChargeDensity(layers, ref carrier_density, chem_pot);
         }
 
         /// <summary>
@@ -137,17 +119,7 @@ namespace OneD_ThomasFermiPoisson
             return alpha * dos_integrand.Integrate(tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
         }
 
-        public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void Close()
-        {
-            Console.WriteLine("Closing density solver");
-        }
-
-        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data chem_pot)
+        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
         {
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(nz);
 
@@ -161,17 +133,11 @@ namespace OneD_ThomasFermiPoisson
             // set diagonal elements
             for (int i = 0; i < nz; i++)
             {
-                potential[i] = chem_pot.vec[i] + Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i]);
+                potential[i] = pot.vec[i] + Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i]);
                 result[i, i] = -2.0 * t + potential[i];
             }
 
             return result;
-        }
-
-        double Density_Of_States(double E)
-        {
-            return Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI) * Get_Fermi_Function(E)
-                        * DoubleComplex.Norm(tmp_eigvec[tmp_zval]) * DoubleComplex.Norm(tmp_eigvec[tmp_zval]);
         }
 
         public int No_Wavefunctions

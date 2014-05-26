@@ -131,6 +131,8 @@ namespace Solver_Bases
 
         static void Unpack_RawData(Dictionary<int, Dictionary<string, object>> data)
         {
+            int layer_no = 1;
+
             for (int i = 0; i < data.Count; i++)
             {
                 string[] raw_layer_data = ((string)data[i]["raw_data"]).Trim().Split(' ');
@@ -149,7 +151,15 @@ namespace Solver_Bases
                         data[i].Add(tmp_key, tmp_value);
                 }
 
-                data[i].Add("layer_no", i);
+                data[i].Add("layer_no", layer_no);
+
+                layer_no++;
+                if (data[i].ContainsKey("is_surface"))
+                    if ((bool)data[i]["is_surface"] == true)
+                    {
+                        data[i].Remove("layer_no");
+                        layer_no--;
+                    }
             }
         }
 

@@ -102,7 +102,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         public override void Run()
         {
-            int count = 0;
+            int count = 0;/*
             while (!dens_solv.Converged)
             {
                 Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dens_solv.Convergence_Factor.ToString());
@@ -117,32 +117,50 @@ namespace ThreeD_SchrodingerPoissonSolver
                 //pois_solv.Blend(ref band_offset, new_band_energy, alpha);
 
                 count++;
-            }
+            }*/
 
             if (TF_only)
                 return;
 
-            pois_solv.Reset();
-
             // and then run the DFT solver at the base temperature over a limited range and with a reduced mixing constant
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this.Temperature, 1.0, Dx_Dens, Dy_Dens, 1, Nx_Dens, Ny_Dens, double.MaxValue, Xmin_Dens, Ymin_Dens);
-            alpha = 0.01;
-            double zeta = 2.0;
-            SpinResolved_Data old_carrier_density = carrier_density.DeepenThisCopy();
+
+            pois_solv.Reset();
 
             count = 0;
-            while (!dft_solv.Converged)
+            t = 1.0;
+            bool converged = false;
+            while (!converged)
             {
-                Console.WriteLine("Iteration: " + count.ToString() + "\ttemperature: " + temperature.ToString() + "\tConvergence factor: " + dft_solv.Convergence_Factor.ToString());
+                // Get charge rho(phi)
+                dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                Band_Data charge_dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
 
-                // solve the chemical potential for the given charge density
-                chem_pot = pois_solv.Get_Chemical_Potential(old_carrier_density.Spin_Summed_Data);
+                // Calculate Laplacian operating on the given band energy d(eps * d(phi))
+                Band_Data tmp_g = pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
 
-                // find the density for this new chemical potential and blend
-                Get_Potential(ref chem_pot, layers);
-                SpinResolved_Data new_carrier_density = dft_solv.Get_ChargeDensity(layers, carrier_density, chem_pot);
-                dft_solv.Blend(ref carrier_density, ref old_carrier_density, new_carrier_density, alpha, zeta, tol);
+                // Generate Jacobian g'(phi) = d(eps * d( )) + rho'(phi)
+                dens_solv.Get_ChargeDensityDeriv(layers, ref carrier_density_deriv, ref dopent_density_deriv, chem_pot);
+                Band_Data rho_prime = carrier_density_deriv.Spin_Summed_Data + dopent_density_deriv.Spin_Summed_Data;
 
+                // Solve stepping equation to find raw Newton iteration step, g'(phi) x = g(phi)
+                Band_Data g_u = tmp_g + charge_dens_old;
+                Band_Data x = Physics_Base.q_e * pois_solv.Calculate_Newton_Step(rho_prime, -g_u.vec);
+
+                // Calculate optimal damping parameter, t
+                t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dft_solv);
+
+                // Check convergence
+                double[] diff = new double[ny_pot * nz_pot];
+                for (int j = 0; j < ny_pot * nz_pot; j++)
+                    diff[j] = Math.Abs(g_u.vec[j]);
+                double convergence = diff.Sum();
+                if (diff.Max() < tol)
+                    converged = true;
+
+                // update band energy phi_new = phi_old + t * x
+                Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString() + "\tt = " + t.ToString());
+                chem_pot = chem_pot + t * x;
                 count++;
             }
 
@@ -159,19 +177,6 @@ namespace ThreeD_SchrodingerPoissonSolver
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens) - chem_pot, "potential.dat");
 
             throw new NotImplementedException();
-        }
-
-        void Get_Potential(ref Band_Data band_offset, ILayer[] layers)
-        {
-            for (int i = 0; i < nx_dens; i++)
-                for (int j = 0; j < ny_dens; j++)
-                {
-                    double pos_x = xmin_dens + i * dx_dens;
-                    double pos_y = ymin_dens + j * dy_dens;
-
-                    double band_gap = Geom_Tool.GetLayer(layers, pos_x, pos_y, (layers[1].Zmax - 1)).Band_Gap;
-                    band_offset.mat[i, j] = 0.5 * band_gap - band_offset.mat[i, j];
-                }
         }
     }
 }

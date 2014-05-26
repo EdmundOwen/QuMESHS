@@ -19,7 +19,7 @@ namespace Solver_Bases
         protected ILayer[] layers;
 
         // damping parameter for Bank-Rose convergence method
-        protected double t = 1.0;
+        protected double t = 0.5;
 
         protected double bottom_V;
 
@@ -101,13 +101,10 @@ namespace Solver_Bases
         }
 
         public abstract void Run();
-
+        /*
         protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
         {
-            double vp = 0.0;
-            Band_Data V_prime = new Band_Data(new DoubleVector(nz_pot));
-            
-            vp = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+            double vp = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
 
             // search for best value of t
             if (vp > 0.0)
@@ -118,20 +115,177 @@ namespace Solver_Bases
                     t = 0.5 * t;
 
             return t;
+        }*/
+
+        /* 
+        /// <summary>
+        /// calculates the optimal t using a Brent-Dekker method (see Wikipedia)
+        /// </summary>
+        /// 
+        protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        {
+            double a = 0.0; double b = 1.0;
+            double delta = 0.001;
+            int max_iteration = 100; int count = 0;
+
+            double vpa = calc_vp(a, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+            double vpb = calc_vp(b, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+
+            if (Math.Abs(vpa) < Math.Abs(vpb))
+            {
+                double tmp = a;
+                a = b;
+                b = tmp;
+                tmp = vpa;
+                vpa = vpb;
+                vpb = tmp;
+            }
+
+            double c = a;
+            double vpc = vpa;
+
+            double s = 0.0; bool flag = true; double d = 2.0;
+            while (!(vpb == 0) && Math.Abs(a - b) > delta && max_iteration > count)
+            {
+                if (vpa != vpc && vpb != vpc)
+                    s = (a * vpb * vpc) / (vpa - vpb) / (vpa - vpc) + (b * vpa * vpc) / (vpb - vpa) / (vpb - vpc) + (c * vpa * vpb) / (vpc - vpa) / (vpc - vpb);
+                else
+                    s = b - vpb * (b - a) / (vpb - vpa);
+
+                if (!((s > (3 * a + b) / 4 && s < b) || ((s < (3 * a + b) / 4 && s > b)))
+                    || (flag && Math.Abs(s - b) >= Math.Abs(b - c) / 2)
+                    || (!flag && Math.Abs(s - b) >= Math.Abs(c - d) / 2))
+                {
+                    s = (a + b) / 2;
+                    flag = true;
+                }
+                else
+                {
+                    if ((flag && Math.Abs(b - c) < delta) || (!flag && Math.Abs(c - d) < delta))
+                    {
+                        s = (a + b) / 2;
+                        flag = true;
+                    }
+                    else
+                        flag = false;
+                }
+
+                double vps = calc_vp(s, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+
+                d = c;
+                c = b;
+                vpc = vpb;
+
+                if (vpa * vps < 0)
+                {
+                    b = s; vpb = vps;
+                }
+                else
+                {
+                    a = s; vpa = vps;
+                }
+
+                if (Math.Abs(vpa) < Math.Abs(vpb))
+                {
+                    double tmp = a;
+                    a = b;
+                    b = tmp;
+                    tmp = vpa;
+                    vpa = vpb;
+                    vpb = tmp;
+                }
+
+                count++;
+            }
+
+            return b;
+        }
+         */
+
+        /// <summary>
+        /// calculates an optimal t based on bisection
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="band_energy"></param>
+        /// <param name="x"></param>
+        /// <param name="car_dens"></param>
+        /// <param name="dop_dens"></param>
+        /// <param name="pois_solv"></param>
+        /// <param name="dens_solv"></param>
+        /// <returns></returns>
+        protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        {
+            double minval = 1.0e-5;
+            double maxval = 1.0;
+
+            double vpa = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+            double vpb = calc_vp(0.5 * t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+
+            // work out whether this is going in the right direction (assuming vp is monotonic)
+            if (Math.Abs(vpb) < Math.Abs(vpa))
+            {
+                // if 0.5 * t was going downhill, first, halve t seeing as you've already done this step
+                t = 0.5 * t;
+                // then halve the damping parameter and check whether you've found a root yet
+                while (Math.Sign(vpb) == Math.Sign(vpa))
+                {
+                    if (t < minval)
+                        return minval;
+                    t = 0.5 * t;
+                    vpa = vpb;
+                    vpb = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+                }
+
+                return 1.5 * t;
+            }
+            else
+            {
+                // if 0.5 * t was going downhill, then we need to be doubling t and looking for the root
+                while (Math.Sign(vpb) == Math.Sign(vpa) && t < maxval)
+                {
+                    t = 2.0 * t;
+                    vpa = vpb;
+                    vpb = calc_vp(2.0 * t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+                }
+
+                return 0.75 * t;
+            }
         }
 
-        double calc_vp(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        protected virtual double calc_vp(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
         {
             double vp;
 
             SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, band_energy + t * x);
             Band_Data V_Prime = pois_solv.Calculate_Laplacian((band_energy + t * x) / Physics_Base.q_e) + tmp_dens.Spin_Summed_Data;
 
+            DoubleVector vals = new DoubleVector(x.Length);
             vp = 0.0;
             for (int i = 0; i < x.Length; i++)
+            {
                 vp += V_Prime[i] * x[i];
+            }
 
             return vp;
+        }
+
+        void Print_Data(Band_Data x, Band_Data v)
+        {
+            StreamWriter swx = new StreamWriter("x_prt.dat");
+            StreamWriter swv = new StreamWriter("v_prt.dat");
+            for (int i =0; i < v.mat.Rows; i++)
+                for (int j = 0; j < v.mat.Cols; j++)
+                {
+                    swx.Write(x.mat[i, j].ToString() + '\t');
+                    swv.Write(v.mat[i, j].ToString() + '\t');
+                    if (j == v.mat.Cols - 1)
+                    {
+                        swv.WriteLine();
+                        swx.WriteLine();
+                    }
+                }
+
+            swx.Close(); swv.Close();
         }
 
         /// <summary>

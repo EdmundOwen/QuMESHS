@@ -76,47 +76,12 @@ namespace Solver_Bases
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
                 dos_integrand.Integrator = new GaussKronrodIntegrator();
-                return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+                if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
+                    return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
+                else
+                    return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
             }
         }
-
-        /*public void Output(SpinResolved_DoubleVector data, string filename)
-        {
-            StreamWriter sw = new StreamWriter(filename);
-
-            // output the charge density
-            for (int i = 0; i < data.Nx; i++)
-                sw.WriteLine(data.Spin_Summed_Vector[i].ToString());
-
-            sw.Close();
-        }
-
-        public void Output(SpinResolved_DoubleMatrix data, string filename)
-        {
-            StreamWriter sw = new StreamWriter(filename);
-            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
-            
-            // output the charge density
-            for (int i = 0; i < data.Nx; i++)
-                for (int j = 0; j < data.Ny; j++)
-                    sw.WriteLine(data.Spin_Summed_Matrix[i, j].ToString());
-
-            sw.Close();
-        }
-
-        public void Output(SpinResolved_DoubleMatrix[] data, string filename)
-        {
-            StreamWriter sw = new StreamWriter(filename);
-            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
-
-            // output the charge density
-            for (int i = 0; i < data[0].Nx; i++)
-                for (int j = 0; j < data[0].Ny; j++)
-                    for (int k = 0; k < data.Length; k++)
-                        sw.WriteLine(data[k].Spin_Summed_Matrix[i, j].ToString());
-
-            sw.Close();
-        }*/
 
         public void Output(SpinResolved_Data data, string filename, bool with_warnings)
         {
@@ -152,6 +117,14 @@ namespace Solver_Bases
         protected double Get_Dopent_Fermi_Function(double energy)
         {
             return Physics_Base.Get_Dopent_Fermi_Function(energy, fermi_Energy, temperature);
+        }
+
+        /// <summary>
+        /// for this method, it is assumed that the dopent density is frozen out (and therefore not altered) unless overriden
+        /// </summary>
+        public virtual void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot)
+        {
+            Get_ChargeDensity(layers, ref carrier_density, chem_pot);
         }
 
         public virtual double Get_Chemical_Potential(double z, ILayer[] layers)
@@ -307,8 +280,8 @@ namespace Solver_Bases
         }
 
         public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot);
-        public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot);
         public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
+        public abstract SpinResolved_Data Get_ChargeDensityDeriv(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
         public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
         public abstract void Close();
     }

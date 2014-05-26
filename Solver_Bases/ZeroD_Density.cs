@@ -130,9 +130,21 @@ namespace Solver_Bases
 
         public double Get_CarrierDensityDeriv(double mu)
         {
+            double conductance_electrons_deriv, valence_holes_deriv;
             // calculate the densities due to the various components for a given chemical potential
-            double conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, 0.5 * band_gap, Math.Max(0.5 * band_gap, mu) + no_kB_T * Physics_Base.kB * temperature);
-            double valence_holes_deriv = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, Math.Min(-0.5 * band_gap, mu) - no_kB_T * Physics_Base.kB * temperature, -0.5 * band_gap);
+            // only integrate from -nokb kb T to + nokb kb T with the if statement for ensuring no integration in the band gap
+            // this is due to the derivative of the fermi function being strongly peaked at the chemical potential
+            if (mu - no_kB_T * Physics_Base.kB * temperature < 0.5 * band_gap)
+                conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, 0.5 * band_gap, Math.Max(0.5 * band_gap, mu) + no_kB_T * Physics_Base.kB * temperature);
+            else
+                conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
+
+            // and for holes
+            // only integrate from -nokb kb T to + nokb kb T with the if statement for ensuring no integration in the band gap
+            if (mu + no_kB_T * Physics_Base.kB * temperature > -0.5 * band_gap)
+                valence_holes_deriv = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, Math.Min(-0.5 * band_gap, mu) - no_kB_T * Physics_Base.kB * temperature, -0.5 * band_gap);
+            else
+                valence_holes_deriv = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
 
             return Physics_Base.q_e * (valence_holes_deriv - conductance_electrons_deriv);
         }

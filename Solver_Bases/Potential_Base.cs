@@ -66,13 +66,10 @@ namespace Solver_Bases
             Save_Density_Data(density, dens_filename);
 
             // run the code
-            Run_FlexPDE_Code();
+            Run_FlexPDE_Code("pot.dat");
 
             string[] lines = File.ReadAllLines("pot.dat");
             string[] data = Trim_Potential_File(lines);
-
-            // and trim all of the empty lines
-            //string[] data = (from items in tmp where items != "" select items).ToArray();
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
             return Physics_Base.q_e * Parse_Potential(data);
@@ -96,10 +93,10 @@ namespace Solver_Bases
             return data;
         }
 
-        protected void Run_FlexPDE_Code()
+        protected void Run_FlexPDE_Code(string result_filename)
         {
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
-            try { File.Delete("pot.dat"); }
+            try { File.Delete(result_filename); }
             catch (Exception) { }
 
             if (!File.Exists(flexpde_inputfile))
@@ -124,7 +121,7 @@ namespace Solver_Bases
             report = SetForegroundWindow(2);
 
             //Process.Start(flexpde_location, "-Q " + flexpde_inputfile);
-            while (!File.Exists("pot.dat"))
+            while (!File.Exists(result_filename))
                 Thread.Sleep(10);
             Thread.Sleep(1000);
         }
@@ -268,5 +265,6 @@ namespace Solver_Bases
         protected abstract Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density);
         protected abstract void Save_Density_Data(Band_Data density, string input_file_name);
         public abstract Band_Data Calculate_Laplacian(Band_Data input_data);
+        public abstract Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs);
     }
 }

@@ -70,13 +70,11 @@ namespace OneD_ThomasFermiPoisson
             // initialise the chemical potential as the solution with zero density
             chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
 
-            OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(run_temps[0], dz_pot, nz_pot, zmin_pot);;
-            
             for (int i = 0; i < run_temps.Length; i++)
             {
                 double current_temperature = run_temps[i];
 
-                dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz_pot, nz_pot, zmin_pot);
+                OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz_pot, nz_pot, zmin_pot);
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature))
                     this.bottom_V = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
                 // reset the boundary conditions
@@ -95,12 +93,11 @@ namespace OneD_ThomasFermiPoisson
                     Band_Data tmp_g = pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
 
                     // Generate Jacobian g'(phi) = d(eps * d( )) + rho'(phi)
-                    dens_solv.Get_ChargeDensityDeriv(layers, ref carrier_density_deriv, ref dopent_density_deriv, chem_pot);
-                    Band_Data rho_prime = carrier_density_deriv.Spin_Summed_Data + dopent_density_deriv.Spin_Summed_Data;
+                    SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                     // Solve stepping equation to find raw Newton iteration step, g'(phi) x = g(phi)
                     Band_Data g_u = tmp_g + charge_dens_old;
-                    Band_Data x = Physics_Base.q_e * pois_solv.Calculate_Newton_Step(rho_prime, - g_u.vec);
+                    Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * g_u);
 
                     // Calculate optimal damping parameter, t
                     t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv);
@@ -146,12 +143,11 @@ namespace OneD_ThomasFermiPoisson
                 Band_Data tmp_g = pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
 
                 // Generate an approximate Jacobian g'(phi) = d(eps * d( )) + rho'(phi) using the Thomas-Fermi solver
-                dens_solv.Get_ChargeDensityDeriv(layers, ref carrier_density_deriv, ref dopent_density_deriv, chem_pot);
-                Band_Data rho_prime = carrier_density_deriv.Spin_Summed_Data + dopent_density_deriv.Spin_Summed_Data;
+                SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = g(phi)
                 Band_Data g_u = tmp_g + charge_dens_old;
-                Band_Data x = Physics_Base.q_e * pois_solv.Calculate_Newton_Step(rho_prime, -g_u.vec);
+                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * g_u);
 
                 // Calculate optimal damping parameter, t
                 t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dft_solv);

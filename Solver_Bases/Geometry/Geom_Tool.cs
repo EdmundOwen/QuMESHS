@@ -40,7 +40,7 @@ namespace Solver_Bases.Geometry
         {
             for (int i = 0; i < layers.Length; i++)
                 if (layers[i].Zmax == 0.0)
-                    return i;
+                    return layers[i].Layer_No;
 
             throw new Exception("Error - cannot find the layer immediately below the surface");
         }
@@ -49,7 +49,7 @@ namespace Solver_Bases.Geometry
         {
             for (int i = 0; i < layers.Length; i++)
                 if (layers[i].Zmin == 0.0)
-                    return i;
+                    return layers[i].Layer_No;
 
             throw new Exception("Error - cannot find the layer immediately below the surface");
         }

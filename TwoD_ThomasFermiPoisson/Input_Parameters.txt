@@ -18,10 +18,10 @@
 % dy = 50
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 2050
+% nz = 1025
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 1
+% dz = 2
 #
 #
 ############## Poisson solver details #################################
@@ -42,7 +42,7 @@
 % top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -0.5
+% split_V = -0.0
 #
 ## Split gate width
 % split_width = 700
@@ -72,28 +72,28 @@
 % T = 1
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -600.0
+% ymin_dens = -400.0
 #
 ## Lattice spacing in the transverse direction
 % dy_dens = 20.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 60
+% ny_dens = 40
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -325.0
+% zmin_dens = -315.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 2.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 25
+% nz_dens = 20
 #
 #
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = true
+% hot_start = false
 #
 ## File location for spin-up data
 % spin_up_file = dens_2D_up_raw.dat

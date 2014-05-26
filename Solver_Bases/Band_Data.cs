@@ -399,6 +399,31 @@ namespace Solver_Bases
             return result;
         }
 
+        public Band_Data DeepenThisCopy()
+        {
+            if (dim == 1)
+            {
+                DoubleVector result = new DoubleVector(Length);
+                for (int i = 0; i < Length; i++)
+                    result[i] = this[i];
+
+                return new Band_Data(result);
+            }
+            else if (dim == 2)
+            {
+                DoubleMatrix result = new DoubleMatrix(mat.Rows, mat.Cols);
+                for (int i = 0; i < mat.Rows; i++)
+                    for (int j = 0; j < mat.Cols; j++)
+                        result[i, j] = mat[i, j];
+
+                return new Band_Data(result);
+            }
+            else if (dim == 3)
+                throw new NotImplementedException();
+            else
+                throw new NotImplementedException();
+        }
+
         public int Dimension
         {
             get { return dim; }
