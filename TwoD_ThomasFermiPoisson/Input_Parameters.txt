@@ -36,13 +36,13 @@
 % FlexPDE_file = split_gate.pde
 #
 ## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
+% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 # Top gate voltage
 % top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -0.0
+% split_V = -1.0
 #
 ## Split gate width
 % split_width = 700
@@ -72,22 +72,22 @@
 % T = 1
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -400.0
+% ymin_dens = -500.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens = 20.0
+% dy_dens = 10.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 40
+% ny_dens = 100
 #
 ## Minimum of simulation domain in the growth direction
 % zmin_dens = -315.0
 #
 ## Lattice spacing in the growth direction
-% dz_dens = 2.0
+% dz_dens = 4.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 20
+% nz_dens = 10
 #
 #
 ############## Data transfer details ##############################

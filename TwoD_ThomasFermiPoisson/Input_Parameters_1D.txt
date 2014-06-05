@@ -42,7 +42,7 @@
 ############## Generic density solver details #########################
 #
 ## Final solution tolerance
-% tolerance = 1e-4
+% tolerance = 1e-3
 #
 ## Fermi energy
 % E_f = 0.0

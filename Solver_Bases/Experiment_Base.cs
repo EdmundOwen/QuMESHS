@@ -24,9 +24,9 @@ namespace Solver_Bases
         protected double bottom_V;
 
         // parameters for the density domain
-        protected double dx_dens, dy_dens, dz_dens;
+        protected double dx_dens = 1.0, dy_dens = 1.0, dz_dens = 1.0;
         protected double xmin_dens, ymin_dens, zmin_dens = -1.0;
-        protected int nx_dens, ny_dens, nz_dens;
+        protected int nx_dens, ny_dens, nz_dens = 1;
 
         // parameters for the potential domain
         protected double dx_pot, dy_pot, dz_pot;
@@ -213,9 +213,8 @@ namespace Solver_Bases
         /// <param name="pois_solv"></param>
         /// <param name="dens_solv"></param>
         /// <returns></returns>
-        protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
         {
-            double minval = 1.0e-5;
             double maxval = 1.0;
 
             double vpa = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
@@ -243,6 +242,8 @@ namespace Solver_Bases
                 // if 0.5 * t was going downhill, then we need to be doubling t and looking for the root
                 while (Math.Sign(vpb) == Math.Sign(vpa) && t < maxval)
                 {
+                    if (t > maxval)
+                        return maxval;
                     t = 2.0 * t;
                     vpa = vpb;
                     vpb = calc_vp(2.0 * t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
@@ -259,14 +260,14 @@ namespace Solver_Bases
             SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, band_energy + t * x);
             Band_Data V_Prime = pois_solv.Calculate_Laplacian((band_energy + t * x) / Physics_Base.q_e) + tmp_dens.Spin_Summed_Data;
 
-            DoubleVector vals = new DoubleVector(x.Length);
             vp = 0.0;
             for (int i = 0; i < x.Length; i++)
             {
                 vp += V_Prime[i] * x[i];
             }
 
-            return vp;
+            // multiply by volume element (this works in all dimensions as default dx, dy, dz are 1.0
+            return vp * dx_dens * dy_dens * dz_dens;
         }
 
         void Print_Data(Band_Data x, Band_Data v)

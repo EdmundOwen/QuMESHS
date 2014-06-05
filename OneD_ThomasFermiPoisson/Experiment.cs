@@ -15,6 +15,7 @@ namespace OneD_ThomasFermiPoisson
     {
         double top_V = 0.0;
         double top_V_cooldown;
+        double t_min = 1e-6;
 
         public new void Initialise(Dictionary<string, object> input_dict)
         {
@@ -100,7 +101,7 @@ namespace OneD_ThomasFermiPoisson
                     Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * g_u);
 
                     // Calculate optimal damping parameter, t
-                    t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv);
+                    t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
 
                     // Check convergence
                     double[] diff = new double[Nz_Pot];
@@ -150,7 +151,7 @@ namespace OneD_ThomasFermiPoisson
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * g_u);
 
                 // Calculate optimal damping parameter, t
-                t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dft_solv);
+                t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dft_solv, t_min);
 
                 // Check convergence
                 double[] diff = new double[Nz_Pot];
