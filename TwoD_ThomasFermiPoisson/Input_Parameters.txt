@@ -42,13 +42,16 @@
 % top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -1.0
+% split_V = -1.5
 #
 ## Split gate width
 % split_width = 700
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_pot = -500.0
+#
+## Whether to smooth thee potential during each iteration
+% with_smoothing = true
 #
 #
 ############## Generic density solver details #########################
@@ -60,7 +63,7 @@
 % alpha = 0.001
 #
 ## Final solution tolerance
-% tolerance = 1e-2
+% tolerance = 1e-3
 #
 ## Fermi energy
 % E_f = 0.0

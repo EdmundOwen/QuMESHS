@@ -122,8 +122,8 @@ namespace Solver_Bases
 
             //Process.Start(flexpde_location, "-Q " + flexpde_inputfile);
             while (!File.Exists(result_filename))
-                Thread.Sleep(10);
-            Thread.Sleep(1000);
+                Thread.Sleep(100);
+            Thread.Sleep(5000);
         }
 
         /// <summary>

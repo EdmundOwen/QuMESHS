@@ -24,27 +24,6 @@ namespace OneD_ThomasFermiPoisson
         DoubleMatrix laplacian;
         DoubleLUFact lu_fact;
 
-        /*
-        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
-            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, flexPDE_location, freeze_out_dopents, tol)
-        {
-            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // (as phi = E_c / (-1.0 * q_e)
-            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
-
-            // generate Laplacian matrix (spin-resolved)
-            if (!flexPDE)
-            {
-                laplacian = Generate_Laplacian();
-                lu_fact = new DoubleLUFact(laplacian);
-            }
-
-            this.dens_filename = "dens_1D.dat";
-
-            Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
-        }
-        */
-
         public OneD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
             : base(using_flexPDE, flexPDE_input, flexPDE_location, tol)
         {
@@ -53,28 +32,12 @@ namespace OneD_ThomasFermiPoisson
             // generate Laplacian matrix (spin-resolved)
             if (!flexPDE)
             {
-                // first check whether the grids for the potential and the density are the same
-                //if (exp.Nz_Dens != exp.Nz_Pot || exp.Dz_Dens != exp.Dz_Pot || exp.Zmin_Dens != exp.Zmin_Pot)
-                //    throw new Exception("Error - when not using flexPDE, the density and potential grids must be the same!");
-
                 laplacian = Generate_Laplacian(exp.Layers);
                 lu_fact = new DoubleLUFact(laplacian);
             }
 
             this.dens_filename = "dens_1D.dat";
         }
-
-        /*
-        public DoubleVector Get_Band_Energy(DoubleVector density)
-        {
-            if (flexPDE)
-                // calculate band energy using a potential found by calling FlexPDE
-                return Get_BandEnergy_From_FlexPDE(new Band_Data(density), dens_filename).vec;
-            else
-                // calculate band energies using a potential calculated on a regular grid (not ideal, or scalable)
-                return Get_BandEnergy_On_Regular_Grid(density);
-        }
-        */
 
         protected override Band_Data Parse_Potential(string[] data)
         {
@@ -88,7 +51,7 @@ namespace OneD_ThomasFermiPoisson
             charge_density.vec[charge_density.Length - 1] = top_bc * -1.0 * top_eps / (exp.Dz_Pot * exp.Dz_Pot);
 
             // solve Poisson's equation
-            Band_Data potential = new Band_Data(lu_fact.Solve(charge_density.vec));
+            Band_Data potential = new Band_Data(lu_fact.Solve(-1.0 * charge_density.vec));
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
             return Physics_Base.q_e * potential;
@@ -96,12 +59,12 @@ namespace OneD_ThomasFermiPoisson
 
         /// <summary>
         /// Calculates the Laplacian for the given band structure of the input potential
-        /// ie. returns d(eps * d(input))
+        /// ie. returns - d(eps * d(input))
         /// NOTE: the input should be a potential so make sure you divide all band energies by q_e
         /// </summary>
         public override Band_Data Calculate_Laplacian(Band_Data input)
         {
-            DoubleMatrix lap_mat = -1.0 * Generate_Laplacian(exp.Layers);
+            DoubleMatrix lap_mat = Generate_Laplacian(exp.Layers);
             return new Band_Data(NMathFunctions.Product(lap_mat, input.vec));
         }
 
@@ -127,7 +90,7 @@ namespace OneD_ThomasFermiPoisson
         DoubleMatrix Generate_Laplacian()
         {
             // the factor which multiplies the Laplace equation
-            double factor = -1.0 * Physics_Base.epsilon / (exp.Dz_Pot * exp.Dz_Pot);
+            double factor = Physics_Base.epsilon / (exp.Dz_Pot * exp.Dz_Pot);
 
             DoubleMatrix result = new DoubleMatrix(exp.Nz_Pot, exp.Nz_Pot);
             for (int i = 0; i < exp.Nz_Pot - 1; i++)
@@ -163,8 +126,8 @@ namespace OneD_ThomasFermiPoisson
                 double eps_minus = Geom_Tool.GetLayer(layers, i * exp.Dz_Pot - 0.5 * exp.Dz_Pot + exp.Zmin_Pot).Permitivity;
 
                 // the factor which multiplies the Laplace equation
-                factor_plus = -1.0 * eps_plus / (exp.Dz_Pot * exp.Dz_Pot);
-                factor_minus = -1.0 * eps_minus / (exp.Dz_Pot * exp.Dz_Pot);
+                factor_plus = eps_plus / (exp.Dz_Pot * exp.Dz_Pot);
+                factor_minus = eps_minus / (exp.Dz_Pot * exp.Dz_Pot);
 
                 // on-diagonal term
                 result[i, i] = -1.0 * factor_minus + -1.0 * factor_plus;
@@ -174,10 +137,10 @@ namespace OneD_ThomasFermiPoisson
             }
 
             // and fix boundary conditions
-            double factor = -1.0 * Geom_Tool.GetLayer(layers, exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
+            double factor = Geom_Tool.GetLayer(layers, exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
             result[0, 0] = 1.0 * factor;
             result[0, 1] = 0.0;
-            factor = -1.0 * Geom_Tool.GetLayer(layers, (exp.Nz_Pot - 1) * exp.Dz_Pot + exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
+            factor = Geom_Tool.GetLayer(layers, (exp.Nz_Pot - 1) * exp.Dz_Pot + exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
             result[exp.Nz_Pot - 1, exp.Nz_Pot - 1] = 1.0 * factor;
             result[exp.Nz_Pot - 1, exp.Nz_Pot - 2] = 0.0;
 

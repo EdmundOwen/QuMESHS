@@ -27,7 +27,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // check if we should start from a precalculated density
             // consistency of band-structure, etc is the responsibility of the user...
-            if (!bool.Parse((string)inputs["hot_start"]))
+            if (!(bool)inputs["hot_start"])
             {
                 Console.WriteLine("Performing density dopent calculation");
                 Dictionary<string, object> inputs_init = new Dictionary<string, object>();
@@ -52,7 +52,7 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Starting experiment");
             exp.Initialise_Experiment(inputs);
             // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
-            if (!bool.Parse((string)inputs["hot_start"]) && exp_init.Dz_Pot != exp.Dz_Pot)
+            if (!(bool)inputs["hot_start"] && exp_init.Dz_Pot != exp.Dz_Pot)
                 throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
             Console.WriteLine("Experiment initialised");
             exp.Run();

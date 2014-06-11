@@ -52,7 +52,7 @@ namespace Solver_Bases
             Get_From_Dictionary<double>(input_dict, "alpha", ref alpha_prime);
 
             // will not use FlexPDE unless told to
-            if (input_dict.ContainsKey("use_FlexPDE")) this.using_flexPDE = bool.Parse((string)input_dict["use_FlexPDE"]); else using_flexPDE = false;
+            if (input_dict.ContainsKey("use_FlexPDE")) this.using_flexPDE = (bool)input_dict["use_FlexPDE"]; else using_flexPDE = false;
             // default input file for FlexPDE is called "default.pde"
             if (input_dict.ContainsKey("FlexPDE_file")) this.flexPDE_input = (string)input_dict["FlexPDE_file"]; else this.flexPDE_input = "default.pde";
             if (using_flexPDE)
@@ -216,9 +216,11 @@ namespace Solver_Bases
         protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
         {
             double maxval = 1.0;
+            SpinResolved_Data car_dens_copy = car_dens.DeepenThisCopy();
+            SpinResolved_Data dop_dens_copy = dop_dens.DeepenThisCopy();
 
-            double vpa = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
-            double vpb = calc_vp(0.5 * t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+            double vpa = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+            double vpb = calc_vp(0.5 * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
 
             // work out whether this is going in the right direction (assuming vp is monotonic)
             if (Math.Abs(vpb) < Math.Abs(vpa))
@@ -232,7 +234,7 @@ namespace Solver_Bases
                         return minval;
                     t = 0.5 * t;
                     vpa = vpb;
-                    vpb = calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+                    vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
                 return 1.5 * t;
@@ -246,7 +248,7 @@ namespace Solver_Bases
                         return maxval;
                     t = 2.0 * t;
                     vpa = vpb;
-                    vpb = calc_vp(2.0 * t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+                    vpb = calc_vp(2.0 * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
                 return 0.75 * t;
@@ -258,7 +260,7 @@ namespace Solver_Bases
             double vp;
 
             SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, band_energy + t * x);
-            Band_Data V_Prime = pois_solv.Calculate_Laplacian((band_energy + t * x) / Physics_Base.q_e) + tmp_dens.Spin_Summed_Data;
+            Band_Data V_Prime = -1.0 * pois_solv.Calculate_Laplacian((band_energy + t * x) / Physics_Base.q_e) - tmp_dens.Spin_Summed_Data;
 
             vp = 0.0;
             for (int i = 0; i < x.Length; i++)

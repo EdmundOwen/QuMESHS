@@ -37,10 +37,13 @@ namespace Solver_Bases
                 string key = raw_input[i].Substring(0, index - 1).Trim();
                 string val_string = raw_input[i].Substring(index + 1).Trim();
                 double val;
-
+                
                 // if the val_string can be cast as a double, do so... else, just pass through the string
                 if (double.TryParse(val_string, out val))
                     inputs.Add(key, val);
+                // or try to convert it into a bool
+                else if (val_string.ToLower() == "true" || val_string.ToLower() == "false")
+                    inputs.Add(key, bool.Parse(val_string));
                 else
                     inputs.Add(key, val_string);
             }
