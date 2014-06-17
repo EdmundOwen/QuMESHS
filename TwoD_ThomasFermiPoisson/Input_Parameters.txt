@@ -72,7 +72,7 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 1
+% T = 10
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_dens = -500.0
@@ -87,7 +87,7 @@
 % zmin_dens = -315.0
 #
 ## Lattice spacing in the growth direction
-% dz_dens = 4.0
+% dz_dens = 5.0
 #
 ## Number of lattice points in growth direction
 % nz_dens = 10

@@ -21,7 +21,7 @@ namespace TwoD_ThomasFermiPoisson
         double edge_min_charge = 1e-5;
 
         TwoD_ThomasFermiSolver dens_solv;
-        TwoD_PoissonSolver pois_solv;
+        TwoD_PoissonSolver_Scaled pois_solv;
 
         public void Initialise_Experiment(Dictionary<string, object> input_dict)
         {
@@ -143,9 +143,8 @@ namespace TwoD_ThomasFermiPoisson
             // initialise potential solver
             bool with_smoothing = false;
             Get_From_Dictionary<bool>(input_dict, "with_smoothing", ref with_smoothing);
-            pois_solv = new TwoD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
-            pois_solv.With_Smoothing = with_smoothing;
-
+            pois_solv = new TwoD_PoissonSolver_Scaled(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            
             Console.WriteLine("Experimental parameters initialised");
         }
 
@@ -159,7 +158,7 @@ namespace TwoD_ThomasFermiPoisson
                 converged = false;
                 while (!converged)
                 {
-                    if (count % 10 == 0)
+                    if (count == 0)
                     {
                         // calculate initial potential with the given charge distribution
                         pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
@@ -171,15 +170,12 @@ namespace TwoD_ThomasFermiPoisson
                     Stopwatch stpwch = new Stopwatch();
                     stpwch.Start();
 
-                    // update the band energy (this also smooths the data for the following Newton step calculation)
-                    // phi_new = phi_old + t * x
-                    chem_pot = pois_solv.Update_Potential(carrier_density.Spin_Summed_Data, t);
-
                     // Generate the charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi)
                     SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                     // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                     Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, carrier_density.Spin_Summed_Data);
+                    chem_pot = pois_solv.Chemical_Potential;
 
                     // load residual_g_phi and residual_g_x from the output of the Newton step calculation
                     residual_g_phi = Get_FlexPDE_Data("residual_g.dat", "residual_g_phi");
@@ -194,7 +190,7 @@ namespace TwoD_ThomasFermiPoisson
                     for (int j = 0; j < ny_dens * nz_dens; j++)
                         diff[j] = Math.Abs(g_phi[j]);
                     double convergence = diff.Sum();
-                    if (diff.Max() < tol)
+                    if (diff.Max() < tol || Math.Max((t * x).mat.Max(), (-t * x).mat.Max()) < 0.1)
                         converged = true;
 
                     // Recalculate the charge density but for the updated potential rho(phi + t * x)
@@ -219,12 +215,14 @@ namespace TwoD_ThomasFermiPoisson
                     }
 
                     // update band energy phi_new = phi_old + t * x
+                    chem_pot = chem_pot + t * x;
+                    pois_solv.T = t;
                     stpwch.Stop();
                     Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                     count++;
 
-                    if ((count + 5) % 10 == 0)
-                        File.Copy("split_gate.pg6", "split_gate_TF" + count.ToString("000") + ".pg6");
+                    if ((count - 1) % 10 == 0)
+                        File.Copy("split_gate.pg6", "split_gate_TF" + (count - 1).ToString("000") + ".pg6", true);
                 }
             //}
 
@@ -241,27 +239,15 @@ namespace TwoD_ThomasFermiPoisson
             converged = false;
             while (!converged)
             {
-                if (count == 0 || count == 20)
-                {
-                    // calculate initial potential with the given charge distribution
-                    pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
-                    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-                    // Get charge rho(phi) (not dopents as these are included as a flexPDE input)
-                    dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-                }
-
                 Stopwatch stpwch = new Stopwatch();
                 stpwch.Start();
-
-                // update the band energy (this also smooths the data for the following Newton step calculation)
-                // phi_new = phi_old + t * x
-                chem_pot = pois_solv.Update_Potential(carrier_density.Spin_Summed_Data, t);
 
                 // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
                 SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, carrier_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Chemical_Potential;
 
                 // load residual_g_phi and residual_g_x from the output of the Newton step calculation
                 residual_g_phi = Get_FlexPDE_Data("residual_g.dat", "residual_g_phi");
@@ -300,12 +286,56 @@ namespace TwoD_ThomasFermiPoisson
                         continue;
                 }
 
+                // update band energy phi_new = phi_old + t * x
+                chem_pot = chem_pot + t * x;
+                pois_solv.T = t;
                 stpwch.Stop();
                 Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
 
-                if (count + 5 % 10 == 0)
-                    File.Copy("split_gate.pg6", "split_gate_WF" + count.ToString("000") + ".pg6");
+                // reset the potential if the added potential t * x is too small
+                if (Math.Max((t * x).mat.Max(), (-t * x).mat.Max()) < 0.01 && t > 1e-5)
+                {
+                    File.Copy("split_gate.pg6", "split_gate_WF_BRfinal" + (count - 1).ToString("000") + ".pg6", true);
+                    Console.WriteLine("Maximum potential change this iteration was " + Math.Max((t * x).mat.Max(), (-t * x).mat.Max()).ToString() + "\nChanging to potential blend method...");
+                    break;
+                }
+
+                if ((count - 1) % 10 == 0)
+                    File.Copy("split_gate.pg6", "split_gate_WF_BR" + (count - 1).ToString("000") + ".pg6", true);
+            }
+
+            t = 0.003;
+            count = 0;
+            pois_solv.Set_Blend_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge, t);
+            while(!converged)
+            {
+                Stopwatch stpwch = new Stopwatch();
+                stpwch.Start();
+
+                // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
+                pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Chemical_Potential;
+
+                // Check convergence
+                Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
+                double[] diff = new double[ny_dens * nz_dens];
+                for (int j = 0; j < ny_dens * nz_dens; j++)
+                    diff[j] = Math.Abs(g_phi[j]);
+                double convergence = diff.Sum();
+                if (diff.Max() < tol)
+                    converged = true;
+
+                dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+
+                // update band energy phi_new = phi_old + t * x
+                stpwch.Stop();
+                Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
+                count++;
+
+                if ((count - 1) % 10 == 0)
+                    File.Copy("split_gate.pg6", "split_gate_WF_blend" + (count - 1).ToString("000") + ".pg6", true);
+
             }
 
             // initialise output solvers
@@ -357,7 +387,8 @@ namespace TwoD_ThomasFermiPoisson
 
         protected override double calc_vp(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
         {
-            return residual_g_phi + t * residual_g_x + base.calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+            return base.calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
+            //return residual_g_phi + t * residual_g_x + base.calc_vp(t, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv);
         }
     }
 }

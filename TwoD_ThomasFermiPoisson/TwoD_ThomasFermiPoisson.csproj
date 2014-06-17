@@ -79,6 +79,7 @@
     <Compile Include="TwoD_DFTSolver.cs" />
     <Compile Include="TwoD_EffectiveBandSolver.cs" />
     <Compile Include="TwoD_PoissonSolver.cs" />
+    <Compile Include="TwoD_PoissonSolver_Scaled.cs" />
     <Compile Include="TwoD_ThomasFermiSolver.cs" />
   </ItemGroup>
   <ItemGroup>

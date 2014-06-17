@@ -268,7 +268,7 @@ namespace Solver_Bases
                 vp += V_Prime[i] * x[i];
             }
 
-            // multiply by volume element (this works in all dimensions as default dx, dy, dz are 1.0
+            // multiply by volume element (this works in all dimensions as default dx, dy, dz are 1.0)
             return vp * dx_dens * dy_dens * dz_dens;
         }
 
