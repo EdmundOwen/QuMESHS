@@ -202,6 +202,7 @@ namespace Solver_Bases
         }
          */
 
+        double div_fact = 0.8;
         /// <summary>
         /// calculates an optimal t based on bisection
         /// </summary>
@@ -220,24 +221,24 @@ namespace Solver_Bases
             SpinResolved_Data dop_dens_copy = dop_dens.DeepenThisCopy();
 
             double vpa = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
-            double vpb = calc_vp(0.5 * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+            double vpb = calc_vp(div_fact * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
 
             // work out whether this is going in the right direction (assuming vp is monotonic)
             if (Math.Abs(vpb) < Math.Abs(vpa))
             {
                 // if 0.5 * t was going downhill, first, halve t seeing as you've already done this step
-                t = 0.5 * t;
+                t = div_fact * t;
                 // then halve the damping parameter and check whether you've found a root yet
                 while (Math.Sign(vpb) == Math.Sign(vpa))
                 {
                     if (t < minval)
                         return minval;
-                    t = 0.5 * t;
+                    t = div_fact * t;
                     vpa = vpb;
                     vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
-                return 1.5 * t;
+                return 0.5 * ((1.0 + div_fact) / div_fact) * t;
             }
             else
             {
@@ -246,12 +247,12 @@ namespace Solver_Bases
                 {
                     if (t > maxval)
                         return maxval;
-                    t = 2.0 * t;
+                    t = (1.0 / div_fact) * t;
                     vpa = vpb;
-                    vpb = calc_vp(2.0 * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+                    vpb = calc_vp((1.0 / div_fact) * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
-                return 0.75 * t;
+                return 0.5 * (1.0 + div_fact) * t;
             }
         }
 

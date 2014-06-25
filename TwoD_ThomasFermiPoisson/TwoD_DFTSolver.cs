@@ -110,7 +110,7 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
                 {
-                    potential[i, j] = pot.mat[i, j];// +Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.mat[i, j]);
+                    potential[i, j] = pot.mat[i, j];// +Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.mat[i, j]);  This should already be included in the input chemical potential
                     result[i * nz + j, i * nz + j] = -2.0 * ty + -2.0 * tz + potential[i, j];
                 }
 

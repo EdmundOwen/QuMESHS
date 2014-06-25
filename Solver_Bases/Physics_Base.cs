@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using CenterSpace.NMath.Core;
 
 namespace Solver_Bases
 {
@@ -164,6 +165,39 @@ namespace Solver_Bases
             v_c *= Physics_Base.Ry;
 
             return v_x + v_c;
+        }
+
+        public static Band_Data Get_XC_Potential(SpinResolved_Data charge_density)
+        {
+            Band_Data result;
+            int dim = charge_density.Spin_Summed_Data.Dimension;
+
+            if (dim == 1)
+            {
+                int nx = charge_density.Spin_Summed_Data.vec.Length;
+                result = new Band_Data(new DoubleVector(nx));
+                for (int i = 0; i < nx; i++)
+                    result.vec[i] = Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i]);
+
+                return result;
+            }
+            else if (dim == 2)
+            {
+                int nx = charge_density.Spin_Summed_Data.mat.Rows;
+                int ny = charge_density.Spin_Summed_Data.mat.Cols;
+                result = new Band_Data(new DoubleMatrix(nx, ny));
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
+                        result.mat[i, j] = Get_XC_Potential(charge_density.Spin_Summed_Data.mat[i,j]);
+
+                return result;
+            }
+            else if (dim == 3)
+            {
+                throw new NotImplementedException();
+            }
+            else
+                throw new NotImplementedException();
         }
     }
 }

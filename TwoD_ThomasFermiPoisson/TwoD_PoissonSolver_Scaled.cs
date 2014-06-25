@@ -18,6 +18,8 @@ namespace TwoD_ThomasFermiPoisson
         string pot_filename;
         string new_pot_filename;
 
+        string gphi_filename = "gphi.dat";
+
         double top_bc, split_bc, bottom_bc;
         double split_width;
         double surface;
@@ -75,13 +77,13 @@ namespace TwoD_ThomasFermiPoisson
                     double pos_z = j * exp.Dz_Dens + exp.Zmin_Dens;
 
                     // the factors multiplying the Laplacian in the transverse direction
-                    double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y + 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                    double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y - 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
+                    double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y + exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
+                    double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y - exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
                     result[i, j] = (factor_minus * data[i - 1, j] + factor_plus * data[i + 1, j] - (factor_plus + factor_minus) * data[i, j]);
 
                     // and in the growth direction
-                    factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z + 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                    factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z - 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
+                    factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z + exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
+                    factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z - exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
                     result[i, j] += (factor_minus * data[i, j - 1] + factor_plus * data[i, j + 1] - (factor_plus + factor_minus) * data[i, j]);
                 }
 
@@ -252,9 +254,15 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
+        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, Band_Data car_dens)
+        {
+            Save_Density_Data(car_dens, dens_filename);
+            return Calculate_Newton_Step(rho_prime, rhs);
+        }
+
         public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs)
         {
-            Save_Density_Data(rhs, dens_filename);
+            Save_Density_Data(rhs, gphi_filename);
             Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
             Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile, T);
 
@@ -436,7 +444,7 @@ namespace TwoD_ThomasFermiPoisson
         {
             StreamWriter sw = new StreamWriter(output_file);
 
-            string minus_g_phi = "dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + car_dens + dop_dens";
+            string minus_g_phi = "-1.0 * gphi"; //"dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + car_dens + dop_dens";
 
             sw.WriteLine("TITLE \'Split Gate\'");
             sw.WriteLine("COORDINATES cartesian2");
@@ -454,6 +462,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
+            sw.WriteLine("\tgphi = TABLE(\'" + gphi_filename + "\')");
             sw.WriteLine("\tcar_dens = TABLE(\'" + dens_filename + "\')");
             sw.WriteLine("\tdop_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine("\trho_prime = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + densderiv_filename + "\')");
