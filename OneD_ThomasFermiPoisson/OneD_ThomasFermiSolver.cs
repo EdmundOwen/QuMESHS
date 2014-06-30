@@ -22,21 +22,31 @@ namespace OneD_ThomasFermiPoisson
             {
                 double z = dz * i + zmin;
 
+                double local_dopent_density;
+                double local_carrier_density = carrier_density.Spin_Summed_Data.vec[i];
+
                 // get the relevant layer and if it's frozen out, don't recalculate the charge
                 ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
 
                 // calculate the density at the given point
                 ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
-                if (!current_Layer.Dopents_Frozen_Out(temperature))
-                {
-                    double local_dopent_density = charge_calc.Get_DopentDensity(chem_pot.vec[i]);
-                    dopent_density.Spin_Down.vec[i] = 0.5 * local_dopent_density;
-                    dopent_density.Spin_Up.vec[i] = 0.5 * local_dopent_density;
+                 if (!current_Layer.Dopents_Frozen_Out(temperature))
+                 {
+                    local_dopent_density = charge_calc.Get_DopentDensity(chem_pot.vec[i]);
+                    local_carrier_density = charge_calc.Get_CarrierDensity(chem_pot.vec[i]);
                 }
-
-                double local_carrier_density = charge_calc.Get_CarrierDensity(chem_pot.vec[i]);
-
-                // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                else
+                {
+                    // if the density is frozen out, on the first step, this will add the carrier density to the dopent density
+                    // to give a total, frozen-out charge.  After that, the local carrier density is set to zero and so this value
+                    // should not change
+                    local_dopent_density = dopent_density.Spin_Summed_Data.vec[i] + local_carrier_density;
+                    local_carrier_density = 0.0;
+                }
+ 
+                 // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
+                dopent_density.Spin_Down.vec[i] = 0.5 * local_dopent_density;
+                dopent_density.Spin_Up.vec[i] = 0.5 * local_dopent_density;
                 carrier_density.Spin_Down.vec[i] = 0.5 * local_carrier_density;
                 carrier_density.Spin_Up.vec[i] = 0.5 * local_carrier_density;
             }

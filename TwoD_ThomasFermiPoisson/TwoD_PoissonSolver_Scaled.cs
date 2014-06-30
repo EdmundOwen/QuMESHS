@@ -169,7 +169,7 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 1; i < exp.Layers.Length; i++)
             {
                 sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
-                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
+                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
                     sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
                 else
                     sw.WriteLine("\t\trho = 0.0");
@@ -187,7 +187,7 @@ namespace TwoD_ThomasFermiPoisson
                 if (i == exp.Layers.Length - 1)
                     sw.WriteLine("\t\tVALUE(u) = top_V");
                 // or surface condition
-                if (i == Geom_Tool.Find_Layer_Below_Surface(exp.Layers) - 1)
+                if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
 
                 sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
@@ -352,7 +352,7 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 1; i < exp.Layers.Length; i++)
             {
                 sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
-                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers))
+                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
                     sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
                 else
                     sw.WriteLine("\t\trho = 0.0");
@@ -370,7 +370,7 @@ namespace TwoD_ThomasFermiPoisson
                 if (i == exp.Layers.Length - 1)
                     sw.WriteLine("\t\tVALUE(u) = top_V");
                 // or surface condition
-                if (i == Geom_Tool.Find_Layer_Below_Surface(exp.Layers) - 1)
+                if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
 
                 sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
@@ -524,7 +524,7 @@ namespace TwoD_ThomasFermiPoisson
                 if (i == exp.Layers.Length - 1)
                     sw.WriteLine("\t\tVALUE(u) = top_V");
                 // or surface condition
-                if (i == Geom_Tool.Find_Layer_Below_Surface(exp.Layers) - 1)
+                if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
 
                 sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");

@@ -121,7 +121,13 @@ namespace OneD_ThomasFermiPoisson
             }
 
             if (TF_only)
-                return;
+            {
+                double tot_dens_TF = (from val in carrier_density.Spin_Summed_Data.vec
+                                   where val < 0.0
+                                   select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
+                Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens_TF.ToString("e3") + " cm^-2");
+                 return;
+            }
 
             // and then run the DFT solver at the base temperature over a limited range
             OneD_DFTSolver dft_solv = new OneD_DFTSolver(temperature, dz_dens, nz_dens, zmin_dens);
@@ -183,10 +189,10 @@ namespace OneD_ThomasFermiPoisson
             final_dens_solv.Output(carrier_density + dopent_density, "charge_density.dat", false);
             final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot, "potential.dat");
 
-            double tot_dens = (from val in carrier_density.Spin_Summed_Data.vec
+            double tot_dens_Quantum = (from val in carrier_density.Spin_Summed_Data.vec
                                where val < 0.0
                                select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
-            Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens.ToString("e3") + " cm^-2");
+            Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens_Quantum.ToString("e3") + " cm^-2");
         }
     }
 }

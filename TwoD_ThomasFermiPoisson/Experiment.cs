@@ -133,8 +133,8 @@ namespace TwoD_ThomasFermiPoisson
             else
                 chem_pot = new Band_Data(new DoubleMatrix(ny_dens, nz_dens));
 
-            if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
-            if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
+            if (input_dict.ContainsKey("dft")) this.TF_only = !(bool)input_dict["dft"];
+            if (input_dict.ContainsKey("TF_only")) this.TF_only = (bool)input_dict["TF_only"];
 
             // create charge density solver and calculate boundary conditions
             dens_solv = new TwoD_ThomasFermiSolver(this);
