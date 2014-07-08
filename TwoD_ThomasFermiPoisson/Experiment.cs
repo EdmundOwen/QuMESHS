@@ -17,7 +17,7 @@ namespace TwoD_ThomasFermiPoisson
         double top_V, split_V, surface_charge;
         double split_width;
         double residual_g_phi, residual_g_x;
-        double t_damp = 0.8, t_min = 1e-4;
+        double t_damp = 1.0, t_min = 1e-3;
         double edge_min_charge = 1e-5;
 
         TwoD_ThomasFermiSolver dens_solv;
@@ -253,6 +253,15 @@ namespace TwoD_ThomasFermiPoisson
             converged = false;
             while (!converged)
             {
+                if (count == 10)
+                {
+                    Console.WriteLine("ReCalculating with quantum mechanical density");
+                    pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
+                    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+                    Console.WriteLine("Initial QM potential calculated");
+                    dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                }
+
                 Stopwatch stpwch = new Stopwatch();
                 stpwch.Start();
 
@@ -311,7 +320,7 @@ namespace TwoD_ThomasFermiPoisson
                 count++;
 
                 // reset the potential if the added potential t * x is too small
-                if (Math.Max((t * x).mat.Max(), (-t * x).mat.Max()) < 0.01)
+                if (Math.Max((1.0 * x).mat.Max(), (-1.0 * x).mat.Max()) < 1.0)
                 {
                     File.Copy("split_gate.pg6", "split_gate_WF_BRfinal" + (count - 1).ToString("000") + ".pg6", true);
                     Console.WriteLine("Maximum potential change this iteration was " + Math.Max((t * x).mat.Max(), (-t * x).mat.Max()).ToString() + "\nChanging to potential blend method...");

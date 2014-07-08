@@ -125,7 +125,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // and the tables for carrier and donor densities
             sw.WriteLine("\trho_carrier = TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\trho_dopent = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + densdopent_filename + "\')");
+            sw.WriteLine("\trho_dopent = TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine();
             // simulation dimension
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
@@ -306,7 +306,7 @@ namespace TwoD_ThomasFermiPoisson
             // and the tables for carrier and donor densities
             sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi)");
             sw.WriteLine("\trho_carrier = TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\trho_dopent = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + densdopent_filename + "\')");
+            sw.WriteLine("\trho_dopent = TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine();
             // simulation dimension
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
@@ -444,7 +444,8 @@ namespace TwoD_ThomasFermiPoisson
         {
             StreamWriter sw = new StreamWriter(output_file);
 
-            string minus_g_phi = "-1.0 * gphi"; //"dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + car_dens + dop_dens";
+            string minus_g_phi = "(dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + car_dens + dop_dens)";
+            minus_g_phi +=  " * upulse(y - well_depth + 200, y - well_depth - 100)";
 
             sw.WriteLine("TITLE \'Split Gate\'");
             sw.WriteLine("COORDINATES cartesian2");
@@ -462,10 +463,10 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\tgphi = TABLE(\'" + gphi_filename + "\')");
+            //sw.WriteLine("\tgphi = TABLE(\'" + gphi_filename + "\')");
             sw.WriteLine("\tcar_dens = TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\tdop_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + densdopent_filename + "\')");
-            sw.WriteLine("\trho_prime = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + densderiv_filename + "\')");
+            sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
+            sw.WriteLine("\trho_prime = TABLE(\'" + densderiv_filename + "\')");
             sw.WriteLine();
             // simulation dimension
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());

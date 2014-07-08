@@ -231,9 +231,10 @@ namespace Solver_Bases
                 // then halve the damping parameter and check whether you've found a root yet
                 while (Math.Sign(vpb) == Math.Sign(vpa))
                 {
+                    t = div_fact * t;
                     if (t < minval)
                         return minval;
-                    t = div_fact * t;
+
                     vpa = vpb;
                     vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
@@ -245,9 +246,10 @@ namespace Solver_Bases
                 // if 0.5 * t was going downhill, then we need to be doubling t and looking for the root
                 while (Math.Sign(vpb) == Math.Sign(vpa) && t < maxval)
                 {
+                    t = (1.0 / div_fact) * t;
                     if (t > maxval)
                         return maxval;
-                    t = (1.0 / div_fact) * t;
+
                     vpa = vpb;
                     vpb = calc_vp((1.0 / div_fact) * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
