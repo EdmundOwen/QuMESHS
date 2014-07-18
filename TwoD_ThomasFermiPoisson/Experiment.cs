@@ -253,15 +253,6 @@ namespace TwoD_ThomasFermiPoisson
             converged = false;
             while (!converged)
             {
-                if (count == 10)
-                {
-                    Console.WriteLine("ReCalculating with quantum mechanical density");
-                    pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
-                    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-                    Console.WriteLine("Initial QM potential calculated");
-                    dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-                }
-
                 Stopwatch stpwch = new Stopwatch();
                 stpwch.Start();
 
@@ -320,7 +311,7 @@ namespace TwoD_ThomasFermiPoisson
                 count++;
 
                 // reset the potential if the added potential t * x is too small
-                if (Math.Max((1.0 * x).mat.Max(), (-1.0 * x).mat.Max()) < 1.0)
+                if (Math.Max(x.mat.Max(), (-1.0 * x).mat.Max()) < 10.0)
                 {
                     File.Copy("split_gate.pg6", "split_gate_WF_BRfinal" + (count - 1).ToString("000") + ".pg6", true);
                     Console.WriteLine("Maximum potential change this iteration was " + Math.Max((t * x).mat.Max(), (-t * x).mat.Max()).ToString() + "\nChanging to potential blend method...");
@@ -334,81 +325,99 @@ namespace TwoD_ThomasFermiPoisson
                     File.Copy("split_gate.pg6", "split_gate_WF_BR" + (count - 1).ToString("0000") + ".pg6", true);
             }
 
-            Console.WriteLine("Bank-Rose iteration complete");
-            
-            /*
-            int no_finaliters = 10;
-            for (int iter = 0; iter < no_finaliters; iter++)
+            Console.WriteLine("First Bank-Rose iteration complete");
+
+            // and recalculate the potential for the TF density
+            Console.WriteLine("Calculating potential grid for BR density");
+
+            bool chem_pot_reasonable = false;
+            double min_chem_pot = 10.0;
+            double charge_dens_multiplier = 1.0;
+            while (!chem_pot_reasonable)
             {
-                count = 0;
-                converged = false;
-                while (!converged)
+                pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
+                chem_pot = pois_solv.Get_Chemical_Potential(charge_dens_multiplier * carrier_density.Spin_Summed_Data);
+                charge_dens_multiplier *= 1.1;
+                if (chem_pot.mat.Min() > min_chem_pot)
+                    chem_pot_reasonable = true;
+            }
+
+            Console.WriteLine("New BR potential calculated\nCharge density multiplier = " + charge_dens_multiplier.ToString());
+
+            count = 0;
+            converged = false;
+            while (!converged)
+            {
+                Stopwatch stpwch = new Stopwatch();
+                stpwch.Start();
+
+                // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
+                SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
+
+                // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
+                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density.Spin_Summed_Data);
+                chem_pot = pois_solv.Chemical_Potential;
+                // NOTE: the XC potential must be subtracted as this is not included in the poisson equation
+                //Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian((chem_pot - Physics_Base.Get_XC_Potential(carrier_density)) / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density.Spin_Summed_Data);
+                //chem_pot = pois_solv.Chemical_Potential + Physics_Base.Get_XC_Potential(carrier_density);
+
+                // load residual_g_phi and residual_g_x from the output of the Newton step calculation
+                residual_g_phi = Get_FlexPDE_Data("residual_g.dat", "residual_g_phi");
+                residual_g_x = Get_FlexPDE_Data("residual_g.dat", "residual_g_x");
+
+                // Calculate optimal damping parameter, t, (but damped damping....)
+                t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dft_solv, t_min);
+
+                // Check convergence
+                Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
+                double[] diff = new double[ny_dens * nz_dens];
+                for (int j = 0; j < ny_dens * nz_dens; j++)
+                    diff[j] = Math.Abs(g_phi[j]);
+                double convergence = diff.Sum();
+                if (diff.Max() < tol)
+                    converged = true;
+
+                // Recalculate the charge density but for the updated potential rho(phi + t * x)
+                bool edges_fine = false;
+                while (!edges_fine)
                 {
-                    Stopwatch stpwch = new Stopwatch();
-                    stpwch.Start();
+                    edges_fine = true;
+                    dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot + t * x);
+                    for (int i = 1; i < ny_dens - 1; i++)
+                        for (int j = 1; j < nz_dens - 1; j++)
+                            //if (i == 1 || j == 1 || i == ny_dens - 2 || j == nz_dens - 2)
+                            if (i == 1 || i == ny_dens - 2)
+                                if (Math.Abs(carrier_density.Spin_Summed_Data.mat[i, j]) > edge_min_charge)
+                                {
+                                    t = 2.0 * t;
+                                    edges_fine = false;
+                                    goto end;
+                                }
 
-                    // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
-                    SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
-
-                    // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                    Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, carrier_density.Spin_Summed_Data);
-                    chem_pot = pois_solv.Chemical_Potential;
-
-                    // load residual_g_phi and residual_g_x from the output of the Newton step calculation
-                    residual_g_phi = Get_FlexPDE_Data("residual_g.dat", "residual_g_phi");
-                    residual_g_x = Get_FlexPDE_Data("residual_g.dat", "residual_g_x");
-
-                    // Calculate optimal damping parameter, t, (but damped damping....)
-                    t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dft_solv, t_min);
-
-                    // Check convergence
-                    Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
-                    double[] diff = new double[ny_dens * nz_dens];
-                    for (int j = 0; j < ny_dens * nz_dens; j++)
-                        diff[j] = Math.Abs(g_phi[j]);
-                    double convergence = diff.Sum();
-                    if (diff.Max() < tol)
-                        converged = true;
-
-                    // Recalculate the charge density but for the updated potential rho(phi + t * x)
-                    bool edges_fine = false;
-                    while (!edges_fine)
-                    {
-                        edges_fine = true;
-                        dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot + t * x);
-                        for (int i = 1; i < ny_dens - 1; i++)
-                            for (int j = 1; j < nz_dens - 1; j++)
-                                //if (i == 1 || j == 1 || i == ny_dens - 2 || j == nz_dens - 2)
-                                if (i == 1 || i == ny_dens - 2)
-                                    if (Math.Abs(carrier_density.Spin_Summed_Data.mat[i, j]) > edge_min_charge)
-                                    {
-                                        t = 0.5 * t;
-                                        edges_fine = false;
-                                        goto end;
-                                    }
-
-                    end:
-                        continue;
-                    }
-
-                    // update band energy phi_new = phi_old + t * x
-                    chem_pot = chem_pot + t * x;
-                    pois_solv.T = t;
-                    stpwch.Stop();
-                    Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
-                    count++;
-
-                    // reset the potential if the added potential t * x is too small
-                    if (Math.Max((t * x).mat.Max(), (-t * x).mat.Max()) < 0.01)
-                    {
-                        File.Copy("phi.dat", "phi_process" + iter.ToString("00") + ".dat", true);
-                        Console.WriteLine("Maximum potential change this iteration was " + Math.Max((t * x).mat.Max(), (-t * x).mat.Max()).ToString() + "\nResetting potential...");
-                        pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
-                        chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-
-                        converged = true;
-                    }
+                end:
+                    continue;
                 }
+
+                // update band energy phi_new = phi_old + t * x
+                chem_pot = chem_pot + t * x;
+                pois_solv.T = t;
+                stpwch.Stop();
+                Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
+                count++;
+
+                // reset the potential if the added potential t * x is too small
+                if (Math.Max(x.mat.Max(), (-1.0 * x).mat.Max()) < 1.0)
+                {
+                    File.Copy("split_gate.pg6", "split_gate_WF_BRfinal" + (count - 1).ToString("000") + ".pg6", true);
+                    Console.WriteLine("Maximum potential change this iteration was " + Math.Max(x.mat.Max(), (-1.0 * x).mat.Max()).ToString() + "\nChanging to potential blend method...");
+                    break;
+                }
+
+                if ((count - 1) % 10 == 0 && count < 3000)
+                    File.Copy("split_gate.pg6", "split_gate_WF_BR" + (count - 1).ToString("0000") + ".pg6", true);
+
+                if ((count - 1) % 100 == 0 && count >= 3000)
+                    File.Copy("split_gate.pg6", "split_gate_WF_BR" + (count - 1).ToString("0000") + ".pg6", true);
             }
             
             /*

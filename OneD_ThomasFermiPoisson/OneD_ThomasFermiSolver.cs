@@ -40,8 +40,8 @@ namespace OneD_ThomasFermiPoisson
                     // if the density is frozen out, on the first step, this will add the carrier density to the dopent density
                     // to give a total, frozen-out charge.  After that, the local carrier density is set to zero and so this value
                     // should not change
-                    local_dopent_density = dopent_density.Spin_Summed_Data.vec[i] + local_carrier_density;
-                    local_carrier_density = 0.0;
+                    local_dopent_density = dopent_density.Spin_Summed_Data.vec[i];
+                    local_carrier_density = charge_calc.Get_CarrierDensity(chem_pot.vec[i]);
                 }
  
                  // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally

@@ -38,7 +38,7 @@ namespace TwoD_ThomasFermiPoisson
             this.new_pot_filename = "new_phi.dat";
 
             // calculate scaling factor w = a * z such that the z dimension has the same length as the y dimension
-            z_scaling = (exp.Ny_Pot * exp.Dy_Pot) / (exp.Nz_Pot * exp.Dz_Pot);
+            z_scaling = (exp.Ny_Dens * exp.Dy_Dens) / (exp.Nz_Dens * exp.Dz_Dens);
         }
 
         protected override Band_Data Parse_Potential(string[] data)
@@ -221,23 +221,24 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
 
             // add a front commmand at the well depth to introduce a higher density of points at the interface
-            sw.WriteLine("\tFRONT(y - well_depth, z_scaling)");
+            sw.WriteLine("\tFRONT(y - well_depth, z_scaling * 20)");
             sw.WriteLine();
 
             // write out plotting routines
             sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap)");
-            sw.WriteLine("\tCONTOUR(u)");
-            sw.WriteLine("\tCONTOUR(rho)");
+            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(rho) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(u) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(rho) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap)");
+            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
-            sw.WriteLine("\tCONTOUR(rho)");
+            sw.WriteLine("\tCONTOUR(rho) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(rho) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
             sw.WriteLine("\tELEVATION(-1.0e21*rho/q_e) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
 
@@ -409,21 +410,21 @@ namespace TwoD_ThomasFermiPoisson
 
             // write out plotting routines
             sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap)");
-            sw.WriteLine("\tCONTOUR(u)");
-            sw.WriteLine("\tCONTOUR(rho)");
+            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(rho) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(u) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(rho) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tCONTOUR(u * q_e)");
+            sw.WriteLine("\tCONTOUR(u * q_e) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(u * q_e) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
             sw.WriteLine("\tELEVATION(u * q_e) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
-            sw.WriteLine("\tCONTOUR(phi * q_e)");
+            sw.WriteLine("\tCONTOUR(phi * q_e) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(phi * q_e) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
             sw.WriteLine("\tELEVATION(phi * q_e) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
-            sw.WriteLine("\tCONTOUR(rho)");
+            sw.WriteLine("\tCONTOUR(rho) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(rho) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
             sw.WriteLine("\tELEVATION(rho) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
 
@@ -453,8 +454,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // no regridding for the newton step.  Just use the original grid from the potential calculation
-            sw.WriteLine("REGRID = OFF");
-            //sw.WriteLine("\tERRLIM = 1e-4");
+            //sw.WriteLine("REGRID = OFF");
+            sw.WriteLine("\tERRLIM = 1e-4");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -511,7 +512,7 @@ namespace TwoD_ThomasFermiPoisson
             // cycle through layers below surface
             for (int i = 1; i < exp.Layers.Length; i++)
             {
-                sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
+                sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
                 sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
 
                 // HACK!
@@ -557,20 +558,20 @@ namespace TwoD_ThomasFermiPoisson
             // write out plotting routines
 
             sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ")");
-            sw.WriteLine("\tCONTOUR(u)");
+            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(u) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(" + minus_g_phi + ") FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tCONTOUR(phi + t * new_phi)");
-            sw.WriteLine("\tCONTOUR((phi + t * new_phi) * q_e) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(car_dens) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(car_dens + dop_dens)");
-            sw.WriteLine("\tCONTOUR(u)");
-            sw.WriteLine("\tCONTOUR(u * q_e) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ")");
+            sw.WriteLine("\tCONTOUR(phi + t * new_phi) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR((phi + t * new_phi) * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(car_dens) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(car_dens + dop_dens) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(u * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling)");
 
             // generate summary containing residual integrals for x and phi
             string window_function_string;
