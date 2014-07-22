@@ -14,7 +14,7 @@ namespace OneD_ThomasFermiPoisson
             : base(temperature, 1.0, 1.0, dz, 1, 1, nz, 0.0, 0.0, zmin)
         { }
 
-        public override SpinResolved_Data Get_ChargeDensityDeriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
+        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
         {
             for (int i = 0; i < nz; i++)
             {

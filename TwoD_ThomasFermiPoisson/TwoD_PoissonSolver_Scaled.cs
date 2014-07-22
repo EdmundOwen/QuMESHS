@@ -38,7 +38,7 @@ namespace TwoD_ThomasFermiPoisson
             this.new_pot_filename = "new_phi.dat";
 
             // calculate scaling factor w = a * z such that the z dimension has the same length as the y dimension
-            z_scaling = (exp.Ny_Dens * exp.Dy_Dens) / (exp.Nz_Dens * exp.Dz_Dens);
+            z_scaling = (exp.Ny_Pot * exp.Dy_Pot) / (exp.Nz_Pot * exp.Dz_Pot);
         }
 
         protected override Band_Data Parse_Potential(string[] data)
@@ -116,7 +116,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("\tERRLIM=1e-4");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -223,6 +223,7 @@ namespace TwoD_ThomasFermiPoisson
             // add a front commmand at the well depth to introduce a higher density of points at the interface
             sw.WriteLine("\tFRONT(y - well_depth, z_scaling * 20)");
             sw.WriteLine();
+            sw.WriteLine("\tRESOLVE (rho_carrier)");
 
             // write out plotting routines
             sw.WriteLine("MONITORS");
@@ -445,8 +446,29 @@ namespace TwoD_ThomasFermiPoisson
         {
             StreamWriter sw = new StreamWriter(output_file);
 
-            string minus_g_phi = "(dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + car_dens + dop_dens)";
-            minus_g_phi +=  " * upulse(y - well_depth + 200, y - well_depth - 100)";
+            // generate summary containing residual integrals for car dens (will be used later for x and phi)
+            string window_function_string;
+            if (exp.Ymin_Dens < 0.0)
+                window_function_string = "(ustep(x + " + (-1.0 * exp.Ymin_Dens).ToString() + ")";
+            else
+                window_function_string = "(ustep(x - " + exp.Ymin_Dens.ToString() + ")";
+            double xmax = exp.Ymin_Dens + exp.Ny_Dens * exp.Dy_Dens;
+            if (xmax < 0.0)
+                window_function_string = window_function_string + " - ustep(x + " + (-1.0 * xmax).ToString() + "))";
+            else
+                window_function_string = window_function_string + " - ustep(x - " + xmax.ToString() + "))";
+            if (exp.Zmin_Dens < 0.0)
+                window_function_string = window_function_string + " * (ustep(y + " + (-1.0 * z_scaling * exp.Zmin_Dens).ToString() + ")";
+            else
+                window_function_string = window_function_string + " * (ustep(y - " + (z_scaling * exp.Zmin_Dens).ToString() + ")";
+            double ymax = z_scaling * (exp.Zmin_Dens + exp.Nz_Dens * exp.Dz_Dens);
+            if (ymax < 0.0)
+                window_function_string = window_function_string + " - ustep(y + " + (-1.0 * ymax).ToString() + "))";
+            else
+                window_function_string = window_function_string + " - ustep(y - " + ymax.ToString() + "))";
+
+            string minus_g_phi = "(dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + " +  window_function_string + " * car_dens + dop_dens)";
+            minus_g_phi += " * upulse(y - well_depth + 200, y - well_depth - 100)";
 
             sw.WriteLine("TITLE \'Split Gate\'");
             sw.WriteLine("COORDINATES cartesian2");
@@ -455,7 +477,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("SELECT");
             // no regridding for the newton step.  Just use the original grid from the potential calculation
             //sw.WriteLine("REGRID = OFF");
-            sw.WriteLine("\tERRLIM = 1e-4");
+            sw.WriteLine("\tERRLIM = 1e-2");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -465,7 +487,7 @@ namespace TwoD_ThomasFermiPoisson
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
             //sw.WriteLine("\tgphi = TABLE(\'" + gphi_filename + "\')");
-            sw.WriteLine("\tcar_dens = TABLE(\'" + dens_filename + "\')");
+            sw.WriteLine("\tcar_dens = SPLINE TABLE(\'" + dens_filename + "\')");
             sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine("\trho_prime = TABLE(\'" + densderiv_filename + "\')");
             sw.WriteLine();
@@ -555,6 +577,9 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
 
+            sw.WriteLine("\tRESOLVE(" + minus_g_phi + ")");
+            sw.WriteLine();
+
             // write out plotting routines
 
             sw.WriteLine("MONITORS");
@@ -566,35 +591,14 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(phi + t * new_phi) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR((phi + t * new_phi) * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(car_dens) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(car_dens + dop_dens) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(car_dens * " + window_function_string + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(car_dens * " + window_function_string + " + dop_dens) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR(u * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling)");
-
-            // generate summary containing residual integrals for x and phi
-            string window_function_string;
-            if (exp.Ymin_Dens < 0.0)
-                window_function_string = "(1.0 - (ustep(x + " + (-1.0 * exp.Ymin_Dens).ToString() + ")";
-            else
-                window_function_string = "(1.0 - (ustep(x - " + exp.Ymin_Dens.ToString() + ")";
-            double xmax = exp.Ymin_Dens + exp.Ny_Dens * exp.Dy_Dens;
-            if (xmax < 0.0)
-                window_function_string = window_function_string + " - ustep(x + " + (-1.0 * xmax).ToString() + "))";
-            else
-                window_function_string = window_function_string + " - ustep(x - " + xmax.ToString() + "))";
-            if (exp.Zmin_Dens < 0.0)
-                window_function_string = window_function_string + " * (ustep(y + " + (-1.0 * z_scaling * exp.Zmin_Dens).ToString() + ")";
-            else
-                window_function_string = window_function_string + " * (ustep(y - " + (z_scaling * exp.Zmin_Dens).ToString() + ")";
-            double ymax = z_scaling * (exp.Zmin_Dens + exp.Nz_Dens * exp.Dz_Dens);
-            if (ymax < 0.0)
-                window_function_string = window_function_string + " - ustep(y + " + (-1.0 * ymax).ToString() + ")))";
-            else
-                window_function_string = window_function_string + " - ustep(y - " + ymax.ToString() + "))";
-
-            window_function_string = window_function_string + " - (ustep(y + 3) - ustep(y -13)) * (ustep(x + 353) - ustep(x + 347) - ustep(x - 353) + ustep(x - 347))";
+            
+            window_function_string = "(1.0 - " + window_function_string + ") - (ustep(y + 3) - ustep(y -13)) * (ustep(x + 353) - ustep(x + 347) - ustep(x - 353) + ustep(x - 347))";
 
             string residual_report_filename = "residual_g.dat";
             sw.WriteLine("\tSUMMARY EXPORT FILE = \'" + residual_report_filename + "\'");

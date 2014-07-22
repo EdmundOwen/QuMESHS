@@ -112,5 +112,10 @@ namespace TwoD_ThomasFermiPoisson
                 
             return result;
         }
+
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

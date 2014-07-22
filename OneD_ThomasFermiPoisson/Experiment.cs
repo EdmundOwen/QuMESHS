@@ -94,7 +94,7 @@ namespace OneD_ThomasFermiPoisson
                     Band_Data tmp_g = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
 
                     // Generate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi)
-                    SpinResolved_Data rho_prime = -1.0 * dens_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
+                    SpinResolved_Data rho_prime = -1.0 * dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                     // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                     Band_Data g_phi = tmp_g - charge_dens_old;
@@ -150,7 +150,7 @@ namespace OneD_ThomasFermiPoisson
                 Band_Data tmp_g = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
 
                 // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
-                SpinResolved_Data rho_prime = -1.0 * dft_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
+                SpinResolved_Data rho_prime = -1.0 * dft_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 Band_Data g_phi = tmp_g - charge_dens_old;

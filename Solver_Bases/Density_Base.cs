@@ -65,7 +65,7 @@ namespace Solver_Bases
         /// </summary>
         protected double Get_OneD_DoS(double band_edge, double no_kb_T)
         {
-            if (band_edge > no_kb_T * Physics_Base.kB * temperature)
+            if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
                 return 0.0;
             else if (temperature == 0)
                 return 2.0 * Math.Sqrt(-2.0 * Physics_Base.mass * band_edge) / (Math.PI * Physics_Base.hbar);
@@ -75,6 +75,26 @@ namespace Solver_Bases
                 double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
+                dos_integrand.Integrator = new GaussKronrodIntegrator();
+                if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
+                    return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
+                else
+                    return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+            }
+        }
+
+        protected double Get_OneD_DoS_Deriv(double band_edge, double no_kb_T)
+        {
+            if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
+                return 0.0;
+            else if (temperature == 0)
+                return Math.Sqrt(-2.0 * Physics_Base.mass / band_edge) / (Math.PI * Physics_Base.hbar);
+            else
+            {
+                // calculate the density of states integral directly
+                double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
+                double beta = 1.0 / (Physics_Base.kB * temperature);
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -3.0) * (beta * (Math.Exp(beta * E) + 1) - 2.0 * beta * Math.Exp(beta * E))));
                 dos_integrand.Integrator = new GaussKronrodIntegrator();
                 if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
                     return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
@@ -281,7 +301,7 @@ namespace Solver_Bases
 
         public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot);
         public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
-        public abstract SpinResolved_Data Get_ChargeDensityDeriv(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
+        public abstract SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
         public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
         public abstract void Close();
     }

@@ -75,6 +75,60 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         /// <summary>
+        /// Calculate the charge density for this potential
+        /// NOTE!!! that the boundary potential is (essentially) set to infty by ringing the density with a set of zeros.
+        ///         this prevents potential solvers from extrapolating any residual density at the edge of the eigenstate
+        ///         solution out of the charge density calculation domain
+        /// </summary>
+        /// <param name="layers"></param>
+        /// <param name="charge_density"></param>
+        /// <param name="chem_pot"></param>
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
+        {
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, dft_pot);
+            DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
+
+            double min_eigval = eig_decomp.EigenValues.Min();
+            int max_wavefunction = (from val in eig_decomp.EigenValues
+                                    where val < no_kb_T * Physics_Base.kB * temperature
+                                    select val).ToArray().Length;
+
+            DoubleMatrix dens_up = new DoubleMatrix(ny, nz, 0.0);
+            DoubleMatrix dens_down = new DoubleMatrix(ny, nz, 0.0);
+
+            for (int i = 0; i < ny; i++)
+                for (int j = 0; j < nz; j++)
+                {
+                    double dens_val = 0.0;
+
+                    // do not add anything to the density if on the edge of the domain
+                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                        continue;
+
+                    for (int k = 0; k < max_wavefunction; k++)
+                    {
+                        // and integrate the density of states at this position for this eigenvector from the minimum energy to
+                        // (by default) 50 * k_b * T above mu = 0
+                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS_Deriv(eig_decomp.EigenValue(k), no_kb_T);
+                    }
+
+                    // just share the densities (there is no spin polarisation)
+                    dens_up[i, j] = 0.5 * dens_val;
+                    dens_down[i, j] = 0.5 * dens_val;
+                }
+
+
+            /////////// THERE SHOULD BE A MINUS SIGN HERE!!! NO IDEA WHERE ITS'S GONE /////////////////
+
+            // and multiply the density by -e to get the charge density (as these are electrons)
+            charge_density =  Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+        }
+
+        /// <summary>
         /// returns the eigen-energies for the given potential and charge density
         /// </summary>
         public DoubleVector Get_EnergyLevels(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)

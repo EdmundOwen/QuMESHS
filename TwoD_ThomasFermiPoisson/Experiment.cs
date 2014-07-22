@@ -173,7 +173,7 @@ namespace TwoD_ThomasFermiPoisson
                     stpwch.Start();
 
                     // Generate the charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi)
-                    SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
+                    SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                     // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                     //Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, carrier_density.Spin_Summed_Data);
@@ -257,7 +257,7 @@ namespace TwoD_ThomasFermiPoisson
                 stpwch.Start();
 
                 // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
-                SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
+                SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density.Spin_Summed_Data);
@@ -311,7 +311,7 @@ namespace TwoD_ThomasFermiPoisson
                 count++;
 
                 // reset the potential if the added potential t * x is too small
-                if (Math.Max(x.mat.Max(), (-1.0 * x).mat.Max()) < 10.0)
+                if (Math.Max(x.mat.Max(), (-1.0 * x).mat.Max()) < 10.0 || count == 31)
                 {
                     File.Copy("split_gate.pg6", "split_gate_WF_BRfinal" + (count - 1).ToString("000") + ".pg6", true);
                     Console.WriteLine("Maximum potential change this iteration was " + Math.Max((t * x).mat.Max(), (-t * x).mat.Max()).ToString() + "\nChanging to potential blend method...");
@@ -343,6 +343,7 @@ namespace TwoD_ThomasFermiPoisson
             }
 
             Console.WriteLine("New BR potential calculated\nCharge density multiplier = " + charge_dens_multiplier.ToString());
+            dft_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
 
             count = 0;
             converged = false;
@@ -352,7 +353,7 @@ namespace TwoD_ThomasFermiPoisson
                 stpwch.Start();
 
                 // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
-                SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensityDeriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
+                SpinResolved_Data rho_prime = dft_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density.Spin_Summed_Data);

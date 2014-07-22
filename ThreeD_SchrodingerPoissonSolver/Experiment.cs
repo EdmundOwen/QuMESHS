@@ -140,7 +140,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Band_Data tmp_g = pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
 
                 // Generate Jacobian g'(phi) = d(eps * d( )) + rho'(phi)
-                dens_solv.Get_ChargeDensityDeriv(layers, ref carrier_density_deriv, ref dopent_density_deriv, chem_pot);
+                dens_solv.Get_ChargeDensity_Deriv(layers, ref carrier_density_deriv, ref dopent_density_deriv, chem_pot);
                 Band_Data rho_prime = carrier_density_deriv.Spin_Summed_Data + dopent_density_deriv.Spin_Summed_Data;
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = g(phi)
