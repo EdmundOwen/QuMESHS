@@ -39,12 +39,19 @@ namespace TwoD_ThomasFermiPoisson
             Get_Potential(ref dft_pot, layers);
 
             DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, dft_pot);
-            DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
+            DoubleHermitianEigDecompServer eig_server = new DoubleHermitianEigDecompServer();
+            eig_server.ComputeEigenValueRange(dft_pot.mat.Min(), no_kb_T * Physics_Base.kB * temperature);
+            eig_server.ComputeVectors = true;
+            DoubleHermitianEigDecomp eig_decomp = eig_server.Factor(hamiltonian);
 
-            double min_eigval = eig_decomp.EigenValues.Min();
-            int max_wavefunction = (from val in eig_decomp.EigenValues
+            int max_wavefunction = 0;
+            if (eig_decomp.EigenValues.Length != 0)
+            {
+                double min_eigval = eig_decomp.EigenValues.Min();
+                max_wavefunction = (from val in eig_decomp.EigenValues
                                     where val < no_kb_T * Physics_Base.kB * temperature
                                     select val).ToArray().Length;
+            }
 
             DoubleMatrix dens_up = new DoubleMatrix(ny, nz, 0.0);
             DoubleMatrix dens_down = new DoubleMatrix(ny, nz, 0.0);
@@ -147,12 +154,12 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
                 {
-                    // coupling sites in the growth direction
+                    // coupling sites in the transverse direction
                     if (i != 0)
                         result[i * nz + j, i * nz + j - nz] = ty; 
                     if (i != ny - 1)
                         result[i * nz + j, i * nz + j + nz] = ty;
-                    // coupling sites in the transverse direction
+                    // coupling sites in the growth direction
                     if (j != 0)
                         result[i * nz + j, i * nz + j - 1] = tz;
                     if (j != nz - 1)

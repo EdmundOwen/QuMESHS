@@ -73,39 +73,6 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Closing density solver");
         }
 
-        /*
-        protected void Insert_DFT_Charge(ref SpinResolved_Data charge_density, SpinResolved_Data dft_dens)
-        {
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                {
-                    // index for the initial domain (ie. for charge_density and band_offset)
-                    int init_index_y = (int)Math.Floor((i * dy - ymin_pot + ymin) / dy_pot);
-                    int init_index_z = (int)Math.Floor((j * dz - zmin_pot + zmin) / dz_pot);
-
-                    // no interpolation (it doesn't work...)
-                    charge_density.Spin_Up.mat[init_index_y, init_index_z] = dft_dens.Spin_Up.mat[i, j];
-                    charge_density.Spin_Down.mat[init_index_y, init_index_z] = dft_dens.Spin_Down.mat[i, j];
-                }
-        }
-
-        protected void Interpolate_DFT_Grid(ref SpinResolved_Data dft_dens, ref Band_Data dft_band_offset, SpinResolved_Data charge_density, Band_Data band_offset)
-        {
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                {
-                    // index for the initial domain (ie. for charge_density and band_offset)
-                    int init_index_y = (int)Math.Floor((i * dy - ymin_pot + ymin) / dy_pot);
-                    int init_index_z = (int)Math.Floor((j * dz - zmin_pot + zmin) / dz_pot);
-
-                    // no interpolation (it doesn't work...)
-                    dft_dens.Spin_Up.mat[i, j] = charge_density.Spin_Up.mat[init_index_y, init_index_z];
-                    dft_dens.Spin_Down.mat[i, j] = charge_density.Spin_Down.mat[init_index_y, init_index_z];
-                    dft_band_offset.mat[i, j] = band_offset.mat[init_index_y, init_index_z];
-                }
-        }
-        */ 
-
         protected void Get_Potential(ref Band_Data dft_band_offset, ILayer[] layers)
         {
             for (int i = 0; i < ny; i++)

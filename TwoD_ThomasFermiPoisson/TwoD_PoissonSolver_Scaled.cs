@@ -77,13 +77,13 @@ namespace TwoD_ThomasFermiPoisson
                     double pos_z = j * exp.Dz_Dens + exp.Zmin_Dens;
 
                     // the factors multiplying the Laplacian in the transverse direction
-                    double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y + exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                    double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y - exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
+                    double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y + 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
+                    double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y - 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
                     result[i, j] = (factor_minus * data[i - 1, j] + factor_plus * data[i + 1, j] - (factor_plus + factor_minus) * data[i, j]);
 
                     // and in the growth direction
-                    factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z + exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                    factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z - exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
+                    factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z + 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
+                    factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z - 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
                     result[i, j] += (factor_minus * data[i, j - 1] + factor_plus * data[i, j + 1] - (factor_plus + factor_minus) * data[i, j]);
                 }
 
@@ -168,7 +168,8 @@ namespace TwoD_ThomasFermiPoisson
             // cycle through layers below surface
             for (int i = 1; i < exp.Layers.Length; i++)
             {
-                sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
+                // minus one to get rid of the substrate
+                sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
                 if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
                     sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
                 else
@@ -185,7 +186,9 @@ namespace TwoD_ThomasFermiPoisson
 
                 // set top gate here
                 if (i == exp.Layers.Length - 1)
-                    sw.WriteLine("\t\tVALUE(u) = top_V");
+                    // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = surface_bc\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
+                     sw.WriteLine("\t\tVALUE(u) = top_V");
+                    //sw.WriteLine("\t\tNATURAL(u) = top_V");
                 // or surface condition
                 if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
@@ -199,7 +202,7 @@ namespace TwoD_ThomasFermiPoisson
                 sw.WriteLine("\t\tLINE TO CLOSE");
                 sw.WriteLine();
             }
-
+            
             // write in surface and gates
             sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
             sw.WriteLine("\t\trho = 0");
@@ -219,7 +222,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t\tVALUE(u) = split_V");
             sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
-
+            
             // add a front commmand at the well depth to introduce a higher density of points at the interface
             sw.WriteLine("\tFRONT(y - well_depth, z_scaling * 20)");
             sw.WriteLine();
@@ -467,8 +470,9 @@ namespace TwoD_ThomasFermiPoisson
             else
                 window_function_string = window_function_string + " - ustep(y - " + ymax.ToString() + "))";
 
-            string minus_g_phi = "(dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + " +  window_function_string + " * car_dens + dop_dens)";
-            minus_g_phi += " * upulse(y - well_depth + 200, y - well_depth - 100)";
+            //string minus_g_phi = "(dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + " +  window_function_string + " * car_dens + dop_dens)";
+            //minus_g_phi += " * upulse(y - well_depth + 200, y - well_depth - 100)";
+            string minus_g_phi = "-1.0 * gphi * " + window_function_string;
 
             sw.WriteLine("TITLE \'Split Gate\'");
             sw.WriteLine("COORDINATES cartesian2");
@@ -477,7 +481,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("SELECT");
             // no regridding for the newton step.  Just use the original grid from the potential calculation
             //sw.WriteLine("REGRID = OFF");
-            sw.WriteLine("\tERRLIM = 1e-2");
+            sw.WriteLine("\tERRLIM = 1e-3");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -486,7 +490,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
-            //sw.WriteLine("\tgphi = TABLE(\'" + gphi_filename + "\')");
+            sw.WriteLine("\tgphi = SPLINE TABLE(\'" + gphi_filename + "\')");
             sw.WriteLine("\tcar_dens = SPLINE TABLE(\'" + dens_filename + "\')");
             sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine("\trho_prime = TABLE(\'" + densderiv_filename + "\')");
@@ -506,7 +510,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
             sw.WriteLine("\tsplit_width = " + split_width.ToString());
-            sw.WriteLine("\tsplit_depth = 10.0 * z_scaling\t! scaled depth of the split gate metal material");
+            sw.WriteLine("\tsplit_depth = 10 * z_scaling\t! scaled depth of the split gate metal material");
             sw.WriteLine();
             sw.WriteLine("\t! WELL DEPTH (in nm)");
             sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 5).ToString() + " * z_scaling");
@@ -534,19 +538,18 @@ namespace TwoD_ThomasFermiPoisson
             // cycle through layers below surface
             for (int i = 1; i < exp.Layers.Length; i++)
             {
-                sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
+                // minus one to get rid of the substrate
+                sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
                 sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
-
-                // HACK!
-                //if (i == 1)
-                //    sw.WriteLine("mesh_density=0.07*exp(-0.00001*(y-well_depth)^2)*exp(-0.000001*x^2)");
 
                 sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
                 sw.WriteLine("\t\tLINE TO (ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
 
                 // set top gate here
                 if (i == exp.Layers.Length - 1)
-                    sw.WriteLine("\t\tVALUE(u) = top_V");
+                    // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = 0\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
+                     sw.WriteLine("\t\tVALUE(u) = top_V");
+                    sw.WriteLine("\t\tNATURAL(u) = top_V");
                 // or surface condition
                 if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
@@ -560,7 +563,7 @@ namespace TwoD_ThomasFermiPoisson
                 sw.WriteLine("\t\tLINE TO CLOSE");
                 sw.WriteLine();
             }
-
+            
             // write in surface and gates
             sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
             sw.WriteLine("\t\teps = eps_0");
@@ -576,7 +579,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t\tVALUE(u) = split_V");
             sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
-
+            
             sw.WriteLine("\tRESOLVE(" + minus_g_phi + ")");
             sw.WriteLine();
 

@@ -28,7 +28,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // check if we should start from a precalculated density
             // consistency of band-structure, etc is the responsibility of the user...
-            if (!(bool)inputs["hot_start"])
+            //if (!(bool)inputs["hot_start"])
             {
                 Console.WriteLine("Performing density dopent calculation");
                 Dictionary<string, object> inputs_init = new Dictionary<string, object>();
@@ -54,7 +54,7 @@ namespace TwoD_ThomasFermiPoisson
                 inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
             }
 
-            Console.WriteLine("Starting experiment");
+            //Console.WriteLine("Starting experiment");
             exp.Initialise_Experiment(inputs);
             // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
             if (!(bool)inputs["hot_start"] && exp_init.Dz_Pot != exp.Dz_Pot)
@@ -111,9 +111,17 @@ namespace TwoD_ThomasFermiPoisson
 
         static void Run_Multiple_SGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)
         {
-            int init = (int)Math.Abs((int)(double)dict["init_val"]);
-            int final = (int)Math.Abs((int)(double)dict["final_val"]);
-            double interval = (double)dict["interval"] * Math.Sign((double)dict["final_val"] - (double)dict["init_val"]);
+            int init = (int)(double)dict["init_val"];
+            int final = (int)(double)dict["final_val"];
+            double interval = (double)dict["interval"];
+
+            // generate null raw data
+            string[] tmp_data = new string[(int)(double)dict["ny_dens"] * (int)(double)dict["nz_dens"]];
+            for (int i = 0; i < tmp_data.Length; i++)
+                tmp_data[i] = "0";
+            File.WriteAllLines((string)dict["spin_up_file"], tmp_data);
+            File.WriteAllLines((string)dict["spin_down_file"], tmp_data);
+            File.WriteAllLines((string)dict["surface_charge_file"], new string[] { ((double)dict["surface_charge"]).ToString() });
 
             for (int i = init; i < final; i++)
             {
@@ -126,9 +134,10 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Experiment initialised for sg = " + sg.ToString() + "V");
                 exp.Run();
 
-                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + i.ToString("00000") + "_tg000.dat");
-                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + i.ToString("00000") + "_tg000.dat");
-                File.Copy("energies.dat", "energies_sg" + i.ToString("00000") + "_tg000.dat");
+                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
+                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
+                File.Copy("energies.dat", "energies_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
+                File.Copy("split_gate_final.pg6", "split_gate_final_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".pg6", true);
                 Console.WriteLine("Experiment complete");
             }
         }

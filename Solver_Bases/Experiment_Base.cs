@@ -43,6 +43,7 @@ namespace Solver_Bases
         protected double temperature;
 
         protected bool TF_only = false;       // only run Thomas-Fermi density calculations (i.e. no DFT, Green's functions etc...)
+        protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
 
         protected void Initialise(Dictionary<string, object> input_dict)
         {
@@ -222,6 +223,7 @@ namespace Solver_Bases
 
             double vpa = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
             double vpb = calc_vp(div_fact * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+            double t_orig = t;
 
             // work out whether this is going in the right direction (assuming vp is monotonic)
             if (Math.Abs(vpb) < Math.Abs(vpa))
@@ -233,7 +235,17 @@ namespace Solver_Bases
                 {
                     t = div_fact * t;
                     if (t < minval)
-                        return minval;
+                    {
+                        // evaluate vp at zero
+                        double vpc = calc_vp(0.0, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+                        // if there is a root between minval and zero, return minval
+                        if (Math.Sign(vpb) != Math.Sign(vpc))
+                            return minval;
+                        // otherwise, return a negative value which can be used as a flag or, if not, will still
+                        // generate weird behavious which should push the iterator into an active regime
+                        else
+                            return -1.0 * minval;
+                    }
 
                     vpa = vpb;
                     vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
@@ -243,8 +255,8 @@ namespace Solver_Bases
             }
             else
             {
-                // if 0.5 * t was going downhill, then we need to be doubling t and looking for the root
-                while (Math.Sign(vpb) == Math.Sign(vpa) && t < maxval)
+                // if 0.5 * t was going uphill, then we need to be doubling t and looking for the root
+                while (Math.Sign(vpb) == Math.Sign(vpa))
                 {
                     t = (1.0 / div_fact) * t;
                     if (t > maxval)
