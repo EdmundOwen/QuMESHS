@@ -305,5 +305,9 @@ namespace TwoD_ThomasFermiPoisson
 
             return carrier_density_deriv + dopent_density_deriv;
         }
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
