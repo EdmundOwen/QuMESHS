@@ -39,10 +39,10 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 # Top gate voltage
-% top_V = -7.0
+% top_V = -0.0
 #
 ## Split gate voltage
-% split_V = -0.48
+% split_V = -2.65
 #
 ## Split gate width
 % split_width = 800
@@ -72,16 +72,16 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 1.0
+% T = 0.05
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -900.0
+% ymin_dens = -150.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens =  15.0
+% dy_dens =  5.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 121
+% ny_dens = 61
 #
 ## Minimum of simulation domain in the growth direction
 % zmin_dens = -315.0
@@ -96,7 +96,7 @@
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = true
+% hot_start = false
 #
 ## File location for spin-up data
 % spin_up_file = dens_2D_up_sg-049_tg-700.dat

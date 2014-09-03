@@ -88,15 +88,15 @@ namespace TwoD_ThomasFermiPoisson
         ///         solution out of the charge density calculation domain
         /// </summary>
         /// <param name="layers"></param>
-        /// <param name="charge_density"></param>
+        /// <param name="charge_density_deriv"></param>
         /// <param name="chem_pot"></param>
-        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
         {
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, dft_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density_deriv, dft_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
@@ -132,7 +132,7 @@ namespace TwoD_ThomasFermiPoisson
             /////////// THERE SHOULD BE A MINUS SIGN HERE!!! NO IDEA WHERE ITS'S GONE /////////////////
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            charge_density =  Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            charge_density_deriv =  Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
         }
 
         /// <summary>

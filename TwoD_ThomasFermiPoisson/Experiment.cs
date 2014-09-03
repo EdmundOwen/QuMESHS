@@ -170,12 +170,14 @@ namespace TwoD_ThomasFermiPoisson
                 Run_Iteration_Routine(dens_solv, 1.0);
 
             // and then run the DFT solver at the base temperature over a limited range
-            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+            TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
+            //TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
             dft_solv.Ymin_Pot = ymin_pot; dft_solv.Dy_Pot = dy_pot;
             dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
+            dft_solv.Get_SOI_parameters(chem_pot);
             
             bool converged = false;
-            int no_runs = 11;
+            int no_runs = 10;
             while (!converged)
             {
                 converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
@@ -194,11 +196,11 @@ namespace TwoD_ThomasFermiPoisson
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(surface_charge.ToString()); sw.Close();
             // save eigen-energies
-            DoubleVector energies = dft_solv.Get_EnergyLevels(layers, carrier_density, chem_pot);
-            StreamWriter sw_e = new StreamWriter("energies.dat");
-            for (int i = 0; i < energies.Length; i++)
-                sw_e.WriteLine(energies[i]);
-            sw_e.Close();
+            //DoubleVector energies = dft_solv.Get_EnergyLevels(layers, carrier_density, chem_pot);
+            //StreamWriter sw_e = new StreamWriter("energies.dat");
+            //for (int i = 0; i < energies.Length; i++)
+            //    sw_e.WriteLine(energies[i]);
+            //sw_e.Close();
 
             final_dens_solv.Output(carrier_density, "carrier_density.dat");
             final_dens_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot), "density_error.dat");

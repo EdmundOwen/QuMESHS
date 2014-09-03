@@ -13,7 +13,7 @@ namespace TwoD_ThomasFermiPoisson
     class TwoD_SO_DFTSolver : TwoD_Density_Base
     {
         double no_kb_T = 50.0;          // number of kb_T to integrate to
-        double delta_k = 0.1;           // integration variable in k for band structure
+        double delta_k = 0.03;           // integration variable in k for band structure
         double eps = 1.0e-9;            // minimum density added before convergence
 
         DoubleComplex I = new DoubleComplex(0.0, 1.0);
@@ -32,7 +32,7 @@ namespace TwoD_ThomasFermiPoisson
         {
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
             tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
-            double r_so = 1.0e-8;
+            double r_so = 0.0e-8;
             alpha = r_so * Physics_Base.hbar * Physics_Base.hbar / (4.0 * Physics_Base.mass * Physics_Base.mass);
 
             h = 3.0 * delta_k / 8.0;
@@ -84,24 +84,28 @@ namespace TwoD_ThomasFermiPoisson
                 DoubleHermitianMatrix hamiltonian_m = Create_Hamiltonian(layers, charge_density, dft_pot, -1.0 * k);
 
                 // calculate density for this value of k
-                SpinResolved_Data density_k_p = Calculate_Density(hamiltonian_p);
-                SpinResolved_Data density_k_m = Calculate_Density(hamiltonian_m);
-                SpinResolved_Data density_k = density_k_p + density_k_m;
+                SpinResolved_Data charge_density_k = Calculate_Density(hamiltonian_p);
+                if (k != 0)
+                    charge_density_k += Calculate_Density(hamiltonian_m);
 
                 // add new k density according to Simpson's 3/8th rule
-                if (count % 3 != 0)
-                    charge_density += 3.0 * h * density_k;
-                else if (count == 0)
-                    charge_density = h * density_k;
+                if (count == 0)
+                {
+                    charge_density = h * charge_density_k;
+                    // and check to see whether there is any density being added
+                    integrated = Check_Convergence(charge_density_k, eps);
+                }
+                else if (count % 3 != 0)
+                    charge_density += 3.0 * h * charge_density_k;
                 else
                 {
                     // check whether there was any density at this wave vector to add
-                    integrated = Check_Integration_Convergence(density_k, eps);
+                    integrated = Check_Integration_Convergence(charge_density_k, eps);
 
                     if (integrated)
-                        charge_density = h * density_k;
+                        charge_density += h * charge_density_k;
                     else
-                        charge_density = 2.0 * h * density_k;
+                        charge_density += 2.0 * h * charge_density_k;
                 }
 
                 k += delta_k;
@@ -129,8 +133,8 @@ namespace TwoD_ThomasFermiPoisson
                                 - I * Create_SOI_Hamiltonian(Direction.z, Direction.x, k, ny, nz));
 
             // recombine matrices and output result
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < ny * nz; i++)
+                for (int j = 0; j < ny * nz; j++)
                 {
                     result[i, j] = h_upup[i, j];
                     result[i, j + ny * nz] = h_dnup[i, j];
