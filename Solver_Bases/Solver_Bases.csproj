@@ -79,6 +79,7 @@
     <Compile Include="Geometry\Sheet.cs" />
     <Compile Include="Geometry\Slab.cs" />
     <Compile Include="IDensity_Solve.cs" />
+    <Compile Include="IExperiment.cs" />
     <Compile Include="Inputs_to_Dictionary.cs" />
     <Compile Include="Input_Band_Structure.cs" />
     <Compile Include="IPoisson_Solve.cs" />

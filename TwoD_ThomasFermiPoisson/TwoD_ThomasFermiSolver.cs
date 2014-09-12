@@ -10,7 +10,7 @@ namespace TwoD_ThomasFermiPoisson
 {
     public class TwoD_ThomasFermiSolver : TwoD_Density_Base
     {
-        public TwoD_ThomasFermiSolver(Experiment exp)
+        public TwoD_ThomasFermiSolver(IExperiment exp)
             : base(exp)
         {
         }

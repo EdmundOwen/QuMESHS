@@ -3,7 +3,8 @@
 #
 ## High density shallow HEMT (eg W0626)
 #
-mat=PMMA t=200
+mat=air t=950
+mat=PMMA t=150
 surface=true
 #mat=GaAs t=10
 #mat=AlGaAs t=40 x=.3 Nd=0.3e18
@@ -13,9 +14,9 @@ surface=true
 ## Low density deep HEMT (eg W0616)
 #
 mat=GaAs t=10
-mat=AlGaAs t=200 x=.3 Nd=8e16
+mat=AlGaAs t=200 x=.3 Nd=4.4e16
 mat=AlGaAs t=75 x=.3
-mat=GaAs t=1605 Nd=1e14
+mat=GaAs t=1615
 #
 ## Masato's wafer
 #

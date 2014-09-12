@@ -75,7 +75,7 @@ namespace Solver_Bases
             return Physics_Base.q_e * Parse_Potential(data);
         }
 
-        protected static string[] Trim_Potential_File(string[] lines)
+        protected virtual string[] Trim_Potential_File(string[] lines)
         {
             // work out where the data starts (this is flexPDE specific)
             int first_line = 0;
@@ -259,6 +259,12 @@ namespace Solver_Bases
         {
             Console.WriteLine("Resetting convergence criteria for the potential solver");
             converged = false; convergence_factor = double.MaxValue;
+        }
+
+        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, Band_Data car_dens)
+        {
+            Save_Density_Data(car_dens, dens_filename);
+            return Calculate_Newton_Step(rho_prime, rhs);
         }
 
         protected abstract Band_Data Parse_Potential(string[] data);

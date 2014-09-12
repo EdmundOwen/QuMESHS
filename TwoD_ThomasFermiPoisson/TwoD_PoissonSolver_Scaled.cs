@@ -259,12 +259,6 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
-        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, Band_Data car_dens)
-        {
-            Save_Density_Data(car_dens, dens_filename);
-            return Calculate_Newton_Step(rho_prime, rhs);
-        }
-
         public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs)
         {
             Save_Density_Data(rhs, gphi_filename);

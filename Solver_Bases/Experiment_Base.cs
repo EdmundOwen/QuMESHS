@@ -9,7 +9,7 @@ using Solver_Bases.Geometry;
 
 namespace Solver_Bases
 {
-    public abstract class Experiment_Base
+    public abstract class Experiment_Base : IExperiment
     {
         protected SpinResolved_Data carrier_density;
         protected SpinResolved_Data dopent_density;
@@ -45,7 +45,7 @@ namespace Solver_Bases
         protected bool TF_only = false;       // only run Thomas-Fermi density calculations (i.e. no DFT, Green's functions etc...)
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
 
-        protected void Initialise(Dictionary<string, object> input_dict)
+        public void Initialise(Dictionary<string, object> input_dict)
         {
             // solver inputs
             Get_From_Dictionary<double>(input_dict, "tolerance", ref tol);

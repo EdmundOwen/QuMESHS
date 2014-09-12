@@ -18,6 +18,13 @@ namespace Solver_Bases
         z = 2
     }
 
+    public enum Plane
+    {
+        xy = 0,
+        yz = 1,
+        zx = 2
+    }
+
     public enum Material
     {
         GaAs,

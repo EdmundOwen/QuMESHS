@@ -16,7 +16,7 @@ namespace TwoD_ThomasFermiPoisson
 
         double ty, tz;
 
-        public TwoD_DFTSolver(Experiment exp)
+        public TwoD_DFTSolver(IExperiment exp)
             : base(exp)
         {
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);

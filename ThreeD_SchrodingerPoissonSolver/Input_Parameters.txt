@@ -24,7 +24,7 @@
 % dy = 80
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 240
+% nz = 600
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
 % dz = 5
@@ -58,6 +58,9 @@
 #
 ## Length of the split gate (in the longitudinal direction)
 % split_length = 400
+#
+## Top gate length (in transport direction)
+% top_length = 400
 #
 ## Minimum of simulation domain in the longitudinal direction
 % xmin_pot = -1000.0

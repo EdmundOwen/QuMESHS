@@ -11,9 +11,9 @@ namespace TwoD_ThomasFermiPoisson
 {
     public abstract class TwoD_Density_Base : Density_Base
     {
-        Experiment exp;
+        IExperiment exp;
 
-        public TwoD_Density_Base(Experiment exp)
+        public TwoD_Density_Base(IExperiment exp)
             : base(exp.Temperature, 0.0, exp.Dy_Dens, exp.Dz_Dens, 1, exp.Ny_Dens, exp.Nz_Dens, 0.0, exp.Ymin_Dens, exp.Zmin_Dens)
         {
             this.exp = exp;

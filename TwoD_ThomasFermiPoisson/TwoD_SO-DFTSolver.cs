@@ -27,7 +27,7 @@ namespace TwoD_ThomasFermiPoisson
 
         Band_Data dV_y, dV_z, dV_yz;
 
-        public TwoD_SO_DFTSolver(Experiment exp)
+        public TwoD_SO_DFTSolver(IExperiment exp)
             : base(exp)
         {
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);

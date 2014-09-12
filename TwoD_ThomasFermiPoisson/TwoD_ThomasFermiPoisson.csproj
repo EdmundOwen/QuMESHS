@@ -75,7 +75,6 @@
     <Compile Include="Experiment.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TwoD_DensitySolver.cs" />
     <Compile Include="TwoD_Density_Base.cs" />
     <Compile Include="TwoD_DFTSolver.cs" />
     <Compile Include="TwoD_EffectiveBandSolver.cs" />

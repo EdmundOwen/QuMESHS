@@ -175,7 +175,7 @@ namespace TwoD_ThomasFermiPoisson
             dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
             
             bool converged = false;
-            int no_runs = 11;
+            int no_runs = 10;
             while (!converged)
             {
                 converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
