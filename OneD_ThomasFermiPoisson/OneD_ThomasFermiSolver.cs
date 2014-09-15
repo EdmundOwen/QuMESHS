@@ -11,9 +11,12 @@ namespace OneD_ThomasFermiPoisson
 {
     public class OneD_ThomasFermiSolver : OneD_Density_Base
     {
-        public OneD_ThomasFermiSolver(double temperature, double dz, int nz, double zmin)
-            : base(temperature, dz, nz, zmin)
+        public OneD_ThomasFermiSolver(IExperiment exp, double dz, double zmin, int nz)
+            : base(exp)
         {
+            this.dz = dz;
+            this.zmin = zmin;
+            this.nz = nz;
         }
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot)

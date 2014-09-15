@@ -12,30 +12,15 @@ namespace Solver_Bases
     {
         protected double temperature;
 
-        protected double dx, dy, dz;
-        protected double xmin, ymin, zmin;
-        protected int nx, ny, nz;
-
         protected double fermi_Energy = 0.0;
         protected int dim;
 
         private bool converged = false;
         private double convergence_factor = double.MaxValue;
 
-        public Density_Base(double temperature, double dx, double dy, double dz, int nx, int ny, int nz, double xmin, double ymin, double zmin)
+        public Density_Base(double temperature)
         {
             this.temperature = temperature;
-            this.dx = dx; this.dy = dy; this.dz = dz;
-            this.nx = nx; this.ny = ny; this.nz = nz;
-            this.xmin = xmin; this.ymin = ymin; this.zmin = zmin;
-
-            // check how many actual dimensions are present
-            if (nx != 1)
-                dim = 3;
-            else if (ny != 1)
-                dim = 2;
-            else
-                dim = 1;
         }
 
         /// <summary>

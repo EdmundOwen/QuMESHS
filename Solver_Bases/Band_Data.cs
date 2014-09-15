@@ -279,7 +279,7 @@ namespace Solver_Bases
         /// <summary>
         /// saves out the 2d density data with a modulation in the z direction given by dens_z
         /// </summary>
-        public void Save_3D_Data(string filename, DoubleVector dens_z, double dx, double dy, double dz, double xmin, double ymin, double zmin)
+        public void Save_3D_Data(string filename, Band_Data dens_z, double dx, double dy, double dz, double xmin, double ymin, double zmin)
         {
             // check that the dimension of the density is correct
             if (this.Dimension != 2)
@@ -288,9 +288,9 @@ namespace Solver_Bases
             // open stream
             StreamWriter sw = new StreamWriter(filename);
 
-            int nx = this.mat.Cols;
-            int ny = this.mat.Rows;
-            int nz = dens_z.Length;
+            int nx = this.mat.Rows;
+            int ny = this.mat.Cols;
+            int nz = dens_z.vec.Length;
 
             // save out positions
             sw.WriteLine("x " + nx.ToString());
@@ -317,11 +317,11 @@ namespace Solver_Bases
                 for (int j = 0; j < ny; j++)
                 {
                     for (int k = 0; k < nx; k++)
-                        if (Math.Abs(this.mat[j, k]) < 1e-20)
+                        if (Math.Abs(this.mat[k, j] * dens_z.vec[i]) < 1e-20)
                             sw.Write("0\t");
                         else
                             // note that the ordering is x first, then y, then z -- this is FlexPDE specific
-                            sw.Write(((float)this.mat[k, j] * (float)dens_z[i]).ToString() + '\t');
+                            sw.Write(((float)(this.mat[k, j] * dens_z.vec[i])).ToString() + '\t');
                     sw.WriteLine();
                 }
 

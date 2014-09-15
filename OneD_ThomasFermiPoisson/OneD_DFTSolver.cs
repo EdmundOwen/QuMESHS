@@ -17,8 +17,8 @@ namespace OneD_ThomasFermiPoisson
         double t;
         int max_wavefunction = 0;
 
-        public OneD_DFTSolver(double temperature, double dz, int nz, double zmin)
-            : base(temperature, dz, nz, zmin)
+        public OneD_DFTSolver(IExperiment exp)
+            : base(exp)
         {
             t = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }

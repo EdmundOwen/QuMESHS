@@ -36,6 +36,18 @@ namespace Solver_Bases.Geometry
             return result;
         }
 
+        public static ILayer GetLayer(ILayer[] layers, Plane plane, double x, double y, double z)
+        {
+            if (plane == Plane.xy)
+                return GetLayer(layers, x, y, z);
+            else if (plane == Plane.yz)
+                return GetLayer(layers, z, x, y);
+            else if (plane == Plane.zx)
+                return GetLayer(layers, y, z, x);
+            else
+                throw new NotImplementedException();
+        }
+
         public static ILayer Find_Layer_Below_Surface(ILayer[] layers)
         {
             for (int i = 0; i < layers.Length; i++)

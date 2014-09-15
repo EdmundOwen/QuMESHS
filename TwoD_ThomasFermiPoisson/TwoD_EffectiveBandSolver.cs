@@ -15,13 +15,13 @@ namespace TwoD_ThomasFermiPoisson
 
         double no_kb_T = 50.0;          // number of kb_T to integrate to
 
-        double ty, tz;
+        double tx, ty;
 
         public TwoD_EffectiveBandSolver(Experiment exp)
             : base(exp)
         {
+            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
-            tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
@@ -32,25 +32,25 @@ namespace TwoD_ThomasFermiPoisson
 
             DoubleHermitianEigDecomp eig_decomp;
 
-            double[] y_energy = new double[ny];
-            DoubleMatrix dens_up = new DoubleMatrix(ny, nz, 0.0);
-            DoubleMatrix dens_down = new DoubleMatrix(ny, nz, 0.0);
+            double[] x_energy = new double[nx];
+            DoubleMatrix dens_up = new DoubleMatrix(nx, ny, 0.0);
+            DoubleMatrix dens_down = new DoubleMatrix(nx, ny, 0.0);
 
             // cycle over y-direction calculating the ground state energy and eigenstate in the z-direction
-            for (int i = 0; i < ny; i++)
+            for (int i = 0; i < nx; i++)
             {
                 // pull out the chemical potential for this slice
-                double[] z_dft_pot = new double[nz];
-                for (int j = 0; j < nz; j++)
-                    z_dft_pot[j] = dft_pot.mat[i, j];
+                double[] y_dft_pot = new double[ny];
+                for (int j = 0; j < ny; j++)
+                    y_dft_pot[j] = dft_pot.mat[i, j];
 
                 // calculate its eigendecomposition
-                DoubleHermitianMatrix h_z = Create_Hamiltonian(z_dft_pot, tz, nz);
-                eig_decomp = new DoubleHermitianEigDecomp(h_z);
+                DoubleHermitianMatrix h_y = Create_Hamiltonian(y_dft_pot, ty, ny);
+                eig_decomp = new DoubleHermitianEigDecomp(h_y);
 
                 // insert the eigenstate into density and record the local confinement energy
-                y_energy[i] = eig_decomp.EigenValue(0);
-                for (int j = 0; j < nz; j++)
+                x_energy[i] = eig_decomp.EigenValue(0);
+                for (int j = 0; j < ny; j++)
                 {
                     dens_up[i, j] = DoubleComplex.Norm(0.5 * eig_decomp.EigenVector(0)[j]) * DoubleComplex.Norm(0.5 * eig_decomp.EigenVector(0)[j]);
                     dens_down[i, j] = DoubleComplex.Norm(0.5 * eig_decomp.EigenVector(0)[j]) * DoubleComplex.Norm(0.5 * eig_decomp.EigenVector(0)[j]);
@@ -58,26 +58,26 @@ namespace TwoD_ThomasFermiPoisson
             }
 
             // calculate the eigenstates in the y-direction
-            DoubleHermitianMatrix h_y = Create_Hamiltonian(y_energy, ty, ny);
-            eig_decomp = new DoubleHermitianEigDecomp(h_y);
+            DoubleHermitianMatrix h_x = Create_Hamiltonian(x_energy, tx, nx);
+            eig_decomp = new DoubleHermitianEigDecomp(h_x);
             energies = eig_decomp.EigenValues;
 
             int max_wavefunction = (from val in eig_decomp.EigenValues
                                     where val < no_kb_T * Physics_Base.kB * temperature
                                     select val).ToArray().Length;
-            double[] dens_y = new double[ny];
+            double[] dens_x = new double[nx];
 
             // and generate a density for the y-direction
-            for (int i = 0; i < ny; i++)
+            for (int i = 0; i < nx; i++)
                 for (int k = 0; k < max_wavefunction; k++)
-                    dens_y[i] += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
+                    dens_x[i] += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
 
             // multiply the z-densities by the y-density
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
-                    dens_up[i, j] *= dens_y[i];
-                    dens_down[i, j] *= dens_y[i];
+                    dens_up[i, j] *= dens_x[i];
+                    dens_down[i, j] *= dens_x[i];
                 }
             
             // and multiply the density by -e to get the charge density (as these are electrons)

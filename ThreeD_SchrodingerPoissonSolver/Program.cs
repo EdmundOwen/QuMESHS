@@ -33,7 +33,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             Band_Data chem_pot = exp_init.Chemical_Potential;
             ILayer[] layers = exp_init.Layers;
             OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
-            inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(chem_pot, layers) * (double)inputs_init["dz"]);
+            inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(chem_pot, layers));
             inputs.Add("bottom_bc", exp_init.Bottom_BC);
             
             Console.WriteLine("Starting experiment");
@@ -43,9 +43,11 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             int nx_init = (int)(double)inputs_init["nx_1d"]; int ny_init = (int)(double)inputs_init["ny_1d"];
             double dx_init = exp.Nx_Pot * exp.Dx_Pot / nx_init; double dy_init = exp.Ny_Pot * exp.Dy_Pot / ny_init;
-            
-            Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_dopents.dat", dx_init, dy_init, exp.Dz_Pot, exp.Xmin_Pot, exp.Ymin_Pot, exp.Zmin_Pot);
-            Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init, exp.Dz_Pot, exp.Xmin_Pot, exp.Ymin_Pot, exp.Zmin_Pot);
+
+            double y_scaling = ((double)inputs["nx"] * (double)inputs["dx"]) / ((double)inputs["ny"] * (double)inputs["dy"]);
+            double z_scaling = ((double)inputs["nx"] * (double)inputs["dx"]) / ((double)inputs["nz"] * (double)inputs["dz"]);
+            Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_dopents.dat", dx_init, dy_init * y_scaling, exp.Dz_Pot * z_scaling, exp.Xmin_Pot, exp.Ymin_Pot * y_scaling, exp.Zmin_Pot * z_scaling);
+            Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init * y_scaling, exp.Dz_Pot * z_scaling, exp.Xmin_Pot, exp.Ymin_Pot * y_scaling, exp.Zmin_Pot * z_scaling);
             Console.WriteLine("Saved 1D dopent density");
 
             exp.Run();

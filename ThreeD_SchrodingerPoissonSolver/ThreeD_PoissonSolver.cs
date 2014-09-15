@@ -16,7 +16,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         double split_width, split_length, top_length;
 
         Experiment exp;
-        DoubleVector dens_1d;
+        SpinResolved_Data dens_1d;
         string densdopent_filename;
         string densderiv_filename;
         string pot_filename;
@@ -29,26 +29,22 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         double t = 0.0;
 
-        public ThreeD_PoissonSolver(Experiment exp, DoubleVector dens_1d, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
+        public ThreeD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
             : base(using_flexPDE, flexPDE_input, flexPDE_location, tol)
         {
             this.exp = exp;
-            this.dens_1d = dens_1d;
 
             this.dens_filename = "car_dens.dat";
             this.densdopent_filename = "dens_2D_dopents.dat";
             this.densderiv_filename = "rho_prime.dat";
             this.pot_filename = "phi.dat";
             this.new_pot_filename = "new_phi.dat";
-
-            // calculate the z-position of the maximum of dens_1d and use this as z_2DEG
-            z_2DEG = exp.Zmin_Pot + exp.Dz_Pot * (double)Array.IndexOf(dens_1d.ToArray(), dens_1d.Min());
-
+            
             // calculate scaling factors (x is used as the reference dimension)
             // w = a_y * y such that the y dimension has the same length as the x dimension
-            y_scaling = (exp.Ny_Pot * exp.Dy_Pot) / (exp.Nx_Pot * exp.Dx_Pot);
+            y_scaling = (exp.Nx_Pot * exp.Dx_Pot) / (exp.Ny_Pot * exp.Dy_Pot);
             // w = a_z * z such that the z dimension has the same length as the x dimension
-            z_scaling = (exp.Nz_Pot * exp.Dz_Pot) / (exp.Nx_Pot * exp.Dx_Pot);
+            z_scaling = (exp.Nx_Pot * exp.Dx_Pot) / (exp.Nz_Pot * exp.Dz_Pot);
         }
 
         protected override Band_Data Parse_Potential(string[] data)
@@ -120,12 +116,12 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tlx = " + (exp.Dx_Pot * exp.Nx_Pot).ToString());
             sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
             sw.WriteLine();
-            sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
-            sw.WriteLine("\tsurface_bc = " + surface.ToString());
-            sw.WriteLine();
             sw.WriteLine("\t! Scale factors");
             sw.WriteLine("\ty_scaling = " + y_scaling.ToString());
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
+            sw.WriteLine();
+            sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
+            sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
             sw.WriteLine("\tsplit_V = " + split_bc.ToString());
@@ -152,27 +148,27 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
-            sw.WriteLine("\tu: div(eps * grad(u)) = - rho	! Poisson's equation");
+            sw.WriteLine("\tu: dx(eps * dx(u)) + y_scaling * dy(eps * y_scaling * dy(u)) + z_scaling * dz(eps * z_scaling * dz(u)) = - rho\t! Poisson's equation");
             sw.WriteLine();
             sw.WriteLine("EXTRUSION");
-            sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " / z_scaling");
+            sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " * z_scaling");
             int layercount = 1;
             for (int i = 1; i < exp.Layers.Length; i++)
             {
                 sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                sw.WriteLine("\tSURFACE	\"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " / z_scaling");
+                sw.WriteLine("\tSURFACE	\"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling");
                 layercount++;
 
                 if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
                 {
                     sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = split_depth / z_scaling");
+                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = split_depth * z_scaling");
                     layercount++;
                 }
                 else if (exp.Layers[i].Material == Material.PMMA)
                 {
                     sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " / z_scaling + top_depth / z_scaling");
+                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling + top_depth * z_scaling");
                     layercount++;
                 }
             }
@@ -208,56 +204,56 @@ namespace ThreeD_SchrodingerPoissonSolver
                 }
             }
             int max_layers = layercount - 1;
-            sw.WriteLine("\t\tSTART(-lx / 2, -ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (-lx / 2, ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, -ly / 2 /  y_scaling)");
+            sw.WriteLine("\t\tSTART(-lx / 2, -ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (-lx / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (lx / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (lx / 2, -ly / 2 * y_scaling)");
             sw.WriteLine("\t\tLINE TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 2 ! left split gate");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, ly / 2 /  y_scaling)");
+            sw.WriteLine("\t\tSTART (-split_length / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, ly / 2 * y_scaling)");
             sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, split_width / 2 /  y_scaling) TO (-split_length / 2, split_width / 2 /  y_scaling) TO CLOSE");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, split_width / 2 * y_scaling) TO (-split_length / 2, split_width / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 3 ! right split gate");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, -ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -ly / 2 /  y_scaling)");
+            sw.WriteLine("\t\tSTART (-split_length / 2, -ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, -ly / 2 * y_scaling)");
             sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -split_width / 2 /  y_scaling) TO (-split_length / 2, -split_width / 2 /  y_scaling) TO CLOSE");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, -split_width / 2 * y_scaling) TO (-split_length / 2, -split_width / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 4 ! top gate");
             sw.WriteLine("\t\tSURFACE \"" + (max_layers - 2).ToString() + "\" VALUE(u) = top_V");
             sw.WriteLine("\t\tSURFACE \"" + (max_layers - 1).ToString() + "\" VALUE(u) = top_V");
             sw.WriteLine("\t\tLAYER \"" + (max_layers - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-top_length / 2, ly / 2 / y_scaling)");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, ly / 2 / y_scaling)");
+            sw.WriteLine("\t\tSTART (-top_length / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (top_length / 2, ly / 2 * y_scaling)");
             sw.WriteLine("\t\tVALUE(u) = top_V");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, -ly / 2 / y_scaling) TO (-top_length / 2, -ly / 2 / y_scaling) TO CLOSE");
+            sw.WriteLine("\t\tLINE TO (top_length / 2, -ly / 2 * y_scaling) TO (-top_length / 2, -ly / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth / z_scaling");
-            sw.WriteLine("\tCONTOUR(u) ON z = well_depth / z_scaling");
+            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth * z_scaling");
+            sw.WriteLine("\tCONTOUR(u) ON z = well_depth * z_scaling");
             sw.WriteLine("\tCONTOUR(u) ON x = 0");
             sw.WriteLine("\tCONTOUR(u) ON y = 0");
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(rho) ON x = 0");
             sw.WriteLine("\tCONTOUR(u) ON x = 0");
             sw.WriteLine("\tCONTOUR(u) ON y = 0");
-            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth / z_scaling");
-            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON z = well_depth / z_scaling");
-            sw.WriteLine("\tELEVATION(rho) FROM (0,0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " / z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " / z_scaling)");
-            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, 0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " / z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " / z_scaling)");
-            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, -ly / 2 * y_scaling, well_depth / z_scaling) TO (0, ly / 2 / y_scaling, well_depth / z_scaling)");
-            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-lx/2, 0, well_depth / z_scaling) TO (lx / 2, 0, well_depth / z_scaling)");
+            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth * z_scaling");
+            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON z = well_depth * z_scaling");
+            sw.WriteLine("\tELEVATION(rho) FROM (0,0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " * z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " * z_scaling)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, 0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " * z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " * z_scaling)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, -ly / 2 * y_scaling, well_depth * z_scaling) TO (0, ly / 2 * y_scaling, well_depth * z_scaling)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-lx/2, 0, well_depth * z_scaling) TO (lx / 2, 0, well_depth * z_scaling)");
             sw.WriteLine();
-            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", well_depth / z_scaling, " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", 0.001) EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", 2) FILE = \"pot.dat\"");
+            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", well_depth * z_scaling, " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", 0.001) EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", 2) FILE = \"pot.dat\"");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(0.0 * u) FILE = \'" + new_pot_filename + "\' ! dummy file for smoother function");
             sw.WriteLine();
@@ -315,9 +311,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine();
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\tgphi = SPLINE TABLE(\'" + gphi_filename + "\')");
-            sw.WriteLine("\tcar_dens = SPLINE TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
+            sw.WriteLine("\tgphi = TABLE(\'" + gphi_filename + "\')");
+            sw.WriteLine("\trho = TABLE(\'" + dens_filename + "\')");
             sw.WriteLine("\trho_prime = TABLE(\'" + densderiv_filename + "\')");
             sw.WriteLine();
             sw.WriteLine("\tlx = " + (exp.Dx_Pot * exp.Nx_Pot).ToString());
@@ -358,27 +353,27 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tt = " + t.ToString() + "! Mixing parameter from previous iteration");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
-            sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * z_scaling * dy(eps * z_scaling * dy(u)) - rho_prime * u = " + minus_g_phi + " \t! Poisson's equation");
+            sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * y_scaling * dy(eps * y_scaling * dy(u)) - 1.0 * z_scaling * dz(eps * z_scaling * dz(u)) - rho_prime * u = " + minus_g_phi + " \t! Poisson's equation");
             sw.WriteLine();
             sw.WriteLine("EXTRUSION");
-            sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " / z_scaling");
+            sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " * z_scaling");
             int layercount = 1;
             for (int i = 1; i < exp.Layers.Length; i++)
             {
                 sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                sw.WriteLine("\tSURFACE	\"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " / z_scaling");
+                sw.WriteLine("\tSURFACE	\"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling");
                 layercount++;
 
                 if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
                 {
                     sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = split_depth / z_scaling");
+                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = split_depth * z_scaling");
                     layercount++;
                 }
                 else if (exp.Layers[i].Material == Material.PMMA)
                 {
                     sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " / z_scaling + top_depth / z_scaling");
+                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling + top_depth * z_scaling");
                     layercount++;
                 }
             }
@@ -406,56 +401,57 @@ namespace ThreeD_SchrodingerPoissonSolver
                 }
             }
             int max_layers = layercount - 1;
-            sw.WriteLine("\t\tSTART(-lx / 2, -ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (-lx / 2, ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, -ly / 2 /  y_scaling)");
+            sw.WriteLine("\t\tSTART(-lx / 2, -ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (-lx / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (lx / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (lx / 2, -ly / 2 * y_scaling)");
             sw.WriteLine("\t\tLINE TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 2 ! left split gate");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, ly / 2 /  y_scaling)");
+            sw.WriteLine("\t\tSTART (-split_length / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, ly / 2 * y_scaling)");
             sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, split_width / 2 /  y_scaling) TO (-split_length / 2, split_width / 2 /  y_scaling) TO CLOSE");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, split_width / 2 * y_scaling) TO (-split_length / 2, split_width / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 3 ! right split gate");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
             sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, -ly / 2 /  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -ly / 2 /  y_scaling)");
+            sw.WriteLine("\t\tSTART (-split_length / 2, -ly / 2 *  y_scaling)");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, -ly / 2 *  y_scaling)");
             sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -split_width / 2 /  y_scaling) TO (-split_length / 2, -split_width / 2 /  y_scaling) TO CLOSE");
+            sw.WriteLine("\t\tLINE TO (split_length / 2, -split_width / 2 *  y_scaling) TO (-split_length / 2, -split_width / 2 *  y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 4 ! top gate");
             sw.WriteLine("\t\tSURFACE \"" + (max_layers - 2).ToString() + "\" VALUE(u) = top_V");
             sw.WriteLine("\t\tSURFACE \"" + (max_layers - 1).ToString() + "\" VALUE(u) = top_V");
             sw.WriteLine("\t\tLAYER \"" + (max_layers - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-top_length / 2, ly / 2 / y_scaling)");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, ly / 2 / y_scaling)");
+            sw.WriteLine("\t\tSTART (-top_length / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (top_length / 2, ly / 2 * y_scaling)");
             sw.WriteLine("\t\tVALUE(u) = top_V");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, -ly / 2 / y_scaling) TO (-top_length / 2, -ly / 2 / y_scaling) TO CLOSE");
+            sw.WriteLine("\t\tLINE TO (top_length / 2, -ly / 2 * y_scaling) TO (-top_length / 2, -ly / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tRESOLVE(" + minus_g_phi + ")");
             sw.WriteLine();
             sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth / z_scaling");
-            sw.WriteLine("\tCONTOUR(u) ON z = well_depth / z_scaling");
+            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth * z_scaling");
+            sw.WriteLine("\tCONTOUR(u) ON z = well_depth * z_scaling");
             sw.WriteLine("\tCONTOUR(u) ON x = 0");
             sw.WriteLine("\tCONTOUR(u) ON y = 0");
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tCONTOUR(q_e * (phi + t * new_phi)) ON z = well_depth / z_scaling ON GRID(x, y / y_scaling)");
-            sw.WriteLine("\tCONTOUR(u * q_e) ON z = well_depth / z_scaling ON GRID(x, y / y_scaling)");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON z = well_depth / z_scaling ON GRID(x, y / y_scaling)");
+            sw.WriteLine("\tCONTOUR(rho) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
+            sw.WriteLine("\tCONTOUR(q_e * (phi + t * new_phi)) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
+            sw.WriteLine("\tCONTOUR(u * q_e) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
+            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
             sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON x = 0 ON GRID(y / y_scaling, z / z_scaling)");
             sw.WriteLine();
             sw.WriteLine("\tTRANSFER(phi + t * new_phi) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + new_pot_filename + "\'");
             sw.WriteLine();
-            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", well_depth / z_scaling, " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", 0.001) EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", 2) FILE = \"pot.dat\"");
+            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", well_depth * z_scaling, " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", 0.001) EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", 2) FILE = \"pot.dat\"");
             sw.WriteLine();
             sw.WriteLine("END");
 
@@ -470,6 +466,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             this.split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
             this.bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
 
+            this.top_length = top_length; this.split_width = split_width; this.split_length = split_length;
+
             if (flexpde_inputfile != null)
                 Create_FlexPDE_File(top_length, split_width, split_length, surface, flexpde_inputfile);
         }
@@ -479,10 +477,36 @@ namespace ThreeD_SchrodingerPoissonSolver
             throw new NotImplementedException();
         }
 
+        public SpinResolved_Data ZDens
+        {
+            get 
+            {
+                if (dens_1d == null)
+                    throw new Exception("Error - Must set 1D density");
+                else
+                    return dens_1d;
+            }
+            set 
+            {
+                dens_1d = value;
+                // calculate the z-position of the maximum of dens_1d and use this as z_2DEG
+                z_2DEG = exp.Zmin_Dens + exp.Dz_Dens * (double)Array.IndexOf(dens_1d.Spin_Summed_Data.vec.ToArray(), dens_1d.Spin_Summed_Data.vec.Min());
+            }
+        }
+
+        public double Z_2DEG
+        {
+            get { return z_2DEG; }
+            set { z_2DEG = value; }
+        }
+
         protected override void Save_Density_Data(Band_Data density, string input_file_name)
         {
-            throw new NotImplementedException();
-            density.Save_3D_Data(input_file_name, dens_1d, exp.Dx_Dens, exp.Dy_Dens, exp.Dz_Dens, exp.Xmin_Dens, exp.Ymin_Dens, exp.Zmin_Dens);
+            // check that the data isn't all zeros and if it is, add a small 1e-8 perturbation at the centre
+            if (density.mat.Min() > -1e-8 && density.mat.Max() < 1e-8)
+                density.mat[(int)(density.mat.Rows / 2), (int)(density.mat.Cols / 2)] = 1e-8;
+
+            density.Save_3D_Data(input_file_name, dens_1d.Spin_Summed_Data, exp.Dx_Dens, exp.Dy_Dens * y_scaling, exp.Dz_Dens * z_scaling, exp.Xmin_Dens, exp.Ymin_Dens * y_scaling, exp.Zmin_Dens * z_scaling);
         }
 
         public Band_Data Chemical_Potential

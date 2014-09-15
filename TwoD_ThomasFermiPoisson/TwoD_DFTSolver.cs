@@ -14,13 +14,13 @@ namespace TwoD_ThomasFermiPoisson
     {
         double no_kb_T = 50.0;          // number of kb_T to integrate to
 
-        double ty, tz;
+        double tx, ty;
 
         public TwoD_DFTSolver(IExperiment exp)
             : base(exp)
         {
+            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
-            tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }
 
         /// <summary>
@@ -53,23 +53,23 @@ namespace TwoD_ThomasFermiPoisson
                                     select val).ToArray().Length;
             }
 
-            DoubleMatrix dens_up = new DoubleMatrix(ny, nz, 0.0);
-            DoubleMatrix dens_down = new DoubleMatrix(ny, nz, 0.0);
+            DoubleMatrix dens_up = new DoubleMatrix(nx, ny, 0.0);
+            DoubleMatrix dens_down = new DoubleMatrix(nx, ny, 0.0);
 
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     double dens_val = 0.0;
 
                     // do not add anything to the density if on the edge of the domain
-                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
                         continue;
 
                     for (int k = 0; k < max_wavefunction; k++)
                     {
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 50 * k_b * T above mu = 0
-                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
+                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
                     }
 
                     // just share the densities (there is no spin polarisation)
@@ -104,23 +104,23 @@ namespace TwoD_ThomasFermiPoisson
                                     where val < no_kb_T * Physics_Base.kB * temperature
                                     select val).ToArray().Length;
 
-            DoubleMatrix dens_up = new DoubleMatrix(ny, nz, 0.0);
-            DoubleMatrix dens_down = new DoubleMatrix(ny, nz, 0.0);
+            DoubleMatrix dens_up = new DoubleMatrix(nx, ny, 0.0);
+            DoubleMatrix dens_down = new DoubleMatrix(nx, ny, 0.0);
 
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     double dens_val = 0.0;
 
                     // do not add anything to the density if on the edge of the domain
-                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
                         continue;
 
                     for (int k = 0; k < max_wavefunction; k++)
                     {
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 50 * k_b * T above mu = 0
-                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS_Deriv(eig_decomp.EigenValue(k), no_kb_T);
+                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS_Deriv(eig_decomp.EigenValue(k), no_kb_T);
                     }
 
                     // just share the densities (there is no spin polarisation)
@@ -148,31 +148,31 @@ namespace TwoD_ThomasFermiPoisson
 
         DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
         {
-            DoubleHermitianMatrix result = new DoubleHermitianMatrix(ny * nz);
+            DoubleHermitianMatrix result = new DoubleHermitianMatrix(nx * ny);
 
             // set off diagonal elements 
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     // coupling sites in the transverse direction
                     if (i != 0)
-                        result[i * nz + j, i * nz + j - nz] = ty; 
-                    if (i != ny - 1)
-                        result[i * nz + j, i * nz + j + nz] = ty;
+                        result[i * ny + j, i * ny + j - ny] = tx; 
+                    if (i != nx - 1)
+                        result[i * ny + j, i * ny + j + ny] = tx;
                     // coupling sites in the growth direction
                     if (j != 0)
-                        result[i * nz + j, i * nz + j - 1] = tz;
-                    if (j != nz - 1)
-                        result[i * nz + j, i * nz + j + 1] = tz;
+                        result[i * ny + j, i * ny + j - 1] = ty;
+                    if (j != ny - 1)
+                        result[i * ny + j, i * ny + j + 1] = ty;
                 }
 
-            double[,] potential = new double[ny, nz];
+            double[,] potential = new double[nx, ny];
             // set diagonal elements
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     potential[i, j] = pot.mat[i, j];// +Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.mat[i, j]);  This should already be included in the input chemical potential
-                    result[i * nz + j, i * nz + j] = -2.0 * ty + -2.0 * tz + potential[i, j];
+                    result[i * ny + j, i * ny + j] = -2.0 * tx + -2.0 * ty + potential[i, j];
                 }
 
             return result;
@@ -209,11 +209,11 @@ namespace TwoD_ThomasFermiPoisson
         public void Write_Out_Potential(double[,] potential, string outfile)
         {
             System.IO.StreamWriter sw = new System.IO.StreamWriter(outfile);
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     sw.Write(potential[i, j].ToString() + '\t');
-                    if (j == nz - 1)
+                    if (j == ny - 1)
                         sw.WriteLine();
                 }
 
@@ -230,25 +230,25 @@ namespace TwoD_ThomasFermiPoisson
             for (int k = 0; k < max_wavefunction; k++)
             {
                 System.IO.StreamWriter sw = new System.IO.StreamWriter("dens_wavefunction_" + k.ToString("00"));
-                DoubleMatrix tmp = new DoubleMatrix(ny, nz, 0.0);
+                DoubleMatrix tmp = new DoubleMatrix(nx, ny, 0.0);
 
-                for (int i = 0; i < ny; i++)
-                    for (int j = 0; j < nz; j++)
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
                     {
                         // do not add anything to the density if on the edge of the domain
-                        if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                        if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
                             continue;
 
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 50 * k_b * T above mu = 0
-                        tmp[i, j] = -1.0 * Physics_Base.q_e * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * nz + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);    
+                        tmp[i, j] = -1.0 * Physics_Base.q_e * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);    
                     }
 
-                for (int i = 0; i < ny; i++)
-                    for (int j = 0; j < nz; j++)
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
                     {
                         sw.Write(tmp[i, j].ToString() + '\t');
-                        if (j == nz - 1)
+                        if (j == ny - 1)
                             sw.WriteLine();
                     }
 

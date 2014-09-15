@@ -15,20 +15,25 @@ namespace TwoD_ThomasFermiPoisson
         {
         }
 
+        public TwoD_ThomasFermiSolver(IExperiment exp, Plane plane, double plane_pos)
+            : base(exp, plane, plane_pos)
+        {
+        }
+
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     // do not add anything to the density if on the edge of the domain
-                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
                         continue;
 
-                    double y = dy * i + ymin;
-                    double z = dz * j + zmin;
+                    double x = dx * i + xmin;
+                    double y = dy * j + ymin;
                     
                     // get the relevant layer
-                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z);
+                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, plane, x, y, pos_z);
                     
                     // calculate the density at the given point
                     ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
@@ -42,18 +47,18 @@ namespace TwoD_ThomasFermiPoisson
 
         public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
         {
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     // leave the edges zeroed
-                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
                         continue;
 
-                    double y = dy * i + ymin;
-                    double z = dz * j + zmin;
+                    double x = dx * i + xmin;
+                    double y = dy * j + ymin;
 
                     // get the relevant layer and if it's frozen out, don't recalculate the dopent charge
-                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z);
+                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, plane, x, y, pos_z);
 
                     ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
                     if (!current_Layer.Dopents_Frozen_Out(temperature))

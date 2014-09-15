@@ -74,8 +74,9 @@ namespace OneD_ThomasFermiPoisson
             for (int i = 0; i < run_temps.Length; i++)
             {
                 double current_temperature = run_temps[i];
+                this.temperature = current_temperature;
 
-                OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(current_temperature, dz_pot, nz_pot, zmin_pot);
+                OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature))
                     this.bottom_V = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
                 // reset the boundary conditions
@@ -130,7 +131,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             // and then run the DFT solver at the base temperature over a limited range
-            OneD_DFTSolver dft_solv = new OneD_DFTSolver(temperature, dz_dens, nz_dens, zmin_dens);
+            OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
             dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
             Console.WriteLine("Starting DFT calculation");
 
@@ -176,7 +177,7 @@ namespace OneD_ThomasFermiPoisson
             pois_solv.Reset();
 
             // initialise output solvers
-            OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(temperature, dz_dens, nz_dens, zmin_dens);
+            OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
             OneD_PoissonSolver final_pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out

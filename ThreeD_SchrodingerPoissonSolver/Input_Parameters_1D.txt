@@ -18,10 +18,10 @@
 % dz = 2
 #
 ## Number of lattice sites in the transverse direction to save to
-% ny_1d = 10
+% ny_1d = 11
 #
 ## Number of lattice sites in the transverse direction to save to
-% nx_1d = 10
+% nx_1d = 11
 #
 #
 ############## Poisson solver details #################################
@@ -45,7 +45,7 @@
 ############## Generic density solver details #########################
 #
 ## Final solution tolerance
-% tolerance = 10e-5
+% tolerance = 1e-4
 #
 ## Fermi energy
 % E_f = 0.0
@@ -60,15 +60,15 @@
 % dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dens = 40
+% nz_dens = 20
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dens = -450.0
+% zmin_dens = -315.0
 #
 #
 ############## Physical parameters ####################################
 #
 ## Temperature
-% T = 4
+% T = 1
 #
 

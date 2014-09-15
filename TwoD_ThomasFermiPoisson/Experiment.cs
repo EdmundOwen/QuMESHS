@@ -171,8 +171,8 @@ namespace TwoD_ThomasFermiPoisson
 
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-            dft_solv.Ymin_Pot = ymin_pot; dft_solv.Dy_Pot = dy_pot;
-            dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
+            dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
+            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
             
             bool converged = false;
             int no_runs = 10;

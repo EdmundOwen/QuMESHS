@@ -10,9 +10,18 @@ namespace OneD_ThomasFermiPoisson
 {
     public abstract class OneD_Density_Base : Density_Base
     {
-        public OneD_Density_Base(double temperature, double dz, int nz, double zmin)
-            : base(temperature, 1.0, 1.0, dz, 1, 1, nz, 0.0, 0.0, zmin)
-        { }
+        IExperiment exp;
+        protected double dz;
+        protected double zmin;
+        protected int nz;
+
+        public OneD_Density_Base(IExperiment exp)
+            : base(exp.Temperature)
+        {
+            this.dz = exp.Dz_Dens;
+            this.zmin = exp.Zmin_Dens;
+            this.nz = exp.Nz_Dens;
+        }
 
         public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
         {

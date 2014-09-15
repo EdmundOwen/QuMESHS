@@ -12,22 +12,22 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the longitudinal direction for the density calculation
-% nx = 26
+% nx = 101
 #
 ## Spacing of lattice sites in the longitudinal direction for the density calculation
-% dx = 80
+% dx = 50
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 26
+% ny = 41
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 80
+% dy = 50
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 600
+% nz = 1500
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 5
+% dz = 2
 #
 #
 ############## Poisson solver details #################################
@@ -63,7 +63,7 @@
 % top_length = 400
 #
 ## Minimum of simulation domain in the longitudinal direction
-% xmin_pot = -1000.0
+% xmin_pot = -2500.0
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_pot = -1000.0
@@ -83,8 +83,9 @@
 ## Temperature
 % T = 4
 #
+#
 ## Minimum of simulation domain in the longitudinal direction
-% xmin_dens = -1000.0
+% xmin_dens = -2500.0
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_dens = -1000.0
@@ -93,15 +94,9 @@
 % zmin_dens = -320.0
 #
 ## Lattice spacing in the growth direction
-% dz_dens = 5.0
-#
-## Number of lattice points in longitudinal direction
-% nx_dens = 26
-#
-## Number of lattice points in transverse direction
-% ny_dens = 26
+% dz_dens = 2.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 14
+% nz_dens = 20
 #
 #

@@ -16,10 +16,9 @@ namespace ThreeD_SchrodingerPoissonSolver
     {
         double top_V, split_V, surface_charge;
         double split_width, split_length, top_length;
-        double well_depth;
         double t_damp = 1.0, t_min = 1e-3;
 
-        DoubleVector dens_1d;
+        SpinResolved_Data dens_1d;
         TwoD_ThomasFermiSolver dens_solv;
         ThreeD_PoissonSolver pois_solv;
 
@@ -66,19 +65,19 @@ namespace ThreeD_SchrodingerPoissonSolver
             Get_From_Dictionary<double>(input_dict, "split_length", ref split_length);
             Get_From_Dictionary<double>(input_dict, "top_length", ref top_length);
 
-            // and well depth
-            well_depth = layers[1].Zmax - 1;
-
             // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density"))
             {
                 this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
                 SpinResolved_Data tmp_charge_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
-                dens_1d = new DoubleVector(nz_dens);
+                dens_1d = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_dens)), new Band_Data(new DoubleVector(nz_dens)));
                 int z_offset = (int)Math.Abs((Zmin_Pot - Zmin_Dens) / Dz_Pot);
 
                 for (int i = 0; i < nz_dens; i++)
-                    dens_1d[i] = tmp_charge_1d_density.Spin_Summed_Data.vec[z_offset + i];
+                {
+                    dens_1d.Spin_Up.vec[i] = tmp_charge_1d_density.Spin_Up.vec[z_offset + i];
+                    dens_1d.Spin_Down.vec[i] = tmp_charge_1d_density.Spin_Down.vec[z_offset + i];
+                }
 
                 // this is the charge density modulation in the (x, y) plane so, initially, it is set to one
                 for (int i = 0; i < nx_dens; i++)
@@ -91,15 +90,24 @@ namespace ThreeD_SchrodingerPoissonSolver
             else
                 this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
 
+            // and instantiate their derivatives
+            carrier_density_deriv = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
+            dopent_density_deriv = new SpinResolved_Data(new Band_Data(new DoubleMatrix(nx_dens, ny_dens)), new Band_Data(new DoubleMatrix(nx_dens, ny_dens)));
+
+            // calculate the z-position of the maximum of dens_1d and use this as z_2DEG
+            double z_2DEG = zmin_dens + dz_dens * (double)Array.IndexOf(dens_1d.Spin_Summed_Data.vec.ToArray(), dens_1d.Spin_Summed_Data.vec.Min());
+
+            // initialise potential solver
+            pois_solv = new ThreeD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            pois_solv.Set_Boundary_Conditions(top_V, split_V, top_length, split_width, split_length, bottom_V, surface_charge);
+            pois_solv.ZDens = dens_1d;
+            pois_solv.Z_2DEG = z_2DEG;
+                
             if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
             if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
 
             // create charge density solver and calculate boundary conditions
-            dens_solv = new TwoD_ThomasFermiSolver(this);
-
-            // initialise potential solver
-            pois_solv = new ThreeD_PoissonSolver(this, dens_1d, using_flexPDE, flexPDE_input, flexPDE_location, tol);
-            pois_solv.Set_Boundary_Conditions(top_V, split_V, top_length, split_width, split_length, bottom_V, surface_charge);
+            dens_solv = new TwoD_ThomasFermiSolver(this, Plane.xy, z_2DEG);
 
             Console.WriteLine("Experimental parameters initialised");
         }
@@ -109,17 +117,17 @@ namespace ThreeD_SchrodingerPoissonSolver
             if (!hot_start)
                 Run_Iteration_Routine(dens_solv, 1.0);
 
-            bool converged = false;
-            int no_runs = 10;
-            while (!converged)
-            {
-                converged = Run_Iteration_Routine(dens_solv, tol, no_runs);
-                no_runs += 10;
-            }
+          //  bool converged = false;
+          //  int no_runs = 10;
+          //  while (!converged)
+          //  {
+          //      converged = Run_Iteration_Routine(dens_solv, tol, no_runs);
+          //      no_runs += 10;
+          //  }
 
             // initialise output solvers
            // TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(temperature, dx_dens, dy_dens, nx_dens, ny_dens, xmin_dens, ymin_dens);
-            ThreeD_PoissonSolver final_pois_solv = new ThreeD_PoissonSolver(this, dens_1d, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            ThreeD_PoissonSolver final_pois_solv = new ThreeD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
             carrier_density.Spin_Summed_Data.Save_Data("dens_2D.dat");
@@ -146,6 +154,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             Console.WriteLine("Initial grid complete");
             // Get charge rho(phi) (not dopents as these are included as a flexPDE input)
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+            Set_Edges(carrier_density);
 
             int count = 0;
             bool converged = false;
@@ -175,15 +184,16 @@ namespace ThreeD_SchrodingerPoissonSolver
 
                 // Check convergence
                 Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
-                double[] diff = new double[ny_dens * nz_dens];
-                for (int j = 0; j < ny_dens * nz_dens; j++)
-                    diff[j] = Math.Abs(g_phi[j]);
+                double[] diff = new double[nx_dens * ny_dens];
+                for (int i = 0; i < nx_dens * ny_dens; i++)
+                    diff[i] = Math.Abs(g_phi[i]);
                 double convergence = diff.Sum();
                 if (Math.Max(t * x.mat.Max(), (-t * x).mat.Max()) < pot_lim)
                     converged = true;
 
                 // Recalculate the charge density but for the updated potential rho(phi + t * x)
                 dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot + t * x);
+                Set_Edges(carrier_density);
 
                 // update band energy phi_new = phi_old + t * x
                 chem_pot = chem_pot + t * x;
@@ -204,6 +214,30 @@ namespace ThreeD_SchrodingerPoissonSolver
             Console.WriteLine("Iteration complete");
 
             return converged;
+        }
+
+        /// <summary>
+        /// sets the edges to be the same as their nearest neighbour.
+        /// traditionally, would expect the edges to have zero charge but this will be different for simulations in the plane of the 2deg
+        /// </summary>
+        /// <param name="carrier_density"></param>
+        private void Set_Edges(SpinResolved_Data carrier_density)
+        {
+            for (int i = 0; i < nx_dens; i++)
+            {
+                carrier_density.Spin_Up.mat[i, 0] = carrier_density.Spin_Up.mat[i, 1];
+                carrier_density.Spin_Down.mat[i, 0] = carrier_density.Spin_Down.mat[i, 1];
+                carrier_density.Spin_Up.mat[i, ny_dens - 1] = carrier_density.Spin_Up.mat[i, ny_dens - 2];
+                carrier_density.Spin_Down.mat[i, ny_dens - 1] = carrier_density.Spin_Down.mat[i, ny_dens - 2];
+            }
+
+            for (int j = 0; j < ny_dens; j++)
+            {
+                carrier_density.Spin_Up.mat[0, j] = carrier_density.Spin_Up.mat[1, j];
+                carrier_density.Spin_Down.mat[0, j] = carrier_density.Spin_Down.mat[1, j];
+                carrier_density.Spin_Up.mat[nx_dens - 1, j] = carrier_density.Spin_Up.mat[nx_dens - 2, j];
+                carrier_density.Spin_Down.mat[nx_dens - 1, j] = carrier_density.Spin_Down.mat[nx_dens - 2, j];
+            }
         }
 
     }
