@@ -8,7 +8,7 @@ using CenterSpace.NMath.Core;
 
 namespace ThreeD_SchrodingerPoissonSolver
 {
-    class ThreeD_Density_Base : Density_Base
+    public abstract class ThreeD_Density_Base : Density_Base
     {
         IExperiment exp;
         protected double dx, dy, dz;
@@ -33,15 +33,11 @@ namespace ThreeD_SchrodingerPoissonSolver
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix[carrier_density.Spin_Up.vol.Length]);
-            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix[carrier_density.Spin_Down.vol.Length]);
+            Band_Data tmp_spinup = new Band_Data(carrier_density.Spin_Up.vol[0].Rows, carrier_density.Spin_Up.vol[0].Cols, carrier_density.Spin_Up.vol.Length, 0.0);
+            Band_Data tmp_spindown = new Band_Data(carrier_density.Spin_Down.vol[0].Rows, carrier_density.Spin_Down.vol[0].Cols, carrier_density.Spin_Down.vol.Length, 0.0);
 
             for (int k = 0; k < carrier_density.Spin_Up.vol.Length; k++)
             {
-                // initialise matrix in volume array
-                tmp_spinup.vol[k] = new DoubleMatrix(carrier_density.Spin_Up.vol[0].Rows, carrier_density.Spin_Up.vol[0].Cols);
-                tmp_spindown.vol[k] = new DoubleMatrix(carrier_density.Spin_Down.vol[0].Rows, carrier_density.Spin_Down.vol[0].Cols);
-
                 // fill with data
                 for (int i = 0; i < carrier_density.Spin_Up.vol[0].Rows; i++)
                     for (int j = 0; j < carrier_density.Spin_Up.vol[0].Cols; j++)
@@ -62,15 +58,11 @@ namespace ThreeD_SchrodingerPoissonSolver
         public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix[carrier_density_deriv.Spin_Up.vol.Length]);
-            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix[carrier_density_deriv.Spin_Down.vol.Length]);
+            Band_Data tmp_spinup = new Band_Data(carrier_density_deriv.Spin_Up.vol[0].Rows, carrier_density_deriv.Spin_Up.vol[0].Cols, carrier_density_deriv.Spin_Up.vol.Length, 0.0);
+            Band_Data tmp_spindown = new Band_Data(carrier_density_deriv.Spin_Down.vol[0].Rows, carrier_density_deriv.Spin_Down.vol[0].Cols, carrier_density_deriv.Spin_Down.vol.Length, 0.0);
 
             for (int k = 0; k < carrier_density_deriv.Spin_Up.vol.Length; k++)
             {
-                // initialise matrix in volume array
-                tmp_spinup.vol[k] = new DoubleMatrix(carrier_density_deriv.Spin_Up.vol[0].Rows, carrier_density_deriv.Spin_Up.vol[0].Cols);
-                tmp_spindown.vol[k] = new DoubleMatrix(carrier_density_deriv.Spin_Down.vol[0].Rows, carrier_density_deriv.Spin_Down.vol[0].Cols);
-
                 // fill with data
                 for (int i = 0; i < carrier_density_deriv.Spin_Up.vol[0].Rows; i++)
                     for (int j = 0; j < carrier_density_deriv.Spin_Up.vol[0].Cols; j++)

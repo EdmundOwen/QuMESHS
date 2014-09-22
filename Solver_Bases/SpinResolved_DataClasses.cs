@@ -316,8 +316,23 @@ namespace Solver_Bases
                 return result;
             }
             else if (dim == 3)
-                throw new NotImplementedException();
-            //return new SpinResolved_Data(new Band_Data(this.Spin_Up.vol.DeepenThisCopy()), new Band_Data(this.Spin_Down.vol.DeepenThisCopy()));
+            {
+                int nx = this.Spin_Summed_Data.vol[0].Rows;
+                int ny = this.Spin_Summed_Data.vol[0].Cols;
+                int nz = this.Spin_Summed_Data.vol.Length;
+
+                SpinResolved_Data result = new SpinResolved_Data(new Band_Data(nx, ny, nz, 0.0), new Band_Data(nx, ny, nz, 0.0));
+
+                for (int k = 0; k < nz; k++)
+                    for (int i = 0; i < nx; i++)
+                        for (int j = 0; j < ny; j++)
+                        {
+                            result.Spin_Up.vol[k][i, j] = this.Spin_Up.vol[k][i, j];
+                            result.Spin_Down.vol[k][i, j] = this.Spin_Down.vol[k][i, j];
+                        }
+
+                return result;
+            }
             else
                 throw new NotImplementedException();
         }

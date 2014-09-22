@@ -36,6 +36,26 @@ namespace Solver_Bases
             dim = 3;
         }
 
+        public Band_Data(int nz, double val)
+        { 
+            this.vec = new DoubleVector(nz, val);
+            dim = 1;
+        }
+
+        public Band_Data(int ny, int nz, double val)
+        {
+            this.mat = new DoubleMatrix(ny, nz, val);
+            dim = 2;
+        }
+
+        public Band_Data(int nx, int ny, int nz, double val)
+        {
+            this.vol = new DoubleMatrix[nz];
+            for (int i = 0; i < nz; i++)
+                this.vol[i] = new DoubleMatrix(nx, ny, val);
+            dim = 3;
+        }
+
         /// <summary>
         /// returns a value for this data type.
         /// Note that value ordering is not very well defined
@@ -57,7 +77,7 @@ namespace Solver_Bases
                     int matsize = vol[0].Rows * vol[0].Cols;
                     int index1 = i % matsize;
                     int x = i % vol[0].Cols;
-                    int y = (int)((i - x) / vol[0].Cols);
+                    int y = (int)((index1 - x) / vol[0].Cols);
                     int z = (int)((i - index1) / matsize);
 
                     return (double)vol[z][y, x];
@@ -255,8 +275,8 @@ namespace Solver_Bases
             sw.WriteLine();
             sw.WriteLine();
             sw.WriteLine("z " + nz.ToString());
-            for (int j = 0; j < nz; j++)
-                sw.Write(((float)(j * dz + zmin)).ToString() + '\t');
+            for (int k = 0; k < nz; k++)
+                sw.Write(((float)(k * dz + zmin)).ToString() + '\t');
 
             // save out densities
             sw.WriteLine();
@@ -265,7 +285,7 @@ namespace Solver_Bases
                 for (int j = 0; j < ny; j++)
                 {
                     for (int k = 0; k < nx; k++)
-                        if (Math.Abs(this.vol[i][j, k]) < 1e-20)
+                        if (Math.Abs(this.vol[i][k, j]) < 1e-20)
                             sw.Write("0\t");
                         else
                             // note that the ordering is x first, then y, then z -- this is FlexPDE specific
@@ -387,14 +407,11 @@ namespace Solver_Bases
                 throw new Exception("Error - FlexPDE is outputting the wrong number of potential data points");
 
             // and parse these values into a DoubleVector
-            Band_Data result = new Band_Data(new DoubleMatrix[nx]);
-            for (int i = 0; i < nx; i++)
-            {
-                result.vol[i] = new DoubleMatrix(ny, nz);
-                for (int j = 0; j < ny; j++)
-                    for (int k = 0; k < nz; k++)
-                        result.vol[i][j, k] = double.Parse(input_data[k * ny * nz + j * ny + i]);
-            }
+            Band_Data result = new Band_Data(nx, ny, nz, 0.0);
+            for (int k = 0; k < nz; k++)
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
+                        result.vol[k][i, j] = double.Parse(input_data[k * nx * ny + j * nx + i]);
 
             return result;
         }
@@ -419,9 +436,80 @@ namespace Solver_Bases
                 return new Band_Data(result);
             }
             else if (dim == 3)
-                throw new NotImplementedException();
+            {
+                int nx = vol[0].Rows;
+                int ny = vol[0].Cols;
+                int nz = vol.Length;
+
+                Band_Data result = new Band_Data(nx, ny, nz, 0.0);
+
+                for (int k = 0; k < nz; k++)
+                    for (int i = 0; i < nx; i++)
+                        for (int j = 0; j < ny; j++)
+                            result.vol[k][i, j] = this.vol[k][i, j];
+
+                return result;
+            }
             else
                 throw new NotImplementedException();
+        }
+
+        public double Max()
+        {
+            double result = double.MinValue;
+
+            if (dim == 1)
+            {
+                for (int i = 0; i < vec.Length; i++)
+                    if (result < this[i])
+                        result = this[i];
+            }
+            else if (dim == 2)
+            {
+                for (int i = 0; i < mat.Rows * mat.Cols; i++)
+                    if (result < this[i])
+                        result = this[i];
+            }
+            else if (dim == 3)
+            {
+                for (int i = 0; i < vol[0].Rows * vol[0].Cols * vol.Length; i++)
+                    if (result < this[i])
+                        result = this[i];
+
+            }
+            else
+                throw new NotImplementedException();
+
+            return result;
+        }
+
+        public double Min()
+        {
+            double result = double.MaxValue;
+
+            if (dim == 1)
+            {
+                for (int i = 0; i < vec.Length; i++)
+                    if (result > this[i])
+                        result = this[i];
+            }
+            else if (dim == 2)
+            {
+                for (int i = 0; i < mat.Rows * mat.Cols; i++)
+                    if (result > this[i])
+                        result = this[i];
+            }
+            else if (dim == 3)
+            {
+                for (int i = 0; i < vol[0].Rows * vol[0].Cols * vol.Length; i++)
+                    if (result > this[i])
+                        result = this[i];
+
+            }
+            else
+                throw new NotImplementedException();
+
+            return result;
         }
 
         public int Dimension

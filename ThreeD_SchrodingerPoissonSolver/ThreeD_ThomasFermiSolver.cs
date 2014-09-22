@@ -86,5 +86,9 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.Close();
         }
 
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
