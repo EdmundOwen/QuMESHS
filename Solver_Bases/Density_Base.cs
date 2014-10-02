@@ -289,5 +289,19 @@ namespace Solver_Bases
         public abstract SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
         public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
         public abstract void Close();
+
+        protected Band_Data dft_pot;
+        protected double alpha = 0.1;
+        public void Set_DFT_Potential(SpinResolved_Data car_dens)
+        {
+            if (this.dft_pot == null)
+                this.dft_pot = Physics_Base.Get_XC_Potential(car_dens);
+            else
+                this.dft_pot = (1.0 - alpha) * dft_pot + alpha * Physics_Base.Get_XC_Potential(car_dens);
+        }
+        public void Print_DFT_diff(SpinResolved_Data car_dens)
+        {
+            Console.WriteLine("Difference in DFT potentials: Max = " + (dft_pot - Physics_Base.Get_XC_Potential(car_dens)).Max().ToString("F") + ", Min = " + (dft_pot - Physics_Base.Get_XC_Potential(car_dens)).Min().ToString("F"));
+        }
     }
 }

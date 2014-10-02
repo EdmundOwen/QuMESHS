@@ -28,6 +28,7 @@ namespace TwoD_ThomasFermiPoisson
         {
             this.exp = exp;
             this.pos_z = plane_pos;
+            this.plane = dir;
 
             // Get nx and ny dimensions depending on the orientation
             if (plane == Plane.xy)
