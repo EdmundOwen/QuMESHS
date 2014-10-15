@@ -7,6 +7,7 @@ using Solver_Bases.Geometry;
 using Solver_Bases.Layers;
 using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Matrix;
+using System.IO;
 
 namespace TwoD_ThomasFermiPoisson
 {
@@ -80,8 +81,8 @@ namespace TwoD_ThomasFermiPoisson
             while (!integrated)
             {
                 // generate the Hamiltonian for this k value
-                DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, charge_density, dft_pot, k);
-                DoubleHermitianMatrix hamiltonian_m = Create_Hamiltonian(layers, charge_density, dft_pot, -1.0 * k);
+                DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
+                DoubleHermitianMatrix hamiltonian_m = Create_Hamiltonian(layers, dft_pot, -1.0 * k);
 
                 // calculate density for this value of k
                 SpinResolved_Data charge_density_k = Calculate_Density(hamiltonian_p);
@@ -113,14 +114,14 @@ namespace TwoD_ThomasFermiPoisson
             }
         }
 
-        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data dft_pot, double k)
+        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, Band_Data dft_pot, double k)
         {
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(2 * ny * nz);
             DoubleHermitianMatrix h_upup, h_updn, h_dnup, h_dndn;
 
             // create sub-matrices with no spin orbit
-            h_upup = Create_NoSOI_Hamiltonian(dft_pot, charge_density, k, ny, nz);      // takes up to up (ie. H_11)
-            h_dndn = Create_NoSOI_Hamiltonian(dft_pot, charge_density, k, ny, nz);      // takes dn to dn (ie. H_22)
+            h_upup = Create_NoSOI_Hamiltonian(dft_pot, k, ny, nz);      // takes up to up (ie. H_11)
+            h_dndn = Create_NoSOI_Hamiltonian(dft_pot, k, ny, nz);      // takes dn to dn (ie. H_22)
             h_updn = new DoubleHermitianMatrix(ny * nz);                                // takes up to dn (ie. H_21)
             h_dnup = new DoubleHermitianMatrix(ny * nz);                                // takes dn to up (ie. H_12)
 
@@ -192,7 +193,7 @@ namespace TwoD_ThomasFermiPoisson
             return Create_SOI_Hamiltonian(dV, p, 0.0, ny, nz);
         }
 
-        DoubleHermitianMatrix Create_NoSOI_Hamiltonian(Band_Data dft_pot, SpinResolved_Data charge_density, double k, int ny, int nz)
+        DoubleHermitianMatrix Create_NoSOI_Hamiltonian(Band_Data dft_pot, double k, int ny, int nz)
         {
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(ny * nz);
 
@@ -217,7 +218,7 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < ny; i++)
                 for (int j = 0; j < nz; j++)
                 {
-                    potential[i, j] = dft_pot.mat[i, j];// +Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.mat[i, j]);  This should already be included in the input chemical potential
+                    potential[i, j] = dft_pot.mat[i, j];
                     potential[i, j] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * Physics_Base.mass);
                     result[i * nz + j, i * nz + j] = -2.0 * ty + -2.0 * tz + potential[i, j];
                 }
@@ -239,19 +240,8 @@ namespace TwoD_ThomasFermiPoisson
 
         SpinResolved_Data Calculate_Density(DoubleHermitianMatrix hamiltonian)
         {
-            DoubleHermitianEigDecompServer eig_server = new DoubleHermitianEigDecompServer();
-            eig_server.ComputeEigenValueRange(E_min, no_kb_T * Physics_Base.kB * temperature);
-            eig_server.ComputeVectors = true;
-            DoubleHermitianEigDecomp eig_decomp = eig_server.Factor(hamiltonian);
-
-            int max_wavefunction = 0;
-            if (eig_decomp.EigenValues.Length != 0)
-            {
-                double min_eigval = eig_decomp.EigenValues.Min();
-                max_wavefunction = (from val in eig_decomp.EigenValues
-                                    where val < no_kb_T * Physics_Base.kB * temperature
-                                    select val).ToArray().Length;
-            }
+            int max_wavefunction;
+            DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(hamiltonian, out max_wavefunction);
 
             DoubleMatrix dens_up = new DoubleMatrix(ny, nz, 0.0);
             DoubleMatrix dens_down = new DoubleMatrix(ny, nz, 0.0);
@@ -273,6 +263,27 @@ namespace TwoD_ThomasFermiPoisson
 
             // and multiply the density by -e to get the charge density (as these are electrons)
             return -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+        }
+
+        DoubleHermitianEigDecomp Diagonalise_Hamiltonian(DoubleHermitianMatrix hamiltonian, out int max_wavefunction)
+        {
+            DoubleHermitianEigDecomp eig_decomp;
+
+            DoubleHermitianEigDecompServer eig_server = new DoubleHermitianEigDecompServer();
+            eig_server.ComputeEigenValueRange(E_min, no_kb_T * Physics_Base.kB * temperature);
+            eig_server.ComputeVectors = true;
+            eig_decomp = eig_server.Factor(hamiltonian);
+
+            max_wavefunction = 0;
+            if (eig_decomp.EigenValues.Length != 0)
+            {
+                double min_eigval = eig_decomp.EigenValues.Min();
+                max_wavefunction = (from val in eig_decomp.EigenValues
+                                    where val < no_kb_T * Physics_Base.kB * temperature
+                                    select val).ToArray().Length;
+            }
+
+            return eig_decomp;
         }
 
         public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
@@ -313,5 +324,55 @@ namespace TwoD_ThomasFermiPoisson
         {
             throw new NotImplementedException();
         }
+
+        /// <summary>
+        /// Calculates and prints the band structure
+        /// </summary>
+        void Print_Band_Structure(Band_Data chem_pot, ILayer[] layers, int Nk, double dk, string outfile, int max_eigval)
+        {
+            if (dV_y == null)
+                throw new Exception("Error - Band structure derivatives are null!  Have you initiated this type properly by calling Get_SOI_parameters(Band_Data chem_pot)?");
+
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
+            // calculate the energies up to a given maximum energy of the lowest state
+            int count = 0;
+            double k = 0;
+            double[][] energies = new double[Nk][];
+            for (int i = 0; i < Nk; i++)
+            {
+                k = count * dk;
+                // generate the Hamiltonian for this k value
+                DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
+                // and diagonalise it
+                int max_wavefunction;
+                DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction);
+
+                // add the calculated energies up to either the maximum required eigenvalue or
+                // to the maximum calculated wave function (which is 50*kb*T above the chemical potential)
+                double[] tmp_energies = new double[max_eigval];
+                for (int j = 0; j < max_eigval; j++)
+                    if (j < max_wavefunction)
+                        tmp_energies[j] = eig_decomp.EigenValues[j];
+                    else
+                        tmp_energies[j] = eig_decomp.EigenValues[max_wavefunction];
+
+                energies[i] = tmp_energies;
+            }
+
+            // output the data to file
+            StreamWriter sw = new StreamWriter(outfile);
+            for (int i = 0; i < Nk; i++)
+            {
+                for (int j = 0; j < max_eigval; j++)
+                    sw.Write(energies[i][j].ToString() + "\t");
+
+                sw.WriteLine();
+            }
+            sw.Close();
+        }
+
     }
 }
