@@ -206,44 +206,6 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                 {
-        }
-
-        /// <summary>
-        /// returns the eigen-energies for the given potential and charge density
-        /// </summary>
-        public DoubleVector Get_EnergyLevels(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
-        {
-            Get_Potential(ref pot, layers);
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, pot);
-            DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
-            return eig_decomp.EigenValues;
-        }
-
-        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
-        {
-            DoubleHermitianMatrix result = new DoubleHermitianMatrix(nx * ny);
-
-            // set off diagonal elements 
-            for (int i = 0; i < nx; i++)
-                for (int j = 0; j < ny; j++)
-                {
-                    // coupling sites in the transverse direction
-                    if (i != 0)
-                        result[i * ny + j, i * ny + j - ny] = tx; 
-                    if (i != nx - 1)
-                        result[i * ny + j, i * ny + j + ny] = tx;
-                    // coupling sites in the growth direction
-                    if (j != 0)
-                        result[i * ny + j, i * ny + j - 1] = ty;
-                    if (j != ny - 1)
-                        result[i * ny + j, i * ny + j + 1] = ty;
-                }
-
-            double[,] potential = new double[nx, ny];
-            // set diagonal elements
-            for (int i = 0; i < nx; i++)
-                for (int j = 0; j < ny; j++)
-                {
                     potential[i, j] = pot.mat[i, j] + dft_pot.mat[i, j];
                     result[i * ny + j, i * ny + j] = -2.0 * tx + -2.0 * ty + potential[i, j];
                 }

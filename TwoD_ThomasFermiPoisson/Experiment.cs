@@ -272,7 +272,7 @@ namespace TwoD_ThomasFermiPoisson
                     diff[j] = Math.Abs(g_phi[j]);
                 double convergence = diff.Sum();
 
-                if (Math.Max(t * x.Max(), (-t * x).Max()) < pot_lim && t != t_min)
+                if (Math.Max(t * x.Max(), (-t * x).Max()) < pot_lim && t > 10.0 * t_min)
                 {
                     // once dft potential is starting to be mixed in, set the maximum count to lots
                     max_count = 1000;
