@@ -485,6 +485,8 @@ namespace TwoD_ThomasFermiPoisson
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
             sw.WriteLine("\tgphi = SPLINE TABLE(\'" + gphi_filename + "\')");
+            sw.WriteLine("\txc_pot = SPLINE TABLE(\'" + xc_pot_filename + "\')");
+            sw.WriteLine("\txc_pot_calc = SPLINE TABLE(\'xc_pot_calc.dat\')");
             sw.WriteLine("\tcar_dens = SPLINE TABLE(\'" + dens_filename + "\')");
             sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine("\trho_prime = TABLE(\'" + densderiv_filename + "\')");
@@ -589,11 +591,11 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tCONTOUR(phi + t * new_phi) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR((phi + t * new_phi) * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(car_dens * " + window_function_string + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(car_dens * " + window_function_string + " + dop_dens) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR(u * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(xc_pot) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(xc_pot_calc) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             
             window_function_string = "(1.0 - " + window_function_string + ") - (ustep(y + 3) - ustep(y -13)) * (ustep(x + 353) - ustep(x + 347) - ustep(x - 353) + ustep(x - 347))";
 

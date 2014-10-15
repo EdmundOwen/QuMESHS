@@ -39,10 +39,12 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 # Top gate voltage
-% top_V = -3.0
+#% top_V = -7.0
+% top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -1.8
+#% split_V = -0.6
+% split_V = -2.7
 #
 ## Split gate width
 % split_width = 800
@@ -72,25 +74,25 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 1.0
+% T = 0.05
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -400.0
+% ymin_dens = -300.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens =  10.0
+% dy_dens =  5.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 81
+% ny_dens = 121
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -315.0
+% zmin_dens = -321.0
 #
 ## Lattice spacing in the growth direction
-% dz_dens = 2.0
+% dz_dens = 3.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 20
+% nz_dens = 16
 #
 #
 ############## Data transfer details ##############################
@@ -99,10 +101,10 @@
 % hot_start = false
 #
 ## File location for spin-up data
-% spin_up_file = dens_2D_up_sg-049_tg-700.dat
+% spin_up_file = dens_2D_up_sg-066_tg-700.dat
 #
 ## File location for spin-down data
-% spin_down_file = dens_2D_down_sg-049_tg-700.dat
+% spin_down_file = dens_2D_down_sg-066_tg-700.dat
 #
 ## File containing surface charge density
 % surface_charge_file = surface_charge.dat
@@ -111,10 +113,10 @@
 ############## Run details #######################################
 #
 ## 
-% init_val = -49
+% init_val = -280
 #
 ##
-% final_val = -40
+% final_val = -150
 #
 ##
 % interval = 0.01

@@ -199,7 +199,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 Band_Data rhs = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
                 Set_Edges(rhs);
-                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, rhs, carrier_density.Spin_Summed_Data);
+                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, rhs, carrier_density);
                 chem_pot = pois_solv.Chemical_Potential;
 
                 // Calculate optimal damping parameter, t, (but damped damping....)

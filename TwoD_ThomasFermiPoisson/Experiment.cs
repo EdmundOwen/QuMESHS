@@ -166,16 +166,22 @@ namespace TwoD_ThomasFermiPoisson
 
         public override void Run()
         {
-            if (!hot_start)
-                Run_Iteration_Routine(dens_solv, 1.0);
+            //if (!hot_start)
+            //    Run_Iteration_Routine(dens_solv, 1.0);
 
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
             dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
             dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
             
+       //     // run without DFT
+       //     dft_solv.Set_DFT_Mixing_Parameter(0.0);
+       //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
+
             bool converged = false;
             int no_runs = 10;
+            // start without dft
+            dft_solv.Set_DFT_Mixing_Parameter(0.0);
             while (!converged)
             {
                 converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
@@ -219,10 +225,13 @@ namespace TwoD_ThomasFermiPoisson
             chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             Console.WriteLine("Initial grid complete");
             // Get charge rho(phi) (not dopents as these are included as a flexPDE input)
+            dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+            dens_solv.Set_DFT_Potential(carrier_density);
 
             int count = 0;
             bool converged = false;
+            dens_solv.Set_DFT_Mixing_Parameter(0.1);
             while (!converged)
             {
                 Stopwatch stpwch = new Stopwatch();
@@ -232,18 +241,19 @@ namespace TwoD_ThomasFermiPoisson
                 SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density.Spin_Summed_Data);
+                //Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density);
+                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density, dens_solv.DFT_diff(carrier_density));
                 chem_pot = pois_solv.Chemical_Potential;
 
                 // Calculate optimal damping parameter, t, (but damped damping....)
                 t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
                 if (t < 0.0)
                 {
-                    Console.WriteLine("Iterator has stalled, resetting potential");
-                    pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
-                    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-                    dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-                    Console.WriteLine("Potential reset!");
+                    Console.WriteLine("Iterator has stalled. Setting t = " + t_min.ToString());
+                    //pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
+                    //chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+                    //dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                    //Console.WriteLine("Potential reset!");
                     t = t_min;
                 }
 
@@ -253,9 +263,25 @@ namespace TwoD_ThomasFermiPoisson
                 for (int j = 0; j < ny_dens * nz_dens; j++)
                     diff[j] = Math.Abs(g_phi[j]);
                 double convergence = diff.Sum();
-                //if (diff.Max() < tol || Math.Max(t * x.mat.Max(), (-t * x).mat.Max()) < pot_lim)
-                if (Math.Max(t * x.mat.Max(), (-t * x).mat.Max()) < pot_lim)
-                    converged = true;
+
+                if (Math.Max(t * x.Max(), (-t * x).Max()) < pot_lim && t != t_min)
+                {
+                    // once dft potential is starting to be mixed in, set the maximum count to lots
+                    max_count = 1000;
+
+                    // and set the DFT potential
+                    dens_solv.Print_DFT_diff(carrier_density);
+                    dens_solv.Set_DFT_Potential(carrier_density);
+                   // if (alpha_dft <= 0.1)
+                   // {
+                   //     alpha_dft += 0.01;
+                   //     Console.WriteLine("Setting DFT mixing parameter to " + alpha_dft.ToString());
+                   //     dens_solv.Set_DFT_Mixing_Parameter(alpha_dft);
+                   // }
+
+                    if (Math.Max(dens_solv.DFT_diff(carrier_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_density).Min()))  < pot_lim)
+                        converged = true;
+                }
 
                 // Recalculate the charge density but for the updated potential rho(phi + t * x)
                 bool edges_fine = false;
@@ -295,6 +321,12 @@ namespace TwoD_ThomasFermiPoisson
                 // update band energy phi_new = phi_old + t * x
                 chem_pot = chem_pot + t * x;
                 pois_solv.T = t;
+
+                //// and set the DFT potential
+                //if (count % 10 == 0)
+                //    dens_solv.Print_DFT_diff(carrier_density);
+                //dens_solv.Set_DFT_Potential(carrier_density);
+
                 stpwch.Stop();
                 Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;

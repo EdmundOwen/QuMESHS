@@ -17,6 +17,7 @@ namespace Solver_Bases
     {
         /// this is where the density will be saved out to
         protected string dens_filename;
+        protected string xc_pot_filename = "xc_pot.dat";
 
         protected bool flexPDE;
         protected string flexpde_location;
@@ -261,10 +262,20 @@ namespace Solver_Bases
             converged = false; convergence_factor = double.MaxValue;
         }
 
-        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, Band_Data car_dens)
+        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, SpinResolved_Data car_dens)
         {
-            Save_Density_Data(car_dens, dens_filename);
+            Save_Density_Data(car_dens.Spin_Summed_Data, dens_filename);
+            Save_Density_Data(Physics_Base.Get_XC_Potential(car_dens), xc_pot_filename);
             return Calculate_Newton_Step(rho_prime, rhs);
+        }
+
+        /// <summary>
+        /// temporary method!!!!
+        /// </summary>
+        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, SpinResolved_Data car_dens, Band_Data dft_diff)
+        {
+            Save_Density_Data(dft_diff + Physics_Base.Get_XC_Potential(car_dens), "xc_pot_calc.dat");
+            return Calculate_Newton_Step(rho_prime, rhs, car_dens);
         }
 
         protected abstract Band_Data Parse_Potential(string[] data);
