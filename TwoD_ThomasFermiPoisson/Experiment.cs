@@ -231,7 +231,7 @@ namespace TwoD_ThomasFermiPoisson
 
             int count = 0;
             bool converged = false;
-            dens_solv.Set_DFT_Mixing_Parameter(0.1);
+            dens_solv.Set_DFT_Mixing_Parameter(0.3);
             while (!converged)
             {
                 Stopwatch stpwch = new Stopwatch();
