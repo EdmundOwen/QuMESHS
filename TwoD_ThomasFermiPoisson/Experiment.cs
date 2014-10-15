@@ -172,14 +172,14 @@ namespace TwoD_ThomasFermiPoisson
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
             dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
-            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
+            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot; 
             
        //     // run without DFT
        //     dft_solv.Set_DFT_Mixing_Parameter(0.0);
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 10;
+            int no_runs = 100;
             // start without dft
             dft_solv.Set_DFT_Mixing_Parameter(0.0);
             while (!converged)
@@ -224,7 +224,7 @@ namespace TwoD_ThomasFermiPoisson
             pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
             chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             Console.WriteLine("Initial grid complete");
-            // Get charge rho(phi) (not dopents as these are included as a flexPDE input)
+            dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
             dens_solv.Set_DFT_Potential(carrier_density);
@@ -237,15 +237,21 @@ namespace TwoD_ThomasFermiPoisson
                 Stopwatch stpwch = new Stopwatch();
                 stpwch.Start();
 
+                // Get charge rho(phi) (not dopents as these are included as a flexPDE input)
+                dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+
                 // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
                 SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
-
+                
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 //Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density);
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density, dens_solv.DFT_diff(carrier_density));
                 chem_pot = pois_solv.Chemical_Potential;
-
+                
                 // Calculate optimal damping parameter, t, (but damped damping....)
+                if (t == 0.0)
+                    t = t_min;
+
                 t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
                 if (t < 0.0)
                 {
@@ -254,7 +260,9 @@ namespace TwoD_ThomasFermiPoisson
                     //chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
                     //dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
                     //Console.WriteLine("Potential reset!");
-                    t = t_min;
+                    //t = t_min;
+                    Console.WriteLine("Iterator has stalled, setting t = 0");
+                    t = 0.0;
                 }
 
                 // Check convergence
@@ -288,12 +296,12 @@ namespace TwoD_ThomasFermiPoisson
                 while (!edges_fine)
                 {
                     edges_fine = true;
-                    dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot + t * x);
+                    SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot + t * x);
                     for (int i = 1; i < ny_dens - 1; i++)
                         for (int j = 1; j < nz_dens - 1; j++)
                             //if (i == 1 || j == 1 || i == ny_dens - 2 || j == nz_dens - 2)
                             if (i == 1 || i == ny_dens - 2)
-                                if (Math.Abs(carrier_density.Spin_Summed_Data.mat[i, j]) > edge_min_charge)
+                                if (Math.Abs(tmp_dens.Spin_Summed_Data.mat[i, j]) > edge_min_charge)
                                 {
                                     if (x.mat.Max() > 0)
                                         t = 0.5 * t;
@@ -305,16 +313,16 @@ namespace TwoD_ThomasFermiPoisson
                                 }
 
                     end:
-                    if (t < t_min)
-                    {
-                        Console.WriteLine("Unable to reduce density to zero at edge of density domain\nRecalculating potential");
-                        pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
-                        chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-                        dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-                        Console.WriteLine("Potential recalculated");
-                        edges_fine = true;
-                    }
-                    else
+                    //if (t < t_damp * t_min)
+                    //{
+                    //    Console.WriteLine("Unable to reduce density to zero at edge of density domain\nRecalculating potential");
+                    //    pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
+                    //    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+                    //    dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                    //    Console.WriteLine("Potential recalculated");
+                    //    edges_fine = true;
+                    //}
+                    //else
                         continue;
                 }
 
@@ -327,6 +335,7 @@ namespace TwoD_ThomasFermiPoisson
                 //    dens_solv.Print_DFT_diff(carrier_density);
                 //dens_solv.Set_DFT_Potential(carrier_density);
 
+                // and finallly, set the carrier density to the new value
                 stpwch.Stop();
                 Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;

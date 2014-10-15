@@ -339,6 +339,41 @@ namespace Solver_Bases
             return Get_LSDA_Ex_Potential(0.5 * charge_density, 0.5 * charge_density) + Get_LSDA_Ec_Potential(0.5 * charge_density, 0.5 * charge_density);
         }
 
+        /// <summary>
+        /// return the derivative, with respect to the density, of the Perdew - Zunger exchange correlation potential
+        /// </summary>
+        public static double Get_XC_Potential_Deriv(double charge_density)
+        {
+            double d_vc_d_rs, d_vx_d_rs;                                                 // correlation and exchange potentials
+            double density = Math.Abs(charge_density) / Physics_Base.q_e;    // DFT works on density, not charge 
+            double r_s = Math.Pow(0.75 / (Math.PI * density), 1.0 / 3.0) / Physics_Base.a_B;    // and convert to dimensionless constant
+
+            double d_rs_dn = -1.0 * r_s / (3.0 * density); // derivative of rs with respect to the density
+
+            if (density == 0 || double.IsInfinity(r_s))
+                return 0.0;
+
+            // exchange energy per particle for uniform electron gas from Parr and Yang (Density Functional Theory of Atoms and Molecules)
+            // e_x = - 0.9164 / r_s
+            d_vx_d_rs = (4.0 * 0.9164 / 3.0) / (r_s * r_s);
+
+            // correlation energy per particle from Perdew and Zunger (1981) App C, v_xc = (1 - r_s/3 d/dr_s) e_xc (in Ry, note that PZ-1981 is in Ha)
+            // e_c = -0.2846 / (1.0 + 1.0529 * Math.Sqrt(r_s) + 0.3334 * r_s)                           r_s > 1
+            // e_c = 0.0622 * Math.Log(r_s) - 0.0960 - 0.0232 * r_s + 0.0040 * r_s * Math.Log(r_s)      r_s < 1
+
+            if (r_s > 1)
+                d_vc_d_rs = -0.2846 * (1 + 7.0 * 1.0529 / 6.0 * (0.5 / Math.Sqrt(r_s)) + 4.0 * 0.3334 / 3.0) * Math.Pow(1.0 + 1.0529 * Math.Sqrt(r_s) + 0.3334 * r_s, -2.0)
+                                + -0.2846 * (1 + 7.0 * 1.0529 / 6.0 * Math.Sqrt(r_s) + 4.0 * 0.3334 / 3.0 * r_s) * -2.0 * (1.0529 * 0.5 / Math.Sqrt(r_s) + 0.3334) * Math.Pow(1.0 + 1.0529 * Math.Sqrt(r_s) + 0.3334 * r_s, -3.0);
+            else
+                d_vc_d_rs = 0.0622 / r_s + (2.0 * 0.0040 / 3.0) * (1.0 + Math.Log(r_s)) + (2.0 * -0.0232 - 0.0040) / 3.0;
+
+            // convert from Ry to meV
+            d_vx_d_rs *= Physics_Base.Ry;
+            d_vc_d_rs *= Physics_Base.Ry;
+
+            return d_rs_dn * (d_vx_d_rs + d_vc_d_rs);
+        }
+
         public static Band_Data Get_XC_Potential(SpinResolved_Data charge_density)
         {
             Band_Data result;

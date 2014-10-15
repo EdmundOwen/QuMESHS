@@ -151,6 +151,10 @@ namespace Solver_Bases
                     vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
+                // check that t is not less than the minimum possible value (just in case)
+                if (t < minval)
+                    return minval;
+
                 return 0.5 * ((1.0 + div_fact) / div_fact) * t;
             }
             else
@@ -204,6 +208,18 @@ namespace Solver_Bases
                 }
 
             swx.Close(); swv.Close();
+        }
+
+        void Print_VP(Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        {
+            StreamWriter sw = new StreamWriter("vp");
+            int count_max = 100;
+            double dt = 0.001;
+
+            for (int i = 0; i < count_max; i++)
+                sw.WriteLine(calc_vp(i * dt, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv).ToString());
+
+            sw.Close();
         }
 
         /// <summary>
