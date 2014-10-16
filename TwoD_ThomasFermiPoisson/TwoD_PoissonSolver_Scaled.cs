@@ -271,7 +271,7 @@ namespace TwoD_ThomasFermiPoisson
             Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
             Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile, T);
 
-            Run_FlexPDE_Code("x.dat");
+     //       Run_FlexPDE_Code("x.dat");
 
             string[] lines = File.ReadAllLines("x.dat");
             string[] data = Trim_Potential_File(lines);

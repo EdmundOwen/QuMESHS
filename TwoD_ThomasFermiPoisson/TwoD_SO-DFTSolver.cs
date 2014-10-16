@@ -34,7 +34,7 @@ namespace TwoD_ThomasFermiPoisson
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
             tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
             double r_so = 0.0e-8;
-            alpha = r_so * Physics_Base.hbar * Physics_Base.hbar / (4.0 * Physics_Base.mass * Physics_Base.mass);
+            alpha = 1.0;//r_so * Physics_Base.hbar * Physics_Base.hbar / (4.0 * Physics_Base.mass * Physics_Base.mass);
 
             h = 3.0 * delta_k / 8.0;
             g_1D = 2.0 / Math.PI;
@@ -64,12 +64,17 @@ namespace TwoD_ThomasFermiPoisson
         /// <param name="chem_pot"></param>
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
         {
+
             if (dV_y == null)
                 throw new Exception("Error - Band structure derivatives are null!  Have you initiated this type properly by calling Get_SOI_parameters(Band_Data chem_pot)?");
 
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
+
+            temperature = 100;
+            Print_Band_Structure(chem_pot, layers, 10, 0.01, "tmp.dat", 20);
+
 
             // reset charge density
             charge_density = 0.0 * charge_density;
@@ -126,11 +131,11 @@ namespace TwoD_ThomasFermiPoisson
             h_dnup = new DoubleHermitianMatrix(ny * nz);                                // takes dn to up (ie. H_12)
 
             // add spin-orbit
-            h_upup += alpha * Create_SOI_Hamiltonian(Direction.y, Direction.x, k, ny, nz);
-            h_dndn += -1.0 * alpha * Create_SOI_Hamiltonian(Direction.y, Direction.x, k, ny, nz);
-            h_updn += alpha * (Create_SOI_Hamiltonian(Direction.z, Direction.y, ny, nz) - Create_SOI_Hamiltonian(Direction.y, Direction.z, ny, nz) 
+            h_upup -= alpha * Create_SOI_Hamiltonian(Direction.y, Direction.x, k, ny, nz);
+            h_dndn -= -1.0 * alpha * Create_SOI_Hamiltonian(Direction.y, Direction.x, k, ny, nz);
+            h_updn -= alpha * (Create_SOI_Hamiltonian(Direction.z, Direction.y, ny, nz) - Create_SOI_Hamiltonian(Direction.y, Direction.z, ny, nz) 
                                 + I * Create_SOI_Hamiltonian(Direction.z, Direction.x, k, ny, nz));
-            h_dnup += alpha * (Create_SOI_Hamiltonian(Direction.z, Direction.y, ny, nz) - Create_SOI_Hamiltonian(Direction.y, Direction.z, ny, nz)
+            h_dnup -= alpha * (Create_SOI_Hamiltonian(Direction.z, Direction.y, ny, nz) - Create_SOI_Hamiltonian(Direction.y, Direction.z, ny, nz)
                                 - I * Create_SOI_Hamiltonian(Direction.z, Direction.x, k, ny, nz));
 
             // recombine matrices and output result
@@ -163,24 +168,24 @@ namespace TwoD_ThomasFermiPoisson
             if (p == Direction.x)
                 for (int i = 0; i < ny; i++)
                     for (int j = 0; j < nz; j++)
-                        result[i, j] = k * dV_data.mat[i, j];
+                        result[i, j] = Physics_Base.hbar * k * dV_data.mat[i, j];
             else if (p == Direction.y)
                 for (int i = 0; i < ny; i++)
                     for (int j = 0; j < nz; j++)
                     {
                         if (i != ny - 1)
-                            result[i * nz + j, i * nz + j + nz] = 0.5 * dV_data.mat[i, j] / dy;
+                            result[i * nz + j, i * nz + j + nz] = -0.5 * I * Physics_Base.hbar * dV_data.mat[i, j] / dy;
                         if (i != 0)
-                            result[i * nz + j, i * nz + j - nz] = -0.5 * dV_data.mat[i, j] / dy;
+                            result[i * nz + j, i * nz + j - nz] = 0.5 * I * Physics_Base.hbar * dV_data.mat[i, j] / dy;
                     }
             else if (p == Direction.z)
                 for (int i = 0; i < ny; i++)
                     for (int j = 0; j < nz; j++)
                     {
                         if (i != ny - 1)
-                            result[i * nz + j, i * nz + j + 1] = 0.5 * dV_data.mat[i, j] / dz;
+                            result[i * nz + j, i * nz + j + 1] = -0.5 * I * Physics_Base.hbar * dV_data.mat[i, j] / dz;
                         if (i != 0)
-                            result[i * nz + j, i * nz + j - 1] = -0.5 * dV_data.mat[i, j] / dz;
+                            result[i * nz + j, i * nz + j - 1] = 0.5 * I * Physics_Base.hbar * dV_data.mat[i, j] / dz;
                     }
             else
                 throw new Exception("Error - It's completely impossible to get here");
@@ -338,12 +343,11 @@ namespace TwoD_ThomasFermiPoisson
             Get_Potential(ref dft_pot, layers);
 
             // calculate the energies up to a given maximum energy of the lowest state
-            int count = 0;
             double k = 0;
             double[][] energies = new double[Nk][];
             for (int i = 0; i < Nk; i++)
             {
-                k = count * dk;
+                k = i * dk;
                 // generate the Hamiltonian for this k value
                 DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
                 // and diagonalise it
@@ -357,7 +361,7 @@ namespace TwoD_ThomasFermiPoisson
                     if (j < max_wavefunction)
                         tmp_energies[j] = eig_decomp.EigenValues[j];
                     else
-                        tmp_energies[j] = eig_decomp.EigenValues[max_wavefunction];
+                        tmp_energies[j] = eig_decomp.EigenValues[max_wavefunction - 1];
 
                 energies[i] = tmp_energies;
             }
