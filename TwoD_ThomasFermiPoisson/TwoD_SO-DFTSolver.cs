@@ -33,8 +33,8 @@ namespace TwoD_ThomasFermiPoisson
         {
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
             tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
-            double r_so = 0.0e-8;
-            alpha = 1.0;//r_so * Physics_Base.hbar * Physics_Base.hbar / (4.0 * Physics_Base.mass * Physics_Base.mass);
+            double r_so = 117.1;
+            alpha = r_so / (Physics_Base.q_e * Physics_Base.hbar);
 
             h = 3.0 * delta_k / 8.0;
             g_1D = 2.0 / Math.PI;
@@ -71,10 +71,6 @@ namespace TwoD_ThomasFermiPoisson
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
-
-            temperature = 100;
-            Print_Band_Structure(chem_pot, layers, 10, 0.01, "tmp.dat", 20);
-
 
             // reset charge density
             charge_density = 0.0 * charge_density;
@@ -168,7 +164,7 @@ namespace TwoD_ThomasFermiPoisson
             if (p == Direction.x)
                 for (int i = 0; i < ny; i++)
                     for (int j = 0; j < nz; j++)
-                        result[i, j] = Physics_Base.hbar * k * dV_data.mat[i, j];
+                        result[i * nz + j, i * nz + j] = Physics_Base.hbar * k * dV_data.mat[i, j];
             else if (p == Direction.y)
                 for (int i = 0; i < ny; i++)
                     for (int j = 0; j < nz; j++)
@@ -349,10 +345,10 @@ namespace TwoD_ThomasFermiPoisson
             {
                 k = i * dk;
                 // generate the Hamiltonian for this k value
-                DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
+                DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot, k);
                 // and diagonalise it
                 int max_wavefunction;
-                DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction);
+                DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(hamiltonian, out max_wavefunction);
 
                 // add the calculated energies up to either the maximum required eigenvalue or
                 // to the maximum calculated wave function (which is 50*kb*T above the chemical potential)
