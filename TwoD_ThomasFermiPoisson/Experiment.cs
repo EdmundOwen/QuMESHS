@@ -179,7 +179,7 @@ namespace TwoD_ThomasFermiPoisson
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 100;
+            int no_runs = 10;
             // start without dft
             dft_solv.Set_DFT_Mixing_Parameter(0.0);
             while (!converged)
@@ -308,9 +308,15 @@ namespace TwoD_ThomasFermiPoisson
                                     else
                                         t = 2.0 * t;
 
-                                    edges_fine = false;
-                                    goto end;
+                                    if (t > t_min)
+                                    {
+                                        edges_fine = false;
+                                        goto end;
+                                    }
                                 }
+
+                    if (!edges_fine)
+                        throw new Exception("Error - Unable to reduce density to zero at edge of density domain.\nSimulation aborted");
 
                     end:
                     //if (t < t_damp * t_min)

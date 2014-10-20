@@ -44,7 +44,7 @@
 #
 ## Split gate voltage
 #% split_V = -0.6
-% split_V = -2.7
+% split_V = -2.6
 #
 ## Split gate width
 % split_width = 800
@@ -77,19 +77,19 @@
 % T = 0.05
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -300.0
+% ymin_dens = -200.0
 #
 ## Lattice spacing in the transverse direction
 % dy_dens =  5.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 121
+% ny_dens = 81
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -321.0
+% zmin_dens = -309.0
 #
 ## Lattice spacing in the growth direction
-% dz_dens = 3.0
+% dz_dens = 2.0
 #
 ## Number of lattice points in growth direction
 % nz_dens = 16
@@ -113,7 +113,7 @@
 ############## Run details #######################################
 #
 ## 
-% init_val = -280
+% init_val = -250
 #
 ##
 % final_val = -150
