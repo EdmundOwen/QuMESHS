@@ -72,6 +72,28 @@ namespace TwoD_ThomasFermiPoisson
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
 
+            // test
+            Console.WriteLine("TEST!!!!!!!!!!!!!!!!!!!!!");
+
+            dy = 0.1;
+
+            double l_w = ny * dy / 5.0;
+            double omega = Physics_Base.hbar / Physics_Base.mass / l_w / l_w;
+            for (int i = 0; i < dft_pot.mat.Rows; i++)
+                for (int j = 0; j < dft_pot.mat.Cols; j++)
+                    dft_pot.mat[i, j] = 0.5 * Physics_Base.mass * omega * omega * (i - ny) * (i - ny) * dy * dy;
+
+            alpha = 1.0;
+            double beta = Physics_Base.hbar * Physics_Base.hbar / (2.0 * Physics_Base.mass * 10.0 * l_w);
+            double factor = beta / (Physics_Base.hbar * l_w * Physics_Base.mass * omega * omega);
+            Get_SOI_parameters(factor * dft_pot);
+
+            temperature = 1000.0;
+
+            Console.WriteLine("hbar omega / 2 = " + (Physics_Base.hbar * omega * 0.5).ToString());
+            Print_Band_Structure(dft_pot, layers, 20, 1.0 / l_w, "tmp.dat", 10);
+            Console.WriteLine("End of test");
+
             // reset charge density
             charge_density = 0.0 * charge_density;
             
@@ -271,7 +293,7 @@ namespace TwoD_ThomasFermiPoisson
             DoubleHermitianEigDecomp eig_decomp;
 
             DoubleHermitianEigDecompServer eig_server = new DoubleHermitianEigDecompServer();
-            eig_server.ComputeEigenValueRange(E_min, no_kb_T * Physics_Base.kB * temperature);
+  //          eig_server.ComputeEigenValueRange(E_min, no_kb_T * Physics_Base.kB * temperature);
             eig_server.ComputeVectors = true;
             eig_decomp = eig_server.Factor(hamiltonian);
 
@@ -329,14 +351,10 @@ namespace TwoD_ThomasFermiPoisson
         /// <summary>
         /// Calculates and prints the band structure
         /// </summary>
-        void Print_Band_Structure(Band_Data chem_pot, ILayer[] layers, int Nk, double dk, string outfile, int max_eigval)
+        void Print_Band_Structure(Band_Data dft_pot, ILayer[] layers, int Nk, double dk, string outfile, int max_eigval)
         {
             if (dV_y == null)
                 throw new Exception("Error - Band structure derivatives are null!  Have you initiated this type properly by calling Get_SOI_parameters(Band_Data chem_pot)?");
-
-            // convert the chemical potential into a quantum mechanical potential
-            Band_Data dft_pot = chem_pot.DeepenThisCopy();
-            Get_Potential(ref dft_pot, layers);
 
             // calculate the energies up to a given maximum energy of the lowest state
             double k = 0;
@@ -344,20 +362,22 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < Nk; i++)
             {
                 k = i * dk;
+                Console.WriteLine(i.ToString() + ": Calculating for k = " + k.ToString());
                 // generate the Hamiltonian for this k value
                 DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot, k);
                 // and diagonalise it
                 int max_wavefunction;
                 DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(hamiltonian, out max_wavefunction);
+                max_wavefunction = max_eigval;
 
                 // add the calculated energies up to either the maximum required eigenvalue or
                 // to the maximum calculated wave function (which is 50*kb*T above the chemical potential)
                 double[] tmp_energies = new double[max_eigval];
                 for (int j = 0; j < max_eigval; j++)
                     if (j < max_wavefunction)
-                        tmp_energies[j] = eig_decomp.EigenValues[j];
+                        tmp_energies[j] = eig_decomp.EigenValues[j] - 0.5 * Physics_Base.hbar * Physics_Base.hbar * k * k / Physics_Base.mass;
                     else
-                        tmp_energies[j] = eig_decomp.EigenValues[max_wavefunction - 1];
+                        tmp_energies[j] = eig_decomp.EigenValues[max_wavefunction - 1] -0.5 * Physics_Base.hbar * Physics_Base.hbar * k * k / Physics_Base.mass;
 
                 energies[i] = tmp_energies;
             }

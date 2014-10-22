@@ -60,11 +60,11 @@
 % dz_dens = 2.0
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dens = -1630.0
+% zmin_dens = -325.0
 #
 #
 ############## Physical parameters ####################################
 #
 ## Temperature
-% T = 4
+% T = 1
 #
