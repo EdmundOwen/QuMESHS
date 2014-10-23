@@ -166,8 +166,8 @@ namespace TwoD_ThomasFermiPoisson
 
         public override void Run()
         {
-            if (!hot_start)
-                Run_Iteration_Routine(dens_solv, 1.0);
+        //    if (!hot_start)
+        //        Run_Iteration_Routine(dens_solv, 1.0);
 
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
