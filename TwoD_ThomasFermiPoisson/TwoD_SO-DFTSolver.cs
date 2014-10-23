@@ -52,7 +52,7 @@ namespace TwoD_ThomasFermiPoisson
                 for (int j = 1; j < nz - 1; j++)
                 {
                     dV_y.mat[i, j] = (chem_pot.mat[i + 1, j] - chem_pot.mat[i - 1, j]) / (2.0 * dy);
-    //                dV_z.mat[i, j] = (chem_pot.mat[i, j + 1] - chem_pot.mat[i, j - 1]) / (2.0 * dz);
+                    dV_z.mat[i, j] = (chem_pot.mat[i, j + 1] - chem_pot.mat[i, j - 1]) / (2.0 * dz);
                     dV_yz.mat[i, j] = (chem_pot.mat[i + 1, j + 1] - chem_pot.mat[i - 1, j + 1] - chem_pot.mat[i + 1, j - 1] + chem_pot.mat[i - 1, j - 1]) / (4.0 * dy * dz);
                 }
         }
@@ -71,32 +71,6 @@ namespace TwoD_ThomasFermiPoisson
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
-
-            // test
-            Console.WriteLine("TEST!!!!!!!!!!!!!!!!!!!!!");
-            
-            dy = 0.1;
-            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
-            dz = 0.1;
-            tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
-
-            double l_w = ny * dy / 10.0;
-            double omega_z = 50000.0;
-            double omega = Physics_Base.hbar / Physics_Base.mass / l_w / l_w;
-            for (int i = 0; i < dft_pot.mat.Rows; i++)
-                for (int j = 0; j < dft_pot.mat.Cols; j++)
-                    dft_pot.mat[i, j] = 0.5 * Physics_Base.mass * omega * omega * (i - (ny + 1) / 2) * (i - (ny + 1) / 2) * dy * dy + 0.5 * Physics_Base.mass * omega_z * omega_z * (j - (nz + 1) / 2) * (j - (nz + 1) / 2) * dz * dz;
-
-            alpha = 1.0;
-            double beta = Physics_Base.hbar * Physics_Base.hbar / (2.0 * Physics_Base.mass * 10.0 * l_w);
-            double factor = beta / (Physics_Base.hbar * l_w * Physics_Base.mass * omega * omega);
-            Get_SOI_parameters(factor * dft_pot);
-
-            temperature = 1000.0;
-
-            Console.WriteLine("hbar omega / 2 = " + (Physics_Base.hbar * omega * 0.5).ToString());
-            Print_Band_Structure(dft_pot, layers, 21, 1.0 / l_w, "tmp.dat", 20);
-            Console.WriteLine("End of test");
 
             // reset charge density
             charge_density = 0.0 * charge_density;
@@ -297,7 +271,7 @@ namespace TwoD_ThomasFermiPoisson
             DoubleHermitianEigDecomp eig_decomp;
 
             DoubleHermitianEigDecompServer eig_server = new DoubleHermitianEigDecompServer();
-  //          eig_server.ComputeEigenValueRange(E_min, no_kb_T * Physics_Base.kB * temperature);
+            eig_server.ComputeEigenValueRange(E_min, no_kb_T * Physics_Base.kB * temperature);
             eig_server.ComputeVectors = true;
             eig_decomp = eig_server.Factor(hamiltonian);
 

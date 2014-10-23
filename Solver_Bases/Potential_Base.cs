@@ -66,7 +66,7 @@ namespace Solver_Bases
             Save_Density_Data(density, dens_filename);
 
             // run the code
-      //      Run_FlexPDE_Code("pot.dat");
+            Run_FlexPDE_Code("pot.dat");
 
             string[] lines = File.ReadAllLines("pot.dat");
             string[] data = Trim_Potential_File(lines);
