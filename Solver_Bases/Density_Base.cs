@@ -296,6 +296,8 @@ namespace Solver_Bases
         {
             if (this.dft_pot == null)
                 this.dft_pot = Physics_Base.Get_XC_Potential(car_dens);
+            else if (alpha_dft == 0.0)
+                this.dft_pot = 0.0 * dft_pot;
             else
                 this.dft_pot = (1.0 - alpha_dft) * dft_pot + alpha_dft * Physics_Base.Get_XC_Potential(car_dens);
         }

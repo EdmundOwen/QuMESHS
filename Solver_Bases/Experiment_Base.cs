@@ -141,10 +141,15 @@ namespace Solver_Bases
                         // if there is a root between minval and zero, return minval
                         if (Math.Sign(vpb) != Math.Sign(vpc))
                             return minval;
-                        // otherwise, return a negative value which can be used as a flag or, if not, will still
-                        // generate weird behavious which should push the iterator into an active regime
+                        /*
+                    // otherwise, return a negative value which can be used as a flag or, if not, will still
+                    // generate weird behavious which should push the iterator into an active regime
+                    else
+                        return -1.0 * minval;
+                         */
+                        // new behaviour is to just set the blend parameter to the minimum value so that at least something happens
                         else
-                            return -1.0 * minval;
+                            return minval;
                     }
 
                     vpa = vpb;

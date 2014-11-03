@@ -64,6 +64,107 @@ namespace OneD_ThomasFermiPoisson
             Insert_DFT_Charge(ref charge_density, dft_dens);
         }
 
+        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
+        {
+            // artificially deepen the copies of spin up and spin down
+            Band_Data tmp_spinup = new Band_Data(new DoubleVector(carrier_density_deriv.Spin_Up.vec.Length));
+            Band_Data tmp_spindown = new Band_Data(new DoubleVector(carrier_density_deriv.Spin_Up.vec.Length));
+
+            for (int i = 0; i < carrier_density_deriv.Spin_Up.vec.Length; i++)
+
+                {
+                    tmp_spinup.vec[i] = carrier_density_deriv.Spin_Up.vec[i];
+                    tmp_spindown.vec[i] = carrier_density_deriv.Spin_Down.vec[i];
+                }
+
+            SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
+
+            // finally, get the charge density and send it to this new array
+            Get_ChargeDensity_Deriv(layers, ref new_density, chem_pot);
+
+            return new_density;
+        }
+
+        /// <summary>
+        /// Calculate the charge density for this potential
+        /// NOTE!!! that the boundary potential is (essentially) set to infty by ringing the density with a set of zeros.
+        ///         this prevents potential solvers from extrapolating any residual density at the edge of the eigenstate
+        ///         solution out of the charge density calculation domain
+        /// </summary>
+        /// <param name="layers"></param>
+        /// <param name="charge_density_deriv"></param>
+        /// <param name="chem_pot"></param>
+        public void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
+        {
+            // interpolate the input charge density and chemical potential onto a reduced domain to simplify DFT solve
+            SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+            Get_ChargeDensity(layers, ref charge_density_deriv, chem_pot);
+            Band_Data dft_pot = new Band_Data(new DoubleVector(nz));
+            Interpolate_DFT_Grid(ref dft_dens, ref dft_pot, charge_density_deriv, chem_pot);
+            Get_Potential(ref dft_pot, layers);
+
+       //     // set dft_dens to zero so that the hamiltonian doesn't include the XC term
+       //     dft_dens = 0.0 * dft_dens;
+
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_dens, dft_pot);
+            DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
+
+            double min_eigval = eig_decomp.EigenValues.Min();
+            max_wavefunction = (from val in eig_decomp.EigenValues
+                                where val < no_kb_T * Physics_Base.kB * temperature
+                                select val).ToArray().Length;
+
+            DoubleVector dens_up_deriv = new DoubleVector(nz, 0.0);
+            DoubleVector dens_down_deriv = new DoubleVector(nz, 0.0);
+
+                for (int j = 0; j < nz; j++)
+                {
+                double dens_val = 0.0;
+                for (int i = 0; i < max_wavefunction; i++)
+                {
+                    // and integrate the density of states at this position for this eigenvector from the minimum energy to
+                    // (by default) 50 * k_b * T above mu = 0
+                    //dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
+                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Physics_Base.mass / (2.0 * Math.PI * Physics_Base.hbar * Physics_Base.hbar);// *Physics_Base.Get_Fermi_Function_Derivative(eig_decomp.EigenValue(i), 0.0, no_kb_T) / (Math.PI * Physics_Base.hbar * Physics_Base.hbar);
+                }
+
+                // just share the densities (there is no spin polarisation)
+                dens_up_deriv[j] = 0.5 * dens_val;
+                dens_down_deriv[j] = 0.5 * dens_val;
+            }
+
+            // and multiply the density by -e to get the charge density (as these are electrons)
+            dft_dens = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
+
+            Insert_DFT_Charge(ref charge_density_deriv, dft_dens);
+        }
+
+        public DoubleVector Get_Energy(ILayer[] layers, SpinResolved_Data charge_density, Band_Data chem_pot)
+        {
+            // interpolate the input charge density and chemical potential onto a reduced domain to simplify DFT solve
+            SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+            Band_Data dft_pot = new Band_Data(new DoubleVector(nz));
+            Interpolate_DFT_Grid(ref dft_dens, ref dft_pot, charge_density, chem_pot);
+            Get_Potential(ref dft_pot, layers);
+
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_dens, dft_pot);
+            DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
+
+            System.IO.StreamWriter sw_pot = new System.IO.StreamWriter("tmp_pot.dat");
+            System.IO.StreamWriter sw_dens = new System.IO.StreamWriter("tmp_dens.dat");
+
+            for (int i = 0; i < dft_pot.Length; i++)
+            {
+                sw_dens.WriteLine(dft_dens.Spin_Summed_Data[i].ToString());
+                sw_pot.WriteLine(dft_pot[i].ToString());
+            }
+
+            sw_dens.Close();
+            sw_pot.Close();
+
+            return eig_decomp.EigenValues;
+        }
+
         /// <summary>
         /// protects carrier_density such that its values are not overriden
         /// </summary>
@@ -73,6 +174,7 @@ namespace OneD_ThomasFermiPoisson
             Get_ChargeDensity(layers, ref tmp_dens, ref dopent_density, chem_pot);
             return tmp_dens + dopent_density;
         }
+
 
         void Insert_DFT_Charge(ref SpinResolved_Data charge_density, SpinResolved_Data dft_dens)
         {

@@ -170,9 +170,9 @@ namespace TwoD_ThomasFermiPoisson
             //    Run_Iteration_Routine(dens_solv, 1.0);
 
             // and then run the DFT solver at the base temperature over a limited range
-            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+            TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
             dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
-            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot; 
+            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
             
        //     // run without DFT
        //     dft_solv.Set_DFT_Mixing_Parameter(0.0);
@@ -225,7 +225,6 @@ namespace TwoD_ThomasFermiPoisson
             chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             Console.WriteLine("Initial grid complete");
             dens_solv.Set_DFT_Potential(carrier_density);
-            dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
             dens_solv.Set_DFT_Potential(carrier_density);
 
@@ -242,7 +241,7 @@ namespace TwoD_ThomasFermiPoisson
 
                 // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
                 SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
-                
+
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 //Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density);
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density, dens_solv.DFT_diff(carrier_density));
@@ -350,7 +349,7 @@ namespace TwoD_ThomasFermiPoisson
                 if (converged || count > max_count)
                 {
                     File.Copy("split_gate.pg6", "split_gate_final.pg6", true);
-                    Console.WriteLine("Maximum potential change at end of iteration was " + Math.Max(t * x.mat.Max(), (-t * x).mat.Max()).ToString());
+                    Console.WriteLine("Maximum potential change at end of iteration was " + Math.Max(t * x.Max(), (-t * x).Max()).ToString());
                     break;
                 }
 

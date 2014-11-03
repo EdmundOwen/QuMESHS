@@ -38,7 +38,7 @@ namespace TwoD_ThomasFermiPoisson
             Band_Data band_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref band_pot, layers);
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, band_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, band_pot);
             DoubleHermitianEigDecompServer eig_server = new DoubleHermitianEigDecompServer();
             eig_server.ComputeEigenValueRange(band_pot.mat.Min(), no_kb_T * Physics_Base.kB * temperature);
             eig_server.ComputeVectors = true;
@@ -128,7 +128,7 @@ namespace TwoD_ThomasFermiPoisson
             Band_Data band_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref band_pot, layers);
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density_deriv, band_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, band_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
@@ -173,15 +173,15 @@ namespace TwoD_ThomasFermiPoisson
         /// <summary>
         /// returns the eigen-energies for the given potential and charge density
         /// </summary>
-        public DoubleVector Get_EnergyLevels(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
+        public DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data pot)
         {
             Get_Potential(ref pot, layers);
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, charge_density, pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
             return eig_decomp.EigenValues;
         }
 
-        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
+        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, Band_Data pot)
         {
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(nx * ny);
 

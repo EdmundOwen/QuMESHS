@@ -15,7 +15,9 @@ namespace OneD_ThomasFermiPoisson
     {
         double top_V = 0.0;
         double top_V_cooldown;
-        double t_min = 1e-6;
+        double t_min = 1e-3;
+        double t_damp = 1.0;
+        OneD_PoissonSolver pois_solv;
 
         public new void Initialise(Dictionary<string, object> input_dict)
         {
@@ -56,67 +58,31 @@ namespace OneD_ThomasFermiPoisson
 
             if (input_dict.ContainsKey("dft")) this.TF_only = !(bool)input_dict["dft"];
             if (input_dict.ContainsKey("TF_only")) this.TF_only = (bool)input_dict["TF_only"];
+
+            // Initialise potential solver
+            pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+
+            Console.WriteLine("Experimental parameters initialised");
         }
 
-        int count = 0;
         public override void Run()
         {
             // get temperatures to run the experiment at
             double[] run_temps = Freeze_Out_Temperatures();
 
-            // initialise potential solver
-            OneD_PoissonSolver pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
-            // set the boundary conditions
-            pois_solv.Set_Boundary_Conditions(layers, top_V_cooldown, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
-            // initialise the chemical potential as the solution with zero density
-            chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
-
+            // run experiment using Thgomas-Fermi solver
             for (int i = 0; i < run_temps.Length; i++)
             {
                 double current_temperature = run_temps[i];
                 this.temperature = current_temperature;
 
                 OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
+                dens_solv.Set_DFT_Mixing_Parameter(0.0);
+
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature))
                     this.bottom_V = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
-                // reset the boundary conditions
-                pois_solv.Set_Boundary_Conditions(layers, top_V_cooldown, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
-                
-                count = 0;
-                t = 1.0;
-                bool converged = false;
-                while (!converged)
-                {
-                    // Get charge rho(phi)
-                    dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-                    Band_Data charge_dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
 
-                    // Calculate Laplacian operating on the given band energy, - d(eps * d(phi))
-                    Band_Data tmp_g = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
-
-                    // Generate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi)
-                    SpinResolved_Data rho_prime = -1.0 * dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
-
-                    // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                    Band_Data g_phi = tmp_g - charge_dens_old;
-                    Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * g_phi);
-
-                    // Calculate optimal damping parameter, t
-                    t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
-
-                    // Check convergence
-                    double[] diff = new double[Nz_Pot];
-                    for (int j = 0; j < nz_pot; j++)
-                        diff[j] = Math.Abs(g_phi.vec[j]);
-                    double convergence = diff.Sum();
-                    if (diff.Max() < tol)
-                        converged = true;
-
-                    // update band energy phi_new = phi_old + t * x
-                    Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString() + "\tt = " + t.ToString());
-                    chem_pot = chem_pot + t * x;
-                    count++;
-                }
+                Run_Iteration_Routine(dens_solv, tol);
 
                 pois_solv.Reset();
             }
@@ -127,52 +93,15 @@ namespace OneD_ThomasFermiPoisson
                                    where val < 0.0
                                    select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
                 Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens_TF.ToString("e3") + " cm^-2");
-                 return;
+                return;
             }
 
-            // and then run the DFT solver at the base temperature over a limited range
+            // and then run the DFT solver at the base temperature
             OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
+            dft_solv.Set_DFT_Mixing_Parameter(0.0);                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
             dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
             Console.WriteLine("Starting DFT calculation");
-
-            // reset boundary conditions
-            pois_solv.Set_Boundary_Conditions(layers, top_V, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
-
-            count = 0;
-            t = 1.0;
-            bool dft_converged = false;
-            while (!dft_converged)
-            {
-                // Get charge rho(phi)
-                dft_solv.Get_ChargeDensity(layers, ref carrier_density, chem_pot);
-                Band_Data charge_dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
-                
-                // Calculate Laplacian operating on the given band energy, - d(eps * d(phi))
-                Band_Data tmp_g = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
-
-                // Generate an approximate charge-dependent part of the Jacobian, g'(phi) = - d(eps * d( )) - rho'(phi) using the Thomas-Fermi semi-classical method
-                SpinResolved_Data rho_prime = -1.0 * dft_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
-
-                // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                Band_Data g_phi = tmp_g - charge_dens_old;
-                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * g_phi);
-
-                // Calculate optimal damping parameter, t
-                t = Calculate_optimal_t(t, chem_pot, x, carrier_density, dopent_density, pois_solv, dft_solv, t_min);
-
-                // Check convergence
-                double[] diff = new double[Nz_Pot];
-                for (int j = 0; j < nz_pot; j++)
-                    diff[j] = Math.Abs(g_phi.vec[j]);
-                double convergence = diff.Sum();
-                if (diff.Max() < tol)
-                    dft_converged = true;
-
-                // update band energy phi_new = phi_old + t * x
-                Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString() + "\tt = " + t.ToString());
-                chem_pot = chem_pot + t * x;
-                count++;
-            }
+            Run_Iteration_Routine(dft_solv, tol);
 
             pois_solv.Reset();
 
@@ -194,6 +123,114 @@ namespace OneD_ThomasFermiPoisson
                                where val < 0.0
                                select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
             Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens_Quantum.ToString("e3") + " cm^-2");
+        }
+
+        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim)
+        {
+            return Run_Iteration_Routine(dens_solv, pot_lim, int.MaxValue);
+        }
+
+        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim, int max_count)
+        {
+            // calculate initial potential with the given charge distribution
+            Console.WriteLine("Calculating initial potential grid");
+            pois_solv.Set_Boundary_Conditions(layers, top_V, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
+            chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
+            Console.WriteLine("Initial grid complete");
+            dens_solv.Set_DFT_Potential(carrier_density);
+            dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+            dens_solv.Set_DFT_Potential(carrier_density);
+
+            int count = 0;
+            t = 1.0;
+            bool converged = false;
+            while (!converged)
+            {
+                // Generate charge-dependent part of the Jacobian, g'(phi) = -d(eps * d( )) - rho'(phi)
+                SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
+
+                // Get charge rho(phi)
+                dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                Band_Data charge_dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
+
+                // Calculate Laplacian operating on the given band energy, d(eps * d(phi))
+                Band_Data tmp_g = pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
+
+                // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
+                Band_Data g_phi = -1.0 * tmp_g - charge_dens_old;
+                g_phi[0] = 0.0; g_phi[g_phi.Length - 1] = 0.0;
+                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, g_phi);
+
+                // Calculate optimal damping parameter, t
+                t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
+
+                // Check convergence
+                double[] diff = new double[Nz_Pot];
+                for (int j = 0; j < nz_pot; j++)
+                    diff[j] = Math.Abs(g_phi.vec[j]);
+                double convergence = diff.Sum();
+                if (diff.Max() < tol)
+                    converged = true;
+
+                // update band energy phi_new = phi_old + t * x
+               Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString() + "\tt = " + t.ToString());
+                chem_pot = chem_pot + t * x;
+                count++;
+
+                // reset the potential if the added potential t * x is too small
+                if (converged || count > max_count)
+                {
+                    Console.WriteLine("Maximum potential change at end of iteration was " + Math.Max(t * x.Max(), (-t * x).Max()).ToString());
+                    break;
+                }
+            }
+
+            Console.WriteLine("Iteration complete");
+
+            return converged;
+        }
+
+        private void Run_Test()
+        {
+            StreamWriter sw_dens = new StreamWriter("test_dens.dat");
+            StreamWriter sw_e = new StreamWriter("test_ener.dat");
+
+            Console.WriteLine("top_gate\t\tN_top\t\tN_bottom");
+            int top_index = (int)Math.Floor((- zmin_pot + zmin_dens) / dz_pot + nz_dens / 2);
+            int bottom_index = (int)Math.Floor((- zmin_pot + zmin_dens) / dz_pot);
+            int test_no = 50;
+            for (int i = 0; i < test_no; i++)
+            {
+                top_V = -0.02 * (double)i;
+
+                // and then run the DFT solver at the base temperature
+                OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
+                dft_solv.Set_DFT_Mixing_Parameter(0.0);                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
+                dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
+                Console.WriteLine("Starting DFT calculation");
+                Run_Iteration_Routine(dft_solv, tol);
+
+                double top = 0.0;
+                double bottom = 0.0;
+                for (int j= 0; j < nz_dens / 2; j++)
+                {
+                    top += carrier_density.Spin_Summed_Data.vec[top_index + j];
+                    bottom += carrier_density.Spin_Summed_Data.vec[bottom_index + j];
+                }
+                top *= -1.0e14 * dz_dens / Physics_Base.q_e;
+                bottom *= -1.0e14 * dz_dens / Physics_Base.q_e;
+
+                Console.WriteLine(top_V.ToString() + "\t\t" + top.ToString("e3") + "\t\t" + bottom.ToString("e3"));
+                sw_dens.WriteLine(top.ToString("e3") + "\t" + bottom.ToString("e3"));
+                DoubleVector energies = dft_solv.Get_Energy(layers, carrier_density, chem_pot);
+                sw_e.WriteLine(energies[0].ToString() + "\t" + energies[1].ToString() + "\t" + energies[2].ToString() + "\t" + energies[3].ToString());
+
+                File.Copy("tmp_pot.dat", "pot_" + i.ToString("00"), true);
+                File.Copy("tmp_dens.dat", "dens_" + i.ToString("00"), true);
+            }
+
+            sw_dens.Close();
+            sw_e.Close();
         }
     }
 }

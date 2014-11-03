@@ -53,7 +53,7 @@ namespace Solver_Bases
                     return 0.0;
             else
             {
-                double exponent = (energy - mu) / kB * T;
+                double exponent = (energy - mu) / (kB * T);
 
                 if (double.IsInfinity(Math.Exp(exponent)))
                     return 0.0;
@@ -90,7 +90,7 @@ namespace Solver_Bases
                     return 0.0;
             else
             {
-                double exponent = (energy - mu) / kB * T;
+                double exponent = (energy - mu) / (kB * T);
 
                 if (double.IsInfinity(Math.Exp(exponent)))
                     return 0.0;
