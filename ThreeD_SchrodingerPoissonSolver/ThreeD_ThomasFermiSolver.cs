@@ -90,5 +90,10 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             throw new NotImplementedException();
         }
+
+        public override CenterSpace.NMath.Core.DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

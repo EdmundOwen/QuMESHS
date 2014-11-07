@@ -73,5 +73,10 @@ namespace OneD_ThomasFermiPoisson
             Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
             return carrier_density + dopent_density;
         }
+
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

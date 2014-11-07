@@ -116,7 +116,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-4");
+            sw.WriteLine("\tERRLIM=1e-7");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -226,7 +226,6 @@ namespace TwoD_ThomasFermiPoisson
             // add a front commmand at the well depth to introduce a higher density of points at the interface
             sw.WriteLine("\tFRONT(y - well_depth, z_scaling * 20)");
             sw.WriteLine();
-            sw.WriteLine("\tRESOLVE (rho_carrier)");
 
             // write out plotting routines
             sw.WriteLine("MONITORS");
@@ -296,6 +295,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
+            sw.WriteLine("\tERRLIM = 1e-5");
             sw.WriteLine("\tREGRID = OFF");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -449,7 +449,7 @@ namespace TwoD_ThomasFermiPoisson
                 window_function_string = "(ustep(x + " + (-1.0 * exp.Ymin_Dens).ToString() + ")";
             else
                 window_function_string = "(ustep(x - " + exp.Ymin_Dens.ToString() + ")";
-            double xmax = exp.Ymin_Dens + exp.Ny_Dens * exp.Dy_Dens;
+            double xmax = exp.Ymin_Dens + (exp.Ny_Dens - 1) * exp.Dy_Dens;
             if (xmax < 0.0)
                 window_function_string = window_function_string + " - ustep(x + " + (-1.0 * xmax).ToString() + "))";
             else
@@ -458,7 +458,7 @@ namespace TwoD_ThomasFermiPoisson
                 window_function_string = window_function_string + " * (ustep(y + " + (-1.0 * z_scaling * exp.Zmin_Dens).ToString() + ")";
             else
                 window_function_string = window_function_string + " * (ustep(y - " + (z_scaling * exp.Zmin_Dens).ToString() + ")";
-            double ymax = z_scaling * (exp.Zmin_Dens + exp.Nz_Dens * exp.Dz_Dens);
+            double ymax = z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens - 1) * exp.Dz_Dens);
             if (ymax < 0.0)
                 window_function_string = window_function_string + " - ustep(y + " + (-1.0 * ymax).ToString() + "))";
             else
@@ -475,7 +475,6 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("SELECT");
             // no regridding for the newton step.  Just use the original grid from the potential calculation
             //sw.WriteLine("REGRID = OFF");
-            sw.WriteLine("\tERRLIM = 1e-3");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable

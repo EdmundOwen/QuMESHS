@@ -222,7 +222,7 @@ namespace OneD_ThomasFermiPoisson
 
                 Console.WriteLine(top_V.ToString() + "\t\t" + top.ToString("e3") + "\t\t" + bottom.ToString("e3"));
                 sw_dens.WriteLine(top.ToString("e3") + "\t" + bottom.ToString("e3"));
-                DoubleVector energies = dft_solv.Get_Energy(layers, carrier_density, chem_pot);
+                DoubleVector energies = dft_solv.Get_EnergyLevels(layers, ref carrier_density, chem_pot);
                 sw_e.WriteLine(energies[0].ToString() + "\t" + energies[1].ToString() + "\t" + energies[2].ToString() + "\t" + energies[3].ToString());
 
                 File.Copy("tmp_pot.dat", "pot_" + i.ToString("00"), true);

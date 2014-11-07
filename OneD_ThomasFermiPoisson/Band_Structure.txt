@@ -12,16 +12,10 @@ surface=true
 #
 ## Low density deep HEMT (eg W0616)
 #
-#mat=GaAs t=10
-#mat=AlGaAs t=200 x=.3 Nd=6.4e16
-#mat=AlGaAs t=75 x=.3
-#mat=GaAs t=20
-#mat=AlGaAs t=20
-#mat=GaAs t=20
-#mat=AlGaAs t=40 x=.3
-#mat=AlGaAs t=40 x=.3 Nd=0.05e18
-#mat=AlGaAs t=1670
-#mat=GaAs t=1615
+mat=GaAs t=10
+mat=AlGaAs t=200 x=.3 Nd=6.4e16
+mat=AlGaAs t=75 x=.3
+mat=GaAs t=1615
 #mat=GaAs t=1615 Na=1e14
 #
 ## Masato's wafer
@@ -35,26 +29,15 @@ surface=true
 #
 #surface=true
 #mat=AlGaAs t=10
-#mat=AlGaAs t=40 x=.3
-#mat=AlGaAs t=40 x=.3
-#mat=GaAs t=10
-#mat=AlGaAs t=30
-#mat=GaAs t=10
-#mat=AlGaAs t=360
-#
-#
-#
-#surface=true
-mat=AlGaAs t=10
-mat=AlGaAs t=200 x=.3 Nd=3.5e16
-mat=AlGaAs t=74 x=.3
-mat=GaAs t=16
-mat=AlGaAs t=32
-mat=GaAs t=16
-mat=AlGaAs t=74
-mat=AlGaAs t=200 Nd=7.0e15
-mat=AlGaAs t=500
-mat=GaAs t=1100
+#mat=AlGaAs t=200 x=.3 Nd=3.5e16
+#mat=AlGaAs t=74 x=.3
+#mat=GaAs t=16
+#mat=AlGaAs t=32
+#mat=GaAs t=16
+#mat=AlGaAs t=74
+#mat=AlGaAs t=200 Nd=7.0e15
+#mat=AlGaAs t=500
+#mat=GaAs t=1100
 #
 #
 mat=substrate

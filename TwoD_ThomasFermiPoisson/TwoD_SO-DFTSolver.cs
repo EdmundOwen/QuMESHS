@@ -372,7 +372,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
-        public DoubleVector Get_EnergyLevels(ILayer[] layers, SpinResolved_Data carrier_density, Band_Data chem_pot)
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
         {
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();

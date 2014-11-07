@@ -14,6 +14,8 @@ namespace Solver_Bases
         SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
         void Output(SpinResolved_Data data, string filename);
 
+        CenterSpace.NMath.Core.DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot);
+
         void Set_DFT_Potential(SpinResolved_Data car_dens);
         void Print_DFT_diff(SpinResolved_Data car_dens);
         Band_Data DFT_diff(SpinResolved_Data car_dens);

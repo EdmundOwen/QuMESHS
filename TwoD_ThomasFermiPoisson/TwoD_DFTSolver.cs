@@ -173,7 +173,7 @@ namespace TwoD_ThomasFermiPoisson
         /// <summary>
         /// returns the eigen-energies for the given potential and charge density
         /// </summary>
-        public DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data pot)
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data pot)
         {
             Get_Potential(ref pot, layers);
             DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, pot);

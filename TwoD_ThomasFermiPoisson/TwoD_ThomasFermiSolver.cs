@@ -98,5 +98,10 @@ namespace TwoD_ThomasFermiPoisson
         {
             throw new NotImplementedException();
         }
+
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

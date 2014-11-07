@@ -139,7 +139,12 @@ namespace OneD_ThomasFermiPoisson
             Insert_DFT_Charge(ref charge_density_deriv, dft_dens);
         }
 
-        public DoubleVector Get_Energy(ILayer[] layers, SpinResolved_Data charge_density, Band_Data chem_pot)
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
+
+        public DoubleVector Get_EnergyLevels(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
         {
             // interpolate the input charge density and chemical potential onto a reduced domain to simplify DFT solve
             SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));

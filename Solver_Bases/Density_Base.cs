@@ -73,7 +73,7 @@ namespace Solver_Bases
             if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
                 return 0.0;
             else if (temperature == 0)
-                return Math.Sqrt(-2.0 * Physics_Base.mass / band_edge) / (Math.PI * Physics_Base.hbar);
+                return -1.0 * Math.Sqrt(-2.0 * Physics_Base.mass / band_edge) / (Math.PI * Physics_Base.hbar);
             else
             {
                 // calculate the density of states integral directly
@@ -289,6 +289,7 @@ namespace Solver_Bases
         public abstract SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
         public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
         public abstract void Close();
+        public abstract DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot);
 
         protected Band_Data dft_pot;
         protected double alpha_dft = 0.1;

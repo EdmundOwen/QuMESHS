@@ -170,7 +170,8 @@ namespace TwoD_ThomasFermiPoisson
             //    Run_Iteration_Routine(dens_solv, 1.0);
 
             // and then run the DFT solver at the base temperature over a limited range
-            TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
+            //TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+            TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
             dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
             dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
             
@@ -179,7 +180,7 @@ namespace TwoD_ThomasFermiPoisson
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 10;
+            int no_runs = 1000;
             // start without dft
             dft_solv.Set_DFT_Mixing_Parameter(0.0);
             while (!converged)
@@ -200,7 +201,7 @@ namespace TwoD_ThomasFermiPoisson
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(surface_charge.ToString()); sw.Close();
             // save eigen-energies
-            DoubleVector energies = dft_solv.Get_EnergyLevels(layers, carrier_density, chem_pot);
+            DoubleVector energies = dft_solv.Get_EnergyLevels(layers, chem_pot);
             StreamWriter sw_e = new StreamWriter("energies.dat");
             for (int i = 0; i < energies.Length; i++)
                 sw_e.WriteLine(energies[i]);
