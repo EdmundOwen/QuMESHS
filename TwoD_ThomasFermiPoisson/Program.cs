@@ -55,15 +55,15 @@ namespace TwoD_ThomasFermiPoisson
             }
 
             //Console.WriteLine("Starting experiment");
-            exp.Initialise_Experiment(inputs);
-            // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
-            if (!(bool)inputs["hot_start"] && exp_init.Dz_Pot != exp.Dz_Pot)
-                throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
-            Console.WriteLine("Experiment initialised");
-            exp.Run();
-            Console.WriteLine("Experiment complete");
+        //    exp.Initialise_Experiment(inputs);
+        //    // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
+        //    if (!(bool)inputs["hot_start"] && exp_init.Dz_Pot != exp.Dz_Pot)
+        //        throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
+        //    Console.WriteLine("Experiment initialised");
+        //    exp.Run();
+        //    Console.WriteLine("Experiment complete");
 
-        //    Run_Multiple_SGs(exp, inputs);
+            Run_Multiple_SGs(exp, inputs);
         }
 
         static void Run_Multiple_TGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)
@@ -123,22 +123,44 @@ namespace TwoD_ThomasFermiPoisson
             File.WriteAllLines((string)dict["spin_down_file"], tmp_data);
             File.WriteAllLines((string)dict["surface_charge_file"], new string[] { ((double)dict["surface_charge"]).ToString() });
 
-            for (int i = init; i < final; i++)
-            {
-                double sg = i * interval;
-                dict["split_V"] = sg;
+            /////////////// HACK!!! ////////////////
+            int vsg_start = 48;
+            int vsg_end = 53;
+            int vtg_start = 760;
+            int vtg_end = 782;
+            ////////////////////////////////////////
+
+          //  for (int i = init; i < final; i++)
+//            {
+//                double sg = i * interval;
+//                dict["split_V"] = sg;
+
+            for (int i = vsg_start; i < vsg_end + 1; i++)
+                for (int j = vtg_start; j < vtg_end + 1; j++)
+                {
+                    dict["split_V"] = i * -0.01;
+                    dict["top_V"] = j * -0.01;
                 //dict["spin_up_file"] = "dens_2D_up_sg" + i.ToString("000") + "_tg000.dat";
                 //dict["spin_down_file"] = "dens_2D_down_sg" + i.ToString("000") + "_tg000.dat";
                 
                 exp.Initialise_Experiment(dict);
-                Console.WriteLine("Experiment initialised for sg = " + sg.ToString() + "V");
+                Console.WriteLine("Experiment initialised for sg = " + (i * -0.01).ToString() + "V, tg = " + (j * -0.01).ToString() + "V");
                 exp.Run();
 
-                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
-                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
-                File.Copy("energies.dat", "energies_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
-                File.Copy("split_gate_final.pg6", "split_gate_final_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".pg6", true);
-                Console.WriteLine("Experiment complete");
+//                File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
+//                File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
+//                File.Copy("energies.dat", "energies_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".dat", true);
+//                File.Copy("split_gate_final.pg6", "split_gate_final_sg" + i.ToString("000") + "_tg" + ((double)dict["top_V"] * 100).ToString("000") + ".pg6", true);
+
+                File.Copy("bare_pot.dat", "bare_pot_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".dat", true);
+                File.Copy("potential.dat", "pot_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".dat", true);
+                  File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".dat", true);
+                  File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".dat", true);
+                  File.Copy("energies.dat", "energies_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".dat", true);
+                  File.Copy("xc_pot.dat", "xc_pot_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".dat", true);
+                  File.Copy("pot_KS.dat", "pot_KS_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".dat", true);
+                  File.Copy("split_gate_final.pg6", "split_gate_final_sg" + i.ToString("000") + "_tg" + j.ToString("000") + ".pg6", true);
+                  Console.WriteLine("Experiment complete");
             }
         }
     }

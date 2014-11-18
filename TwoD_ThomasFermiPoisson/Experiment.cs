@@ -166,8 +166,13 @@ namespace TwoD_ThomasFermiPoisson
 
         public override void Run()
         {
-            //if (!hot_start)
-            //    Run_Iteration_Routine(dens_solv, 1.0);
+            // calculate the bare potential
+            Console.WriteLine("Calculating bare potential");
+            pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
+            chem_pot = pois_solv.Get_Chemical_Potential(0.0 * carrier_density.Spin_Summed_Data);
+            Console.WriteLine("Saving bare potential");
+            (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("bare_pot.dat");
+            Console.WriteLine("Bare potential saved");
 
             // and then run the DFT solver at the base temperature over a limited range
             //TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
@@ -180,7 +185,7 @@ namespace TwoD_ThomasFermiPoisson
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 1000;
+            int no_runs = 40;
             // start without dft
             dft_solv.Set_DFT_Mixing_Parameter(0.0);
             while (!converged)
@@ -209,7 +214,10 @@ namespace TwoD_ThomasFermiPoisson
 
             final_dens_solv.Output(carrier_density, "carrier_density.dat");
             final_dens_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot), "density_error.dat");
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot, "potential.dat");
+            (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential.dat");
+            Band_Data pot_exc = dft_solv.DFT_diff(carrier_density) + Physics_Base.Get_XC_Potential(carrier_density);
+            pot_exc.Save_Data("xc_pot.dat");
+            (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS.dat");
         }
 
 

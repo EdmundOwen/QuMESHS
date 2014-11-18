@@ -135,6 +135,14 @@ namespace Solver_Bases
             return Math.Pow(2.0 * mass * mass * mass * (valence_band_edge - energy), 0.5) / (Math.PI * Math.PI * hbar * hbar * hbar);
         }
 
+        public static double Get_Rs(double charge_density)
+        {
+            if (charge_density == 0.0)
+                return double.PositiveInfinity;
+
+            charge_density = Math.Abs(charge_density) / Physics_Base.q_e;    // DFT works on density, not charge 
+            return Math.Pow(0.75 / (Math.PI * charge_density), 1.0 / 3.0) / Physics_Base.a_B;    // and convert to dimensionless constant
+        }
 /*
         static Dictionary<string, double> Unpolarized_Parameters = new Dictionary<string, double>
         {
@@ -225,10 +233,9 @@ namespace Solver_Bases
             double polarisation = (dens_up - dens_down) / (dens_up + dens_down);
 
             double ec, d_ec;                                                 // correlation potential
-            double density = Math.Abs(dens_up + dens_down) / Physics_Base.q_e;    // DFT works on density, not charge 
-            double r_s = Math.Pow(0.75 / (Math.PI * density), 1.0 / 3.0) / Physics_Base.a_B;    // and convert to dimensionless constant
+            double r_s = Get_Rs(dens_up + dens_down);
             
-            if (density == 0 || double.IsInfinity(r_s))
+            if (double.IsInfinity(r_s))
                 return 0.0;
 
             // correlation energy per particle from Guiliani & Vignale (Perdew-Wang form)
@@ -269,10 +276,9 @@ namespace Solver_Bases
         static double Get_Ex_Potential(double charge_density, Dictionary<string, double> xc_params)
         {
             double v_x;                                                 // exchange potential
-            double density = Math.Abs(charge_density) / Physics_Base.q_e;    // DFT works on density, not charge 
-            double r_s = Math.Pow(0.75 / (Math.PI * density), 1.0 / 3.0) / Physics_Base.a_B;    // and convert to dimensionless constant
+            double r_s = Get_Rs(charge_density);
 
-            if (density == 0 || double.IsInfinity(r_s))
+            if (double.IsInfinity(r_s))
                 return 0.0;
 
             // exchange energy per particle for uniform electron gas from Guiliani & Vignale p. 34
@@ -293,12 +299,12 @@ namespace Solver_Bases
         public static double Get_XC_Potential_Deriv(double charge_density)
         {
             double d_vc, d_vx;                                                 // correlation and exchange potentials
-            double density = Math.Abs(charge_density) / Physics_Base.q_e;    // DFT works on density, not charge 
-            double r_s = Math.Pow(0.75 / (Math.PI * density), 1.0 / 3.0) / Physics_Base.a_B;    // and convert to dimensionless constant
+            double r_s = Get_Rs(charge_density);
 
+            double density = Math.Abs(charge_density) / Physics_Base.q_e;
             double d_rs = -1.0 * r_s / (3.0 * density); // derivative of rs with respect to the density
 
-            if (density == 0 || double.IsInfinity(r_s))
+            if (double.IsInfinity(r_s))
                 return 0.0;
 
             // exchange energy per particle for uniform electron gas from Parr and Yang (Density Functional Theory of Atoms and Molecules)
