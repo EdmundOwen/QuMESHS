@@ -313,9 +313,10 @@ namespace Solver_Bases
             else
                 return dft_pot - Physics_Base.Get_XC_Potential(car_dens);
         }
-        public void Set_DFT_Mixing_Parameter(double a)
+        public double DFT_Mixing_Parameter
         {
-            this.alpha_dft = a;
+            get { return alpha_dft; }
+            set { alpha_dft = value; }
         }
     }
 }

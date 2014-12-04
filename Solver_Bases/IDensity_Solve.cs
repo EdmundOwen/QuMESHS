@@ -19,7 +19,7 @@ namespace Solver_Bases
         void Set_DFT_Potential(SpinResolved_Data car_dens);
         void Print_DFT_diff(SpinResolved_Data car_dens);
         Band_Data DFT_diff(SpinResolved_Data car_dens);
-        void Set_DFT_Mixing_Parameter(double alpha);
+        double DFT_Mixing_Parameter { get; set;  }
 
         double Get_Chemical_Potential(double z, ILayer[] layers);
         double Get_Chemical_Potential(double z, ILayer[] layers, double temperature_input);

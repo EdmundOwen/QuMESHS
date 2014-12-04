@@ -185,14 +185,16 @@ namespace TwoD_ThomasFermiPoisson
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 40;
-            // start without dft
-            dft_solv.Set_DFT_Mixing_Parameter(0.0);
-            while (!converged)
-            {
+            int no_runs = 500;
+            dft_solv.DFT_Mixing_Parameter = 0.3;
+            // start without dft if carrier density is empty
+            if (carrier_density.Spin_Summed_Data.Min() == 0.0)
+                dft_solv.DFT_Mixing_Parameter = 0.0;
+            //while (!converged)
+            //{
                 converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
-                no_runs += 10;
-            }
+            //    no_runs += 10;
+            //}
 
             // initialise output solvers
             TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(this);
@@ -218,6 +220,8 @@ namespace TwoD_ThomasFermiPoisson
             Band_Data pot_exc = dft_solv.DFT_diff(carrier_density) + Physics_Base.Get_XC_Potential(carrier_density);
             pot_exc.Save_Data("xc_pot.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS.dat");
+            Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
+            ks_ke.Save_Data("ks_ke.dat");
         }
 
 
@@ -226,6 +230,9 @@ namespace TwoD_ThomasFermiPoisson
             return Run_Iteration_Routine(dens_solv, pot_lim, int.MaxValue);
         }
 
+        double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
+        double max_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
+        double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim, int max_count)
         {
             // calculate initial potential with the given charge distribution
@@ -235,15 +242,19 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Initial grid complete");
             dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-            dens_solv.Set_DFT_Potential(carrier_density);
+            dens_solv.Set_DFT_Potential(carrier_density); 
 
             int count = 0;
             bool converged = false;
-            dens_solv.Set_DFT_Mixing_Parameter(0.3);
+            dens_solv.DFT_Mixing_Parameter = 0.3;
+            dens_diff_lim = 0.1;
             while (!converged)
             {
                 Stopwatch stpwch = new Stopwatch();
                 stpwch.Start();
+
+                // save old density data
+                Band_Data dens_old = carrier_density.Spin_Summed_Data.DeepenThisCopy();
 
                 // Get charge rho(phi) (not dopents as these are included as a flexPDE input)
                 dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
@@ -280,14 +291,36 @@ namespace TwoD_ThomasFermiPoisson
                     diff[j] = Math.Abs(g_phi[j]);
                 double convergence = diff.Sum();
 
-                if (Math.Max(t * x.Max(), (-t * x).Max()) < pot_lim && t > 10.0 * t_min)
+                // and check convergence of density
+                Band_Data dens_diff = carrier_density.Spin_Summed_Data - dens_old;
+                // using the relative absolute density difference
+                for (int i = 0; i < dens_diff.Length; i++)
+                    // only calculate density difference for densities more than 1% of the maximum value
+                    if (Math.Abs(carrier_density.Spin_Summed_Data[i]) > 0.01 * Math.Abs(carrier_density.Spin_Summed_Data.Min()))
+                        dens_diff[i] = Math.Abs(dens_diff[i] / carrier_density.Spin_Summed_Data[i]);
+                    else
+                        dens_diff[i] = 0.0;
+
+                //if (Math.Max(t * x.Max(), (-t * x).Max()) < pot_lim && t > 10.0 * t_min)
+                if (dens_diff.Max() < dens_diff_lim && t > 10.0 * t_min  && count > 10)              // only renew DFT potential when the difference in density has converged and the iterator has done at least 10 iterations
                 {
                     // once dft potential is starting to be mixed in, set the maximum count to lots
-                    max_count = 1000;
+//                    max_count = 1000;
 
                     // and set the DFT potential
                     dens_solv.Print_DFT_diff(carrier_density);
                     dens_solv.Set_DFT_Potential(carrier_density);
+
+                    // also... if the difference in the old and new dft potentials is greater than for the previous V_xc update, reduce the dft mixing parameter
+                    double current_dens_diff = Math.Max(dens_solv.DFT_diff(carrier_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_density).Min()));
+                    if (current_dens_diff > max_diff && dens_solv.DFT_Mixing_Parameter / 3.0 > min_alpha)
+                    {
+                        dens_solv.DFT_Mixing_Parameter /= 3.0;      // alpha is only incremented if it will be above the value of min_alpha
+                        dens_diff_lim /= 3.0;
+                        Console.WriteLine("DFT mixing parameter reduced to " + dens_solv.DFT_Mixing_Parameter.ToString());
+                    }
+                    max_diff = current_dens_diff;
+
                    // if (alpha_dft <= 0.1)
                    // {
                    //     alpha_dft += 0.01;
@@ -299,6 +332,7 @@ namespace TwoD_ThomasFermiPoisson
                         converged = true;
                 }
 
+                /*
                 // Recalculate the charge density but for the updated potential rho(phi + t * x)
                 bool edges_fine = false;
                 while (!edges_fine)
@@ -321,6 +355,13 @@ namespace TwoD_ThomasFermiPoisson
                                         edges_fine = false;
                                         goto end;
                                     }
+                                    else
+                                    {
+                                        // although the edges are not fine at this point, we don't want the code to decrease t any further so we
+                                        // break the loop by setting...
+                                        edges_fine = true;
+                                        goto end;
+                                    }
                                 }
 
                     if (!edges_fine)
@@ -338,8 +379,8 @@ namespace TwoD_ThomasFermiPoisson
                     //}
                     //else
                         continue;
-                }
-
+                }*/
+                
                 // update band energy phi_new = phi_old + t * x
                 chem_pot = chem_pot + t * x;
                 pois_solv.T = t;

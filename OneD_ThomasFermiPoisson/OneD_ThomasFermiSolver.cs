@@ -6,6 +6,7 @@ using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Analysis;
 using Solver_Bases;
 using Solver_Bases.Layers;
+using System.Web;
 
 namespace OneD_ThomasFermiPoisson
 {

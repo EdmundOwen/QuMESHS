@@ -115,7 +115,7 @@ namespace TwoD_ThomasFermiPoisson
                     double pos_y = ymin + j * dy;
                     double band_gap = Geom_Tool.GetLayer(layers, plane, pos_x, pos_y, pos_z).Band_Gap;
 
-                    dft_band_offset.mat[i, j] = 0.5 * band_gap - dft_band_offset.mat[i, j];
+                    dft_band_offset.mat[i, j] = 0.5 * band_gap - dft_band_offset.mat[i, j] + dft_pot.mat[i, j];
                 }
         }
 

@@ -108,6 +108,7 @@ namespace TwoD_ThomasFermiPoisson
 
                 // calculate its eigendecomposition
                 DoubleHermitianMatrix h_y = Create_Hamiltonian(y_dft_pot, ty, ny);
+
                 eig_decomp = new DoubleHermitianEigDecomp(h_y);
 
                 // insert the eigenstate into density and record the local confinement energy
@@ -138,7 +139,44 @@ namespace TwoD_ThomasFermiPoisson
         {
             return energies;
         }
-        
+
+        public Band_Data Get_KS_KE(ILayer[] layers, Band_Data chem_pot)
+        {
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
+            // create temporary density for input into...
+            DoubleMatrix dens_up = new DoubleMatrix(nx, ny, 0.0);
+            DoubleMatrix dens_down = new DoubleMatrix(nx, ny, 0.0);
+            SpinResolved_Data dens = new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+
+            // calculate eigenvectors
+            DoubleHermitianEigDecomp eig_decomp = Solve_Eigenvector_Problem(dft_pot, ref dens);
+            
+            int max_wavefunction = (from val in eig_decomp.EigenValues
+                                    where val < no_kb_T * Physics_Base.kB * temperature
+                                    select val).ToArray().Length;
+
+            // generate kinetic energy data
+            Band_Data ke = new Band_Data(nx, ny, 0.0);
+            Band_Data dens_tot = dens.Spin_Summed_Data;
+            double ke_prefactor = -0.5 * Physics_Base.hbar * Physics_Base.hbar / Physics_Base.mass;
+            for (int i = 1; i < nx - 1; i++)
+                for (int j = 1; j < ny - 1; j++)
+                    for (int k = 0; k < max_wavefunction; k++)
+                    {
+                        double dy2psi = (dens_tot.mat[i, j + 1] + dens_tot.mat[i, j - 1] - 2.0 * dens_tot.mat[i, j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i]);
+                        double dx2psi = DoubleComplex.Norm(eig_decomp.EigenVector(k)[i + 1] + eig_decomp.EigenVector(k)[i - 1] - 2.0 * eig_decomp.EigenVector(k)[i]) * dens_tot.mat[i, j];
+
+                        double psi_div2psi = (dens_tot.mat[i, j] * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i])) * (dx2psi + dy2psi);
+
+                        ke.mat[i, j] += ke_prefactor * psi_div2psi * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
+                    }
+
+            return ke;
+        }
+
         DoubleHermitianMatrix Create_Hamiltonian(double[] V, double t, int N)
         {
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(N);

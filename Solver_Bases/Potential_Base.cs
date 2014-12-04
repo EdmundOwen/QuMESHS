@@ -103,6 +103,9 @@ namespace Solver_Bases
             if (!File.Exists(flexpde_inputfile))
                 throw new Exception("Error - there is no input file for flexpde!");
 
+      //      Stopwatch stpwtch = new Stopwatch();
+      //      stpwtch.Start();
+
             // run the flexPDE program as a process (quietly)
             //Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
             int handle = GetForegroundWindow();
@@ -125,6 +128,9 @@ namespace Solver_Bases
             while (!File.Exists(result_filename))
                 Thread.Sleep(100);
             Thread.Sleep(5000);
+
+        //    stpwtch.Stop();
+        //    Console.WriteLine("Time spent in FlexPDE: " + stpwtch.Elapsed.TotalSeconds.ToString() + " s");
         }
 
         /// <summary>

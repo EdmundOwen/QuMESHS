@@ -77,7 +77,7 @@ namespace OneD_ThomasFermiPoisson
                 this.temperature = current_temperature;
 
                 OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
-                dens_solv.Set_DFT_Mixing_Parameter(0.0);
+                dens_solv.DFT_Mixing_Parameter = 0.0;
 
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature))
                     this.bottom_V = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
@@ -98,7 +98,7 @@ namespace OneD_ThomasFermiPoisson
 
             // and then run the DFT solver at the base temperature
             OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
-            dft_solv.Set_DFT_Mixing_Parameter(0.0);                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
+            dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
             dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
             Console.WriteLine("Starting DFT calculation");
             Run_Iteration_Routine(dft_solv, tol);
@@ -205,7 +205,7 @@ namespace OneD_ThomasFermiPoisson
 
                 // and then run the DFT solver at the base temperature
                 OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
-                dft_solv.Set_DFT_Mixing_Parameter(0.0);                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
+                dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
                 dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
                 Console.WriteLine("Starting DFT calculation");
                 Run_Iteration_Routine(dft_solv, tol);

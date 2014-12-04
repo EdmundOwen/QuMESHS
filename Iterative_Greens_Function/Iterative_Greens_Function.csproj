@@ -11,7 +11,8 @@
     <RootNamespace>Iterative_Greens_Function</RootNamespace>
     <AssemblyName>Iterative_Greens_Function</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
@@ -55,9 +56,9 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NMathPremium, Version=5.3.0.2, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
+    <Reference Include="NMathPremium, Version=6.0.0.12, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 5.3\Assemblies\NMathPremium.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</HintPath>
     </Reference>
     <Reference Include="OpenCLNet">
       <HintPath>.\OpenCLNet.dll</HintPath>
@@ -86,6 +87,9 @@
       <Project>{E50D4360-27F2-442C-AD4D-4D267C273CBE}</Project>
       <Name>Solver_Bases</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
