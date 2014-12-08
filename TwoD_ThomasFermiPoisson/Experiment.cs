@@ -293,11 +293,13 @@ namespace TwoD_ThomasFermiPoisson
 
                 // and check convergence of density
                 Band_Data dens_diff = carrier_density.Spin_Summed_Data - dens_old;
+                Band_Data car_dens_spin_summed = carrier_density.Spin_Summed_Data;
+                double carrier_dens_min = Math.Abs(car_dens_spin_summed.Min());
                 // using the relative absolute density difference
                 for (int i = 0; i < dens_diff.Length; i++)
                     // only calculate density difference for densities more than 1% of the maximum value
-                    if (Math.Abs(carrier_density.Spin_Summed_Data[i]) > 0.01 * Math.Abs(carrier_density.Spin_Summed_Data.Min()))
-                        dens_diff[i] = Math.Abs(dens_diff[i] / carrier_density.Spin_Summed_Data[i]);
+                    if (Math.Abs(car_dens_spin_summed[i]) > 0.01 * carrier_dens_min)
+                        dens_diff[i] = Math.Abs(dens_diff[i] / car_dens_spin_summed[i]);
                     else
                         dens_diff[i] = 0.0;
 

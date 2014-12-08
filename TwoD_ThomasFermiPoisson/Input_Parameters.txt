@@ -117,10 +117,10 @@
 ############## Run details #######################################
 #
 ## 
-% init_val = -250
+% init_val = 755
 #
 ##
-% final_val = -150
+% final_val = 782
 #
 ##
-% interval = 0.01
+% interval = -0.01

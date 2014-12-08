@@ -348,25 +348,26 @@ namespace Solver_Bases
         public static Band_Data Get_XC_Potential(SpinResolved_Data charge_density)
         {
             Band_Data result;
-            int dim = charge_density.Spin_Summed_Data.Dimension;
+            Band_Data charge_dens_spin_summed = charge_density.Spin_Summed_Data;
+            int dim = charge_dens_spin_summed.Dimension;
 
             if (dim == 1)
             {
-                int nx = charge_density.Spin_Summed_Data.vec.Length;
+                int nx = charge_dens_spin_summed.vec.Length;
                 result = new Band_Data(new DoubleVector(nx));
                 for (int i = 0; i < nx; i++)
-                    result.vec[i] = Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i]);
+                    result.vec[i] = Get_XC_Potential(charge_dens_spin_summed.vec[i]);
 
                 return result;
             }
             else if (dim == 2)
             {
-                int nx = charge_density.Spin_Summed_Data.mat.Rows;
-                int ny = charge_density.Spin_Summed_Data.mat.Cols;
+                int nx = charge_dens_spin_summed.mat.Rows;
+                int ny = charge_dens_spin_summed.mat.Cols;
                 result = new Band_Data(new DoubleMatrix(nx, ny));
                 for (int i = 0; i < nx; i++)
                     for (int j = 0; j < ny; j++)
-                        result.mat[i, j] = Get_XC_Potential(charge_density.Spin_Summed_Data.mat[i,j]);
+                        result.mat[i, j] = Get_XC_Potential(charge_dens_spin_summed.mat[i, j]);
 
                 return result;
             }
@@ -381,25 +382,26 @@ namespace Solver_Bases
         public static Band_Data Get_XC_Potential_Deriv(SpinResolved_Data charge_density)
         {
             Band_Data result;
-            int dim = charge_density.Spin_Summed_Data.Dimension;
+            Band_Data charge_dens_spin_summed = charge_density.Spin_Summed_Data;
+            int dim = charge_dens_spin_summed.Dimension;
 
             if (dim == 1)
             {
-                int nx = charge_density.Spin_Summed_Data.vec.Length;
+                int nx = charge_dens_spin_summed.vec.Length;
                 result = new Band_Data(new DoubleVector(nx));
                 for (int i = 0; i < nx; i++)
-                    result.vec[i] = Get_XC_Potential_Deriv(charge_density.Spin_Summed_Data.vec[i]);
+                    result.vec[i] = Get_XC_Potential_Deriv(charge_dens_spin_summed.vec[i]);
 
                 return result;
             }
             else if (dim == 2)
             {
-                int nx = charge_density.Spin_Summed_Data.mat.Rows;
-                int ny = charge_density.Spin_Summed_Data.mat.Cols;
+                int nx = charge_dens_spin_summed.mat.Rows;
+                int ny = charge_dens_spin_summed.mat.Cols;
                 result = new Band_Data(new DoubleMatrix(nx, ny));
                 for (int i = 0; i < nx; i++)
                     for (int j = 0; j < ny; j++)
-                        result.mat[i, j] = Get_XC_Potential_Deriv(charge_density.Spin_Summed_Data.mat[i, j]);
+                        result.mat[i, j] = Get_XC_Potential_Deriv(charge_dens_spin_summed.mat[i, j]);
 
                 return result;
             }

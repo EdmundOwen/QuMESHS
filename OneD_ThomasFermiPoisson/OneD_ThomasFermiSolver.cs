@@ -22,12 +22,15 @@ namespace OneD_ThomasFermiPoisson
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot)
         {
+            Band_Data car_dens_spin_summed = carrier_density.Spin_Summed_Data;
+            Band_Data dop_dens_spin_summed = dopent_density.Spin_Summed_Data;
+
             for (int i = 0; i < nz; i++)
             {
                 double z = dz * i + zmin;
 
                 double local_dopent_density;
-                double local_carrier_density = carrier_density.Spin_Summed_Data.vec[i];
+                double local_carrier_density = car_dens_spin_summed.vec[i];
 
                 // get the relevant layer and if it's frozen out, don't recalculate the charge
                 ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z);
@@ -44,7 +47,7 @@ namespace OneD_ThomasFermiPoisson
                     // if the density is frozen out, on the first step, this will add the carrier density to the dopent density
                     // to give a total, frozen-out charge.  After that, the local carrier density is set to zero and so this value
                     // should not change
-                    local_dopent_density = dopent_density.Spin_Summed_Data.vec[i];
+                    local_dopent_density = dop_dens_spin_summed.vec[i];
                     local_carrier_density = charge_calc.Get_CarrierDensity(chem_pot.vec[i]);
                 }
  

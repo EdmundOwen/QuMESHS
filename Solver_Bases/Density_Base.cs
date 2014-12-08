@@ -169,8 +169,10 @@ namespace Solver_Bases
         double[] Get_Array_of_Absolute_Differences(SpinResolved_Data density1, SpinResolved_Data density2)
         {
             double[] result = new double[density1.Length];
-            for (int i = 0; i < density1.Spin_Summed_Data.Length; i++)
-                result[i] = Math.Abs(density1.Spin_Summed_Data[i] - density2.Spin_Summed_Data[i]);
+            Band_Data dens1_spin_summed = density1.Spin_Summed_Data;
+            Band_Data dens2_spin_summed = density2.Spin_Summed_Data;
+            for (int i = 0; i < dens1_spin_summed.Length; i++)
+                result[i] = Math.Abs(dens1_spin_summed[i] - dens2_spin_summed[i]);
 
             return result;
         }
@@ -181,9 +183,10 @@ namespace Solver_Bases
         /// </summary>
         public bool Check_Convergence(SpinResolved_Data blending_density, double tol)
         {
-            double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
-            for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
-                density_diff[i] = Math.Abs(blending_density.Spin_Summed_Data[i]);
+            Band_Data blend_dens_spin_summed = blending_density.Spin_Summed_Data;
+            double[] density_diff = new double[blend_dens_spin_summed.Length];
+            for (int i = 0; i < blend_dens_spin_summed.Length; i++)
+                density_diff[i] = Math.Abs(blend_dens_spin_summed[i]);
 
             int[] converged_test = new int[density_diff.Length];
             for (int i = 0; i < density_diff.Length; i++)
@@ -207,15 +210,18 @@ namespace Solver_Bases
         /// </summary>
         public bool Check_Convergence_Fraction(SpinResolved_Data blending_density, SpinResolved_Data density, double tol)
         {
+            Band_Data blend_dens_spin_summed = blending_density.Spin_Summed_Data;
+            Band_Data dens_spin_summed = density.Spin_Summed_Data;
+
             // minimum density where convergence is no longer checked is equal to maximum fluctuation
-            double dens_max = Math.Abs(density.Spin_Summed_Data.mat.Min());
-            double dens_min = Math.Abs(density.Spin_Summed_Data.mat.Max());
+            double dens_max = Math.Abs(dens_spin_summed.mat.Min());
+            double dens_min = Math.Abs(dens_spin_summed.mat.Max());
             double minval = Math.Abs(Math.Max(dens_min, dens_max) * tol);
 
-            double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
-            for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
-                if (Math.Abs(density.Spin_Summed_Data[i]) > minval)
-                    density_diff[i] = Math.Abs(blending_density.Spin_Summed_Data[i]) / Math.Abs(density.Spin_Summed_Data[i]);
+            double[] density_diff = new double[blend_dens_spin_summed.Length];
+            for (int i = 0; i < blend_dens_spin_summed.Length; i++)
+                if (Math.Abs(dens_spin_summed[i]) > minval)
+                    density_diff[i] = Math.Abs(blend_dens_spin_summed[i]) / Math.Abs(dens_spin_summed[i]);
                 else
                     density_diff[i] = 0;
 
@@ -229,7 +235,7 @@ namespace Solver_Bases
 
             // the convergence factor is the sum of the absolute values of the density error defined by the
             // difference between the current density and the ideal one for this potential
-            convergence_factor = blending_density.Spin_Summed_Data.mat.Select(x => Math.Abs(x)).ToList().Sum();
+            convergence_factor = blend_dens_spin_summed.mat.Select(x => Math.Abs(x)).ToList().Sum();
 
             if (converged_test.Sum() == density_diff.Length)
                 return true;

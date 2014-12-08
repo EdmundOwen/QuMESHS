@@ -229,12 +229,14 @@ namespace TwoD_ThomasFermiPoisson
 
         public void Write_Out_Density(SpinResolved_Data h, string outfile)
         {
+            Band_Data h_spin_summed = h.Spin_Summed_Data;
+
             System.IO.StreamWriter sw = new System.IO.StreamWriter(outfile);
-            for (int i = 0; i < h.Spin_Summed_Data.mat.Cols; i++)
-                for (int j = 0; j < h.Spin_Summed_Data.mat.Rows; j++)
+            for (int i = 0; i < h_spin_summed.mat.Cols; i++)
+                for (int j = 0; j < h_spin_summed.mat.Rows; j++)
                 {
-                    sw.Write(h.Spin_Summed_Data.mat[j, i].ToString() + '\t');
-                    if (j == h.Spin_Summed_Data.mat.Rows - 1)
+                    sw.Write(h_spin_summed.mat[j, i].ToString() + '\t');
+                    if (j == h_spin_summed.mat.Rows - 1)
                         sw.WriteLine();
                 }
 

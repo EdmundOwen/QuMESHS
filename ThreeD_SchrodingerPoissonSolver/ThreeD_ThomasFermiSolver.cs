@@ -73,13 +73,15 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         public void Write_Out_Density(SpinResolved_Data h, string outfile)
         {
+            Band_Data h_spin_summed = h.Spin_Summed_Data;
+
             System.IO.StreamWriter sw = new System.IO.StreamWriter(outfile);
-            for (int k = 0; k < h.Spin_Summed_Data.vol.Length; k++)
-                for (int i = 0; i < h.Spin_Summed_Data.vol[k].Cols; i++)
-                    for (int j = 0; j < h.Spin_Summed_Data.vol[k].Rows; j++)
+            for (int k = 0; k < h_spin_summed.vol.Length; k++)
+                for (int i = 0; i < h_spin_summed.vol[k].Cols; i++)
+                    for (int j = 0; j < h_spin_summed.vol[k].Rows; j++)
                 {
-                    sw.Write(h.Spin_Summed_Data.vol[k][i, j].ToString() + '\t');
-                    if (i == h.Spin_Summed_Data.vol[k].Cols - 1 || j == h.Spin_Summed_Data.vol[k].Rows - 1)
+                    sw.Write(h_spin_summed.vol[k][i, j].ToString() + '\t');
+                    if (i == h_spin_summed.vol[k].Cols - 1 || j == h_spin_summed.vol[k].Rows - 1)
                         sw.WriteLine();
                 }
 

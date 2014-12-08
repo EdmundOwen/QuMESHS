@@ -89,7 +89,8 @@ namespace OneD_ThomasFermiPoisson
 
             if (TF_only)
             {
-                double tot_dens_TF = (from val in carrier_density.Spin_Summed_Data.vec
+                Band_Data car_dens_spin_summed = carrier_density.Spin_Summed_Data;
+                double tot_dens_TF = (from val in car_dens_spin_summed.vec
                                    where val < 0.0
                                    select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
                 Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens_TF.ToString("e3") + " cm^-2");
@@ -212,10 +213,11 @@ namespace OneD_ThomasFermiPoisson
 
                 double top = 0.0;
                 double bottom = 0.0;
+                Band_Data car_dens_spin_summed = carrier_density.Spin_Summed_Data;
                 for (int j= 0; j < nz_dens / 2; j++)
                 {
-                    top += carrier_density.Spin_Summed_Data.vec[top_index + j];
-                    bottom += carrier_density.Spin_Summed_Data.vec[bottom_index + j];
+                    top += car_dens_spin_summed.vec[top_index + j];
+                    bottom += car_dens_spin_summed.vec[bottom_index + j];
                 }
                 top *= -1.0e14 * dz_dens / Physics_Base.q_e;
                 bottom *= -1.0e14 * dz_dens / Physics_Base.q_e;

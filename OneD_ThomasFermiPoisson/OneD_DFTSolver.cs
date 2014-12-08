@@ -158,9 +158,10 @@ namespace OneD_ThomasFermiPoisson
             System.IO.StreamWriter sw_pot = new System.IO.StreamWriter("tmp_pot.dat");
             System.IO.StreamWriter sw_dens = new System.IO.StreamWriter("tmp_dens.dat");
 
+            Band_Data dft_dens_spin_summed = dft_dens.Spin_Summed_Data;
             for (int i = 0; i < dft_pot.Length; i++)
             {
-                sw_dens.WriteLine(dft_dens.Spin_Summed_Data[i].ToString());
+                sw_dens.WriteLine(dft_dens_spin_summed[i].ToString());
                 sw_pot.WriteLine(dft_pot[i].ToString());
             }
 
@@ -237,10 +238,11 @@ namespace OneD_ThomasFermiPoisson
             }
 
             double[] potential = new double[nz];
+            Band_Data charge_dens_spin_summed = charge_density.Spin_Summed_Data;
             // set diagonal elements
             for (int i = 0; i < nz; i++)
             {
-                potential[i] = pot.vec[i] + Physics_Base.Get_XC_Potential(charge_density.Spin_Summed_Data.vec[i]);
+                potential[i] = pot.vec[i] + Physics_Base.Get_XC_Potential(charge_dens_spin_summed.vec[i]);
                 result[i, i] = -2.0 * t + potential[i];
             }
 

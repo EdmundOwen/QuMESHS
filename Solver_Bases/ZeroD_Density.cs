@@ -156,7 +156,7 @@ namespace Solver_Bases
             // initialise root finder and search for a root for the chemical potential
             RiddersRootFinder finder = new RiddersRootFinder();
             double result = finder.Find(charge_func, -1.0 * band_gap, band_gap);
-
+            
             return result;
         }
 
