@@ -16,7 +16,7 @@ namespace TwoD_ThomasFermiPoisson
     {
         double top_V, split_V, surface_charge;
         double split_width;
-        double t_damp = 1.0, t_min = 1e-3;
+        double t_damp = 0.8, t_min = 1e-3;
         double edge_min_charge = 1e-5;
 
         TwoD_ThomasFermiSolver dens_solv;
@@ -185,7 +185,7 @@ namespace TwoD_ThomasFermiPoisson
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 500;
+            int no_runs = 1000;
             dft_solv.DFT_Mixing_Parameter = 0.3;
             // start without dft if carrier density is empty
             if (carrier_density.Spin_Summed_Data.Min() == 0.0)
@@ -231,7 +231,9 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
-        double max_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
+        double max_vxc_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
+        double min_dens_diff = 0.02; // minimum bound for the required, percentage density difference for updating the dft potential
+        double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim, int max_count)
         {
@@ -247,7 +249,7 @@ namespace TwoD_ThomasFermiPoisson
             int count = 0;
             bool converged = false;
             dens_solv.DFT_Mixing_Parameter = 0.3;
-            dens_diff_lim = 0.1;
+            dens_diff_lim = 0.12;
             while (!converged)
             {
                 Stopwatch stpwch = new Stopwatch();
@@ -302,9 +304,11 @@ namespace TwoD_ThomasFermiPoisson
                         dens_diff[i] = Math.Abs(dens_diff[i] / car_dens_spin_summed[i]);
                     else
                         dens_diff[i] = 0.0;
-
+                
                 //if (Math.Max(t * x.Max(), (-t * x).Max()) < pot_lim && t > 10.0 * t_min)
-                if (dens_diff.Max() < dens_diff_lim && t > 10.0 * t_min  && count > 10)              // only renew DFT potential when the difference in density has converged and the iterator has done at least 10 iterations
+
+                // only renew DFT potential when the difference in density has converged and the iterator has done at least 3 iterations
+                if (dens_diff.Max() < dens_diff_lim && t > 10.0 * t_min && count > 3)              
                 {
                     // once dft potential is starting to be mixed in, set the maximum count to lots
 //                    max_count = 1000;
@@ -314,14 +318,19 @@ namespace TwoD_ThomasFermiPoisson
                     dens_solv.Set_DFT_Potential(carrier_density);
 
                     // also... if the difference in the old and new dft potentials is greater than for the previous V_xc update, reduce the dft mixing parameter
-                    double current_dens_diff = Math.Max(dens_solv.DFT_diff(carrier_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_density).Min()));
-                    if (current_dens_diff > max_diff && dens_solv.DFT_Mixing_Parameter / 3.0 > min_alpha)
+                    double current_vxc_diff = Math.Max(dens_solv.DFT_diff(carrier_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_density).Min()));
+              //      if (current_dens_diff > max_diff && dens_solv.DFT_Mixing_Parameter / 3.0 > min_alpha)
+              //      {
+              //          dens_solv.DFT_Mixing_Parameter /= 3.0;      // alpha is only incremented if it will be above the value of min_alpha
+              //          dens_diff_lim /= 3.0;
+              //          Console.WriteLine("DFT mixing parameter reduced to " + dens_solv.DFT_Mixing_Parameter.ToString());
+              //      }
+                    if (current_vxc_diff > max_vxc_diff && dens_diff_lim / 2.0 > min_dens_diff)
                     {
-                        dens_solv.DFT_Mixing_Parameter /= 3.0;      // alpha is only incremented if it will be above the value of min_alpha
-                        dens_diff_lim /= 3.0;
-                        Console.WriteLine("DFT mixing parameter reduced to " + dens_solv.DFT_Mixing_Parameter.ToString());
+                        dens_diff_lim /= 2.0;
+                        Console.WriteLine("Minimum percentage density difference reduced to " + dens_diff_lim.ToString());
                     }
-                    max_diff = current_dens_diff;
+                    max_vxc_diff = current_vxc_diff;
 
                    // if (alpha_dft <= 0.1)
                    // {
@@ -330,7 +339,11 @@ namespace TwoD_ThomasFermiPoisson
                    //     dens_solv.Set_DFT_Mixing_Parameter(alpha_dft);
                    // }
 
-                    if (Math.Max(dens_solv.DFT_diff(carrier_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_density).Min()))  < pot_lim)
+                 //   if (Math.Max(dens_solv.DFT_diff(carrier_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_density).Min())) < pot_lim)
+                 //       converged = true;
+
+                    // solution is converged if the density accuracy is better than half the minimum possible value for changing the dft potential
+                    if (dens_diff.Max() < min_dens_diff / 2.0  && current_vxc_diff < min_vxc_diff)
                         converged = true;
                 }
 
@@ -394,7 +407,8 @@ namespace TwoD_ThomasFermiPoisson
 
                 // and finallly, set the carrier density to the new value
                 stpwch.Stop();
-                Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
+      //          Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
+                Console.WriteLine("Iter = " + count.ToString() + "\tDens conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
 
                 // reset the potential if the added potential t * x is too small

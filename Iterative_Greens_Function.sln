@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Split_Gate_Potential_Calc",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeD_SchrodingerPoissonSolver", "ThreeD_SchrodingerPoissonSolver\ThreeD_SchrodingerPoissonSolver.csproj", "{E3499505-85C9-46F8-B419-E9841CDD3399}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexPDE_StartupTool", "FlexPDE_StartupTool\FlexPDE_StartupTool.csproj", "{1632E07D-4DE0-47FB-BD04-ACDED42530A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -89,6 +91,14 @@ Global
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release13|x64.Build.0 = Release|x64
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release21|x64.ActiveCfg = Release|x64
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release21|x64.Build.0 = Release|x64
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Debug|x64.ActiveCfg = Debug|x64
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Debug|x64.Build.0 = Debug|x64
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Debug13|x64.ActiveCfg = Debug|Any CPU
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Release_WithGraphics|x64.ActiveCfg = Release|Any CPU
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Release|x64.ActiveCfg = Release|x64
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Release|x64.Build.0 = Release|x64
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Release13|x64.ActiveCfg = Release|Any CPU
+		{1632E07D-4DE0-47FB-BD04-ACDED42530A0}.Release21|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

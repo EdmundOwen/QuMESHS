@@ -41,12 +41,12 @@
 # Top gate voltage
 #% top_V = -7.71
 #% top_V = -7.3
-% top_V = -6.9
+% top_V = -9.3
 #
 ## Split gate voltage
 #% split_V = -0.49
 #% split_V = -0.55
-% split_V = -0.68
+% split_V = -0.64
 #
 ## Split gate width
 % split_width = 800
@@ -102,7 +102,7 @@
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = false
+% hot_start = true
 #
 ## File location for spin-up data
 % spin_up_file = dens_2D_up_sg-066_tg-700.dat
@@ -117,10 +117,10 @@
 ############## Run details #######################################
 #
 ## 
-% init_val = 755
+% init_val = 1546
 #
 ##
-% final_val = 782
+% final_val = 1560
 #
 ##
-% interval = -0.01
+% interval = -0.005
