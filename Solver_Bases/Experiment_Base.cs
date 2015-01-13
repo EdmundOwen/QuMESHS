@@ -42,7 +42,7 @@ namespace Solver_Bases
         protected double initial_temperature = 300.0;
         protected double temperature;
 
-        protected bool TF_only = false;       // only run Thomas-Fermi density calculations (i.e. no DFT, Green's functions etc...)
+        protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
 
         public void Initialise(Dictionary<string, object> input_dict)
@@ -99,6 +99,17 @@ namespace Solver_Bases
             Get_From_Dictionary<double>(input_dict, "xmin_dens", ref xmin_dens, true);
             Get_From_Dictionary<double>(input_dict, "ymin_dens", ref ymin_dens, true);
             Get_From_Dictionary<double>(input_dict, "zmin_dens", ref zmin_dens, true);
+
+            // work out whether we are doing dft or not
+            // first check that there is only one entry (else throw exception)
+            if ((input_dict.ContainsKey("no_dft") && input_dict.ContainsKey("dft")) || (input_dict.ContainsKey("no_dft") && input_dict.ContainsKey("TF_only")) || (input_dict.ContainsKey("dft") && input_dict.ContainsKey("TF_only")))
+                throw new Exception("Error - more that one key specifying whether dft should be used!");
+
+            // then input from dictionary
+            Get_From_Dictionary<bool>(input_dict, "TF_only", ref no_dft, true);
+            Get_From_Dictionary<bool>(input_dict, "no_dft", ref no_dft, true);
+            if (input_dict.ContainsKey("dft"))
+                no_dft = !(bool)input_dict["dft"];
         }
 
         public abstract void Run();

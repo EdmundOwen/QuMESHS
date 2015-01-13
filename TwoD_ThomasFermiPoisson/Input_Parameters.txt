@@ -60,6 +60,9 @@
 #
 ############## Generic density solver details #########################
 #
+## Use DFT or not
+% no_dft = false
+#
 ## Scheduler data file
 % scheduler_file = Scheduler_Data.txt
 #
@@ -124,3 +127,9 @@
 #
 ##
 % interval = -0.005
+#
+##
+% no_Vsg = 2
+#
+##
+% delta_Vsg = 0.002

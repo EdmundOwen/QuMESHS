@@ -56,9 +56,6 @@ namespace OneD_ThomasFermiPoisson
             // and finally, try to get the chemical potential from the dictionary...
             if (input_dict.ContainsKey("Chemical_Potential")) this.chem_pot = new Band_Data((DoubleVector)input_dict["Chemical_Potential"]); else chem_pot = new Band_Data(new DoubleVector(nz_pot));
 
-            if (input_dict.ContainsKey("dft")) this.TF_only = !(bool)input_dict["dft"];
-            if (input_dict.ContainsKey("TF_only")) this.TF_only = (bool)input_dict["TF_only"];
-
             // Initialise potential solver
             pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
@@ -87,7 +84,7 @@ namespace OneD_ThomasFermiPoisson
                 pois_solv.Reset();
             }
 
-            if (TF_only)
+            if (no_dft)
             {
                 Band_Data car_dens_spin_summed = carrier_density.Spin_Summed_Data;
                 double tot_dens_TF = (from val in car_dens_spin_summed.vec

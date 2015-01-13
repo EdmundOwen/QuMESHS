@@ -149,9 +149,6 @@ namespace TwoD_ThomasFermiPoisson
             else
                 chem_pot = new Band_Data(new DoubleMatrix(ny_dens, nz_dens));
 
-            if (input_dict.ContainsKey("dft")) this.TF_only = !(bool)input_dict["dft"];
-            if (input_dict.ContainsKey("TF_only")) this.TF_only = (bool)input_dict["TF_only"];
-
             // create charge density solver and calculate boundary conditions
             dens_solv = new TwoD_ThomasFermiSolver(this);
             double bottom_V = dens_solv.Get_Chemical_Potential(0.0, zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
@@ -185,8 +182,11 @@ namespace TwoD_ThomasFermiPoisson
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 1000;
-            dft_solv.DFT_Mixing_Parameter = 0.3;
+            int no_runs = 2500;
+            if (no_dft)
+                dft_solv.DFT_Mixing_Parameter = 0.0;
+            else
+                dft_solv.DFT_Mixing_Parameter = 0.1;
             // start without dft if carrier density is empty
             if (carrier_density.Spin_Summed_Data.Min() == 0.0)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
@@ -248,7 +248,8 @@ namespace TwoD_ThomasFermiPoisson
 
             int count = 0;
             bool converged = false;
-            dens_solv.DFT_Mixing_Parameter = 0.3;
+            if (!no_dft)
+                dens_solv.DFT_Mixing_Parameter = 0.1;
             dens_diff_lim = 0.12;
             while (!converged)
             {
@@ -265,7 +266,6 @@ namespace TwoD_ThomasFermiPoisson
                 SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                //Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density);
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data, carrier_density, dens_solv.DFT_diff(carrier_density));
                 chem_pot = pois_solv.Chemical_Potential;
                 
@@ -276,12 +276,6 @@ namespace TwoD_ThomasFermiPoisson
                 t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
                 if (t < 0.0)
                 {
-                    Console.WriteLine("Iterator has stalled. Setting t = " + t_min.ToString());
-                    //pois_solv.Set_Boundary_Conditions(top_V, split_V, split_width, bottom_V, surface_charge);
-                    //chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-                    //dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-                    //Console.WriteLine("Potential reset!");
-                    //t = t_min;
                     Console.WriteLine("Iterator has stalled, setting t = 0");
                     t = 0.0;
                 }
@@ -314,7 +308,8 @@ namespace TwoD_ThomasFermiPoisson
 //                    max_count = 1000;
 
                     // and set the DFT potential
-                    dens_solv.Print_DFT_diff(carrier_density);
+                    if (dens_solv.DFT_Mixing_Parameter != 0.0)
+                        dens_solv.Print_DFT_diff(carrier_density);
                     dens_solv.Set_DFT_Potential(carrier_density);
 
                     // also... if the difference in the old and new dft potentials is greater than for the previous V_xc update, reduce the dft mixing parameter
@@ -407,7 +402,6 @@ namespace TwoD_ThomasFermiPoisson
 
                 // and finallly, set the carrier density to the new value
                 stpwch.Stop();
-      //          Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString("F") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 Console.WriteLine("Iter = " + count.ToString() + "\tDens conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
 
@@ -418,16 +412,9 @@ namespace TwoD_ThomasFermiPoisson
                     Console.WriteLine("Maximum potential change at end of iteration was " + Math.Max(t * x.Max(), (-t * x).Max()).ToString());
                     break;
                 }
-
-                //if ((count - 1) % 10 == 0 && count < 3000)
-                //    File.Copy("split_gate.pg6", "split_gate_" + (count - 1).ToString("0000") + ".pg6", true);
-                //
-                //if ((count - 1) % 100 == 0 && count >= 3000)
-                //    File.Copy("split_gate.pg6", "split_gate_" + (count - 1).ToString("0000") + ".pg6", true);
             }
 
             Console.WriteLine("Iteration complete");
-
             return converged;
         }
 

@@ -123,8 +123,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             pois_solv.ZDens = dens_1d;
             pois_solv.Z_2DEG = z_2DEG;
                 
-            if (input_dict.ContainsKey("dft")) this.TF_only = !bool.Parse((string)input_dict["dft"]);
-            if (input_dict.ContainsKey("TF_only")) this.TF_only = bool.Parse((string)input_dict["TF_only"]);
+            if (input_dict.ContainsKey("dft")) this.no_dft = !bool.Parse((string)input_dict["dft"]);
+            if (input_dict.ContainsKey("TF_only")) this.no_dft = bool.Parse((string)input_dict["TF_only"]);
 
             // create charge density solver and calculate boundary conditions
             dens_solv = new ThreeD_ThomasFermiSolver(this);
