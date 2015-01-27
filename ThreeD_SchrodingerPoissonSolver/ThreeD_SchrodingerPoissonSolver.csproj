@@ -73,6 +73,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ThreeD_Density_Base.cs" />
+    <Compile Include="ThreeD_EffectiveBandSolver.cs" />
     <Compile Include="ThreeD_PoissonSolver.cs" />
     <Compile Include="ThreeD_ThomasFermiSolver.cs" />
   </ItemGroup>

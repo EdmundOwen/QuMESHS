@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Solver_Bases;
+using Solver_Bases.Geometry;
 using Solver_Bases.Layers;
 using CenterSpace.NMath.Core;
 
@@ -85,6 +86,20 @@ namespace ThreeD_SchrodingerPoissonSolver
             ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, x, y, z), temperature_input);
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
+        }
+        protected void Get_Potential(ref Band_Data dft_band_offset, ILayer[] layers)
+        {
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                    for (int k = 0; k < nz; k++)
+                    {
+                        double pos_x = xmin + i * dx;
+                        double pos_y = ymin + j * dy;
+                        double pos_z = zmin + k * dz;
+                        double band_gap = Geom_Tool.GetLayer(layers, pos_x, pos_y, pos_z).Band_Gap;
+
+                        dft_band_offset.vol[k][i, j] = 0.5 * band_gap - dft_band_offset.vol[k][i, j] + dft_pot.vol[k][i, j];
+                    }
         }
 
         public override void Close()

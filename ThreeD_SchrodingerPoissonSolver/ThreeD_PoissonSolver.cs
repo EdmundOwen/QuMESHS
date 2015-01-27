@@ -12,8 +12,6 @@ namespace ThreeD_SchrodingerPoissonSolver
 {
     public class ThreeD_PoissonSolver: Potential_Base
     {
-        double top_bc, split_bc, bottom_bc, surface;
-        double split_width, split_length, top_length;
 
         Experiment exp;
         SpinResolved_Data dens_1d;
@@ -24,9 +22,13 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         string gphi_filename = "gphi.dat";
 
-        double z_2DEG;
-        double y_scaling, z_scaling;
+        double top_bc, split_bc, bottom_bc;
+        double surface;
 
+        double z_2DEG;
+        double split_width, split_length, top_length;
+
+        double y_scaling, z_scaling;
         double t = 0.0;
 
         public ThreeD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
@@ -49,7 +51,18 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         protected override Band_Data Parse_Potential(string[] data)
         {
-            return Band_Data.Parse_Band_Data(data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+            string[] new_data = Trim_Potential_File(data);
+            return Band_Data.Parse_Band_Data(new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+        }
+
+        protected override void Save_Density_Data(Band_Data density, string input_file_name)
+        {
+            // check that the data isn't all zeros and if it is, add a small 1e-8 perturbation at the centre
+            for (int k = 0; k < density.vol.Length; k++)
+                if (density.vol[k].Min() > -1e-8 && density.vol[k].Max() < 1e-8)
+                    density.vol[k][(int)(density.vol[k].Rows / 2), (int)(density.vol[k].Cols / 2)] = 1e-8;
+
+            density.Save_3D_Data(input_file_name, exp.Dx_Dens, exp.Dy_Dens * y_scaling, exp.Dz_Dens * z_scaling, exp.Xmin_Dens, exp.Ymin_Dens * y_scaling, exp.Zmin_Dens * z_scaling);
         }
 
         /// <summary>
@@ -90,28 +103,46 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             return new Band_Data(result);
         }
+        public void Set_Boundary_Conditions(double top_V, double split_V, double top_length, double split_width, double split_length, double bottom_V, double surface)
+        {
+            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
+            // with a factor to convert from V to meV zC^-1
+            top_bc = top_V * Physics_Base.energy_V_to_meVpzC;
+            split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
+            bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
 
-        public void Create_FlexPDE_File(double top_length, double split_width, double split_length, double surface, string output_file)
+            // and save the gate geometry and surface charge
+            this.top_length = top_length; 
+            this.split_width = split_width; 
+            this.split_length = split_length;
+            this.surface = surface;
+
+            if (flexpde_inputfile != null)
+                Create_FlexPDE_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, flexpde_inputfile);
+        }
+
+        public void Create_FlexPDE_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
             // write out output file
             sw.WriteLine("TITLE \'Full Split Gate Geometry\'");
             sw.WriteLine("COORDINATES cartesian3");
-            sw.WriteLine();
             sw.WriteLine("VARIABLES");
             sw.WriteLine("\tu");
-            sw.WriteLine();
             sw.WriteLine("SELECT");
+            // gives the flexPDE tolerance for the finite element solve
             sw.WriteLine("\tERRLIM=1e-3");
+            sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
-            sw.WriteLine("\trho = 0.0");
+            sw.WriteLine("\trho");
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
             // and the tables for carrier and donor densities
             sw.WriteLine("\trho_carrier = TABLE(\'" + dens_filename + "\', x, y, z)");
             sw.WriteLine("\trho_dopent = TABLE(\'dens_3D_dopents.dat\', x, y, z)");
             sw.WriteLine();
+            // simulation dimension
             sw.WriteLine("\tlx = " + (exp.Dx_Pot * exp.Nx_Pot).ToString());
             sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
             sw.WriteLine();
@@ -120,7 +151,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
             sw.WriteLine();
             sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
-            sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling");
+            sw.WriteLine("\tsurface_bc = " + surface.ToString() + " / z_scaling");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
             sw.WriteLine("\tsplit_V = " + split_bc.ToString());
@@ -144,9 +175,11 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
             sw.WriteLine("\teps");
             sw.WriteLine();
+            // other physical parameters
             sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
+            // Poisson's equation
             sw.WriteLine("\tu: dx(eps * dx(u)) + y_scaling * dy(eps * y_scaling * dy(u)) + z_scaling * dz(eps * z_scaling * dz(u)) = - rho\t! Poisson's equation");
             sw.WriteLine();
             sw.WriteLine("EXTRUSION");
@@ -196,6 +229,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No || exp.Layers[i].Material == Material.PMMA)
                 {
                     sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
+                    sw.WriteLine("\t\trho = 0.0");
                     sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i + 1].Material));
                     sw.WriteLine("\t\tband_gap = " + exp.Layers[i + 1].Band_Gap.ToString());
                     sw.WriteLine();
@@ -237,8 +271,6 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\t\tLINE TO (top_length / 2, -ly / 2 * y_scaling) TO (-top_length / 2, -ly / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\t\tFRONT(z - well_depth * z_scaling, 20 * z_scaling)");
-            sw.WriteLine();
-            sw.WriteLine("\t\tRESOLVE(rho_carrier)");
             sw.WriteLine();
             sw.WriteLine("!MONITORS");
             sw.WriteLine("\t!CONTOUR(rho) ON z = well_depth * z_scaling");
@@ -306,7 +338,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tu");
             sw.WriteLine();
             sw.WriteLine("SELECT");
-            sw.WriteLine("\tERRLIM=1e-2");
+            sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
             sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi)");
@@ -315,18 +347,22 @@ namespace ThreeD_SchrodingerPoissonSolver
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
             sw.WriteLine("\tgphi = TABLE(\'" + gphi_filename + "\')");
-            sw.WriteLine("\trho = TABLE(\'" + dens_filename + "\')");
+            sw.WriteLine("\txc_pot = TABLE(\'" + xc_pot_filename + "\')");
+            sw.WriteLine("\txc_pot_calc = TABLE(\'xc_pot_calc.dat\')");
+            sw.WriteLine("\tcar_dens = TABLE(\'" + dens_filename + "\')");
+            sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine("\trho_prime = TABLE(\'" + densderiv_filename + "\')");
             sw.WriteLine();
-            sw.WriteLine("\tlx = " + (exp.Dx_Pot * exp.Nx_Pot).ToString());
-            sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
-            sw.WriteLine();
-            sw.WriteLine("\tbottom_bc = 0.0");
-            sw.WriteLine("\tsurface_bc = 0.0");
-            sw.WriteLine();
-            sw.WriteLine("\t! Scale factors");
+            // simulation dimension
             sw.WriteLine("\ty_scaling = " + y_scaling.ToString());
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
+            sw.WriteLine("\tlx = " + (exp.Dx_Pot * exp.Nx_Pot).ToString());
+            sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
+            sw.WriteLine("\tlz = " + (exp.Dz_Pot * exp.Nz_Pot).ToString());
+            sw.WriteLine();
+            // boundary conditions
+            sw.WriteLine("\tbottom_bc = 0.0");
+            sw.WriteLine("\tsurface_bc = 0.0");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
             sw.WriteLine("\tsplit_V = 0.0");
@@ -356,6 +392,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tt = " + t.ToString() + "! Mixing parameter from previous iteration");
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
+            // Poisson's equation
             sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * y_scaling * dy(eps * y_scaling * dy(u)) - 1.0 * z_scaling * dz(eps * z_scaling * dz(u)) - rho_prime * u = " + minus_g_phi + " \t! Poisson's equation");
             sw.WriteLine();
             sw.WriteLine("EXTRUSION");
@@ -445,7 +482,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\t!CONTOUR(u) ON x = 0");
             sw.WriteLine("\t!CONTOUR(u) ON y = 0");
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\t!CONTOUR(rho) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
+            sw.WriteLine("\t!CONTOUR(car_dens) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
             sw.WriteLine("\t!CONTOUR(q_e * (phi + t * new_phi)) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
             sw.WriteLine("\t!CONTOUR(u * q_e) ON x = 0 ON GRID(y / y_scaling, z / z_scaling)");
             sw.WriteLine("\t!CONTOUR(u * q_e) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
@@ -461,25 +498,6 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("END");
 
             sw.Close();
-        }
-
-        public void Set_Boundary_Conditions(double top_V, double split_V, double top_length, double split_width, double split_length, double bottom_V, double surface)
-        {
-            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // with a factor to convert from V to meV zC^-1
-            this.top_bc = top_V * Physics_Base.energy_V_to_meVpzC;
-            this.split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
-            this.bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
-
-            this.top_length = top_length; this.split_width = split_width; this.split_length = split_length;
-
-            if (flexpde_inputfile != null)
-                Create_FlexPDE_File(top_length, split_width, split_length, surface, flexpde_inputfile);
-        }
-
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
-        {
-            throw new NotImplementedException();
         }
 
         public SpinResolved_Data ZDens
@@ -505,16 +523,6 @@ namespace ThreeD_SchrodingerPoissonSolver
             set { z_2DEG = value; }
         }
 
-        protected override void Save_Density_Data(Band_Data density, string input_file_name)
-        {
-            // check that the data isn't all zeros and if it is, add a small 1e-8 perturbation at the centre
-            for (int k = 0; k < density.vol.Length; k++)
-                if (density.vol[k].Min() > -1e-8 && density.vol[k].Max() < 1e-8)
-                    density.vol[k][(int)(density.vol[k].Rows / 2), (int)(density.vol[k].Cols / 2)] = 1e-8;
-
-            density.Save_3D_Data(input_file_name, exp.Dx_Dens, exp.Dy_Dens * y_scaling, exp.Dz_Dens * z_scaling, exp.Xmin_Dens, exp.Ymin_Dens * y_scaling, exp.Zmin_Dens * z_scaling);
-        }
-
         public Band_Data Chemical_Potential
         {
             get
@@ -528,5 +536,10 @@ namespace ThreeD_SchrodingerPoissonSolver
         }
 
         public double T { get { return t; } set { t = value; } }
+
+        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

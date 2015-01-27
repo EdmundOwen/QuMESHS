@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Solver_Bases;
 using Solver_Bases.Layers;
+using Solver_Bases.Geometry;
 
 namespace ThreeD_SchrodingerPoissonSolver
 {
@@ -13,6 +14,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             // set nmath license key
 
+            Console.BufferHeight = Int16.MaxValue - 1;
             Console.WriteLine("Program starting");
 
             Console.WriteLine("Loading input parameters from file");
@@ -20,36 +22,54 @@ namespace ThreeD_SchrodingerPoissonSolver
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Input_Parameters.txt");
             Console.WriteLine("Input parameters loaded");
 
+            // read in the value of vsg to be used
+            Console.WriteLine("Enter split gate voltage");
+            inputs["split_V"] = double.Parse(Console.ReadLine());
+            Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
+
+            // check to make sure it's negative
+            if ((double)inputs["split_V"] > 0)
+            {
+                Console.WriteLine("\"split_V\" has been set positive at " + ((double)inputs["split_V"]).ToString() + "V.  Are you sure you want to do this?");
+                Console.ReadKey();
+            }
+
+            // initialise the band structure experiment
+            Experiment exp = new Experiment();
+            OneD_ThomasFermiPoisson.Experiment exp_init = new OneD_ThomasFermiPoisson.Experiment();
+
             Console.WriteLine("Performing density dopent calculation");
             Dictionary<string, object> inputs_init = new Dictionary<string, object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs_init, "Input_Parameters_1D.txt");
-            OneD_ThomasFermiPoisson.Experiment exp_init = new OneD_ThomasFermiPoisson.Experiment();
             exp_init.Initialise(inputs_init);
             exp_init.Run();
             inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
             inputs.Add("Band_Offset", exp_init.Chemical_Potential);
             Console.WriteLine("Calculated 1D density for dopents");
 
-            Band_Data chem_pot = exp_init.Chemical_Potential;
-            ILayer[] layers = exp_init.Layers;
-            OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
-            inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(chem_pot, layers));
-            inputs.Add("bottom_bc", exp_init.Bottom_BC);
-            
-            Console.WriteLine("Starting experiment");
-            Experiment exp = new Experiment();
-            Console.WriteLine("Created experiment");
-            exp.Initialise_Experiment(inputs);
-
             int nx_init = (int)(double)inputs_init["nx_1d"]; int ny_init = (int)(double)inputs_init["ny_1d"];
-            double dx_init = exp.Nx_Pot * exp.Dx_Pot / nx_init; double dy_init = exp.Ny_Pot * exp.Dy_Pot / ny_init;
+            double dx_init = (double)inputs["nx"] * (double)inputs["dx"] / nx_init; double dy_init = (double)inputs["ny"] * (double)inputs["ny"] / ny_init;
 
+            // this is a scaled version for the dopents!
             double y_scaling = ((double)inputs["nx"] * (double)inputs["dx"]) / ((double)inputs["ny"] * (double)inputs["dy"]);
             double z_scaling = ((double)inputs["nx"] * (double)inputs["dx"]) / ((double)inputs["nz"] * (double)inputs["dz"]);
-            Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_dopents.dat", dx_init, dy_init * y_scaling, exp.Dz_Pot * z_scaling, exp.Xmin_Pot, exp.Ymin_Pot * y_scaling, exp.Zmin_Pot * z_scaling);
-            Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init * y_scaling, exp.Dz_Pot * z_scaling, exp.Xmin_Pot, exp.Ymin_Pot * y_scaling, exp.Zmin_Pot * z_scaling);
+            Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_dopents.dat", dx_init, dy_init * y_scaling, (double)inputs["dz"] * z_scaling, (double)inputs["xmin_pot"], (double)inputs["ymin_pot"] * y_scaling, Geom_Tool.Get_Zmin(exp_init.Layers) * z_scaling);
+            Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init * y_scaling, (double)inputs["dz"] * z_scaling, (double)inputs["xmin_pot"], (double)inputs["ymin_pot"] * y_scaling, Geom_Tool.Get_Zmin(exp_init.Layers) * z_scaling);
             Console.WriteLine("Saved 1D dopent density");
 
+            // recalculate the band structure at 70K (for frozen out surface charge)
+            inputs_init["T"] = 70.0;
+            exp_init.Initialise(inputs_init);
+            exp_init.Run();
+            Band_Data band_offset = exp_init.Chemical_Potential;
+            ILayer[] layers = exp_init.Layers;
+            // get surface charge for band structure at 70K
+            OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
+            inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
+
+            Console.WriteLine("Starting experiment");
+            exp.Initialise_Experiment(inputs);
+            Console.WriteLine("Experiment initialised");
             exp.Run();
             Console.WriteLine("Experiment complete");
         }

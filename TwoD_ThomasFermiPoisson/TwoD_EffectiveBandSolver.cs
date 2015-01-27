@@ -16,6 +16,7 @@ namespace TwoD_ThomasFermiPoisson
         double no_kb_T = 50.0;          // number of kb_T to integrate to
 
         double tx, ty;
+        bool force_symmetry = true;
 
         public TwoD_EffectiveBandSolver(Experiment exp)
             : base(exp)
@@ -120,6 +121,18 @@ namespace TwoD_ThomasFermiPoisson
                     dens_down[i, j] = 0.5 * dens_tot;
                 }
             }
+
+            // check whether to enforce symmetry in the transverse direction
+            if (force_symmetry)
+                for (int i = nx / 2 + 1; i < nx; i++)
+                {
+                    x_energy[i] = x_energy[nx - i - 1];
+                    for (int j = 0; j < ny; j++)
+                    {
+                        dens_up[i, j] = dens_up[nx - i - 1, j];
+                        dens_down[i, j] = dens_down[nx - i - 1, j];
+                    }
+                }
 
             // calculate the eigenstates in the x-direction
             DoubleHermitianMatrix h_x = Create_Hamiltonian(x_energy, tx, nx);

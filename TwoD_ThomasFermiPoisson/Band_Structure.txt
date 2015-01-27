@@ -17,6 +17,9 @@ surface=true
 #
 mat=GaAs t=10
 mat=AlGaAs t=200 x=.3 Nd=4.4e16
+# Gives density of 1.10e-11 cm^-2
+#mat=AlGaAs t=200 x=.3 Nd=5.4e16
+# Gives density of 1.49e-11 cm^-2
 mat=AlGaAs t=75 x=.3
 mat=GaAs t=1615
 # Na=1e14

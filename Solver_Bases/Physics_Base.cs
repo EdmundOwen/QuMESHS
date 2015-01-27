@@ -354,7 +354,7 @@ namespace Solver_Bases
             if (dim == 1)
             {
                 int nx = charge_dens_spin_summed.vec.Length;
-                result = new Band_Data(new DoubleVector(nx));
+                result = new Band_Data(nx, 0.0);
                 for (int i = 0; i < nx; i++)
                     result.vec[i] = Get_XC_Potential(charge_dens_spin_summed.vec[i]);
 
@@ -364,7 +364,7 @@ namespace Solver_Bases
             {
                 int nx = charge_dens_spin_summed.mat.Rows;
                 int ny = charge_dens_spin_summed.mat.Cols;
-                result = new Band_Data(new DoubleMatrix(nx, ny));
+                result = new Band_Data(nx, ny, 0.0);
                 for (int i = 0; i < nx; i++)
                     for (int j = 0; j < ny; j++)
                         result.mat[i, j] = Get_XC_Potential(charge_dens_spin_summed.mat[i, j]);
@@ -373,7 +373,16 @@ namespace Solver_Bases
             }
             else if (dim == 3)
             {
-                throw new NotImplementedException();
+                int nx = charge_dens_spin_summed.vol[0].Rows;
+                int ny = charge_dens_spin_summed.vol[0].Cols;
+                int nz = charge_dens_spin_summed.vol.Length;
+                result = new Band_Data(nx, ny, nz, 0.0);
+                for (int k = 0; k < nz; k++)
+                    for (int i = 0; i < nx; i++)
+                        for (int j = 0; j < ny; j++)
+                            result.vol[k][i, j] = Get_XC_Potential(charge_dens_spin_summed.vol[k][i, j]);
+
+                return result;
             }
             else
                 throw new NotImplementedException();

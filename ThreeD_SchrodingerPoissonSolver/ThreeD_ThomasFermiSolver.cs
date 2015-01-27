@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Solver_Bases;
 using Solver_Bases.Layers;
+using CenterSpace.NMath.Core;
 
 namespace ThreeD_SchrodingerPoissonSolver
 {
@@ -93,7 +94,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             throw new NotImplementedException();
         }
 
-        public override CenterSpace.NMath.Core.DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
         {
             throw new NotImplementedException();
         }

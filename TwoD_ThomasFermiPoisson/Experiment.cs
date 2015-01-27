@@ -173,9 +173,10 @@ namespace TwoD_ThomasFermiPoisson
 
             // and then run the DFT solver at the base temperature over a limited range
             //TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-            TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
-            dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
-            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
+      //      TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+      //      dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
+      //      dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
+            TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
             
        //     // run without DFT
        //     dft_solv.Set_DFT_Mixing_Parameter(0.0);
@@ -245,7 +246,7 @@ namespace TwoD_ThomasFermiPoisson
             dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
             dens_solv.Set_DFT_Potential(carrier_density); 
-
+            
             int count = 0;
             bool converged = false;
             if (!no_dft)
@@ -400,7 +401,6 @@ namespace TwoD_ThomasFermiPoisson
                 //    dens_solv.Print_DFT_diff(carrier_density);
                 //dens_solv.Set_DFT_Potential(carrier_density);
 
-                // and finallly, set the carrier density to the new value
                 stpwch.Stop();
                 Console.WriteLine("Iter = " + count.ToString() + "\tDens conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;

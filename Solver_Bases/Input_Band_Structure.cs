@@ -294,7 +294,17 @@ namespace Solver_Bases
 
         public static Band_Data Get_BandStructure_Grid(ILayer[] layers, double dx, double dy, double dz, int nx, int ny, int nz, double xmin, double ymin, double zmin)
         {
-            throw new NotImplementedException();
+            DoubleMatrix[] result = new DoubleMatrix[nz];
+
+            for (int k = 0; k < nz; k++)
+            {
+                result[k] = new DoubleMatrix(nx, ny);
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
+                        result[k][i, j] = 0.5 * Geom_Tool.GetLayer(layers, xmin + i * dx, ymin + j * dy, zmin + k * dz).Band_Gap;
+            }
+
+            return new Band_Data(result);
         }
     }
 }

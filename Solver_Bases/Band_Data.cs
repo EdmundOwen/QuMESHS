@@ -101,7 +101,7 @@ namespace Solver_Bases
                     int matsize = vol[0].Rows * vol[0].Cols;
                     int index1 = i % matsize;
                     int x = i % vol[0].Cols;
-                    int y = (int)((i - x) / vol[0].Cols);
+                    int y = (int)((i - x) / vol[0].Cols) % vol[0].Rows;
                     int z = (int)((i - index1) / matsize);
 
                     vol[z][y, x] = value;
@@ -363,7 +363,10 @@ namespace Solver_Bases
                     for (int j = 0; j < mat.Rows; j++)
                         sw.WriteLine(mat[j, i]);
             else if (dim == 3)
-                throw new NotImplementedException();
+                for (int k = 0; k < vol.Length; k++ )
+                    for (int i = 0; i < vol[0].Cols; i++)
+                        for (int j = 0; j < vol[0].Rows; j++)
+                            sw.WriteLine(vol[k][j, i]);
             else
                 throw new NotImplementedException();
             sw.Close();

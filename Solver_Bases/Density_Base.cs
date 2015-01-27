@@ -117,6 +117,14 @@ namespace Solver_Bases
         }
 
         /// <summary>
+        /// Gets the derivative of the fermi function at a given energy using the default temperature and fermi energy
+        /// </summary>
+        protected double Get_Fermi_Function_Derivative(double energy)
+        {
+            return Physics_Base.Get_Fermi_Function_Derivative(energy, fermi_Energy, temperature);
+        }
+
+        /// <summary>
         /// Gets the fermi function for the dopents at a given energy using the default temperature and fermi energy
         /// </summary>
         protected double Get_Dopent_Fermi_Function(double energy)

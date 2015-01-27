@@ -72,16 +72,21 @@ namespace TwoD_ThomasFermiPoisson
                 inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
             }
 
-            //Console.WriteLine("Starting experiment");
-  //        exp.Initialise_Experiment(inputs);
-  //          // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
-  //          if (!(bool)inputs["hot_start"] && exp_init.Dz_Pot != exp.Dz_Pot)
-  //              throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
-  //          Console.WriteLine("Experiment initialised");
-  //          exp.Run();
-  //          Console.WriteLine("Experiment complete");
-
-            Run_Multiple_SGs(inputs);
+            if ((bool)inputs["batch_run"])
+            {
+                Run_Multiple_SGs(inputs);
+            }
+            else
+            {
+                Console.WriteLine("Starting experiment");
+                exp.Initialise_Experiment(inputs);
+                // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
+                if (!(bool)inputs["hot_start"] && exp_init.Dz_Pot != exp.Dz_Pot)
+                    throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
+                Console.WriteLine("Experiment initialised");
+                exp.Run();
+                Console.WriteLine("Experiment complete");
+            }
         }
 
         static void Run_Multiple_TGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)

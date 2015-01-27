@@ -1,0 +1,257 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Solver_Bases;
+using Solver_Bases.Layers;
+using CenterSpace.NMath.Core;
+using CenterSpace.NMath.Matrix;
+
+namespace ThreeD_SchrodingerPoissonSolver
+{
+    class ThreeD_EffectiveBandSolver : ThreeD_Density_Base
+    {
+        DoubleVector energies;
+
+        double no_kb_T = 50.0;          // number of kb_T to integrate to
+
+        double tx, ty, tz;
+
+        public ThreeD_EffectiveBandSolver(IExperiment exp)
+            : base(exp)
+        {
+            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
+            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
+        }
+
+        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
+        {
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
+            DoubleHermitianEigDecomp eig_decomp = Solve_Eigenvector_Problem(dft_pot, ref charge_density);
+
+            int max_wavefunction = (from val in eig_decomp.EigenValues
+                                    where val < no_kb_T * Physics_Base.kB * temperature
+                                    select val).ToArray().Length;
+
+            double[,] dens_xy = new double[nx, ny];
+            // and generate a density for the y-direction
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                    for (int k = 0; k < max_wavefunction; k++)
+                        dens_xy[i, j] += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_Fermi_Function(energies[k]);
+
+            // multiply the z-densities by the xy-density
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                    for (int k = 0; k < nz; k++)
+                    {
+                        charge_density.Spin_Up.vol[k][i, j] *= dens_xy[i, j];
+                        charge_density.Spin_Down.vol[k][i, j] *= dens_xy[i, j];
+                    }
+
+            // and multiply the density by -e to get the charge density (as these are electrons)
+            charge_density = -1.0 * Physics_Base.q_e * charge_density;
+        }
+
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
+        {
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
+            DoubleHermitianEigDecomp eig_decomp = Solve_Eigenvector_Problem(dft_pot, ref charge_density_deriv);
+
+            int max_wavefunction = (from val in eig_decomp.EigenValues
+                                    where val < no_kb_T * Physics_Base.kB * temperature
+                                    select val).ToArray().Length;
+
+            double[,] dens_xy_deriv = new double[nx, ny];
+            // and generate a density for the y-direction
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                for (int k = 0; k < max_wavefunction; k++)
+                        dens_xy_deriv[i, j] += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_Fermi_Function_Derivative(energies[k]);
+            
+            // multiply the z-densities by the xy-density
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                    for (int k = 0; k < nz; k++)
+                    {
+                        charge_density_deriv.Spin_Up.vol[k][i, j] *= dens_xy_deriv[i, j];
+                        charge_density_deriv.Spin_Down.vol[k][i, j] *= dens_xy_deriv[i, j];
+                    }
+
+            // and multiply the density derivative by e to get the charge density (as increasing mu decreases the charge: dn/dmu*-e )
+            charge_density_deriv = Physics_Base.q_e * charge_density_deriv;
+        }
+
+        /// <summary>
+        /// returns an eigenvector decomposition for the xy-plane after having calculated the density in the
+        /// z-direction and storing it in "charge_density"
+        /// </summary>
+        /// <param name="dft_pot"></param>
+        /// <param name="charge_density"></param>
+        /// <returns></returns>
+        private DoubleHermitianEigDecomp Solve_Eigenvector_Problem(Band_Data dft_pot, ref SpinResolved_Data charge_density)
+        {
+            DoubleHermitianEigDecomp eig_decomp;
+            double[,] xy_energy = new double[nx, ny];
+            Band_Data dens_up = new Band_Data(nx, ny, nz, 0.0);
+            Band_Data dens_down = new Band_Data(nx, ny, nz, 0.0);
+
+            // cycle over xy-plane calculating the ground state energy and eigenstate in the growth direction
+            for (int i = 0; i < nx; i++)
+                for (int j =0 ; j < ny;j++)
+            {
+                // pull out the chemical potential for this slice
+                double[] z_dft_pot = new double[nz];
+                for (int k = 0; k < nz; k++)
+                    z_dft_pot[k] = dft_pot.vol[k][i, j];
+
+                // calculate its eigendecomposition
+                DoubleHermitianMatrix h_z = Create_Hamiltonian(z_dft_pot, tz, nz);
+
+                eig_decomp = new DoubleHermitianEigDecomp(h_z);
+
+                // insert the eigenstate into density and record the local confinement energy
+                xy_energy[i,j] = eig_decomp.EigenValue(0);
+                for (int k = 0; k < nz; k++)
+                {
+                    double dens_tot = DoubleComplex.Norm(eig_decomp.EigenVector(0)[k]) * DoubleComplex.Norm(eig_decomp.EigenVector(0)[k]);
+                    dens_up.vol[k][i, j] = 0.5 * dens_tot;
+                    dens_down.vol[k][i, j] = 0.5 * dens_tot;
+                }
+            }
+
+            // calculate the eigenstates in the xy-plane
+            DoubleHermitianMatrix h_xy = Create_2DEG_Hamiltonian(xy_energy, tx, ty, nx, ny, true, false);
+            eig_decomp = new DoubleHermitianEigDecomp(h_xy);
+            energies = eig_decomp.EigenValues;
+
+            // put the calculated densities into charge_density
+            charge_density = new SpinResolved_Data(dens_up, dens_down);
+
+            return eig_decomp;
+        }
+
+        /// <summary>
+        /// returns the eigen-energies for the given potential and charge density
+        /// </summary>
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data pot)
+        {
+            return energies;
+        }
+
+        public Band_Data Get_KS_KE(ILayer[] layers, Band_Data chem_pot)
+        {
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
+            // create temporary density for input into...
+            Band_Data dens_up = new Band_Data(nx, ny, nz, 0.0);
+            Band_Data dens_down = new Band_Data(nx, ny, nz, 0.0);
+            SpinResolved_Data dens = new SpinResolved_Data(dens_up, dens_down);
+
+            // calculate eigenvectors
+            DoubleHermitianEigDecomp eig_decomp = Solve_Eigenvector_Problem(dft_pot, ref dens);
+
+            int max_wavefunction = (from val in eig_decomp.EigenValues
+                                    where val < no_kb_T * Physics_Base.kB * temperature
+                                    select val).ToArray().Length;
+
+            // generate kinetic energy data
+            Band_Data ke = new Band_Data(nx, ny, nz, 0.0);
+            Band_Data dens_tot = dens.Spin_Summed_Data;
+            double ke_prefactor = -0.5 * Physics_Base.hbar * Physics_Base.hbar / Physics_Base.mass;
+            for (int i = 1; i < nx - 1; i++)
+                for (int j = 1; j < ny - 1; j++)
+                    for (int k = 1; k < nz - 1; k++)
+                        for (int n = 0; n < max_wavefunction; n++)
+                        {
+                            double dy2psi = (dens_tot.vol[k][i, j + 1] + dens_tot.vol[k][i, j - 1] - 2.0 * dens_tot.vol[k][i, j]) * DoubleComplex.Norm(eig_decomp.EigenVector(n)[i]);
+                            double dx2psi = DoubleComplex.Norm(eig_decomp.EigenVector(n)[i + 1] + eig_decomp.EigenVector(n)[i - 1] - 2.0 * eig_decomp.EigenVector(n)[i]) * dens_tot.mat[i, j];
+
+                            double psi_div2psi = (dens_tot.mat[i, j] * DoubleComplex.Norm(eig_decomp.EigenVector(n)[i])) * (dx2psi + dy2psi);
+
+                            ke.mat[i, j] += ke_prefactor * psi_div2psi * Get_OneD_DoS(eig_decomp.EigenValue(n), no_kb_T);
+                        }
+
+            throw new NotImplementedException();
+
+            return ke;
+        }
+
+        DoubleHermitianMatrix Create_Hamiltonian(double[] V, double t, int N)
+        {
+            DoubleHermitianMatrix result = new DoubleHermitianMatrix(N);
+
+            // set off diagonal elements 
+            for (int i = 0; i < N; i++)
+            {
+                // coupling sites in the growth direction
+                if (i != 0)
+                    result[i - 1, i] = t;
+                if (i != N - 1)
+                    result[i + 1, i] = t;
+            }
+
+            // set diagonal elements
+            for (int i = 0; i < N; i++)
+                result[i, i] = -2.0 * t + V[i];
+
+            return result;
+        }
+
+        DoubleHermitianMatrix Create_2DEG_Hamiltonian(double[,] V, double tx, double ty, int nx, int ny, bool periodic_in_x, bool periodic_in_y)
+        {
+            DoubleHermitianMatrix result = new DoubleHermitianMatrix(nx * ny);
+
+            // set off diagonal elements 
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                {
+                    // coupling sites in the transport direction
+                    if (i != 0)
+                        result[i * ny + j, i * ny + j - ny] = tx;
+                    if (i != nx - 1)
+                        result[i * ny + j, i * ny + j + ny] = tx;
+                    // coupling sites in the transverse direction
+                    if (j != 0)
+                        result[i * ny + j, i * ny + j - 1] = ty;
+                    if (j != ny - 1)
+                        result[i * ny + j, i * ny + j + 1] = ty;
+                }
+
+            // set diagonal elements
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                    result[i * ny + j, i * ny + j] = -2.0 * tx + -2.0 * ty + V[i, j];
+
+            // and finally, add periodic boundary conditions where appropriate 
+            if (periodic_in_x)
+                for (int j = 0; j < ny; j++)
+                {
+                    result[j, j + (nx - 1) * ny] = tx;
+                    result[j + (nx - 1) * ny, j] = tx;
+                }
+            if (periodic_in_y)
+                for (int i = 0; i < nx; i++)
+                {
+                    result[i * ny + 1, i * ny] = ty;
+                    result[i * ny, i * ny + 1] = ty;
+                }
+
+            return result;
+        }
+
+        void Output_Wavefunctions(DoubleHermitianEigDecomp eig, int no_wavefunctions)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

@@ -105,5 +105,11 @@ namespace TwoD_ThomasFermiPoisson
         {
             throw new NotImplementedException();
         }
+
+        public Band_Data Get_KS_KE(ILayer[] layers, Band_Data chem_pot)
+        {
+            // return zeros (as Thomas-Fermi solution does not use wave functions)
+            return new Band_Data(nx, ny, 0.0); ;
+        }
     }
 }

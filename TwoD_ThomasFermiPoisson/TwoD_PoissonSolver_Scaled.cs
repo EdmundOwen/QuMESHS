@@ -47,11 +47,6 @@ namespace TwoD_ThomasFermiPoisson
             return Band_Data.Parse_Band_Data(new_data, exp.Ny_Dens, exp.Nz_Dens);
         }
 
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
-        {
-            throw new NotImplementedException();
-        }
-
         protected override void Save_Density_Data(Band_Data density, string input_file_name)
         {
             // check that the data isn't all zeros and if it is, add a small 1e-8 perturbation at the centre
@@ -493,7 +488,7 @@ namespace TwoD_ThomasFermiPoisson
             // simulation dimension
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
             sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
-            sw.WriteLine("\tlz = z_scaling * " + (exp.Dz_Pot * exp.Nz_Pot).ToString());
+            sw.WriteLine("\tlz = " + (exp.Dz_Pot * exp.Nz_Pot).ToString());
             sw.WriteLine();
             // boundary conditions
             sw.WriteLine("\tbottom_bc = 0.0");// + bottom_bc.ToString());
@@ -527,7 +522,7 @@ namespace TwoD_ThomasFermiPoisson
             // Poisson's equation
             sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * z_scaling * dy(eps * z_scaling * dy(u)) - rho_prime * u = " + minus_g_phi + " \t! Poisson's equation");
             sw.WriteLine();
-            // the boundary definitions for the differnet layers
+            // the boundary definitions for the different layers
             sw.WriteLine("BOUNDARIES");
 
             // cycle through layers below surface
@@ -630,5 +625,9 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         public double T { get { return t; } set { t = value; } }
+        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
