@@ -103,7 +103,7 @@ namespace TwoD_ThomasFermiPoisson
 
         public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
         {
-            throw new NotImplementedException();
+            return new DoubleVector(1, double.NaN);
         }
 
         public Band_Data Get_KS_KE(ILayer[] layers, Band_Data chem_pot)

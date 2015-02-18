@@ -21,7 +21,7 @@
 % nz = 1025
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
-% dz = 2
+% dz = 1
 #
 #
 ############## Poisson solver details #################################
@@ -41,18 +41,19 @@
 # Top gate voltage
 #% top_V = -7.71
 #% top_V = -7.3
-% top_V = -7.72
+#% top_V = -7.72
+% top_V = 0.
 #
 ## Split gate voltage
 #% split_V = -0.49
 #% split_V = -0.55
-% split_V = -0.50
+% split_V = -1.3
 #
 ## Split gate width
-% split_width = 800
+% split_width = 400
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_pot = -500.0
+% ymin_pot = -2500.0
 #
 ## Whether to smooth thee potential during each iteration
 % with_smoothing = true
@@ -79,33 +80,33 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 0.0
+% T = 4.2
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -1000.0
+% ymin_dens = -200.0
 #% ymin_dens = -600.0
 #
 ## Lattice spacing in the transverse direction
 % dy_dens =  5.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 401
+% ny_dens = 81
 #% ny_dens = 241
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -347.0
+% zmin_dens = -90.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 1.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 70
+% nz_dens = 25
 #
 #
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = true
+% hot_start = false
 #
 ## File location for spin-up data
 % spin_up_file = dens_2D_up_sg-066_tg-700.dat
@@ -120,7 +121,7 @@
 ############## Run details #######################################
 #
 ## whether to make this a batch run or not
-% batch_run = true
+% batch_run = false
 #
 ## 
 % init_val = 385

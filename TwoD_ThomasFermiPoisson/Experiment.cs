@@ -172,11 +172,11 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Bare potential saved");
 
             // and then run the DFT solver at the base temperature over a limited range
-            //TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-      //      TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
-      //      dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
-      //      dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
-            TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
+            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+            //TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+            dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
+            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
+      //      TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
             
        //     // run without DFT
        //     dft_solv.Set_DFT_Mixing_Parameter(0.0);
@@ -221,8 +221,8 @@ namespace TwoD_ThomasFermiPoisson
             Band_Data pot_exc = dft_solv.DFT_diff(carrier_density) + Physics_Base.Get_XC_Potential(carrier_density);
             pot_exc.Save_Data("xc_pot.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS.dat");
-            Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
-            ks_ke.Save_Data("ks_ke.dat");
+   //         Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
+   //         ks_ke.Save_Data("ks_ke.dat");
         }
 
 

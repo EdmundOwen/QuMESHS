@@ -13,7 +13,7 @@ using Solver_Bases.Geometry;
 
 namespace OneD_ThomasFermiPoisson
 {
-    public class OneD_PoissonSolver : Potential_Base
+    public class OneD_PoissonSolver : FlexPDE_Base
     {
         Experiment exp;
 
@@ -24,13 +24,13 @@ namespace OneD_ThomasFermiPoisson
         DoubleTriDiagMatrix laplacian;
         DoubleTriDiagFact lu_fact;
 
-        public OneD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
-            : base(using_flexPDE, flexPDE_input, flexPDE_location, tol)
+        public OneD_PoissonSolver(Experiment exp, bool using_external_code, string external_input, string external_location, double tol)
+            : base(using_external_code, external_input, external_location, tol)
         {
             this.exp = exp;
 
             // generate Laplacian matrix (spin-resolved)
-            if (!flexPDE)
+            if (!using_external_code)
             {
                 laplacian = Generate_Laplacian(exp.Layers);
                 lu_fact = new DoubleTriDiagFact(laplacian);
@@ -237,14 +237,14 @@ namespace OneD_ThomasFermiPoisson
         }
         */
 
-        protected void Create_FlexPDE_Input_File(string flexPDE_input)
+        public override void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
         {
             // check if an input file already exists and delete it
-            if (File.Exists(flexPDE_input))
-                File.Delete(flexPDE_input);
+            if (File.Exists(output_file))
+                File.Delete(output_file);
 
             // open up a new streamwriter to create the input file
-            StreamWriter sw = new StreamWriter(flexPDE_input);
+            StreamWriter sw = new StreamWriter(output_file);
 
             // write the file
             sw.WriteLine("TITLE \'Band Structure\'");
@@ -322,13 +322,18 @@ namespace OneD_ThomasFermiPoisson
             top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;
             bottom_eps = Geom_Tool.GetLayer(layers, bottom_pos).Permitivity;
 
-            if (flexpde_inputfile != null)
-                Create_FlexPDE_Input_File(flexpde_inputfile);
+            if (external_input != null)
+                Create_FlexPDE_File(top_bc, 0.0, 0.0, 0.0, bottom_bc, output_file);
         }
 
         protected override void Save_Density_Data(Band_Data density, string input_file_name)
         {
             density.Save_1D_Data(input_file_name, exp.Dz_Pot, exp.Zmin_Pot);
+        }
+
+        public override void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
+        {
+            throw new NotImplementedException();
         }
     }
 }

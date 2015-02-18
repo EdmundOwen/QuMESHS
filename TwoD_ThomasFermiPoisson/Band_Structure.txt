@@ -2,7 +2,7 @@
 #surface schottky=0.9 v1
 #
 #
-mat=pmma t=150
+mat=pmma t=2000
 surface=true
 #
 #
@@ -15,13 +15,13 @@ surface=true
 #
 ## Low density deep HEMT (eg W0616)
 #
-mat=GaAs t=10
-mat=AlGaAs t=200 x=.3 Nd=4.4e16
+#mat=GaAs t=10
+#mat=AlGaAs t=200 x=.3 Nd=4.4e16
 # Gives density of 1.10e-11 cm^-2
 #mat=AlGaAs t=200 x=.3 Nd=5.4e16
 # Gives density of 1.49e-11 cm^-2
-mat=AlGaAs t=75 x=.3
-mat=GaAs t=1615
+#mat=AlGaAs t=75 x=.3
+#mat=GaAs t=1615
 # Na=1e14
 #
 ## Delta doped HEMT (eg W731)
@@ -34,9 +34,9 @@ mat=GaAs t=1615
 #
 ## Masato's wafer
 #
-#mat=GaAs t=24
-#mat=AlGaAs t=36 x=.3 Nd=6e17
-#mat=AlGaAs t=10 x=.3 
-#mat=GaAs t=5930 Na=0.5e14
+mat=GaAs t=24
+mat=AlGaAs t=36 x=.3 Nd=6e17
+mat=AlGaAs t=10 x=.3 
+mat=GaAs t=1930 Na=1e14
 #
 mat=substrate

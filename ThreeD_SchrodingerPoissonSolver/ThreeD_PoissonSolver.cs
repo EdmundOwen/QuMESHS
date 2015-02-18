@@ -10,7 +10,7 @@ using Solver_Bases.Geometry;
 
 namespace ThreeD_SchrodingerPoissonSolver
 {
-    public class ThreeD_PoissonSolver: Potential_Base
+    public class ThreeD_PoissonSolver: FlexPDE_Base
     {
 
         Experiment exp;
@@ -31,8 +31,8 @@ namespace ThreeD_SchrodingerPoissonSolver
         double y_scaling, z_scaling;
         double t = 0.0;
 
-        public ThreeD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
-            : base(using_flexPDE, flexPDE_input, flexPDE_location, tol)
+        public ThreeD_PoissonSolver(Experiment exp, bool using_external_code, string external_inputfile, string external_location, double tol)
+            : base(using_external_code, external_inputfile, external_location, tol)
         {
             this.exp = exp;
 
@@ -117,11 +117,11 @@ namespace ThreeD_SchrodingerPoissonSolver
             this.split_length = split_length;
             this.surface = surface;
 
-            if (flexpde_inputfile != null)
-                Create_FlexPDE_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, flexpde_inputfile);
+            if (external_input != null)
+                Create_FlexPDE_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, external_input);
         }
 
-        public void Create_FlexPDE_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file)
+        public override void Create_FlexPDE_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -303,7 +303,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
             Create_NewtonStep_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, flexpde_inputfile, T);
 
-            Run_FlexPDE_Code("x.dat");
+            Run_External_Code("x.dat");
 
             string[] lines = File.ReadAllLines("x.dat");
             string[] data = Trim_Potential_File(lines);
@@ -312,7 +312,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             return Physics_Base.q_e * Parse_Potential(data);
         }
 
-        public void Create_NewtonStep_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file, double t)
+        public override void Create_NewtonStep_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file, double t)
         {
             StreamWriter sw = new StreamWriter(output_file);
 

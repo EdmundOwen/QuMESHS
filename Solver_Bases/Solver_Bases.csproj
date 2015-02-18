@@ -75,6 +75,7 @@
     <Compile Include="Density_Base.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Experiment_Base.cs" />
+    <Compile Include="FlexPDE_Base.cs" />
     <Compile Include="Geometry\Geom_Base.cs" />
     <Compile Include="Geometry\Geom_Tool.cs" />
     <Compile Include="Geometry\IGeom.cs" />

@@ -10,7 +10,7 @@ using Solver_Bases.Layers;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    class TwoD_PoissonSolver_Scaled : Potential_Base
+    class TwoD_PoissonSolver_Scaled : FlexPDE_Base
     {
         Experiment exp;
         string densdopent_filename;
@@ -27,8 +27,8 @@ namespace TwoD_ThomasFermiPoisson
         double z_scaling;
         double t = 0.0;
 
-        public TwoD_PoissonSolver_Scaled(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
-            : base(using_flexPDE, flexPDE_input, flexPDE_location, tol)
+        public TwoD_PoissonSolver_Scaled(Experiment exp, bool using_external_code, string external_input, string external_location, double tol)
+            : base(using_external_code, external_input, external_location, tol)
         {
             this.exp = exp;
             this.dens_filename = "car_dens.dat";
@@ -97,11 +97,11 @@ namespace TwoD_ThomasFermiPoisson
             this.split_width = split_width;
             this.surface = surface;
 
-            if (flexpde_inputfile != null)
+            if (external_input != null)
                 Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, "split_gate.pde");
         }
 
-        void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
+        public override void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -111,7 +111,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-7");
+            sw.WriteLine("\tERRLIM=1e-5");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -182,8 +182,8 @@ namespace TwoD_ThomasFermiPoisson
                 // set top gate here
                 if (i == exp.Layers.Length - 1)
                     // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = surface_bc\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
-                     sw.WriteLine("\t\tVALUE(u) = top_V");
-                    //sw.WriteLine("\t\tNATURAL(u) = top_V");
+ //                    sw.WriteLine("\t\tVALUE(u) = top_V");
+                    sw.WriteLine("\t\tNATURAL(u) = top_V");
                 // or surface condition
                 if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
@@ -257,9 +257,9 @@ namespace TwoD_ThomasFermiPoisson
         {
             Save_Density_Data(rhs, gphi_filename);
             Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
-            Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile, T);
+            Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file, T);
 
-            Run_FlexPDE_Code("x.dat");
+            Run_External_Code("x.dat");
 
             string[] lines = File.ReadAllLines("x.dat");
             string[] data = Trim_Potential_File(lines);
@@ -276,7 +276,7 @@ namespace TwoD_ThomasFermiPoisson
             split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
             bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
 
-            if (flexpde_inputfile != null)
+            if (external_input != null)
                 Create_Blend_File(top_bc, split_bc, split_width, surface, bottom_bc, "split_gate.pde", t);
         }
 
@@ -434,7 +434,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
-        public void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
+        public override void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
         {
             StreamWriter sw = new StreamWriter(output_file);
 

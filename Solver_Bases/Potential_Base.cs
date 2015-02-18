@@ -19,22 +19,22 @@ namespace Solver_Bases
         protected string dens_filename;
         protected string xc_pot_filename = "xc_pot.dat";
 
-        protected bool flexPDE;
-        protected string flexpde_location;
-        protected string flexpde_inputfile;
+        protected bool external_code;
+        protected string external_location;
+        protected string external_input;
 
         protected double tol;
         private bool converged;
         private double convergence_factor = double.MaxValue;
 
-        public Potential_Base(bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
+        public Potential_Base(bool using_external_code, string external_input, string external_location, double tol)
         {
-            // check whether using flexPDE
-            flexPDE = using_flexPDE;
-            if (using_flexPDE)
+            // check whether using an external code
+            external_code = using_external_code;
+            if (external_code)
             {
-                this.flexpde_inputfile = flexPDE_input;
-                this.flexpde_location = flexPDE_location;
+                this.external_input = external_input;
+                this.external_location = external_location;
             }
 
             // get the tolerance needed for the potential before saying it's good enough
@@ -43,9 +43,9 @@ namespace Solver_Bases
 
         public Band_Data Get_Chemical_Potential(Band_Data density)
         {
-            if (flexPDE)
+            if (external_code)
                 // calculate chemical potential using a potential found by calling FlexPDE
-                return Get_ChemPot_From_FlexPDE(density, dens_filename);
+                return Get_ChemPot_From_External(density, dens_filename);
             else
                 // calculate chemical potential using a potential calculated on a regular grid (not ideal, or scalable)
                 return Get_ChemPot_On_Regular_Grid(density);
@@ -61,13 +61,13 @@ namespace Solver_Bases
         /// <summary>
         /// gets the band energies for the given charge distribution using flexPDE
         /// </summary>
-        protected Band_Data Get_ChemPot_From_FlexPDE(Band_Data density, string dens_filename)
+        protected Band_Data Get_ChemPot_From_External(Band_Data density, string dens_filename)
         {
             // save density to file in a FlexPDE "TABLE" format
             Save_Density_Data(density, dens_filename);
 
             // run the code
-            Run_FlexPDE_Code("pot.dat");
+            Run_External_Code("pot.dat");
 
             string[] lines = File.ReadAllLines("pot.dat");
             string[] data = Trim_Potential_File(lines);
@@ -76,32 +76,14 @@ namespace Solver_Bases
             return Physics_Base.q_e * Parse_Potential(data);
         }
 
-        protected virtual string[] Trim_Potential_File(string[] lines)
-        {
-            // work out where the data starts (this is flexPDE specific)
-            int first_line = 0;
-            for (int i = 0; i < lines.Length; i++)
-                if (lines[i].StartsWith("}"))
-                {
-                    first_line = i + 1;
-                    break;
-                }
-
-            // trim off the first lines which contain no data
-            string[] data = new string[lines.Length - first_line];
-            for (int i = first_line; i < lines.Length; i++)
-                data[i - first_line] = lines[i];
-            return data;
-        }
-
-        protected void Run_FlexPDE_Code(string result_filename)
+        protected void Run_External_Code(string result_filename)
         {
             // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
             try { File.Delete(result_filename); }
             catch (Exception) { }
 
-            if (!File.Exists(flexpde_inputfile))
-                throw new Exception("Error - there is no input file for flexpde!");
+//            if (!File.Exists(external_input))
+//                throw new Exception("Error - there is no input file for flexpde!");
 
       //      Stopwatch stpwtch = new Stopwatch();
       //      stpwtch.Start();
@@ -110,7 +92,7 @@ namespace Solver_Bases
             //Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
             int handle = GetForegroundWindow();
             Process pot_process = new Process();
-            pot_process.StartInfo = new ProcessStartInfo(flexpde_location, "-S " + flexpde_inputfile);
+            pot_process.StartInfo = new ProcessStartInfo(external_location, external_input);
             pot_process.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
 
             //AutoResetEvent ev = new AutoResetEvent(false);
@@ -284,6 +266,7 @@ namespace Solver_Bases
             return Calculate_Newton_Step(rho_prime, rhs, car_dens);
         }
 
+        protected abstract string[] Trim_Potential_File(string[] lines);
         protected abstract Band_Data Parse_Potential(string[] data);
         protected abstract Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density);
         protected abstract void Save_Density_Data(Band_Data density, string input_file_name);

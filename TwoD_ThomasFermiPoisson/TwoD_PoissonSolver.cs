@@ -12,7 +12,7 @@ using Solver_Bases.Geometry;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    public class TwoD_PoissonSolver : Potential_Base
+    public class TwoD_PoissonSolver : FlexPDE_Base
     {
         Experiment exp;
         string densdopent_filename;
@@ -25,8 +25,8 @@ namespace TwoD_ThomasFermiPoisson
         double split_width;
         double surface;
 
-        public TwoD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
-            : base(using_flexPDE, flexPDE_input, flexPDE_location, tol)
+        public TwoD_PoissonSolver(Experiment exp, bool using_external_code, string external_input, string external_location, double tol)
+            : base(using_external_code, external_input, external_location, tol)
         {
             this.exp = exp;
             this.dens_filename = "car_dens.dat";
@@ -59,10 +59,10 @@ namespace TwoD_ThomasFermiPoisson
                                     + "\n\trho_dopent = 0";
 
             // create flexPDE file for a point charge at (ypos, zpos)
-            Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile, dens_line);
+            Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, external_input, dens_line);
 
             // run the FlexPDE script
-            Run_FlexPDE_Code("pot.dat");
+            Run_External_Code("pot.dat");
 
             // Parse the potential, and then return Band_Data for this point
             return Physics_Base.q_e * Parse_Potential(File.ReadAllLines("pot.dat"));
@@ -94,7 +94,7 @@ namespace TwoD_ThomasFermiPoisson
             return result;
         }
 
-        public void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
+        public override void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
         {
             Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file, "rho_carrier = TABLE(\'" + dens_filename + "\', x, y)" + "\t\nrho_dopent = TABLE(\'dens_2D_dopents.dat\', x, y)");
         }
@@ -257,8 +257,8 @@ namespace TwoD_ThomasFermiPoisson
             this.split_width = split_width;
             this.surface = surface;
 
-            if (flexpde_inputfile != null)
-                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile);
+            if (external_input != null)
+                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file);
         }
 
         protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
@@ -274,9 +274,9 @@ namespace TwoD_ThomasFermiPoisson
         public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data carrier_dens)
         {
             Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
-            Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_inputfile, 0.0);
+            Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file, 0.0);
 
-            Run_FlexPDE_Code("x.dat");
+            Run_External_Code("x.dat");
 
             string[] lines = File.ReadAllLines("x.dat");
             string[] data = Trim_Potential_File(lines);
@@ -418,8 +418,8 @@ namespace TwoD_ThomasFermiPoisson
 
         void Smooth_Potential()
         {
-            Create_Potential_Smoothing_File(flexpde_inputfile);
-            Run_FlexPDE_Code("tmp.dat");
+            Create_Potential_Smoothing_File(external_input);
+            Run_External_Code("tmp.dat");
         }
 
         private void Create_Potential_Smoothing_File(string output_file)
@@ -506,11 +506,11 @@ namespace TwoD_ThomasFermiPoisson
         void Smooth_Input_GPhi(Band_Data carrier_dens, double t)
         {
             Save_Density_Data(carrier_dens, dens_filename);
-            Create_Smoothing_File(flexpde_inputfile, t);
-            Run_FlexPDE_Code("smooth_gphi.dat");
+            Create_Smoothing_File(external_input, t);
+            Run_External_Code("smooth_gphi.dat");
         }
 
-        public void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
+        public override void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
