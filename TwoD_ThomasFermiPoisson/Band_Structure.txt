@@ -2,7 +2,7 @@
 #surface schottky=0.9 v1
 #
 #
-mat=pmma t=2000
+mat=air t=2000
 surface=true
 #
 #

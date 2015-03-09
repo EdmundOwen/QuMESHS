@@ -175,8 +175,11 @@ namespace TwoD_ThomasFermiPoisson
         /// </summary>
         public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data pot)
         {
-            Get_Potential(ref pot, layers);
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, pot);
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data band_pot = pot.DeepenThisCopy();
+            Get_Potential(ref band_pot, layers);
+
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, band_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
             return eig_decomp.EigenValues;
         }

@@ -70,6 +70,8 @@ namespace TwoD_ThomasFermiPoisson
                 // get surface charge for band structure at 70K
                 OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
                 inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
+     //           inputs["surface_charge"] = -2.662;
+     //           Console.WriteLine("WARNING!!! -- CHANGING SURFACE CHARGE DENSITY");
             }
 
             if ((bool)inputs["batch_run"])

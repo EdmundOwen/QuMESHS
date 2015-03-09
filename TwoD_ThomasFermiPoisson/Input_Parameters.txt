@@ -62,7 +62,7 @@
 ############## Generic density solver details #########################
 #
 ## Use DFT or not
-% no_dft = false
+% no_dft = true
 #
 ## Scheduler data file
 % scheduler_file = Scheduler_Data.txt

@@ -129,7 +129,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // boundary conditions
             sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
-            sw.WriteLine("\tsurface_bc = " + surface.ToString() + " / z_scaling ");
+            sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling ");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
             sw.WriteLine("\tsplit_V = " + split_bc.ToString());

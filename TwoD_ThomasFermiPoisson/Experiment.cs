@@ -173,7 +173,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-            //TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+    //        TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
             dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
             dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
       //      TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
@@ -215,6 +215,7 @@ namespace TwoD_ThomasFermiPoisson
                 sw_e.WriteLine(energies[i]);
             sw_e.Close();
 
+   //         dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot).Spin_Summed_Data.Save_Data("dens_2D_raw_calc.dat");
             final_dens_solv.Output(carrier_density, "carrier_density.dat");
             final_dens_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot), "density_error.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential.dat");
@@ -233,7 +234,7 @@ namespace TwoD_ThomasFermiPoisson
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
         double max_vxc_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
-        double min_dens_diff = 0.02; // minimum bound for the required, percentage density difference for updating the dft potential
+        double min_dens_diff = 0.005; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim, int max_count)
@@ -321,7 +322,7 @@ namespace TwoD_ThomasFermiPoisson
               //          dens_diff_lim /= 3.0;
               //          Console.WriteLine("DFT mixing parameter reduced to " + dens_solv.DFT_Mixing_Parameter.ToString());
               //      }
-                    if (current_vxc_diff > max_vxc_diff && dens_diff_lim / 2.0 > min_dens_diff)
+                    if ((current_vxc_diff > max_vxc_diff && dens_diff_lim / 2.0 > min_dens_diff) || no_dft)
                     {
                         dens_diff_lim /= 2.0;
                         Console.WriteLine("Minimum percentage density difference reduced to " + dens_diff_lim.ToString());
@@ -393,7 +394,7 @@ namespace TwoD_ThomasFermiPoisson
                 }*/
                 
                 // update band energy phi_new = phi_old + t * x
-                chem_pot = chem_pot + t * x;
+  //              chem_pot = chem_pot + t * x;
                 pois_solv.T = t;
 
                 //// and set the DFT potential
