@@ -12,22 +12,27 @@ namespace TwoD_ThomasFermiPoisson
     class TwoD_dealII_Solver : Potential_Base
     {
         Experiment exp;
-        string densdopent_filename;
-        string densderiv_filename;
-        string pot_filename;
-        string new_pot_filename;
-
+        string dens_filename = "car_dens.dat";
+        string densderiv_filename = "rho_prime.dat";
         string gphi_filename = "gphi.dat";
+                
+        Band_Data chempot;
 
-        public TwoD_dealII_Solver(Experiment exp, bool using_external_code, string external_input, string external_location, double tol)
-            : base(using_external_code, external_input, external_location, tol)
+        public TwoD_dealII_Solver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
+            : base(using_external_code)
         {
             this.exp = exp;
-            this.dens_filename = "car_dens.dat";
-            this.densdopent_filename = "dens_2D_dopents.dat";
-            this.densderiv_filename = "rho_prime.dat";
-            this.pot_filename = "phi.dat";
-            this.new_pot_filename = "new_phi.dat";
+
+            if (!input.ContainsKey("initcalc_location") || !input.ContainsKey("newton_location"))
+                throw new Exception("Error - To use deal.II you must provide the location for calculating the initial potential in \"initcalc_location\" and the newton step calculation in \"newton_location\"");
+
+            this.initcalc_location = (string)input["initcalc_location"];
+            this.newton_location = (string)input["newton_location"];
+        }
+
+        public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions)
+        {
+
         }
 
         protected override string[] Trim_Potential_File(string[] lines)
@@ -47,7 +52,7 @@ namespace TwoD_ThomasFermiPoisson
             throw new NotImplementedException();
         }
 
-        protected override void Save_Density_Data(Band_Data density, string input_file_name)
+        protected override void Save_Data(Band_Data density, string input_file_name)
         {
             density.Save_Data(input_file_name);
         }
@@ -77,25 +82,36 @@ namespace TwoD_ThomasFermiPoisson
             return new Band_Data(result);
         }
 
-        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs)
+        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
         {
-            Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
+            Save_Data(density, dens_filename);
 
-            Run_External_Code("x.dat", true);
-
-            string[] lines = File.ReadAllLines("x.dat");
-            string[] data = Trim_Potential_File(lines);
-
-            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * Parse_Potential(data);
+            chempot = Get_Data_From_External(initcalc_location, initcalc_result_filename);
+            return chempot;
         }
 
-        public void Run_External_Code(string filename, bool newton_step)
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi)
         {
-            Console.WriteLine("Changing state of code to solve Newton step");
-            // do something
+            Save_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
+            Save_Data(gphi, gphi_filename);
 
-            Run_External_Code(filename);
+            Band_Data x = Get_Data_From_External(newton_location, newton_result_filename);
+            chempot += base.T * x;
+            return x;
+        }
+
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens, Band_Data dft_diff)
+        {
+            Save_Data(dft_diff + Physics_Base.Get_XC_Potential(car_dens), "xc_pot_calc.dat");
+            Save_Data(car_dens.Spin_Summed_Data, dens_filename);
+            Save_Data(Physics_Base.Get_XC_Potential(car_dens), xc_pot_filename);
+
+            return Calculate_Newton_Step(rho_prime, gphi);
+        }
+
+        public override Band_Data Chemical_Potential
+        {
+            get { return chempot; }
         }
     }
 }

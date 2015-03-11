@@ -21,8 +21,6 @@ namespace Solver_Bases
         // damping parameter for Bank-Rose convergence method
         protected double t = 0.5;
 
-        protected double bottom_V;
-
         // parameters for the density domain
         protected double dx_dens = 1.0, dy_dens = 1.0, dz_dens = 1.0;
         protected double xmin_dens, ymin_dens, zmin_dens = -1.0;
@@ -36,8 +34,7 @@ namespace Solver_Bases
         protected double alpha, alpha_prime, tol;
 
         protected bool using_flexPDE = false;
-        protected string flexPDE_input;
-        protected string flexPDE_location;
+        protected bool using_dealii = false;
 
         protected double initial_temperature = 300.0;
         protected double temperature;
@@ -54,16 +51,8 @@ namespace Solver_Bases
 
             // will not use FlexPDE unless told to
             if (input_dict.ContainsKey("use_FlexPDE")) this.using_flexPDE = (bool)input_dict["use_FlexPDE"]; else using_flexPDE = false;
-            // default input file for FlexPDE is called "default.pde"
-            if (input_dict.ContainsKey("FlexPDE_file")) this.flexPDE_input = (string)input_dict["FlexPDE_file"]; else this.flexPDE_input = "default.pde";
-            if (using_flexPDE)
-            {
-                // make sure that FlexPDE does exist at the specified location
-                try { this.flexPDE_location = (string)input_dict["FlexPDE_location"]; }
-                catch (Exception) { throw new Exception("Error - no location for FlexPDE executable supplied"); }
-                if (!File.Exists(flexPDE_location))
-                    throw new Exception("Error - FlexPDE executable file does not exist at location" + flexPDE_location + "!");
-            }
+            // and the same for dealii
+            if (input_dict.ContainsKey("use_deal.II")) this.using_dealii = (bool)input_dict["use_deal.II"]; else using_dealii = false;
 
             // physical inputs
             Get_From_Dictionary<double>(input_dict, "init_T", ref initial_temperature, true);
@@ -302,11 +291,6 @@ namespace Solver_Bases
         public double Temperature
         {
             get { return temperature; }
-        }
-
-        public double Bottom_BC
-        {
-            get { return bottom_V; }
         }
 
         public int Nx_Dens

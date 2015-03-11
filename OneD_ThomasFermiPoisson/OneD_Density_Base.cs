@@ -18,6 +18,8 @@ namespace OneD_ThomasFermiPoisson
         public OneD_Density_Base(IExperiment exp)
             : base(exp.Temperature)
         {
+            this.exp = exp;
+
             this.dz = exp.Dz_Dens;
             this.zmin = exp.Zmin_Dens;
             this.nz = exp.Nz_Dens;

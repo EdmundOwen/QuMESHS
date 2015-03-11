@@ -24,8 +24,10 @@ namespace OneD_ThomasFermiPoisson
         DoubleTriDiagMatrix laplacian;
         DoubleTriDiagFact lu_fact;
 
-        public OneD_PoissonSolver(Experiment exp, bool using_external_code, string external_input, string external_location, double tol)
-            : base(using_external_code, external_input, external_location, tol)
+        string dens_filename = "dens_1D.dat";
+
+        public OneD_PoissonSolver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
+            : base(using_external_code, input)
         {
             this.exp = exp;
 
@@ -35,8 +37,6 @@ namespace OneD_ThomasFermiPoisson
                 laplacian = Generate_Laplacian(exp.Layers);
                 lu_fact = new DoubleTriDiagFact(laplacian);
             }
-
-            this.dens_filename = "dens_1D.dat";
         }
 
         protected override Band_Data Parse_Potential(string[] data)
@@ -55,6 +55,13 @@ namespace OneD_ThomasFermiPoisson
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
             return Physics_Base.q_e * potential;
+        }
+
+        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        {
+            Save_Data(density, dens_filename);
+
+            return Get_Data_From_External(flexpde_script, initcalc_result_filename);
         }
 
         /// <summary>
@@ -130,8 +137,6 @@ namespace OneD_ThomasFermiPoisson
             double surface_charge = -1.0 * eps * (chem_pot[surface-1] - chem_pot[surface - 2]) / exp.Dz_Pot;
             // divide by - q_e to convert the chemical potential into a potential
             surface_charge /= -1.0 * Physics_Base.q_e;
-         //   // and divide by dz to give a density
-         //   surface_charge /= exp.Dz_Pot;
 
             return surface_charge;
         }
@@ -322,11 +327,12 @@ namespace OneD_ThomasFermiPoisson
             top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;
             bottom_eps = Geom_Tool.GetLayer(layers, bottom_pos).Permitivity;
 
-            if (external_input != null)
-                Create_FlexPDE_File(top_bc, 0.0, 0.0, 0.0, bottom_bc, output_file);
+            Console.WriteLine("WARNING - If you are trying to use FlexPDE in the 1D solver, it will not work...");
+       //     if (external_input != null)
+       //         Create_FlexPDE_File(top_bc, 0.0, 0.0, 0.0, bottom_bc, output_file);
         }
 
-        protected override void Save_Density_Data(Band_Data density, string input_file_name)
+        protected override void Save_Data(Band_Data density, string input_file_name)
         {
             density.Save_1D_Data(input_file_name, exp.Dz_Pot, exp.Zmin_Pot);
         }
@@ -334,6 +340,15 @@ namespace OneD_ThomasFermiPoisson
         public override void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
         {
             throw new NotImplementedException();
+        }
+
+        public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions)
+        {
+            throw new NotImplementedException();
+        }
+        public override Band_Data Chemical_Potential
+        {
+            get { throw new NotImplementedException(); }
         }
     }
 }

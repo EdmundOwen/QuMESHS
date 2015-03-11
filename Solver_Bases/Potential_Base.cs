@@ -16,36 +16,33 @@ namespace Solver_Bases
 
     {
         /// this is where the density will be saved out to
-        protected string dens_filename;
         protected string xc_pot_filename = "xc_pot.dat";
 
         protected bool external_code;
-        protected string external_location;
-        protected string external_input;
+        protected string external_arguments = "";
 
-        protected double tol;
+        protected string initcalc_location;
+        protected string newton_location;
+
+        protected string initcalc_result_filename = "pot.dat";
+        protected string newton_result_filename = "x.dat";
+
         private bool converged;
         private double convergence_factor = double.MaxValue;
 
-        public Potential_Base(bool using_external_code, string external_input, string external_location, double tol)
+        double t;
+
+        public Potential_Base(bool using_external_code)
         {
             // check whether using an external code
             external_code = using_external_code;
-            if (external_code)
-            {
-                this.external_input = external_input;
-                this.external_location = external_location;
-            }
-
-            // get the tolerance needed for the potential before saying it's good enough
-            this.tol = tol;
         }
 
         public Band_Data Get_Chemical_Potential(Band_Data density)
         {
             if (external_code)
-                // calculate chemical potential using a potential found by calling FlexPDE
-                return Get_ChemPot_From_External(density, dens_filename);
+                // calculate chemical potential using a potential found by calling external code
+                return Get_ChemPot_From_External(density);
             else
                 // calculate chemical potential using a potential calculated on a regular grid (not ideal, or scalable)
                 return Get_ChemPot_On_Regular_Grid(density);
@@ -59,60 +56,56 @@ namespace Solver_Bases
         static extern int LockSetForegroundWindow(int handle);
 
         /// <summary>
-        /// gets the band energies for the given charge distribution using flexPDE
+        /// gets the band energies for the given charge distribution using external code
         /// </summary>
-        protected Band_Data Get_ChemPot_From_External(Band_Data density, string dens_filename)
+        protected Band_Data Get_Data_From_External(string external_program_location, string external_program_argument, string result_filename)
         {
-            // save density to file in a FlexPDE "TABLE" format
-            Save_Density_Data(density, dens_filename);
-
             // run the code
-            Run_External_Code("pot.dat");
+            Run_External_Code(external_program_location, external_program_argument, result_filename);
 
-            string[] lines = File.ReadAllLines("pot.dat");
+            string[] lines = File.ReadAllLines(result_filename);
             string[] data = Trim_Potential_File(lines);
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
             return Physics_Base.q_e * Parse_Potential(data);
         }
 
-        protected void Run_External_Code(string result_filename)
+        /// <summary>
+        /// run external code with null arguments, waiting until the result_filename file is created
+        /// </summary>
+        protected Band_Data Get_Data_From_External(string external_program_location, string result_filename)
         {
-            // remove pot.dat if it still exists (to make sure that a new data file is made by flexPDE)
+            return Get_Data_From_External(external_program_location, "", result_filename);
+        }
+
+        /// <summary>
+        /// run external code with input arguments, waiting until the result_filename file is created
+        /// </summary>
+        protected void Run_External_Code(string external_program_location, string external_program_arguments, string result_filename)
+        {
+            // remove result file if it still exists (to make sure that a new data file is made by the external program)
             try { File.Delete(result_filename); }
             catch (Exception) { }
 
-//            if (!File.Exists(external_input))
-//                throw new Exception("Error - there is no input file for flexpde!");
+            // check whether the program is actually there
+            if (!File.Exists(external_program_location))
+                throw new Exception("Error - there is no file at the requested location: " + external_program_location);
 
-      //      Stopwatch stpwtch = new Stopwatch();
-      //      stpwtch.Start();
-
-            // run the flexPDE program as a process (quietly)
-            //Process.Start("C:\\FlexPDE6\\FlexPDE6.exe", "-Q " + flexpde_inputfile);
             int handle = GetForegroundWindow();
             Process pot_process = new Process();
-            pot_process.StartInfo = new ProcessStartInfo(external_location, external_input);
+            // input arguments into process
+            pot_process.StartInfo = new ProcessStartInfo(external_program_location, external_program_arguments);
             pot_process.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
 
-            //AutoResetEvent ev = new AutoResetEvent(false);
-            //Task.Factory.StartNew(() => { pot_process.Start(); ev.Set(); });
-            //while (!ev.WaitOne(0))
-            //{
-            //    SetForegroundWindow(handle);
-            //    Thread.Sleep(0);
-            //}
+            // and run
             int report = SetForegroundWindow(1);
             pot_process.Start();
             report = SetForegroundWindow(2);
 
-            //Process.Start(flexpde_location, "-Q " + flexpde_inputfile);
+            // wait until the requested file is available, then exit
             while (!File.Exists(result_filename))
                 Thread.Sleep(100);
             Thread.Sleep(5000);
-
-        //    stpwtch.Stop();
-        //    Console.WriteLine("Time spent in FlexPDE: " + stpwtch.Elapsed.TotalSeconds.ToString() + " s");
         }
 
         /// <summary>
@@ -201,36 +194,6 @@ namespace Solver_Bases
             sw.Close();
         }
 
-        /// <summary>
-        /// blends the old and new potentials based on a parameter using a simple mixing scheme
-        /// psi_new = (1 - alpha) * psi_old + alpha * psi_calc
-        /// ALSO: checks for convergence here
-        /// </summary>
-        public Band_Data Blend(Band_Data band_energy, Band_Data new_band_energy, double blend_parameter)
-        {
-            Band_Data blending_energy = band_energy - new_band_energy;
-
-            // check for convergence
-            converged = Check_Convergence(blending_energy, tol);
-
-            return band_energy - blend_parameter * blending_energy;
-        }
-
-        /// <summary>
-        /// blends the old and new band energies based on a parameter using a simple mixing scheme
-        /// psi_new = (1 - alpha) * psi_old + alpha * psi_calc
-        /// ALSO: checks for convergence here
-        /// </summary>
-        public void Blend(ref Band_Data band_energy, Band_Data new_band_energy, double blend_parameter)
-        {
-            Band_Data blending_energy = band_energy - new_band_energy;
-
-            // check for convergence
-            converged = Check_Convergence(blending_energy, tol);
-
-            band_energy = band_energy - blend_parameter * blending_energy;
-        }
-
         public bool Converged
         {
             get { return converged; }
@@ -250,27 +213,21 @@ namespace Solver_Bases
             converged = false; convergence_factor = double.MaxValue;
         }
 
-        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, SpinResolved_Data car_dens)
+        public double T { get { return t; } set { t = value; } }
+
+        public virtual Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data carrier_density, Band_Data dft_difference)
         {
-            Save_Density_Data(car_dens.Spin_Summed_Data, dens_filename);
-            Save_Density_Data(Physics_Base.Get_XC_Potential(car_dens), xc_pot_filename);
-            return Calculate_Newton_Step(rho_prime, rhs);
+            throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// temporary method!!!!
-        /// </summary>
-        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs, SpinResolved_Data car_dens, Band_Data dft_diff)
-        {
-            Save_Density_Data(dft_diff + Physics_Base.Get_XC_Potential(car_dens), "xc_pot_calc.dat");
-            return Calculate_Newton_Step(rho_prime, rhs, car_dens);
-        }
-
+        public abstract void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions);
         protected abstract string[] Trim_Potential_File(string[] lines);
         protected abstract Band_Data Parse_Potential(string[] data);
+        protected abstract Band_Data Get_ChemPot_From_External(Band_Data density);
         protected abstract Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density);
-        protected abstract void Save_Density_Data(Band_Data density, string input_file_name);
+        public abstract Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi);
+        protected abstract void Save_Data(Band_Data density, string input_file_name);
         public abstract Band_Data Calculate_Laplacian(Band_Data input_data);
-        public abstract Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs);
+        public abstract Band_Data Chemical_Potential { get; }
     }
 }

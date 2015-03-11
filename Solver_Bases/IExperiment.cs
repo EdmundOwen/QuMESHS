@@ -17,7 +17,6 @@ namespace Solver_Bases
         ILayer[] Layers { get; }
 
         double Temperature { get; }
-        double Bottom_BC { get; }
 
         int Nx_Dens { get; }
         double Dx_Dens { get; }

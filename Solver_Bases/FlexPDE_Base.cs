@@ -7,14 +7,24 @@ namespace Solver_Bases
 {
     public abstract class FlexPDE_Base : Potential_Base
     {
-        protected string output_file;
+        protected string flexpde_options;
+        protected string flexpde_script;
 
-        public FlexPDE_Base(bool external_code, string external_input, string external_location, double tol)
-            : base(external_code, external_input, external_location, tol) 
+        public FlexPDE_Base(bool external_code, Dictionary<string, object> input)
+            : base(external_code) 
         {
-            output_file = external_input;
+            if (!input.ContainsKey("FlexPDE_location") || !input.ContainsKey("FlexPDE_file"))
+                throw new Exception("Error - To use FlexPDE you must provide the location of FlexPDE in \"FlexPDE_location\" and the script location in \"FlexPDE_file\"");
+
+            string flexpde_location = (string)input["FlexPDE_location"];
+
+            this.initcalc_location = flexpde_location;
+            this.newton_location = flexpde_location;
+
+            this.flexpde_script = (string)input["FlexPDE_file"];
+
             // for flexpde, we need the -S parameter included in the input
-            base.external_input = "-S " + external_input;
+            flexpde_options = "-S " + flexpde_script;
         }
 
         protected override string[] Trim_Potential_File(string[] lines)

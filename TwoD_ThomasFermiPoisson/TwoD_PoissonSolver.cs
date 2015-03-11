@@ -15,26 +15,25 @@ namespace TwoD_ThomasFermiPoisson
     public class TwoD_PoissonSolver : FlexPDE_Base
     {
         Experiment exp;
-        string densdopent_filename;
-        string densderiv_filename;
-        string pot_filename;
-        string new_pot_filename;
-        string smooth_gphi_filename;
+        string dens_filename = "car_dens.dat";
+        string densdopent_filename = "dens_2D_dopents.dat";
+        string densderiv_filename = "rho_prime.dat";
+        string pot_filename = "phi.dat";
+        string new_pot_filename = "new_phi.dat";
+        string xc_pot_calc_filename = "xc_pot_calc.dat";
+
+        string gphi_filename = "gphi.dat";
+
+        string chempot_result_filename = "y.dat";
 
         double top_bc, split_bc, bottom_bc;
         double split_width;
         double surface;
 
-        public TwoD_PoissonSolver(Experiment exp, bool using_external_code, string external_input, string external_location, double tol)
-            : base(using_external_code, external_input, external_location, tol)
+        public TwoD_PoissonSolver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
+            : base(using_external_code, input)
         {
             this.exp = exp;
-            this.dens_filename = "car_dens.dat";
-            this.densdopent_filename = "dens_2D_dopents.dat";
-            this.densderiv_filename = "rho_prime.dat";
-            this.pot_filename = "phi.dat";
-            this.new_pot_filename = "new_phi.dat";
-            this.smooth_gphi_filename = "smooth_gphi.dat";
         }
 
         protected override Band_Data Parse_Potential(string[] data)
@@ -59,13 +58,10 @@ namespace TwoD_ThomasFermiPoisson
                                     + "\n\trho_dopent = 0";
 
             // create flexPDE file for a point charge at (ypos, zpos)
-            Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, external_input, dens_line);
+            Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, initcalc_result_filename, dens_line);
 
-            // run the FlexPDE script
-            Run_External_Code("pot.dat");
-
-            // Parse the potential, and then return Band_Data for this point
-            return Physics_Base.q_e * Parse_Potential(File.ReadAllLines("pot.dat"));
+            // get the data using flexPDE
+            return Get_Data_From_External(initcalc_location, flexpde_options, initcalc_result_filename);
         }
 
         public Band_Data Get_Chemical_Potential(Band_Data background, Band_Data[] point_potentials, Band_Data carrier_densities, double norm)
@@ -92,6 +88,13 @@ namespace TwoD_ThomasFermiPoisson
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
             return result;
+        }
+
+        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        {
+            Save_Data(density, dens_filename);
+
+            return Get_Data_From_External(initcalc_location, flexpde_options, initcalc_result_filename);
         }
 
         public override void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
@@ -234,7 +237,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
-            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"pot.dat\"");
+            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + initcalc_result_filename + "\"");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(0.0 * u) FILE = \'" + new_pot_filename  + "\' ! dummy file for smoother function");
             sw.WriteLine();
@@ -245,20 +248,20 @@ namespace TwoD_ThomasFermiPoisson
             sw.Close();
         }
 
-        public void Set_Boundary_Conditions(double top_V, double split_V, double split_width, double bottom_V, double surface)
+        public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimension, Dictionary<string, double> boundary_conditions)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // with a factor to convert from V to meV zC^-1
-            top_bc = top_V * Physics_Base.energy_V_to_meVpzC;
-            split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
-            bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
+            top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;
+            split_bc = boundary_conditions["split_V"] * Physics_Base.energy_V_to_meVpzC;
+            bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
 
             // and save the split width and surface charge
-            this.split_width = split_width;
-            this.surface = surface;
+            this.split_width = device_dimension["split_width"];
+            this.surface = boundary_conditions["surface"];
 
-            if (external_input != null)
-                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file);
+            if (flexpde_script != null)
+                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_script);
         }
 
         protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
@@ -266,252 +269,40 @@ namespace TwoD_ThomasFermiPoisson
             throw new NotImplementedException();
         }
 
-        protected override void Save_Density_Data(Band_Data density, string input_file_name)
+        protected override void Save_Data(Band_Data density, string input_file_name)
         {
             density.Save_2D_Data(input_file_name, exp.Dy_Dens, exp.Dz_Dens, exp.Ymin_Dens, exp.Zmin_Dens);
         }
 
-        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data carrier_dens)
+
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi)
         {
-            Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
-            Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, output_file, 0.0);
+            throw new NotImplementedException();
+            Save_Data(gphi, gphi_filename);
+            Save_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
+         //   Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, newton_filename, T);
 
-            Run_External_Code("x.dat");
-
-            string[] lines = File.ReadAllLines("x.dat");
-            string[] data = Trim_Potential_File(lines);
-
-            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * Parse_Potential(data);
+            return Get_Data_From_External(newton_location, flexpde_options, newton_result_filename);
         }
 
-        private void Create_Smoothing_File(string output_file, double t)
+        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens)
         {
-            StreamWriter sw = new StreamWriter(output_file);
+            Save_Data(car_dens.Spin_Summed_Data, dens_filename);
+            Save_Data(Physics_Base.Get_XC_Potential(car_dens), xc_pot_filename);
 
-            sw.WriteLine("TITLE \'Split Gate\'");
-            sw.WriteLine("COORDINATES cartesian2");
-            sw.WriteLine("VARIABLES");
-            sw.WriteLine("\tg_phi");
-            sw.WriteLine("SELECT");
-            // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-2");
-            sw.WriteLine("\tGRIDLIMIT=20");
-            sw.WriteLine("DEFINITIONS");
-            sw.WriteLine();
-            sw.WriteLine("\tTRANSFERMESH(\'" + new_pot_filename + "\', new_phi)");
-            sw.WriteLine("\tTRANSFER(\'" + pot_filename + "\', phi)");
-            // and the tables for carrier and donor densities
-            sw.WriteLine("\tcar_dens = TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
-            sw.WriteLine();
-            // simulation dimension
-            sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
-            sw.WriteLine("\tlz = " + (exp.Dz_Pot * exp.Nz_Pot).ToString());
-            sw.WriteLine();
-            sw.WriteLine("\tt = " + t.ToString() + "\t! Mixing parameter");
-            sw.WriteLine();
-            sw.WriteLine("\t! WELL DEPTH (in nm)");
-            sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 5).ToString());
-            sw.WriteLine();
-            sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
-            sw.WriteLine("\tsplit_width = " + split_width.ToString());
-            sw.WriteLine("\tsplit_depth = 10\t! depth of the split gate metal material");
-            sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
-            sw.WriteLine("\teps");
-            sw.WriteLine();
-            // other physical parameters
-            sw.WriteLine("\tq_e = " + Physics_Base.q_e.ToString() + "! charge of electron in zC");
-            sw.WriteLine();
-            // smoothing wavelengths
-            double factor = 2.0;
-            if (with_smoothing)
-                factor = 8.0;
-            sw.WriteLine("\tepsilon_x = " + (factor * exp.Dy_Dens * exp.Dy_Dens).ToString() + " / (pi * pi)");
-            sw.WriteLine("\tepsilon_y = " + (factor * exp.Dz_Dens * exp.Dz_Dens).ToString() + " / (pi * pi)");
-            sw.WriteLine();
-            sw.WriteLine("EQUATIONS");
-            // Poisson's equation
-            sw.WriteLine("\tg_phi: g_phi - epsilon_x * dx(dx(g_phi)) - epsilon_y * dy(dy(g_phi)) = -1.0 * div(eps * grad(phi + t * new_phi)) - car_dens - dop_dens ! Smoothing equation");
-            sw.WriteLine();
-            // the boundary definitions for the differnet layers
-            sw.WriteLine("BOUNDARIES");
-
-            // cycle through layers below surface
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
-                sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO (ly / 2, " + exp.Layers[i].Zmax.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmin.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO CLOSE");
-                sw.WriteLine();
-            }
-
-            // write in surface and gates
-            sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
-            sw.WriteLine("\t\teps = eps_0");
-            sw.WriteLine("\t\tSTART(-ly / 2, 0)");
-            sw.WriteLine("\t\tLINE TO (-ly / 2, split_depth) TO (-split_width / 2, split_depth) TO (-split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
-            sw.WriteLine("\t\teps = eps_0");
-            sw.WriteLine("\t\tSTART(ly / 2, 0)");
-            sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
-
-            // add a front commmand at the well depth to introduce a higher density of points at the interface
-            sw.WriteLine("\tFRONT(y - well_depth, 1)");
-            sw.WriteLine();
-
-            // write out plotting routines
-            sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(g_phi)");
-            sw.WriteLine("\tELEVATION(g_phi) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
-
-            sw.WriteLine("PLOTS");
-            sw.WriteLine("\tCONTOUR(phi * q_e)");
-            sw.WriteLine("\tCONTOUR(new_phi * q_e)");
-            sw.WriteLine("\tCONTOUR(g_phi)");
-            sw.WriteLine("\tCONTOUR(phi * q_e) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(new_phi * q_e) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(g_phi) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-
-            // and transfer the data to a file for reloading and replotting later
-            sw.WriteLine();
-            sw.WriteLine("\tTRANSFER(g_phi) FILE = \'" + smooth_gphi_filename + "\'");
-            sw.WriteLine("\tTRANSFER(phi + t * new_phi) FILE = \'" + pot_filename + "\'");
-            sw.WriteLine("\tTABLE(phi + t * new_phi) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"v.dat\"");
-            sw.WriteLine();
-
-            sw.WriteLine("END");
-
-            // and close the file writer
-            sw.Close();
+            return Calculate_Newton_Step(rho_prime, gphi);
         }
 
-        /// <summary>
-        /// runs the smoothing file method, which also updates the potential with values of t
-        /// and x calculated in the previous iteration
-        /// (the initial step should have u = 0.0 calculated using the initial phi calculation)
-        /// </summary>
-        public Band_Data Update_Potential(Band_Data carrier_dens, double t)
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens, Band_Data dft_diff)
         {
-            //if (with_smoothing)
-            //    Smooth_Potential();
-            Smooth_Input_GPhi(carrier_dens, t);
-            
-            string[] lines = File.ReadAllLines("v.dat");
-            string[] data = Trim_Potential_File(lines);
-            
-            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * Parse_Potential(data);
-        }
+            Save_Data(dft_diff + Physics_Base.Get_XC_Potential(car_dens), xc_pot_calc_filename);
 
-        void Smooth_Potential()
-        {
-            Create_Potential_Smoothing_File(external_input);
-            Run_External_Code("tmp.dat");
-        }
-
-        private void Create_Potential_Smoothing_File(string output_file)
-        {
-            StreamWriter sw = new StreamWriter(output_file);
-
-            sw.WriteLine("TITLE \'Split Gate\'");
-            sw.WriteLine("COORDINATES cartesian2");
-            sw.WriteLine("VARIABLES");
-            sw.WriteLine("\tsmooth_phi");
-            sw.WriteLine("SELECT");
-            // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-2");
-            sw.WriteLine("\tGRIDLIMIT=20");
-            sw.WriteLine("DEFINITIONS");
-            // this is where the density variable
-            sw.WriteLine("\tTRANSFERMESH(\'" + smooth_gphi_filename + "\', g_phi)");
-            sw.WriteLine("\tTRANSFER(\'" + pot_filename + "\', phi)");
-            sw.WriteLine();
-            // simulation dimension
-            sw.WriteLine("\tly = " + (exp.Dy_Pot * exp.Ny_Pot).ToString());
-            sw.WriteLine("\tlz = " + (exp.Dz_Pot * exp.Nz_Pot).ToString());
-            sw.WriteLine();
-            sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
-            sw.WriteLine("\tsplit_width = " + split_width.ToString());
-            sw.WriteLine();
-            sw.WriteLine("\tsplit_depth = 10\t! depth of the split gate metal material");
-            // smoothing wavelengths
-            sw.WriteLine("\tepsilon_x = " + (8.0 * exp.Dy_Dens * exp.Dy_Dens).ToString() + " / (pi * pi)");
-            sw.WriteLine("\tepsilon_y = " + (8.0 * exp.Dz_Dens * exp.Dz_Dens).ToString() + " / (pi * pi)");
-            sw.WriteLine();
-            sw.WriteLine("EQUATIONS");
-            sw.WriteLine("\tsmooth_phi: smooth_phi - epsilon_x * dx(dx(smooth_phi)) - epsilon_y * dy(dy(smooth_phi)) = phi \t! Smoothing equation");
-            sw.WriteLine();
-            // the boundary definitions for the differnet layers
-            sw.WriteLine("BOUNDARIES");
-
-            // cycle through layers below surface
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
-                sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO (ly / 2, " + exp.Layers[i].Zmax.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmin.ToString() + ")");
-                sw.WriteLine("\t\tLINE TO CLOSE");
-                sw.WriteLine();
-            }
-
-            // write in surface and gates
-            sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
-            sw.WriteLine("\t\tSTART(-ly / 2, 0)");
-            sw.WriteLine("\t\tLINE TO (-ly / 2, split_depth) TO (-split_width / 2, split_depth) TO (-split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
-            sw.WriteLine("\t\tSTART(ly / 2, 0)");
-            sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
-
-            // write out plotting routines
-
-            sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(phi)");
-            sw.WriteLine("\tCONTOUR(smooth_phi)");
-
-            sw.WriteLine("PLOTS");
-            sw.WriteLine("\tCONTOUR(phi)");
-            sw.WriteLine("\tCONTOUR(phi) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tSUMMARY EXPORT FILE = \'tmp.dat\'");
-            sw.WriteLine("\tCONTOUR(smooth_phi)");
-            sw.WriteLine("\tCONTOUR(smooth_phi) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-
-            // and transfer the data to a file for reloading and replotting later
-            sw.WriteLine();
-            sw.WriteLine("\tTRANSFER(smooth_phi) FILE = \'" + pot_filename + "\'");
-            sw.WriteLine();
-
-            sw.WriteLine("END");
-
-            // and close the file writer
-            sw.Close();
-        }
-        
-        void Smooth_Input_GPhi(Band_Data carrier_dens, double t)
-        {
-            Save_Density_Data(carrier_dens, dens_filename);
-            Create_Smoothing_File(external_input, t);
-            Run_External_Code("smooth_gphi.dat");
+            return Calculate_Newton_Step(rho_prime, gphi, car_dens);
         }
 
         public override void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
         {
+            throw new NotImplementedException();
             StreamWriter sw = new StreamWriter(output_file);
 
             sw.WriteLine("TITLE \'Split Gate\'");
@@ -524,7 +315,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
-            sw.WriteLine("\tTRANSFERMESH(\'" + smooth_gphi_filename + "\', g_phi)");
+            sw.WriteLine("\tTRANSFER(\'" + gphi_filename + "\', g_phi)");
             sw.WriteLine("\tTRANSFER(\'" + pot_filename + "\', phi)");
             sw.WriteLine();
             // and the tables for carrier and donor densities
@@ -664,7 +455,7 @@ namespace TwoD_ThomasFermiPoisson
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + new_pot_filename + "\'");
-            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"x.dat\"");
+            sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + exp.Zmin_Dens.ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + ((exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + newton_result_filename + "\"");
             sw.WriteLine();
 
             sw.WriteLine("END");
@@ -697,6 +488,9 @@ namespace TwoD_ThomasFermiPoisson
 
             return new Band_Data(result);
         }
+
+        public override Band_Data Chemical_Potential
+        { get { throw new NotImplementedException(); } }
 
         bool with_smoothing = false;
         public bool With_Smoothing { set { with_smoothing = value; } }

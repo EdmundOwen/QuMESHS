@@ -144,7 +144,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             // initialise potential solver
             bool with_smoothing = false;
             Get_From_Dictionary<bool>(input_dict, "with_smoothing", ref with_smoothing, true);
-            pois_solv = new ThreeD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            pois_solv = new ThreeD_PoissonSolver(this, using_flexPDE, external_input, external_location, tol);
             pois_solv.ZDens = dens_1d;
             pois_solv.Z_2DEG = z_2DEG;
 
@@ -179,7 +179,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             // initialise output solvers
             ThreeD_ThomasFermiSolver final_dens_solv = new ThreeD_ThomasFermiSolver(this);
-            ThreeD_PoissonSolver final_pois_solv = new ThreeD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            ThreeD_PoissonSolver final_pois_solv = new ThreeD_PoissonSolver(this, using_flexPDE, external_input, external_location, tol);
 
             // save final density out
             carrier_density.Spin_Summed_Data.Save_Data("dens_3D.dat");
@@ -250,9 +250,9 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Set_Edges(rho_prime);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                Band_Data rhs = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
-                Set_Edges(rhs);
-                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, rhs, carrier_density, dens_solv.DFT_diff(carrier_density));
+                Band_Data gphi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
+                Set_Edges(gphi);
+                Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_density, dens_solv.DFT_diff(carrier_density));
                 chem_pot = pois_solv.Chemical_Potential;
 
                 // Calculate optimal damping parameter, t, (but damped damping....)
@@ -267,10 +267,9 @@ namespace ThreeD_SchrodingerPoissonSolver
                 }
 
                 // Check convergence
-                Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
                 double[] diff = new double[nx_dens * ny_dens * nz_dens];
                 for (int i = 0; i < nx_dens * ny_dens * nz_dens; i++)
-                    diff[i] = Math.Abs(g_phi[i]);
+                    diff[i] = Math.Abs(gphi[i]);
                 double convergence = diff.Sum();
 
                 // and check convergence of density

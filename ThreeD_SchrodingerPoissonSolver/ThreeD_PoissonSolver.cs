@@ -55,7 +55,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             return Band_Data.Parse_Band_Data(new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
         }
 
-        protected override void Save_Density_Data(Band_Data density, string input_file_name)
+        protected override void Save_Data(Band_Data density, string input_file_name)
         {
             // check that the data isn't all zeros and if it is, add a small 1e-8 perturbation at the centre
             for (int k = 0; k < density.vol.Length; k++)
@@ -297,10 +297,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.Close();
         }
         
-        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data rhs)
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi)
         {
-            Save_Density_Data(rhs, gphi_filename);
-            Save_Density_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
+            Save_Data(gphi, gphi_filename);
+            Save_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
             Create_NewtonStep_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, flexpde_inputfile, T);
 
             Run_External_Code("x.dat");

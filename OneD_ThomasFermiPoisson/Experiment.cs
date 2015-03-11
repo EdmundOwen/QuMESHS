@@ -15,6 +15,7 @@ namespace OneD_ThomasFermiPoisson
     {
         double top_V = 0.0;
         double top_V_cooldown;
+        double bottom_V = 0.0;
         double t_min = 1e-3;
         double t_damp = 1.0;
         OneD_PoissonSolver pois_solv;
@@ -57,7 +58,7 @@ namespace OneD_ThomasFermiPoisson
             if (input_dict.ContainsKey("Chemical_Potential")) this.chem_pot = new Band_Data((DoubleVector)input_dict["Chemical_Potential"]); else chem_pot = new Band_Data(new DoubleVector(nz_pot));
 
             // Initialise potential solver
-            pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
+            pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
 
             Console.WriteLine("Experimental parameters initialised");
         }
@@ -67,7 +68,7 @@ namespace OneD_ThomasFermiPoisson
             // get temperatures to run the experiment at
             double[] run_temps = Freeze_Out_Temperatures();
 
-            // run experiment using Thgomas-Fermi solver
+            // run experiment using Thomas-Fermi solver
             for (int i = 0; i < run_temps.Length; i++)
             {
                 double current_temperature = run_temps[i];
@@ -105,7 +106,6 @@ namespace OneD_ThomasFermiPoisson
 
             // initialise output solvers
             OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
-            OneD_PoissonSolver final_pois_solv = new OneD_PoissonSolver(this, using_flexPDE, flexPDE_input, flexPDE_location, tol);
 
             // save final density out
             final_dens_solv.Output(carrier_density, "carrier_density.dat", false);
@@ -115,7 +115,7 @@ namespace OneD_ThomasFermiPoisson
             carrier_density.Spin_Down.Save_1D_Data("dens_1D_down.dat", dz_dens, zmin_dens);
 
             final_dens_solv.Output(carrier_density + dopent_density, "charge_density.dat", false);
-            final_pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot, "potential.dat");
+            pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot, "potential.dat");
 
             double tot_dens_Quantum = (from val in carrier_density.Spin_Summed_Data.vec
                                where val < 0.0

@@ -13,9 +13,11 @@ namespace TwoD_ThomasFermiPoisson
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Setting Centerspace key");
+
             // set nmath license key
 
-            Console.BufferHeight = Int16.MaxValue - 1;
+        //    Console.BufferHeight = Int16.MaxValue - 1;
             Console.WriteLine("Program starting");
 
             Console.WriteLine("Loading input parameters from file");
@@ -68,7 +70,7 @@ namespace TwoD_ThomasFermiPoisson
                 Band_Data band_offset = exp_init.Chemical_Potential;
                 ILayer[] layers = exp_init.Layers;
                 // get surface charge for band structure at 70K
-                OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
+                OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, inputs_init);
                 inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
      //           inputs["surface_charge"] = -2.662;
      //           Console.WriteLine("WARNING!!! -- CHANGING SURFACE CHARGE DENSITY");
