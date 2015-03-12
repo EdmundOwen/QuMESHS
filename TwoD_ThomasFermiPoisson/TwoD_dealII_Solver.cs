@@ -14,9 +14,13 @@ namespace TwoD_ThomasFermiPoisson
         Experiment exp;
         string dens_filename = "car_dens.dat";
         string densderiv_filename = "rho_prime.dat";
+        string densdopent_filename = "donor_1D.dat";
         string gphi_filename = "gphi.dat";
                 
         Band_Data chempot;
+
+        string initcalc_parameterfile = "split_gate.in";
+        string newton_parameterfile = "newton.in";
 
         public TwoD_dealII_Solver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
             : base(using_external_code)
@@ -28,11 +32,46 @@ namespace TwoD_ThomasFermiPoisson
 
             this.initcalc_location = (string)input["initcalc_location"];
             this.newton_location = (string)input["newton_location"];
+
+            if (input.ContainsKey("initcalc_parameterfile"))
+                this.initcalc_parameterfile = (string)input["initcalc_parameterfile"];
+            if (input.ContainsKey("newton_parameterfile"))
+                this.newton_parameterfile = (string)input["newton_parameterfile"];
+
+            // and save the dopent density 
+            SpinResolved_Data dopents = (SpinResolved_Data)input["Dopent_Density"];
+            Save_Data(dopents.Spin_Summed_Data, densdopent_filename);
         }
 
+        /// <summary>
+        /// initiates the poisson solver by writing the input file for the parameter handlers of the initcalc and newton methods
+        /// </summary>
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions)
         {
+            // write the parameter details for the initial potential calculation
+            StreamWriter sw_initcalc = new StreamWriter(initcalc_parameterfile);
 
+            sw_initcalc.WriteLine("subsection System Geometry");
+            sw_initcalc.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
+            sw_initcalc.WriteLine("end");
+
+            sw_initcalc.WriteLine("subsection Boundary Conditions");
+            sw_initcalc.WriteLine("\tset top_bc = " + (boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC).ToString());
+            sw_initcalc.WriteLine("\tset bottom_bc = " + (boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC).ToString());
+            sw_initcalc.WriteLine("\tset split_bc = " + (boundary_conditions["split_V"] * Physics_Base.energy_V_to_meVpzC).ToString());
+            sw_initcalc.WriteLine("\tset surface_bc = " + (0.5 * boundary_conditions["surface"]).ToString());                                   // note that the surface "kink" is halved...
+                                                                                                                                                // not sure why, but this is deal.II specific
+            sw_initcalc.WriteLine("end");
+
+            sw_initcalc.Close();
+
+            // and write the parameter details needed for the newton step
+            StreamWriter sw_newton = new StreamWriter(newton_parameterfile);
+            sw_newton.WriteLine("subsection System Geometry");
+            sw_newton.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
+            sw_newton.WriteLine("end");
+
+            sw_newton.Close();
         }
 
         protected override string[] Trim_Potential_File(string[] lines)
@@ -86,7 +125,7 @@ namespace TwoD_ThomasFermiPoisson
         {
             Save_Data(density, dens_filename);
 
-            chempot = Get_Data_From_External(initcalc_location, initcalc_result_filename);
+            chempot = Get_Data_From_External(initcalc_location, "-p " + initcalc_parameterfile, initcalc_result_filename);
             return chempot;
         }
 
@@ -95,7 +134,7 @@ namespace TwoD_ThomasFermiPoisson
             Save_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
             Save_Data(gphi, gphi_filename);
 
-            Band_Data x = Get_Data_From_External(newton_location, newton_result_filename);
+            Band_Data x = Get_Data_From_External(newton_location, "-p " + newton_parameterfile, newton_result_filename);
             chempot += base.T * x;
             return x;
         }

@@ -195,7 +195,7 @@ namespace Solver_Bases
         static Dictionary<int, Dictionary<string, object>> Get_BandStructure_Data(string filename)
         {
             if (!File.Exists(filename))
-                throw new FileNotFoundException();
+                throw new FileNotFoundException("Error - Could not find file \"" + filename + "\"");
 
             // read data from input file (discarding comment lines and white space)
             string[] raw_input = (from line in File.ReadAllLines(filename)

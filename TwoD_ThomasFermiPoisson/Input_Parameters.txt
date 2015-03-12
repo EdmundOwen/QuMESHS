@@ -38,6 +38,21 @@
 ## FlexPDE file executable location
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
+## Use deal.II?
+% use_deal.II = false
+#
+## Location of initial potential calculator for deal.II
+% initcalc_location = split_gate
+#
+## Location of newton step calculator for deal.II
+% newton_location = newton
+#
+## Optional location to write initial potential calculator parameter file for deal.II (default is "split_gate.in")
+# % initcalc_parameterfile = split_gate.in
+#
+## Optional location to write newton step calculator parameter file for deal.II (default is "newton.in")
+# % newton_parameterfile = newton.in
+#
 # Top gate voltage
 #% top_V = -7.71
 #% top_V = -7.3

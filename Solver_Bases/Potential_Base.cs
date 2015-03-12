@@ -91,16 +91,12 @@ namespace Solver_Bases
             if (!File.Exists(external_program_location))
                 throw new Exception("Error - there is no file at the requested location: " + external_program_location);
 
-            int handle = GetForegroundWindow();
             Process pot_process = new Process();
             // input arguments into process
             pot_process.StartInfo = new ProcessStartInfo(external_program_location, external_program_arguments);
-            pot_process.StartInfo.WindowStyle = ProcessWindowStyle.Minimized;
 
             // and run
-            int report = SetForegroundWindow(1);
             pot_process.Start();
-            report = SetForegroundWindow(2);
 
             // wait until the requested file is available, then exit
             while (!File.Exists(result_filename))

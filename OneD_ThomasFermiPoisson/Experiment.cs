@@ -67,7 +67,7 @@ namespace OneD_ThomasFermiPoisson
         {
             // get temperatures to run the experiment at
             double[] run_temps = Freeze_Out_Temperatures();
-
+            
             // run experiment using Thomas-Fermi solver
             for (int i = 0; i < run_temps.Length; i++)
             {

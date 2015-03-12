@@ -242,9 +242,9 @@ namespace TwoD_ThomasFermiPoisson
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double pot_lim, int max_count)
         {
             // calculate initial potential with the given charge distribution
-            Console.WriteLine("Calculating initial potential grid");
-            pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
-            chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+        //    Console.WriteLine("Calculating initial potential grid");
+       //     pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
+        //    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             Console.WriteLine("Initial grid complete");
             dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
@@ -412,7 +412,6 @@ namespace TwoD_ThomasFermiPoisson
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_count)
                 {
-                    File.Copy("split_gate.pg6", "split_gate_final.pg6", true);
                     Console.WriteLine("Maximum potential change at end of iteration was " + Math.Max(t * x.Max(), (-t * x).Max()).ToString());
                     break;
                 }

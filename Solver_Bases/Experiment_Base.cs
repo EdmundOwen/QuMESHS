@@ -54,6 +54,10 @@ namespace Solver_Bases
             // and the same for dealii
             if (input_dict.ContainsKey("use_deal.II")) this.using_dealii = (bool)input_dict["use_deal.II"]; else using_dealii = false;
 
+            // check to make sure that we haven't asked to use more than one external program to calculate the potential
+            if (using_flexPDE == true && using_dealii == true)
+                throw new Exception("Error - Cannot use both FlexPDE and deal.II to calculate the potential!");
+
             // physical inputs
             Get_From_Dictionary<double>(input_dict, "init_T", ref initial_temperature, true);
             Get_From_Dictionary<double>(input_dict, "T", ref temperature);
