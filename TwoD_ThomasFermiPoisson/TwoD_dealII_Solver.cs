@@ -63,12 +63,30 @@ namespace TwoD_ThomasFermiPoisson
                                                                                                                                                 // not sure why, but this is deal.II specific
             sw_initcalc.WriteLine("end");
 
+            sw_initcalc.WriteLine("subsection Carrier Density Parameters");
+            sw_initcalc.WriteLine("\tset ny_dens = " + exp.Ny_Dens.ToString());
+            sw_initcalc.WriteLine("\tset nz_dens = " + exp.Nz_Dens.ToString());
+            sw_initcalc.WriteLine("\tset ymin_dens = " + exp.Ymin_Dens.ToString());
+            sw_initcalc.WriteLine("\tset ymax_dens = " + (exp.Ymin_Dens + exp.Dy_Dens * (exp.Ny_Dens - 1)).ToString());
+            sw_initcalc.WriteLine("\tset zmin_dens = " + exp.Zmin_Dens.ToString());
+            sw_initcalc.WriteLine("\tset zmax_dens = " + (exp.Zmin_Dens + exp.Dz_Dens * (exp.Nz_Dens - 1)).ToString());
+            sw_initcalc.WriteLine("end");
+
             sw_initcalc.Close();
 
             // and write the parameter details needed for the newton step
             StreamWriter sw_newton = new StreamWriter(newton_parameterfile);
             sw_newton.WriteLine("subsection System Geometry");
             sw_newton.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
+            sw_newton.WriteLine("end");
+
+            sw_newton.WriteLine("subsection Carrier Density Parameters");
+            sw_newton.WriteLine("\tset ny_dens = " + exp.Ny_Dens.ToString());
+            sw_newton.WriteLine("\tset nz_dens = " + exp.Nz_Dens.ToString());
+            sw_newton.WriteLine("\tset ymin_dens = " + exp.Ymin_Dens.ToString());
+            sw_newton.WriteLine("\tset ymax_dens = " + (exp.Ymin_Dens + exp.Dy_Dens * (exp.Ny_Dens - 1)).ToString());
+            sw_newton.WriteLine("\tset zmin_dens = " + exp.Zmin_Dens.ToString());
+            sw_newton.WriteLine("\tset zmax_dens = " + (exp.Zmin_Dens + exp.Dz_Dens * (exp.Nz_Dens - 1)).ToString());
             sw_newton.WriteLine("end");
 
             sw_newton.Close();

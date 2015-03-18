@@ -66,6 +66,7 @@
             this.logout_button = new System.Windows.Forms.Button();
             this.session_no_text = new System.Windows.Forms.TextBox();
             this.session_id_label = new System.Windows.Forms.Label();
+            this.advice_label = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // Start_button
@@ -409,11 +410,21 @@
             this.session_id_label.TabIndex = 35;
             this.session_id_label.Text = "Session ID:";
             // 
+            // advice_label
+            // 
+            this.advice_label.AutoSize = true;
+            this.advice_label.Location = new System.Drawing.Point(186, 250);
+            this.advice_label.Name = "advice_label";
+            this.advice_label.Size = new System.Drawing.Size(198, 13);
+            this.advice_label.TabIndex = 36;
+            this.advice_label.Text = "Please log out using the \'Log Out\' button";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(402, 402);
+            this.Controls.Add(this.advice_label);
             this.Controls.Add(this.session_id_label);
             this.Controls.Add(this.session_no_text);
             this.Controls.Add(this.logout_button);
@@ -497,6 +508,7 @@
         private System.Windows.Forms.Button logout_button;
         private System.Windows.Forms.TextBox session_no_text;
         private System.Windows.Forms.Label session_id_label;
+        private System.Windows.Forms.Label advice_label;
     }
 }
 

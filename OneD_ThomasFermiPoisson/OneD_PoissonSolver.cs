@@ -30,7 +30,7 @@ namespace OneD_ThomasFermiPoisson
             : base(using_external_code, input)
         {
             this.exp = exp;
-
+            
             // generate Laplacian matrix (spin-resolved)
             if (!using_external_code)
             {
@@ -315,23 +315,6 @@ namespace OneD_ThomasFermiPoisson
             // and close the file writer
             sw.Close();
         }
-
-        public void Set_Boundary_Conditions(ILayer[] layers, double top_V, double bottom_V, double top_pos, double bottom_pos)
-        {
-            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // with a factor to convert from V to meV zC^-1
-            this.top_bc = top_V * Physics_Base.energy_V_to_meVpzC; 
-            this.bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
-
-            // and get the corresponding permittivities
-            top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;
-            bottom_eps = Geom_Tool.GetLayer(layers, bottom_pos).Permitivity;
-
-            Console.WriteLine("WARNING - If you are trying to use FlexPDE in the 1D solver, it will not work...");
-       //     if (external_input != null)
-       //         Create_FlexPDE_File(top_bc, 0.0, 0.0, 0.0, bottom_bc, output_file);
-        }
-
         protected override void Save_Data(Band_Data density, string input_file_name)
         {
             density.Save_1D_Data(input_file_name, exp.Dz_Pot, exp.Zmin_Pot);
@@ -344,8 +327,16 @@ namespace OneD_ThomasFermiPoisson
 
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions)
         {
-            throw new NotImplementedException();
+            // get permittivities at top and bottom of the domain
+            top_eps = Geom_Tool.GetLayer(exp.Layers, device_dimensions["top_position"]).Permitivity;
+            bottom_eps = Geom_Tool.GetLayer(exp.Layers, device_dimensions["bottom_position"]).Permitivity;
+
+            this.top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;
+            this.bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
+
+            Console.WriteLine("WARNING - If you are trying to use FlexPDE in the 1D solver, it will not work...");
         }
+
         public override Band_Data Chemical_Potential
         {
             get { throw new NotImplementedException(); }

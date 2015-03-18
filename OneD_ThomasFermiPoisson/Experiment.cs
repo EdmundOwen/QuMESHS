@@ -13,9 +13,9 @@ namespace OneD_ThomasFermiPoisson
 {
     public class Experiment : Experiment_Base
     {
-        double top_V = 0.0;
-        double top_V_cooldown;
-        double bottom_V = 0.0;
+        Dictionary<string, double> device_dimensions, boundary_conditions;
+
+        bool fix_bottom_V;
         double t_min = 1e-3;
         double t_damp = 1.0;
         OneD_PoissonSolver pois_solv;
@@ -39,11 +39,20 @@ namespace OneD_ThomasFermiPoisson
             if (layers[layers.Length - 1].Zmax - layers[1].Zmin < (Nz_Pot - 1) * Dz_Pot)
                 throw new Exception("Error - the band structure provided is smaller than the simulation domain!\nUse nz = " + (int)Math.Ceiling((layers[layers.Length - 1].Zmax - layers[1].Zmin) / Dz_Pot) + " instead");
 
-            // see whether there's a top gate voltage for determining top_bc
-            Get_From_Dictionary<double>(input_dict, "top_V", ref top_V, true);
-            // set the cooldown voltage as this and if there is an extra parameter to allow for biased cooldowns then use this
-            top_V_cooldown = top_V;
-            Get_From_Dictionary<double>(input_dict, "top_V_cooldown", ref top_V_cooldown, true);
+            // and split gate dimensions
+            device_dimensions = new Dictionary<string, double>();
+            device_dimensions.Add("bottom_position", Geom_Tool.Get_Zmin(layers));
+            device_dimensions.Add("top_position", Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot);
+
+            // gate voltages (default is zero)
+            boundary_conditions = new Dictionary<string, double>();
+            if (input_dict.ContainsKey("top_V")) boundary_conditions.Add("top_V", (double)input_dict["top_V"]); else boundary_conditions.Add("top_V", 0.0);
+            if (input_dict.ContainsKey("bottom_V"))
+            {
+                boundary_conditions.Add("bottom_V", (double)input_dict["bottom_V"]);
+                fix_bottom_V = true;
+            }
+            else boundary_conditions.Add("bottom_V", 0.0);
 
             // try to get and the carrier and dopent density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.carrier_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
@@ -77,8 +86,8 @@ namespace OneD_ThomasFermiPoisson
                 OneD_ThomasFermiSolver dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
                 dens_solv.DFT_Mixing_Parameter = 0.0;
 
-                if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature))
-                    this.bottom_V = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
+                if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature) && !fix_bottom_V)
+                    boundary_conditions["bottom_V"] = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
 
                 Run_Iteration_Routine(dens_solv, tol);
 
@@ -132,7 +141,7 @@ namespace OneD_ThomasFermiPoisson
         {
             // calculate initial potential with the given charge distribution
             Console.WriteLine("Calculating initial potential grid");
-            pois_solv.Set_Boundary_Conditions(layers, top_V, bottom_V, Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot, Geom_Tool.Get_Zmin(layers));
+            pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
             chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
             Console.WriteLine("Initial grid complete");
             dens_solv.Set_DFT_Potential(carrier_density);
@@ -190,6 +199,8 @@ namespace OneD_ThomasFermiPoisson
 
         private void Run_Test()
         {
+            throw new NotImplementedException();
+            /*
             StreamWriter sw_dens = new StreamWriter("test_dens.dat");
             StreamWriter sw_e = new StreamWriter("test_ener.dat");
 
@@ -229,7 +240,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             sw_dens.Close();
-            sw_e.Close();
+            sw_e.Close();*/
         }
     }
 }
