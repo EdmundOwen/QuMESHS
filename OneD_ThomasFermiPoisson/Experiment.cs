@@ -14,6 +14,7 @@ namespace OneD_ThomasFermiPoisson
     public class Experiment : Experiment_Base
     {
         Dictionary<string, double> device_dimensions, boundary_conditions;
+        Dictionary<double, double> surface_charge;
 
         bool fix_bottom_V;
         double t_min = 1e-3;
@@ -54,6 +55,9 @@ namespace OneD_ThomasFermiPoisson
             }
             else boundary_conditions.Add("bottom_V", 0.0);
 
+            // initialise the dictionary which contains the surface charges at each temperature
+            surface_charge = new Dictionary<double, double>();
+
             // try to get and the carrier and dopent density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.carrier_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
             else this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
@@ -68,7 +72,7 @@ namespace OneD_ThomasFermiPoisson
 
             // Initialise potential solver
             pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
-
+            
             Console.WriteLine("Experimental parameters initialised");
         }
 
@@ -91,45 +95,41 @@ namespace OneD_ThomasFermiPoisson
 
                 Run_Iteration_Routine(dens_solv, tol);
 
+                // save the surface charge for this temperature
+                surface_charge.Add(current_temperature, pois_solv.Get_Surface_Charge(chem_pot, layers));
                 pois_solv.Reset();
             }
 
-            if (no_dft)
+            if (!no_dft)
             {
-                Band_Data car_dens_spin_summed = carrier_density.Spin_Summed_Data;
-                double tot_dens_TF = (from val in car_dens_spin_summed.vec
-                                   where val < 0.0
-                                   select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
-                Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens_TF.ToString("e3") + " cm^-2");
-                return;
+                // and then run the DFT solver at the base temperature
+                OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
+                dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
+                dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
+                Console.WriteLine("Starting DFT calculation");
+                Run_Iteration_Routine(dft_solv, tol);
+
+                pois_solv.Reset();
+
+                // initialise output solvers
+                OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
+
+                // save final density out
+                final_dens_solv.Output(carrier_density, "carrier_density.dat", false);
+
+                carrier_density.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz_dens, zmin_dens);
+                carrier_density.Spin_Up.Save_1D_Data("dens_1D_up.dat", dz_dens, zmin_dens);
+                carrier_density.Spin_Down.Save_1D_Data("dens_1D_down.dat", dz_dens, zmin_dens);
+
+                final_dens_solv.Output(carrier_density + dopent_density, "charge_density.dat", false);
+                pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot, "potential.dat");
+
             }
 
-            // and then run the DFT solver at the base temperature
-            OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
-            dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
-            dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
-            Console.WriteLine("Starting DFT calculation");
-            Run_Iteration_Routine(dft_solv, tol);
-
-            pois_solv.Reset();
-
-            // initialise output solvers
-            OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
-
-            // save final density out
-            final_dens_solv.Output(carrier_density, "carrier_density.dat", false);
-
-            carrier_density.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz_dens, zmin_dens);
-            carrier_density.Spin_Up.Save_1D_Data("dens_1D_up.dat", dz_dens, zmin_dens);
-            carrier_density.Spin_Down.Save_1D_Data("dens_1D_down.dat", dz_dens, zmin_dens);
-
-            final_dens_solv.Output(carrier_density + dopent_density, "charge_density.dat", false);
-            pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot, "potential.dat");
-
-            double tot_dens_Quantum = (from val in carrier_density.Spin_Summed_Data.vec
+            double tot_dens = (from val in carrier_density.Spin_Summed_Data.vec
                                where val < 0.0
                                select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
-            Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens_Quantum.ToString("e3") + " cm^-2");
+            Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens.ToString("e3") + " cm^-2");
         }
 
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim)
@@ -241,6 +241,18 @@ namespace OneD_ThomasFermiPoisson
 
             sw_dens.Close();
             sw_e.Close();*/
+        }
+
+        /// <summary>
+        /// returns the precalculated surface charge for this temperature
+        /// throws an error if this isn't exactly the temperature a simulation was calculated at
+        /// </summary>
+        public double Surface_Charge(double temperature)
+        {
+            if (!surface_charge.ContainsKey(temperature))
+                throw new KeyNotFoundException("Error - the charge density was not calculated for T = " + temperature.ToString() + "K");
+
+            return surface_charge[temperature];
         }
     }
 }

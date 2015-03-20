@@ -29,6 +29,7 @@ namespace Solver_Bases
 
         private bool converged;
         private double convergence_factor = double.MaxValue;
+        TimeSpan timeout_span = TimeSpan.FromHours(3);
 
         double t;
 
@@ -95,13 +96,11 @@ namespace Solver_Bases
             // input arguments into process
             pot_process.StartInfo = new ProcessStartInfo(external_program_location, external_program_arguments);
 
-            // and run
+            // and run with a timeout given by timeout_span
             pot_process.Start();
-
-            // wait until the requested file is available, then exit
-            while (!File.Exists(result_filename))
-                Thread.Sleep(100);
-            Thread.Sleep(5000);
+            bool success = pot_process.WaitForExit((int)timeout_span.TotalMilliseconds);
+            if (!success)
+                throw new TimeoutException("Error - The command \"" + external_program_location + "\" with arguments \"" + external_program_arguments + "\" timed out at " + DateTime.Now.ToUniversalTime());
         }
 
         /// <summary>

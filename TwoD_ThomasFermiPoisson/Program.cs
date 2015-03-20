@@ -27,7 +27,8 @@ namespace TwoD_ThomasFermiPoisson
 
             // read in the value of vsg to be used
             Console.WriteLine("Enter split gate voltage");
-            inputs["split_V"] = double.Parse(Console.ReadLine());
+   //         inputs["split_V"] = double.Parse(Console.ReadLine());
+            inputs["split_V"] = -1.0 + -0.01 * double.Parse(args[0]);
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
 
             // check to make sure it's negative
@@ -53,10 +54,13 @@ namespace TwoD_ThomasFermiPoisson
                 inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
                 inputs.Add("Dopent_Density", exp_init.Dopent_Density);
                 inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
+                // get the frozen out surface charge at 70K
+                if (!inputs.ContainsKey("surface_charge")) inputs.Add("surface_charge", exp_init.Surface_Charge(70.0));
+                else Console.WriteLine("Surface charge set from Input_Parameters.txt to " + ((double)inputs["surface_charge"]).ToString());
                 Console.WriteLine("Calculated 1D density for dopents");
 
                 //Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D_dopents.dat", (double)inputs["dy"] * (double)inputs["ny"] / (double)inputs_init["ny_1d"], (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * (double)inputs["ny"] / 2.0, Geom_Tool.Get_Zmin(exp_init.Layers));
-
+               
                 // this is a scaled version for the dopents!
                 double scaling_factor = ((double)inputs["ny"] * (double)inputs["dy"]) / ((double)inputs["nz"] * (double)inputs["dz"]);
                 Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D_dopents.dat", (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / ((double)inputs_init["ny_1d"] - 1.0), scaling_factor * (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / 2.0, scaling_factor * Geom_Tool.Get_Zmin(exp_init.Layers));
@@ -64,14 +68,14 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Saved 1D dopent density");
 
                 // recalculate the band structure at 70K (for frozen out surface charge)
-                inputs_init["T"] = 70.0;
-                exp_init.Initialise(inputs_init);
-                exp_init.Run();
-                Band_Data band_offset = exp_init.Chemical_Potential;
-                ILayer[] layers = exp_init.Layers;
-                // get surface charge for band structure at 70K
-                OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, inputs_init);
-                inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
+     //          inputs_init["T"] = 70.0;
+     //          exp_init.Initialise(inputs_init);
+     //          exp_init.Run();
+     //          Band_Data band_offset = exp_init.Chemical_Potential;
+     //          ILayer[] layers = exp_init.Layers;
+     //          // get surface charge for band structure at 70K
+     //          OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, inputs_init);
+     //          inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
      //           inputs["surface_charge"] = -2.662;
      //           Console.WriteLine("WARNING!!! -- CHANGING SURFACE CHARGE DENSITY");
             }
@@ -89,8 +93,25 @@ namespace TwoD_ThomasFermiPoisson
                     throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
                 Console.WriteLine("Experiment initialised");
                 exp.Run();
+
                 Console.WriteLine("Experiment complete");
+
+                Rename_Results((double)inputs["split_V"]);
             }
+        }
+
+        static void Rename_Results(double split_V)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Renaming files");
+            File.Copy("bare_pot.dat", "bare_pot_sg" + split_V.ToString("F2") + ".dat", true);
+            File.Copy("potential.dat", "pot_sg" + split_V.ToString("F2") + ".dat", true);
+            File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + split_V.ToString("F2") + ".dat", true);
+            File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + split_V.ToString("F2") + ".dat", true);
+            File.Copy("energies.dat", "energies_sg" + split_V.ToString("F2") + ".dat", true);
+            File.Copy("xc_pot.dat", "xc_pot_sg" + split_V.ToString("F2") + ".dat", true);
+            File.Copy("pot_KS.dat", "pot_KS_sg" + split_V.ToString("F2") + ".dat", true);
+            Console.WriteLine("Files renamed");
         }
 
         static void Run_Multiple_TGs(TwoD_ThomasFermiPoisson.Experiment exp, Dictionary<string, object> dict)

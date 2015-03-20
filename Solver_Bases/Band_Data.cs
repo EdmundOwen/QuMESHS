@@ -459,60 +459,56 @@ namespace Solver_Bases
 
         public double Max()
         {
-            double result = double.MinValue;
-
             if (dim == 1)
-            {
-                for (int i = 0; i < vec.Length; i++)
-                    if (result < this[i])
-                        result = this[i];
-            }
+                return vec.Max();
             else if (dim == 2)
-            {
-                for (int i = 0; i < mat.Rows * mat.Cols; i++)
-                    if (result < this[i])
-                        result = this[i];
-            }
+                return mat.Max();
             else if (dim == 3)
             {
-                for (int i = 0; i < vol[0].Rows * vol[0].Cols * vol.Length; i++)
-                    if (result < this[i])
-                        result = this[i];
+                DoubleVector mat_max = new DoubleVector(vol.Length);
+                for (int i = 0; i < vol.Length; i++)
+                    mat_max[i] = vol[i].Max();
 
+                return mat_max.Max();
             }
             else
                 throw new NotImplementedException();
-
-            return result;
         }
 
         public double Min()
         {
-            double result = double.MaxValue;
-
             if (dim == 1)
-            {
-                for (int i = 0; i < vec.Length; i++)
-                    if (result > this[i])
-                        result = this[i];
-            }
+                return vec.Min();
             else if (dim == 2)
-            {
-                for (int i = 0; i < mat.Rows * mat.Cols; i++)
-                    if (result > this[i])
-                        result = this[i];
-            }
+                return mat.Min();
             else if (dim == 3)
             {
-                for (int i = 0; i < vol[0].Rows * vol[0].Cols * vol.Length; i++)
-                    if (result > this[i])
-                        result = this[i];
+                DoubleVector mat_min = new DoubleVector(vol.Length);
+                for (int i = 0; i < vol.Length; i++)
+                    mat_min[i] = vol[i].Min();
 
+                return mat_min.Min();
             }
             else
                 throw new NotImplementedException();
+        }
 
-            return result;
+        public double InfinityNorm()
+        {
+            if (dim == 1)
+                return vec.InfinityNorm();
+            else if (dim == 2)
+                return mat.InfinityNorm();
+            else if (dim == 3)
+            {
+                DoubleVector mat_absmax = new DoubleVector(vol.Length);
+                for (int i = 0; i < vol.Length; i++)
+                    mat_absmax[i] = vol[i].InfinityNorm();
+
+                return mat_absmax.InfinityNorm();
+            }
+            else
+                throw new NotImplementedException();
         }
 
         public int Dimension

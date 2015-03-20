@@ -235,6 +235,7 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
+        double pot_diff_lim = 0.1; // minimum value change (in meV) at which the iteration will stop
         double max_vxc_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
         double min_dens_diff = 0.005; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
@@ -343,7 +344,8 @@ namespace TwoD_ThomasFermiPoisson
                  //       converged = true;
 
                     // solution is converged if the density accuracy is better than half the minimum possible value for changing the dft potential
-                    if (dens_diff.Max() < min_dens_diff / 2.0  && current_vxc_diff < min_vxc_diff)
+                    // also, check that the maximum change in the absolute value of the potential is less than a tolerance (default is 0.1meV)
+                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && t * x.InfinityNorm() < pot_diff_lim)
                         converged = true;
                 }
 

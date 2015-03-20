@@ -382,7 +382,7 @@ namespace TwoD_ThomasFermiPoisson
                 // set top gate here
                 if (i == exp.Layers.Length - 1)
                     // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = 0\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
-                     sw.WriteLine("\t\tVALUE(u) = top_V");
+    //                 sw.WriteLine("\t\tVALUE(u) = top_V");
                     sw.WriteLine("\t\tNATURAL(u) = top_V");
                 // or surface condition
                 if (exp.Layers[i].Zmax == 0.0)

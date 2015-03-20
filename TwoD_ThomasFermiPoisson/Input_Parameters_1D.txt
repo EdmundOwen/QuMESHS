@@ -38,6 +38,12 @@
 ## FlexPDE file executable location
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
+## Potential at top of domain (will take default value of zero if not initialised)
+# % top_V = -0.0
+#
+## Potential at bottom of domain (will take default value of zero if not initialised)
+# % bottom_V = -1.23
+#
 #
 ############## Generic density solver details #########################
 #
@@ -57,7 +63,7 @@
 % dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dens = 35
+% nz_dens =35
 #
 ## Minimum z value of the dft calculation domain
 % zmin_dens = -100.0
@@ -66,6 +72,6 @@
 ############## Physical parameters ####################################
 #
 ## Temperature
-% T = 1
+% T = 1.0
 #
 
