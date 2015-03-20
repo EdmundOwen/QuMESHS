@@ -46,6 +46,9 @@ namespace Solver_Bases
 
     public enum Geometry_Type
     {
+        triangle_slab,
+        half_slab,
+        strip,
         slab,
         sheet
     }

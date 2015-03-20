@@ -25,7 +25,7 @@ namespace Solver_Bases.Geometry
             return InLayer(0.0, y, z);
         }
 
-        public bool InLayer(double x, double y, double z)
+        public virtual bool InLayer(double x, double y, double z)
         {
             return (z <= zmax && z > zmin);
         }

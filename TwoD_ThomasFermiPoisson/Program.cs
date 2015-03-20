@@ -66,18 +66,6 @@ namespace TwoD_ThomasFermiPoisson
                 Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D_dopents.dat", (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / ((double)inputs_init["ny_1d"] - 1.0), scaling_factor * (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / 2.0, scaling_factor * Geom_Tool.Get_Zmin(exp_init.Layers));
                 Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D.dat", (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / ((double)inputs_init["ny_1d"] - 1.0), (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / 2.0, Geom_Tool.Get_Zmin(exp_init.Layers));
                 Console.WriteLine("Saved 1D dopent density");
-
-                // recalculate the band structure at 70K (for frozen out surface charge)
-     //          inputs_init["T"] = 70.0;
-     //          exp_init.Initialise(inputs_init);
-     //          exp_init.Run();
-     //          Band_Data band_offset = exp_init.Chemical_Potential;
-     //          ILayer[] layers = exp_init.Layers;
-     //          // get surface charge for band structure at 70K
-     //          OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, inputs_init);
-     //          inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
-     //           inputs["surface_charge"] = -2.662;
-     //           Console.WriteLine("WARNING!!! -- CHANGING SURFACE CHARGE DENSITY");
             }
 
             if ((bool)inputs["batch_run"])
