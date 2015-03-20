@@ -61,6 +61,18 @@ namespace Solver_Bases
                     geom = new Sheet((double)data["zmin"]);
                     break;
 
+                case Geometry_Type.strip:
+                    geom = new Strip((double)data["zmin"], (double)data["zmax"], (double)data["dy"], (double)data["width"], (double)data["theta"]);
+                    break;
+
+                case Geometry_Type.half_slab:
+                    geom = new Half_Slab((double)data["zmin"], (double)data["zmax"], (double)data["dy"], (double)data["theta"]);
+                    break;
+
+                case Geometry_Type.triangle_slab:
+                    geom = new Triangle_Slab((double)data["zmin"], (double)data["zmax"], (double)data["x0"], (double)data["y0"], (double)data["theta1"], (double)data["theta2"]);
+                    break;
+
                 default:
                     throw new NotImplementedException("Error - Unknown geometry");
             }
@@ -186,6 +198,15 @@ namespace Solver_Bases
 
                 case "sheet":
                     return Geometry_Type.sheet;
+
+                case "strip":
+                    return Geometry_Type.strip;
+
+                case "half":
+                    return Geometry_Type.half_slab;
+
+                case "tria":
+                    return Geometry_Type.triangle_slab;
 
                 default:
                     throw new NotImplementedException("Error - Geometry not known");
