@@ -15,7 +15,7 @@
 % ny = 100
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 50
+% dy = 20
 #
 ## Number of lattice sites in the growth direction for the density calculation
 % nz = 1025
@@ -27,7 +27,7 @@
 ############## Poisson solver details #################################
 #
 ## File name with band structure in
-% BandStructure_File = band_structure.txt
+% BandStructure_File = Band_Structure.txt
 #
 ## Use FlexPDE?
 % use_FlexPDE = true
@@ -67,9 +67,6 @@
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_pot = -2500.0
-#
-## Whether to smooth thee potential during each iteration
-% with_smoothing = true
 #
 #
 ############## Generic density solver details #########################

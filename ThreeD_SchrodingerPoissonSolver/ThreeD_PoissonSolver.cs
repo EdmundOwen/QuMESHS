@@ -14,11 +14,12 @@ namespace ThreeD_SchrodingerPoissonSolver
     {
 
         Experiment exp;
-        SpinResolved_Data dens_1d;
-        string densdopent_filename;
-        string densderiv_filename;
-        string pot_filename;
-        string new_pot_filename;
+        string dens_filename = "car_dens.dat";
+        string densdopent_filename = "dens_2D_dopents.dat";
+        string densderiv_filename = "rho_prime.dat";
+        string pot_filename = "phi.dat";
+        string new_pot_filename = "new_phi.dat";
+        string xc_pot_calc_filename = "xc_pot_calc.dat";
 
         string gphi_filename = "gphi.dat";
 
@@ -31,17 +32,11 @@ namespace ThreeD_SchrodingerPoissonSolver
         double y_scaling, z_scaling;
         double t = 0.0;
 
-        public ThreeD_PoissonSolver(Experiment exp, bool using_external_code, string external_inputfile, string external_location, double tol)
-            : base(using_external_code, external_inputfile, external_location, tol)
+        public ThreeD_PoissonSolver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
+            : base(using_external_code, input)
         {
             this.exp = exp;
 
-            this.dens_filename = "car_dens.dat";
-            this.densdopent_filename = "dens_3D_dopents.dat";
-            this.densderiv_filename = "rho_prime.dat";
-            this.pot_filename = "phi.dat";
-            this.new_pot_filename = "new_phi.dat";
-            
             // calculate scaling factors (x is used as the reference dimension)
             // w = a_y * y such that the y dimension has the same length as the x dimension
             y_scaling = (exp.Nx_Pot * exp.Dx_Pot) / (exp.Ny_Pot * exp.Dy_Pot);
@@ -58,9 +53,8 @@ namespace ThreeD_SchrodingerPoissonSolver
         protected override void Save_Data(Band_Data density, string input_file_name)
         {
             // check that the data isn't all zeros and if it is, add a small 1e-8 perturbation at the centre
-            for (int k = 0; k < density.vol.Length; k++)
-                if (density.vol[k].Min() > -1e-8 && density.vol[k].Max() < 1e-8)
-                    density.vol[k][(int)(density.vol[k].Rows / 2), (int)(density.vol[k].Cols / 2)] = 1e-8;
+            if (density.Min() > -1e-8 && density.Max() < 1e-8)
+                density.vol[density.Length / 2][(int)(density.vol[density.Length / 2].Rows / 2), (int)(density.vol[density.Length / 2].Cols / 2)] = 1e-8;
 
             density.Save_3D_Data(input_file_name, exp.Dx_Dens, exp.Dy_Dens * y_scaling, exp.Dz_Dens * z_scaling, exp.Xmin_Dens, exp.Ymin_Dens * y_scaling, exp.Zmin_Dens * z_scaling);
         }
@@ -103,22 +97,23 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             return new Band_Data(result);
         }
-        public void Set_Boundary_Conditions(double top_V, double split_V, double top_length, double split_width, double split_length, double bottom_V, double surface)
+
+        public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimension, Dictionary<string, double> boundary_conditions)
         {
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // with a factor to convert from V to meV zC^-1
-            top_bc = top_V * Physics_Base.energy_V_to_meVpzC;
-            split_bc = split_V * Physics_Base.energy_V_to_meVpzC;
-            bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
+            top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;
+            split_bc = boundary_conditions["split_V"] * Physics_Base.energy_V_to_meVpzC;
+            bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
 
-            // and save the gate geometry and surface charge
-            this.top_length = top_length; 
-            this.split_width = split_width; 
-            this.split_length = split_length;
-            this.surface = surface;
+            // and save the split width and surface charge
+            this.top_length = device_dimension["top_length"];
+            this.split_width = device_dimension["split_width"];
+            this.split_length = device_dimension["split_length"];
+            this.surface = boundary_conditions["surface"];
 
-            if (external_input != null)
-                Create_FlexPDE_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, external_input);
+            if (flexpde_script != null)
+                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_script);
         }
 
         public override void Create_FlexPDE_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file)
@@ -301,15 +296,24 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             Save_Data(gphi, gphi_filename);
             Save_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
-            Create_NewtonStep_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, flexpde_inputfile, T);
+            Create_NewtonStep_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, flexpde_script, T);
 
-            Run_External_Code("x.dat");
+            return Get_Data_From_External(newton_location, flexpde_options, newton_result_filename);
+        }
 
-            string[] lines = File.ReadAllLines("x.dat");
-            string[] data = Trim_Potential_File(lines);
+        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens)
+        {
+            Save_Data(car_dens.Spin_Summed_Data, dens_filename);
+            Save_Data(Physics_Base.Get_XC_Potential(car_dens), xc_pot_filename);
 
-            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * Parse_Potential(data);
+            return Calculate_Newton_Step(rho_prime, gphi);
+        }
+
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens, Band_Data dft_diff)
+        {
+            Save_Data(dft_diff + Physics_Base.Get_XC_Potential(car_dens), xc_pot_calc_filename);
+
+            return Calculate_Newton_Step(rho_prime, gphi, car_dens);
         }
 
         public override void Create_NewtonStep_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file, double t)
@@ -534,8 +538,6 @@ namespace ThreeD_SchrodingerPoissonSolver
                 return Physics_Base.q_e * Parse_Potential(data);
             }
         }
-
-        public double T { get { return t; } set { t = value; } }
 
         protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
         {

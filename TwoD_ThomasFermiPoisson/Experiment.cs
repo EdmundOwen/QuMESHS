@@ -16,7 +16,6 @@ namespace TwoD_ThomasFermiPoisson
     {
         Dictionary<string, double> device_dimensions, boundary_conditions;
         double t_damp = 0.8, t_min = 1e-3;
-        double edge_min_charge = 1e-5;
 
         TwoD_ThomasFermiSolver dens_solv;
         IPoisson_Solve pois_solv;
@@ -138,7 +137,7 @@ namespace TwoD_ThomasFermiPoisson
             // and do the same for the chemical potential
             if (input_dict.ContainsKey("Chemical_Potential"))
             {
-                chem_pot = new Band_Data(new DoubleMatrix(ny_dens, nz_dens));
+                chem_pot = new Band_Data(ny_dens, nz_dens, 0.0);
                 Band_Data tmp_pot_1d = (Band_Data)input_dict["Chemical_Potential"];
 
                 int offset_min = (int)Math.Round((zmin_dens - zmin_pot) / dz_pot);
@@ -149,11 +148,10 @@ namespace TwoD_ThomasFermiPoisson
                     }
             }
             else
-                chem_pot = new Band_Data(new DoubleMatrix(ny_dens, nz_dens));
+                chem_pot = new Band_Data(ny_dens, nz_dens, 0.0);
 
             // create charge density solver and calculate boundary conditions
             dens_solv = new TwoD_ThomasFermiSolver(this);
-            double bottom_V = dens_solv.Get_Chemical_Potential(0.0, zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
 
             // initialise potential solver
             if (using_flexPDE)
@@ -246,7 +244,7 @@ namespace TwoD_ThomasFermiPoisson
         //    Console.WriteLine("Calculating initial potential grid");
        //     pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
         //    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-            Console.WriteLine("Initial grid complete");
+        //    Console.WriteLine("Initial grid complete");
             dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
             dens_solv.Set_DFT_Potential(carrier_density); 
@@ -285,13 +283,6 @@ namespace TwoD_ThomasFermiPoisson
                     Console.WriteLine("Iterator has stalled, setting t = 0");
                     t = 0.0;
                 }
-
-                // Check convergence
-                Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
-                double[] diff = new double[ny_dens * nz_dens];
-                for (int j = 0; j < ny_dens * nz_dens; j++)
-                    diff[j] = Math.Abs(g_phi[j]);
-                double convergence = diff.Sum();
 
                 // and check convergence of density
                 Band_Data dens_diff = carrier_density.Spin_Summed_Data - dens_old;
@@ -414,7 +405,7 @@ namespace TwoD_ThomasFermiPoisson
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_count)
                 {
-                    Console.WriteLine("Maximum potential change at end of iteration was " + Math.Max(t * x.Max(), (-t * x).Max()).ToString());
+                    Console.WriteLine("Maximum potential change at end of iteration was " + (t * x.InfinityNorm()).ToString());
                     break;
                 }
             }

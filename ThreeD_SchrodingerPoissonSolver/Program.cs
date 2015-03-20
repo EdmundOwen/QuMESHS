@@ -44,7 +44,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             exp_init.Initialise(inputs_init);
             exp_init.Run();
             inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
-            inputs.Add("Band_Offset", exp_init.Chemical_Potential);
+            inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
+            // get the frozen out surface charge at 70K
+            if (!inputs.ContainsKey("surface_charge")) inputs.Add("surface_charge", exp_init.Surface_Charge(70.0));
+            else Console.WriteLine("Surface charge set from Input_Parameters.txt to " + ((double)inputs["surface_charge"]).ToString());
             Console.WriteLine("Calculated 1D density for dopents");
 
             int nx_init = (int)(double)inputs_init["nx_1d"]; int ny_init = (int)(double)inputs_init["ny_1d"];
@@ -56,17 +59,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_dopents.dat", dx_init, dy_init * y_scaling, (double)inputs["dz"] * z_scaling, (double)inputs["xmin_pot"], (double)inputs["ymin_pot"] * y_scaling, Geom_Tool.Get_Zmin(exp_init.Layers) * z_scaling);
             Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init * y_scaling, (double)inputs["dz"] * z_scaling, (double)inputs["xmin_pot"], (double)inputs["ymin_pot"] * y_scaling, Geom_Tool.Get_Zmin(exp_init.Layers) * z_scaling);
             Console.WriteLine("Saved 1D dopent density");
-
-            // recalculate the band structure at 70K (for frozen out surface charge)
-            inputs_init["T"] = 70.0;
-            exp_init.Initialise(inputs_init);
-            exp_init.Run();
-            Band_Data band_offset = exp_init.Chemical_Potential;
-            ILayer[] layers = exp_init.Layers;
-            // get surface charge for band structure at 70K
-            OneD_ThomasFermiPoisson.OneD_PoissonSolver tmp_pois_solv = new OneD_ThomasFermiPoisson.OneD_PoissonSolver(exp_init, false, "", "", 0.0);
-            inputs.Add("surface_charge", tmp_pois_solv.Get_Surface_Charge(band_offset, layers));
-
+            
             Console.WriteLine("Starting experiment");
             exp.Initialise_Experiment(inputs);
             Console.WriteLine("Experiment initialised");

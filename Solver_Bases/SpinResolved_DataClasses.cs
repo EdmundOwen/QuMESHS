@@ -241,6 +241,24 @@ namespace Solver_Bases
             spin_data[0] = spin_up; spin_data[1] = spin_down;
         }
 
+        public SpinResolved_Data(int nx)
+        {
+            spin_data = new Band_Data[2];
+            spin_data[0] = new Band_Data(nx, 0.0); spin_data[1] = new Band_Data(nx, 0.0);
+        }
+
+        public SpinResolved_Data(int nx, int ny)
+        {
+            spin_data = new Band_Data[2];
+            spin_data[0] = new Band_Data(nx, ny, 0.0); spin_data[1] = new Band_Data(nx, ny, 0.0);
+        }
+
+        public SpinResolved_Data(int nx, int ny, int nz)
+        {
+            spin_data = new Band_Data[2];
+            spin_data[0] = new Band_Data(nx, ny, nz, 0.0); spin_data[1] = new Band_Data(nx, ny, nz, 0.0);
+        }
+
         /// <summary>
         /// Cast from Band_Data to SpinResolved_Data
         /// Assumes equal spin contributions for up and down
