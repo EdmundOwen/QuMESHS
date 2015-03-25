@@ -27,7 +27,8 @@ namespace TwoD_ThomasFermiPoisson
             // read in the value of vsg to be used
             Console.WriteLine("Enter split gate voltage");
    //         inputs["split_V"] = double.Parse(Console.ReadLine());
-            inputs["split_V"] = -1.0 + -0.01 * double.Parse(args[0]);
+            inputs["split_V"] = -0.49;
+            inputs["top_V"] = -1.0 + -0.01 * double.Parse(args[0]);
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
 
             // check to make sure it's negative

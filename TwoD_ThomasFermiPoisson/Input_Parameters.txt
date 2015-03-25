@@ -12,7 +12,7 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 100
+% ny = 200
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
 % dy = 20
@@ -30,7 +30,7 @@
 % BandStructure_File = Band_Structure.txt
 #
 ## Use FlexPDE?
-% use_FlexPDE = false
+% use_FlexPDE = true
 #
 ## FlexPDE input file
 % FlexPDE_file = split_gate.pde
@@ -39,7 +39,7 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 ## Use deal.II?
-% use_deal.II = true
+% use_deal.II = false
 #
 ## Location of initial potential calculator for deal.II
 % initcalc_location = split_gate
@@ -60,13 +60,13 @@
 % split_V = -1.0
 #
 ## Surface charge (by default, this is set by the 1D solver)
-% surface_charge = -2.677
+# % surface_charge = -2.677
 #
 ## Split gate width
-% split_width = 400
+% split_width = 800
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_pot = -2500.0
+% ymin_pot = -2000.0
 #
 #
 ############## Generic density solver details #########################
@@ -90,27 +90,27 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 4.2
+% T = 0.05
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -200.0
-#% ymin_dens = -600.0
+#% ymin_dens = -200.0
+% ymin_dens = -600.0
 #
 ## Lattice spacing in the transverse direction
 % dy_dens =  5.0
 #
 ## Number of lattice points in transverse direction
-% ny_dens = 81
-#% ny_dens = 241
+#% ny_dens = 81
+% ny_dens = 241
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -90.0
+% zmin_dens = -325.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 1.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 25
+% nz_dens = 50
 #
 #
 ############## Data transfer details ##############################

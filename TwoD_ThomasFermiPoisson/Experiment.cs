@@ -180,8 +180,8 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Bare potential saved");
 
             // and then run the DFT solver at the base temperature over a limited range
-            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-    //        TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+    //        TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+            TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
             dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
             dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
       //      TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);

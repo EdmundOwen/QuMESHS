@@ -12,6 +12,8 @@ namespace TwoD_ThomasFermiPoisson
 {
     class TwoD_PoissonSolver_Scaled : FlexPDE_Base
     {
+        bool natural_topbc = false;
+
         Experiment exp;
         string dens_filename = "car_dens.dat";
         string densdopent_filename = "dens_2D_dopents.dat";
@@ -182,9 +184,12 @@ namespace TwoD_ThomasFermiPoisson
 
                 // set top gate here
                 if (i == exp.Layers.Length - 1)
+                {
                     // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = surface_bc\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
- //                    sw.WriteLine("\t\tVALUE(u) = top_V");
+                                        sw.WriteLine("\t\tVALUE(u) = top_V");
+                    if (natural_topbc)
                     sw.WriteLine("\t\tNATURAL(u) = top_V");
+            }
                 // or surface condition
                 if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * (ustep(x + split_width / 2 - 20) - ustep(x - split_width / 2 + 20))");
@@ -381,10 +386,12 @@ namespace TwoD_ThomasFermiPoisson
 
                 // set top gate here
                 if (i == exp.Layers.Length - 1)
+                { 
                     // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = 0\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
-    //                 sw.WriteLine("\t\tVALUE(u) = top_V");
+                     sw.WriteLine("\t\tVALUE(u) = top_V");
+                if (natural_topbc)
                     sw.WriteLine("\t\tNATURAL(u) = top_V");
-                // or surface condition
+            }// or surface condition
                 if (exp.Layers[i].Zmax == 0.0)
                     sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
 
