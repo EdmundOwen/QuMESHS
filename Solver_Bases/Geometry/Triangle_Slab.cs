@@ -26,7 +26,7 @@ namespace Solver_Bases.Geometry
             return base.InLayer(z) && intriangle;
         }
 
-        public virtual Geometry_Type Get_Geometry
+        public new Geometry_Type Get_Geometry
         {
             get { return Geometry_Type.triangle_slab; }
         }

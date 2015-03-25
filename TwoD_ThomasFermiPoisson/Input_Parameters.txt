@@ -30,7 +30,7 @@
 % BandStructure_File = Band_Structure.txt
 #
 ## Use FlexPDE?
-% use_FlexPDE = true
+% use_FlexPDE = false
 #
 ## FlexPDE input file
 % FlexPDE_file = split_gate.pde
@@ -39,7 +39,7 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 ## Use deal.II?
-% use_deal.II = false
+% use_deal.II = true
 #
 ## Location of initial potential calculator for deal.II
 % initcalc_location = split_gate
@@ -60,7 +60,7 @@
 % split_V = -1.0
 #
 ## Surface charge (by default, this is set by the 1D solver)
-% surface_charge = -2.662
+% surface_charge = -2.677
 #
 ## Split gate width
 % split_width = 400

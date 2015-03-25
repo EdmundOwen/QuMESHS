@@ -48,6 +48,11 @@ namespace TwoD_ThomasFermiPoisson
             // and split gate dimensions
             device_dimensions = new Dictionary<string, double>();
             device_dimensions.Add("split_width", (double)input_dict["split_width"]);
+            device_dimensions.Add("ymin_pot", this.Layers[1].Zmin);
+            device_dimensions.Add("pmma_depth", Geom_Tool.Find_Layer_Above_Surface(this.Layers).Zmax);
+            device_dimensions.Add("cap_depth", Geom_Tool.Find_Layer_Below_Surface(this.Layers).Zmin);
+            device_dimensions.Add("interface_depth", this.Layers[1].Zmax);
+            device_dimensions.Add("buffer_depth", this.Layers[2].Zmax);
 
             // gate voltages
             boundary_conditions = new Dictionary<string, double>();

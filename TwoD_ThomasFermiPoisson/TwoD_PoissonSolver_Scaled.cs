@@ -187,7 +187,7 @@ namespace TwoD_ThomasFermiPoisson
                     sw.WriteLine("\t\tNATURAL(u) = top_V");
                 // or surface condition
                 if (exp.Layers[i].Zmax == 0.0)
-                    sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
+                    sw.WriteLine("\t\tNATURAL(u) = surface_bc * (ustep(x + split_width / 2 - 20) - ustep(x - split_width / 2 + 20))");
 
                 sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
                 sw.WriteLine("\t\tNATURAL(u) = 0");

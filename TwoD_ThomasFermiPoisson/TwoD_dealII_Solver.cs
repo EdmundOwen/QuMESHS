@@ -52,7 +52,12 @@ namespace TwoD_ThomasFermiPoisson
             StreamWriter sw_initcalc = new StreamWriter(initcalc_parameterfile);
 
             sw_initcalc.WriteLine("subsection System Geometry");
+            sw_initcalc.WriteLine("\tset ymin_pot = " + device_dimensions["ymin_pot"].ToString());
             sw_initcalc.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
+            sw_initcalc.WriteLine("\tset pmma_depth = " + device_dimensions["pmma_depth"].ToString());
+            sw_initcalc.WriteLine("\tset cap_depth = " + device_dimensions["cap_depth"].ToString());
+            sw_initcalc.WriteLine("\tset interface_depth = " + device_dimensions["interface_depth"].ToString());
+            sw_initcalc.WriteLine("\tset buffer_depth = " + device_dimensions["buffer_depth"].ToString());
             sw_initcalc.WriteLine("end");
 
             sw_initcalc.WriteLine("subsection Boundary Conditions");
@@ -77,7 +82,12 @@ namespace TwoD_ThomasFermiPoisson
             // and write the parameter details needed for the newton step
             StreamWriter sw_newton = new StreamWriter(newton_parameterfile);
             sw_newton.WriteLine("subsection System Geometry");
+            sw_newton.WriteLine("\tset ymin_pot = " + device_dimensions["ymin_pot"].ToString());
             sw_newton.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
+            sw_newton.WriteLine("\tset pmma_depth = " + device_dimensions["pmma_depth"].ToString());
+            sw_newton.WriteLine("\tset cap_depth = " + device_dimensions["cap_depth"].ToString());
+            sw_newton.WriteLine("\tset interface_depth = " + device_dimensions["interface_depth"].ToString());
+            sw_newton.WriteLine("\tset buffer_depth = " + device_dimensions["buffer_depth"].ToString());
             sw_newton.WriteLine("end");
 
             sw_newton.WriteLine("subsection Carrier Density Parameters");

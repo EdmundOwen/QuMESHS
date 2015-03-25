@@ -63,6 +63,9 @@ namespace Solver_Bases.Layers
         { return geom.InLayer(y, z); }
         public bool InLayer(double x, double y, double z)
         { return geom.InLayer(x, y, z); }
+        public Geometry_Type Geometry { get { return geom.Get_Geometry; } }
+        public ILayer Get_Component(int component_no) { return this; }
+        public int No_Components { get { return 1; } }
 
         public double Xmin { get { return geom.Xmin; } }
         public double Xmax { get { return geom.Xmax; } }

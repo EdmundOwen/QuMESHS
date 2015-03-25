@@ -88,6 +88,7 @@
     <Compile Include="IPoisson_Solve.cs" />
     <Compile Include="Layers\AlGaAs_Layer.cs" />
     <Compile Include="Layers\Air_Layer.cs" />
+    <Compile Include="Layers\Composite_Layer.cs" />
     <Compile Include="Layers\GaAs_Layer.cs" />
     <Compile Include="Layers\ILayer.cs" />
     <Compile Include="Layers\Layer.cs" />

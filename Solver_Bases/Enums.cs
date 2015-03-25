@@ -50,6 +50,7 @@ namespace Solver_Bases
         half_slab,
         strip,
         slab,
-        sheet
+        sheet, 
+        composite
     }
 }

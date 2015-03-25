@@ -17,7 +17,6 @@ namespace TwoD_ThomasFermiPoisson
 
             // set nmath license key
 
-        //    Console.BufferHeight = Int16.MaxValue - 1;
             Console.WriteLine("Program starting");
 
             Console.WriteLine("Loading input parameters from file");
