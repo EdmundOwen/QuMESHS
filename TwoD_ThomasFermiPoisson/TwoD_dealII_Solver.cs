@@ -22,6 +22,9 @@ namespace TwoD_ThomasFermiPoisson
         string initcalc_parameterfile = "split_gate.in";
         string newton_parameterfile = "newton.in";
 
+        int nz_donor;
+        double zmin_donor, zmax_donor;
+
         public TwoD_dealII_Solver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
             : base(using_external_code)
         {
@@ -41,6 +44,11 @@ namespace TwoD_ThomasFermiPoisson
             // and save the dopent density 
             SpinResolved_Data dopents = (SpinResolved_Data)input["Dopent_Density"];
             Save_Data(dopents.Spin_Summed_Data, densdopent_filename);
+
+            // and the necessary data to work out where these points are
+            nz_donor = (int)(double)input["nz_pot_1d"];
+            zmin_donor = (double)input["zmin_pot_1d"];
+            zmax_donor = (double)input["zmax_pot_1d"];
         }
 
         /// <summary>
@@ -52,7 +60,7 @@ namespace TwoD_ThomasFermiPoisson
             StreamWriter sw_initcalc = new StreamWriter(initcalc_parameterfile);
 
             sw_initcalc.WriteLine("subsection System Geometry");
-            sw_initcalc.WriteLine("\tset ymin_pot = " + device_dimensions["ymin_pot"].ToString());
+            sw_initcalc.WriteLine("\tset zmin_pot = " + device_dimensions["zmin_pot"].ToString());
             sw_initcalc.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
             sw_initcalc.WriteLine("\tset pmma_depth = " + device_dimensions["pmma_depth"].ToString());
             sw_initcalc.WriteLine("\tset cap_depth = " + device_dimensions["cap_depth"].ToString());
@@ -77,12 +85,18 @@ namespace TwoD_ThomasFermiPoisson
             sw_initcalc.WriteLine("\tset zmax_dens = " + (exp.Zmin_Dens + exp.Dz_Dens * (exp.Nz_Dens - 1)).ToString());
             sw_initcalc.WriteLine("end");
 
+            sw_initcalc.WriteLine("subsection Donor Density Parameters");
+            sw_initcalc.WriteLine("\tset nz_donor = " + nz_donor);
+            sw_initcalc.WriteLine("\tset zmin_donor = " + zmin_donor);
+            sw_initcalc.WriteLine("\tset zmax_donor = " + zmax_donor);
+            sw_initcalc.WriteLine("end");
+
             sw_initcalc.Close();
 
             // and write the parameter details needed for the newton step
             StreamWriter sw_newton = new StreamWriter(newton_parameterfile);
             sw_newton.WriteLine("subsection System Geometry");
-            sw_newton.WriteLine("\tset ymin_pot = " + device_dimensions["ymin_pot"].ToString());
+            sw_newton.WriteLine("\tset zmin_pot = " + device_dimensions["zmin_pot"].ToString());
             sw_newton.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
             sw_newton.WriteLine("\tset pmma_depth = " + device_dimensions["pmma_depth"].ToString());
             sw_newton.WriteLine("\tset cap_depth = " + device_dimensions["cap_depth"].ToString());

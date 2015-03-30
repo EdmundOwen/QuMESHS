@@ -94,14 +94,14 @@
 #
 ## Minimum of simulation domain in the transverse direction
 #% ymin_dens = -200.0
-% ymin_dens = -600.0
+% ymin_dens = -1000.0
 #
 ## Lattice spacing in the transverse direction
 % dy_dens =  5.0
 #
 ## Number of lattice points in transverse direction
 #% ny_dens = 81
-% ny_dens = 241
+% ny_dens = 401
 #
 ## Minimum of simulation domain in the growth direction
 % zmin_dens = -325.0

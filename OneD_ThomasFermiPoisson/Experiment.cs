@@ -40,10 +40,14 @@ namespace OneD_ThomasFermiPoisson
             if (layers[layers.Length - 1].Zmax - layers[1].Zmin < (Nz_Pot - 1) * Dz_Pot)
                 throw new Exception("Error - the band structure provided is smaller than the simulation domain!\nUse nz = " + (int)Math.Ceiling((layers[layers.Length - 1].Zmax - layers[1].Zmin) / Dz_Pot) + " instead");
 
+            // calculate the top and bottom of the domain
+            input_dict["zmin"] = Geom_Tool.Get_Zmin(layers);
+            input_dict["zmax"] = Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot;
+
             // and split gate dimensions
             device_dimensions = new Dictionary<string, double>();
-            device_dimensions.Add("bottom_position", Geom_Tool.Get_Zmin(layers));
-            device_dimensions.Add("top_position", Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot);
+            device_dimensions.Add("bottom_position", (double)input_dict["zmin"]);
+            device_dimensions.Add("top_position", (double)input_dict["zmax"]);
 
             // gate voltages (default is zero)
             boundary_conditions = new Dictionary<string, double>();

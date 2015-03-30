@@ -27,9 +27,10 @@ namespace TwoD_ThomasFermiPoisson
             // read in the value of vsg to be used
             Console.WriteLine("Enter split gate voltage");
    //         inputs["split_V"] = double.Parse(Console.ReadLine());
-            inputs["split_V"] = -0.49;
-            inputs["top_V"] = -1.0 + -0.01 * double.Parse(args[0]);
+            inputs["split_V"] = -0.5;
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
+            inputs["top_V"] = -1.0 + -0.01 * double.Parse(args[0]);
+            Console.WriteLine("Setting \"top_V\" to " + ((double)inputs["top_V"]).ToString() + "V");
 
             // check to make sure it's negative
             if ((double)inputs["split_V"] > 0)
@@ -54,6 +55,9 @@ namespace TwoD_ThomasFermiPoisson
                 inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
                 inputs.Add("Dopent_Density", exp_init.Dopent_Density);
                 inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
+                inputs.Add("nz_pot_1d", inputs_init["nz"]);
+                inputs.Add("zmin_pot_1d", inputs_init["zmin"]);
+                inputs.Add("zmax_pot_1d", inputs_init["zmax"]);
                 // get the frozen out surface charge at 70K
                 if (!inputs.ContainsKey("surface_charge")) inputs.Add("surface_charge", exp_init.Surface_Charge(70.0));
                 else Console.WriteLine("Surface charge set from Input_Parameters.txt to " + ((double)inputs["surface_charge"]).ToString());
@@ -84,21 +88,21 @@ namespace TwoD_ThomasFermiPoisson
 
                 Console.WriteLine("Experiment complete");
 
-                Rename_Results((double)inputs["split_V"]);
+                Rename_Results((double)inputs["split_V"], (double)inputs["top_V"]);
             }
         }
 
-        static void Rename_Results(double split_V)
+        static void Rename_Results(double split_V, double top_V)
         {
             Console.WriteLine();
             Console.WriteLine("Renaming files");
-            File.Copy("bare_pot.dat", "bare_pot_sg" + split_V.ToString("F2") + ".dat", true);
-            File.Copy("potential.dat", "pot_sg" + split_V.ToString("F2") + ".dat", true);
-            File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + split_V.ToString("F2") + ".dat", true);
-            File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + split_V.ToString("F2") + ".dat", true);
-            File.Copy("energies.dat", "energies_sg" + split_V.ToString("F2") + ".dat", true);
-            File.Copy("xc_pot.dat", "xc_pot_sg" + split_V.ToString("F2") + ".dat", true);
-            File.Copy("pot_KS.dat", "pot_KS_sg" + split_V.ToString("F2") + ".dat", true);
+            File.Copy("bare_pot.dat", "bare_pot_sg" + split_V.ToString("F2") + "_tg" + top_V.ToString("F2") + ".dat", true);
+            File.Copy("potential.dat", "pot_sg" + split_V.ToString("F2") + "_tg" + top_V.ToString("F2") + ".dat", true);
+            File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg" + split_V.ToString("F2") + "_tg" + top_V.ToString("F2") + ".dat", true);
+            File.Copy("dens_2D_down_raw.dat", "dens_2D_down_sg" + split_V.ToString("F2") + "_tg" + top_V.ToString("F2") + ".dat", true);
+            File.Copy("energies.dat", "energies_sg" + split_V.ToString("F2") + "_tg" + top_V.ToString("F2") + ".dat", true);
+            File.Copy("xc_pot.dat", "xc_pot_sg" + split_V.ToString("F2") + "_tg" + top_V.ToString("F2") + ".dat", true);
+            File.Copy("pot_KS.dat", "pot_KS_sg" + split_V.ToString("F2") + "_tg" + top_V.ToString("F2") + ".dat", true);
             Console.WriteLine("Files renamed");
         }
 

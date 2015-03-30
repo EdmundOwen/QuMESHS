@@ -48,7 +48,7 @@ namespace TwoD_ThomasFermiPoisson
             // and split gate dimensions
             device_dimensions = new Dictionary<string, double>();
             device_dimensions.Add("split_width", (double)input_dict["split_width"]);
-            device_dimensions.Add("ymin_pot", this.Layers[1].Zmin);
+            device_dimensions.Add("zmin_pot", this.Layers[1].Zmin);
             device_dimensions.Add("pmma_depth", Geom_Tool.Find_Layer_Above_Surface(this.Layers).Zmax);
             device_dimensions.Add("cap_depth", Geom_Tool.Find_Layer_Below_Surface(this.Layers).Zmin);
             device_dimensions.Add("interface_depth", this.Layers[1].Zmax);
@@ -282,11 +282,12 @@ namespace TwoD_ThomasFermiPoisson
                 if (t == 0.0)
                     t = t_min;
 
+                double t_old = t;
                 t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
-                if (t < 0.0)
+                if (t_old == t && t_old == t_damp * t_min)
                 {
-                    Console.WriteLine("Iterator has stalled, setting t = 0");
-                    t = 0.0;
+                    t_min *= 2.0;
+                    Console.WriteLine("Iterator has stalled, doubling t_min to " + t_min.ToString());
                 }
 
                 // and check convergence of density

@@ -12,7 +12,7 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 2000
+% nz = 1900
 #
 ## Spacing of lattice sites for the density calculation
 % dz = 1
