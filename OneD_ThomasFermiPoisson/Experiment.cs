@@ -37,8 +37,12 @@ namespace OneD_ThomasFermiPoisson
             base.Initialise(input_dict);
 
             // check that the size of the domain [(nz_pot-1) * dz_pot] is not larger than the band structure
-            if (layers[layers.Length - 1].Zmax - layers[1].Zmin < (Nz_Pot - 1) * Dz_Pot)
-                throw new Exception("Error - the band structure provided is smaller than the simulation domain!\nUse nz = " + (int)Math.Ceiling((layers[layers.Length - 1].Zmax - layers[1].Zmin) / Dz_Pot) + " instead");
+            if (layers[layers.Length - 1].Zmax - Geom_Tool.Get_Zmin(layers) < (Nz_Pot - 1) * Dz_Pot)
+                throw new Exception("Error - the band structure provided is smaller than the simulation domain!\nUse nz = " + (int)Math.Ceiling((layers[layers.Length - 1].Zmax - Geom_Tool.Get_Zmin(layers)) / Dz_Pot) + " instead");
+            // and check that the top of the domain is the surface (unless this check is overloaded)
+            bool surface_override = false; Get_From_Dictionary<bool>(input_dict, "surface_check", ref surface_override, true);
+            if (!surface_override && Geom_Tool.Find_Layer_Below_Surface(layers).Zmax - Geom_Tool.Get_Zmin(layers) - Nz_Pot * Dz_Pot != 0.0)
+                throw new Exception("Error - the top of the domain is not the surface!\nUse the input \"surface_check\" to override");
 
             // calculate the top and bottom of the domain
             input_dict["zmin"] = Geom_Tool.Get_Zmin(layers);

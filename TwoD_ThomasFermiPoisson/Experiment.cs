@@ -191,7 +191,7 @@ namespace TwoD_ThomasFermiPoisson
        //     Run_Iteration_Routine(dft_solv, 0.1, 1000);
 
             bool converged = false;
-            int no_runs = 2500;
+            int no_runs = 200;
             if (no_dft)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
             else
