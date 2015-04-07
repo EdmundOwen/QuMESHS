@@ -41,6 +41,7 @@ namespace Solver_Bases
 
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
+        protected bool initialise_from_restart = false;     //is the program starting from a restart? (normally false)
 
         public void Initialise(Dictionary<string, object> input_dict)
         {
