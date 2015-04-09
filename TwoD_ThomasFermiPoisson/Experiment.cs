@@ -57,7 +57,8 @@ namespace TwoD_ThomasFermiPoisson
             // gate voltages
             boundary_conditions = new Dictionary<string, double>();
             boundary_conditions.Add("top_V", (double)input_dict["top_V"]);
-            boundary_conditions.Add("split_V", (double)input_dict["split_V"]);
+            boundary_conditions.Add("split_V1", Get_From_Dictionary(input_dict, "split_V1", (double)input_dict["split_V"]));
+            boundary_conditions.Add("split_V2", Get_From_Dictionary(input_dict, "split_V2", (double)input_dict["split_V"]));
             boundary_conditions.Add("bottom_V", 0.0);
 
             // initialise data classes for the density and chemical potential
@@ -99,6 +100,8 @@ namespace TwoD_ThomasFermiPoisson
             }
             else if (initialise_from_restart)
             {
+                Console.WriteLine("Recovering data from previous, interrupted simulation...");
+
                 // load density and chemical potential
                 string[] cardens_tmp = File.ReadAllLines("carrier_density.tmp");
                 string[] dopdens_tmp = File.ReadAllLines("dopent_density.tmp");
@@ -117,6 +120,8 @@ namespace TwoD_ThomasFermiPoisson
 
                 // and load the surface charge
                 boundary_conditions.Add("surface", (double)input_dict["surface_charge"]);
+
+                Console.WriteLine("Data recovered.  Restarting from checkpoint");
             }
             else
             {
@@ -140,13 +145,14 @@ namespace TwoD_ThomasFermiPoisson
 
             pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
 
+            // and load the output suffix for identification of output files
+            Get_From_Dictionary<string>(input_dict, "output_suffix", ref output_suffix, true);
+
             Console.WriteLine("Experimental parameters initialised");
         }
 
         public override void Run()
         {
-            string output_suffix = "_sg" + boundary_conditions["split_V"].ToString("F2") + "_tg" + boundary_conditions["top_V"].ToString("F2") + ".dat";
-
             if (!initialise_from_restart)
             {
                 // create restart flag file
@@ -168,7 +174,7 @@ namespace TwoD_ThomasFermiPoisson
       //      TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
 
             bool converged = false;
-            int no_runs = 200;
+            int no_runs = 1000;
             if (no_dft)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
             else
@@ -267,11 +273,11 @@ namespace TwoD_ThomasFermiPoisson
                     t = t_min;
 
                 t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
-                if (count % 5 == 0 && t == t_damp * t_min)
-                {
-                    t_min *= 2.0;
-                    Console.WriteLine("Iterator has stalled, doubling t_min to " + t_min.ToString());
-                }
+   //             if (count % 5 == 0 && t == t_damp * t_min)
+   //             {
+   //                 t_min *= 2.0;
+   //                 Console.WriteLine("Iterator has stalled, doubling t_min to " + t_min.ToString());
+   //             }
 
                 // and check convergence of density
                 Band_Data dens_diff = carrier_density.Spin_Summed_Data - dens_old;

@@ -24,13 +24,39 @@ namespace TwoD_ThomasFermiPoisson
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Input_Parameters.txt");
             Console.WriteLine("Input parameters loaded");
 
+            ////////////////////////////////////////////////
+            //
+            //    EDITS FOR BATCH RUNS
+            //
+            ////////////////////////////////////////////////
+
             // read in the value of vsg to be used
             Console.WriteLine("Enter split gate voltage");
    //         inputs["split_V"] = double.Parse(Console.ReadLine());
+            int index = int.Parse(args[0]);
+
+            // split gate with bias
+//            int maxval = 16;
+//            int i1 = index % maxval;
+//            int i2 = (index - i1) / maxval;
+//            if (i1 < i2)
+//                return;
+//            inputs["split_V1"] = -0.5 - 0.1 * (double)i1;
+//            inputs["split_V2"] = -0.5 - 0.1 * (double)i2;
+//            Console.WriteLine("Setting \"split_V1\" to " + ((double)inputs["split_V1"]).ToString() + "V");
+//            Console.WriteLine("Setting \"split_V2\" to " + ((double)inputs["split_V2"]).ToString() + "V");
+//            inputs["top_V"] = 0.0;
+//            Console.WriteLine("Setting \"top_V\" to " + ((double)inputs["top_V"]).ToString() + "V");
+//            inputs["output_suffix"] = "_sg1" + ((double)inputs["split_V1"]).ToString("F2") + "_sg2" + ((double)inputs["split_V2"]).ToString("F2") + ".dat";
+
+            //top gated with constant side gate
             inputs["split_V"] = -0.5;
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
             inputs["top_V"] = -1.0 + -0.01 * double.Parse(args[0]);
             Console.WriteLine("Setting \"top_V\" to " + ((double)inputs["top_V"]).ToString() + "V");
+            inputs["output_suffix"] = "_sg" + ((double)inputs["split_V"]).ToString("F2") + "_tg" + ((double)inputs["top_V"]).ToString("F2") + ".dat";
+
+            ////////////////////////////////////////////////
 
             // check to make sure it's negative
             if ((double)inputs["split_V"] > 0)

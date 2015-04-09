@@ -45,7 +45,7 @@ namespace Solver_Bases
             return data;
         }
 
-        public abstract void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file);
-        public abstract void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t);
+        public abstract void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file);
+        public abstract void Create_NewtonStep_File(double split_width, string output_file, double t);
     }
 }

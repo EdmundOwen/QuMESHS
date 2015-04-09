@@ -43,6 +43,9 @@ namespace Solver_Bases
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
         protected bool initialise_from_restart = false;     //is the program starting from a restart? (normally false)
 
+        // suffix for data output to identify between different runs... initially empty
+        protected string output_suffix = "";
+
         public void Initialise(Dictionary<string, object> input_dict)
         {
             // solver inputs
@@ -252,6 +255,19 @@ namespace Solver_Bases
         /// DOES NOT WORK FOR INTs
         /// </summary>
         /// <param name="attempt_only"> set to true if you don't want this method to throw an Exception</param>
+        protected T Get_From_Dictionary<T>(Dictionary<string, object> input, string key, T default_value)
+        {
+            if (input.ContainsKey(key))
+                return (T)input[key];
+            else
+                return default_value;
+        }
+
+        /// <summary>
+        /// gets a value of the type "T" from the input dictionary
+        /// DOES NOT WORK FOR INTs
+        /// </summary>
+        /// <param name="attempt_only"> set to true if you don't want this method to throw an Exception</param>
         protected void Get_From_Dictionary<T>(Dictionary<string, object> input, string key, ref T value, bool attempt_only = false)
         {
             if (input.ContainsKey(key))
@@ -266,6 +282,14 @@ namespace Solver_Bases
                 value = (int)(double)input[key];
             else if (!attempt_only)
                 throw new KeyNotFoundException("Error - cannot find the key: " + key);
+        }
+
+        protected int Get_From_Dictionary(Dictionary<string, object> input, string key, ref int value, int default_value)
+        {
+            if (input.ContainsKey(key))
+                return (int)(double)input[key];
+            else
+                return default_value;
         }
 
         protected void Get_From_Dictionary<T>(Dictionary<string, object> input, string key, ref T value, T default_value)

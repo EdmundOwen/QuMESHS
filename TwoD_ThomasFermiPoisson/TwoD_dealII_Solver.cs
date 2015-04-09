@@ -59,6 +59,9 @@ namespace TwoD_ThomasFermiPoisson
             // write the parameter details for the initial potential calculation
             StreamWriter sw_initcalc = new StreamWriter(initcalc_parameterfile);
 
+            // check if the top layer is air... if so, we need to use natural boundary conditions on the upper surface
+            bool natural_top_bc = (exp.Layers[exp.Layers.Length - 1].Material == Material.Air);
+
             sw_initcalc.WriteLine("subsection System Geometry");
             sw_initcalc.WriteLine("\tset zmin_pot = " + device_dimensions["zmin_pot"].ToString());
             sw_initcalc.WriteLine("\tset split_width = " + device_dimensions["split_width"].ToString());
@@ -71,7 +74,8 @@ namespace TwoD_ThomasFermiPoisson
             sw_initcalc.WriteLine("subsection Boundary Conditions");
             sw_initcalc.WriteLine("\tset top_bc = " + (boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC).ToString());
             sw_initcalc.WriteLine("\tset bottom_bc = " + (boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC).ToString());
-            sw_initcalc.WriteLine("\tset split_bc = " + (boundary_conditions["split_V"] * Physics_Base.energy_V_to_meVpzC).ToString());
+            sw_initcalc.WriteLine("\tset split_bc1 = " + (boundary_conditions["split_V1"] * Physics_Base.energy_V_to_meVpzC).ToString());
+            sw_initcalc.WriteLine("\tset split_bc2 = " + (boundary_conditions["split_V2"] * Physics_Base.energy_V_to_meVpzC).ToString());
             sw_initcalc.WriteLine("\tset surface_bc = " + (0.5 * boundary_conditions["surface"]).ToString());                                   // note that the surface "kink" is halved...
                                                                                                                                                 // not sure why, but this is deal.II specific
             sw_initcalc.WriteLine("end");
@@ -90,6 +94,8 @@ namespace TwoD_ThomasFermiPoisson
             sw_initcalc.WriteLine("\tset zmin_donor = " + zmin_donor);
             sw_initcalc.WriteLine("\tset zmax_donor = " + zmax_donor);
             sw_initcalc.WriteLine("end");
+
+            sw_initcalc.WriteLine("set natural top_bc = " + natural_top_bc.ToString().ToLower());
 
             sw_initcalc.Close();
 
@@ -112,6 +118,8 @@ namespace TwoD_ThomasFermiPoisson
             sw_newton.WriteLine("\tset zmin_dens = " + exp.Zmin_Dens.ToString());
             sw_newton.WriteLine("\tset zmax_dens = " + (exp.Zmin_Dens + exp.Dz_Dens * (exp.Nz_Dens - 1)).ToString());
             sw_newton.WriteLine("end");
+
+            sw_newton.WriteLine("set natural top_bc = " + natural_top_bc.ToString().ToLower());
 
             sw_newton.Close();
         }

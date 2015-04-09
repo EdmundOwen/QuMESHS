@@ -26,7 +26,7 @@ namespace TwoD_ThomasFermiPoisson
 
         string chempot_result_filename = "y.dat";
 
-        double top_bc, split_bc, bottom_bc;
+        double top_bc, split_bc1, split_bc2, bottom_bc;
         double split_width;
         double surface;
 
@@ -36,6 +36,8 @@ namespace TwoD_ThomasFermiPoisson
             : base(using_external_code, input)
         {
             this.exp = exp;
+            // check if the top layer is air... if so, we need to use natural boundary conditions on the upper surface
+            natural_topbc = (exp.Layers[exp.Layers.Length - 1].Material == Material.Air);
 
             // calculate scaling factor w = a * z such that the z dimension has the same length as the y dimension
             z_scaling = (exp.Ny_Pot * exp.Dy_Pot) / (exp.Nz_Pot * exp.Dz_Pot);
@@ -90,7 +92,8 @@ namespace TwoD_ThomasFermiPoisson
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // with a factor to convert from V to meV zC^-1
             top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;
-            split_bc = boundary_conditions["split_V"] * Physics_Base.energy_V_to_meVpzC;
+            split_bc1 = boundary_conditions["split_V1"] * Physics_Base.energy_V_to_meVpzC;
+            split_bc2 = boundary_conditions["split_V2"] * Physics_Base.energy_V_to_meVpzC;
             bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
 
             // and save the split width and surface charge
@@ -98,7 +101,7 @@ namespace TwoD_ThomasFermiPoisson
             this.surface = boundary_conditions["surface"];
 
             if (flexpde_script != null)
-                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_script);
+                Create_FlexPDE_File(top_bc, split_bc1, split_bc2, split_width, surface, bottom_bc, flexpde_script);
         }
 
         protected override Band_Data Get_ChemPot_From_External(Band_Data density)
@@ -108,7 +111,7 @@ namespace TwoD_ThomasFermiPoisson
             return Get_Data_From_External(initcalc_location, flexpde_options, initcalc_result_filename);
         }
 
-        public override void Create_FlexPDE_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file)
+        public override void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -139,7 +142,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling ");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
-            sw.WriteLine("\tsplit_V = " + split_bc.ToString());
+            sw.WriteLine("\tsplit_V1 = " + split_bc1.ToString());
+            sw.WriteLine("\tsplit_V2 = " + split_bc2.ToString());
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
@@ -211,7 +215,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t\teps = eps_0");
             sw.WriteLine("\t\tSTART(-ly / 2, 0)");
             // left split gate voltage
-            sw.WriteLine("\t\tVALUE(u) = split_V");
+            sw.WriteLine("\t\tVALUE(u) = split_V1");
             sw.WriteLine("\t\tLINE TO (-ly / 2, split_depth) TO (-split_width / 2, split_depth) TO (-split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
@@ -220,7 +224,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t\teps = eps_0");
             sw.WriteLine("\t\tSTART(ly / 2, 0)");
             // right split gate voltage
-            sw.WriteLine("\t\tVALUE(u) = split_V");
+            sw.WriteLine("\t\tVALUE(u) = split_V2");
             sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
             
@@ -263,7 +267,7 @@ namespace TwoD_ThomasFermiPoisson
         {
             Save_Data(gphi, gphi_filename);
             Save_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
-            Create_NewtonStep_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_script, T);
+            Create_NewtonStep_File(split_width, flexpde_script, T);
 
             return Get_Data_From_External(newton_location, flexpde_options, newton_result_filename);
         }
@@ -283,7 +287,7 @@ namespace TwoD_ThomasFermiPoisson
             return Calculate_Newton_Step(rho_prime, gphi, car_dens);
         }
 
-        public override void Create_NewtonStep_File(double top_bc, double split_bc, double split_width, double surface, double bottom_bc, string output_file, double t)
+        public override void Create_NewtonStep_File(double split_width, string output_file, double t)
         {
             StreamWriter sw = new StreamWriter(output_file);
 

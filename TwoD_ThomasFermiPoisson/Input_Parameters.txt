@@ -116,7 +116,7 @@
 ############## Data transfer details ##############################
 #
 ## Whether to try restarting if the program was terminated before completion
-% with_checkpointing = true
+% with_checkpointing = false
 #
 ## Whether to start a simulation "hot" with previous data
 % hot_start = false
