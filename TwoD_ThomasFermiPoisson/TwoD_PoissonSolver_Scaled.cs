@@ -89,6 +89,9 @@ namespace TwoD_ThomasFermiPoisson
 
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimension, Dictionary<string, double> boundary_conditions)
         {
+            if (natural_topbc)
+                boundary_conditions["top_V"] = 0.0;
+
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // with a factor to convert from V to meV zC^-1
             top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;

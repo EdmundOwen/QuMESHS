@@ -14,7 +14,7 @@ namespace TwoD_ThomasFermiPoisson
     class TwoD_SO_DFTSolver : TwoD_Density_Base
     {
         double no_kb_T = 50.0;          // number of kb_T to integrate to
-        double delta_k = 0.03;           // integration variable in k for band structure
+        double delta_k = 0.01;           // integration variable in k for band structure
         double eps = 1.0e-9;            // minimum density added before convergence
 
         DoubleComplex I = new DoubleComplex(0.0, 1.0);
@@ -23,8 +23,8 @@ namespace TwoD_ThomasFermiPoisson
         double alpha;
         double h;
         double g_1D;
-        double E_min = -10.0;           // minimum energy value for Lanczos matrix diagonalisation routine in meV
-                                        // should be less than minimum energy expected for any k-vector
+        double E_min = -100.0;           // minimum energy value for Lanczos matrix diagonalisation routine in meV
+                                         // should be less than minimum energy expected for any k-vector
 
         Band_Data dV_x, dV_y, dV_xy;
 
@@ -43,9 +43,9 @@ namespace TwoD_ThomasFermiPoisson
         public void Get_SOI_parameters(Band_Data chem_pot)
         {
             // initialise matrices with same dimension as the chem_pot data which we will receive later
-            dV_x = new Band_Data(new DoubleMatrix(chem_pot.mat.Rows, chem_pot.mat.Cols));
-            dV_y = new Band_Data(new DoubleMatrix(chem_pot.mat.Rows, chem_pot.mat.Cols));
-            dV_xy = new Band_Data(new DoubleMatrix(chem_pot.mat.Rows, chem_pot.mat.Cols));
+            dV_x = new Band_Data(chem_pot.mat.Rows, chem_pot.mat.Cols, 0.0);
+            dV_y = new Band_Data(chem_pot.mat.Rows, chem_pot.mat.Cols, 0.0);
+            dV_xy = new Band_Data(chem_pot.mat.Rows, chem_pot.mat.Cols, 0.0);
 
             // calculate the derivatives of chem_pot in y and z and the second mixed derivative
             for (int i = 1; i < nx - 1; i++)
@@ -72,6 +72,7 @@ namespace TwoD_ThomasFermiPoisson
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
+            E_min = dft_pot.Min();
 
             // reset charge density
             charge_density = 0.0 * charge_density;
@@ -332,6 +333,10 @@ namespace TwoD_ThomasFermiPoisson
         /// </summary>
         void Print_Band_Structure(Band_Data dft_pot, ILayer[] layers, int Nk, double dk, string outfile, int max_eigval)
         {
+            // set temperature high so that all wave functions will be calculated
+            double old_temperature = temperature;
+            temperature = 1000.0;
+
             if (dV_x == null)
                 throw new Exception("Error - Band structure derivatives are null!  Have you initiated this type properly by calling Get_SOI_parameters(Band_Data chem_pot)?");
 
@@ -370,6 +375,9 @@ namespace TwoD_ThomasFermiPoisson
                 sw.WriteLine();
             }
             sw.Close();
+
+            // reset temperature
+            temperature = old_temperature;
         }
 
         public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)

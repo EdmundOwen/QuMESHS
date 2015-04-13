@@ -168,7 +168,8 @@ namespace TwoD_ThomasFermiPoisson
 
             // and then run the DFT solver at the base temperature over a limited range
     //        TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-            TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+     //       TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+            TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
             dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
             dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
       //      TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
@@ -185,6 +186,12 @@ namespace TwoD_ThomasFermiPoisson
 
             // run the iteration routine!
             converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, no_runs);
+            if (!converged)
+            {
+                StreamWriter sw_notconverged = new StreamWriter("not_converged" + output_suffix); 
+                sw_notconverged.WriteLine("Not converged in " + no_runs.ToString() + " iterations"); 
+                sw_notconverged.Close();
+            }
 
             // initialise output solvers
             TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(this);
