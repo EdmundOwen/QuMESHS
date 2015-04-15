@@ -32,6 +32,8 @@ namespace Solver_Bases
         AlGaAs,
         AlAs,
         In075GaAs,
+        InAlAs,
+        InGaAs,
         InAs,
         PMMA,
         Air,

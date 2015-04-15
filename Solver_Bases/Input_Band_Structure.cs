@@ -86,7 +86,15 @@ namespace Solver_Bases
                     break;
 
                 case Material.AlGaAs:
-                    result = new AlGaAs_Layer(geom, (int)data["layer_no"]);
+                    result = new AlGaAs_Layer(geom, (int)data["layer_no"], (double)data["x"]);
+                    break;
+
+                case Material.InGaAs:
+                    result = new InGaAs_Layer(geom, (int)data["layer_no"], (double)data["x"]);
+                    break;
+
+                case Material.InAlAs:
+                    result = new InAlAs_Layer(geom, (int)data["layer_no"], (double)data["x"]);
                     break;
 
                 case Material.PMMA:

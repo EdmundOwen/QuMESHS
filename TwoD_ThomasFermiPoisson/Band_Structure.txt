@@ -10,38 +10,38 @@ surface=true
 ## High density shallow HEMT (eg W0626)
 #
 #mat=GaAs t=10
-#mat=AlGaAs t=40 x=.3 Nd=0.3e18
-#mat=AlGaAs t=40 x=.3
+#mat=AlGaAs t=40 x=.33 Nd=0.3e18
+#mat=AlGaAs t=40 x=.33
 #mat=GaAs t=410
 #
 ## Low density deep HEMT (eg W0616)
 #
 #   mat=GaAs t=10
-#   #mat=AlGaAs t=200 x=.3 Nd=4.4e16
+#   #mat=AlGaAs t=200 x=.33 Nd=4.4e16
 #   # Gives density of 1.10e11 cm^-2
-#   #mat=AlGaAs t=200 x=.3 Nd=5.4e16
+#   #mat=AlGaAs t=200 x=.33 Nd=5.4e16
 #   # Gives density of 1.49e11 cm^-2
-#   mat=AlGaAs t=200 x=.3 Nd=4.3e16
+#   mat=AlGaAs t=200 x=.33 Nd=4.3e16
 #   # Gives density of 1.01e11 cm^-2
-#   #mat=AlGaAs t=200 x=.3 Nd=1.9e17
+#   #mat=AlGaAs t=200 x=.33 Nd=1.9e17
 #   # Gives density of 5.??e11 cm^-2
-#   mat=AlGaAs t=75 x=.3
+#   mat=AlGaAs t=75 x=.33
 #   mat=GaAs t=1615
 #   # Na=1e14
 #
 ## Delta doped HEMT (eg W731)
 #
 #mat=GaAs t=10
-#mat=AlGaAs t=200
-#mat=AlGaAs t=1 Nd=3.7e18 delta=true
-#mat=AlGaAs t=75
+#mat=AlGaAs x=.33 t=200
+#mat=AlGaAs x=.33 t=1 Nd=3.7e18 delta=true
+#mat=AlGaAs x=.33 t=75
 #mat=GaAs t=914
 #
 ## Masato's wafer
 #
 mat=GaAs t=24
-mat=AlGaAs t=36 x=.3 Nd=6e17
-mat=AlGaAs t=10 x=.3 
+mat=AlGaAs t=36 x=.33 Nd=6e17
+mat=AlGaAs t=10 x=.33 
 mat=GaAs t=1930 Na=1e14
 #
 mat=substrate

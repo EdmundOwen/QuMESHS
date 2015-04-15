@@ -22,11 +22,13 @@ namespace TwoD_ThomasFermiPoisson
         double tx, ty;
         double alpha;
         double h;
-        double g_1D;
-        double E_min = -100.0;           // minimum energy value for Lanczos matrix diagonalisation routine in meV
-                                         // should be less than minimum energy expected for any k-vector
+        double g_1D;                    // one dimensional density of states in k; g(k) = dn/dk
+                                        // NOTE: this is without spin and k degeneracy and is, therefore, a factor of 1/4 times the non-SOI case
+        double E_min = -100.0;          // minimum energy value for Lanczos matrix diagonalisation routine in meV
+                                        // should be less than minimum energy expected for any k-vector
 
         Band_Data dV_x, dV_y, dV_xy;
+        double kmax = 0.0;
 
         public TwoD_SO_DFTSolver(Experiment exp)
             : base(exp)
@@ -37,7 +39,7 @@ namespace TwoD_ThomasFermiPoisson
             alpha = r_so / (Physics_Base.q_e * Physics_Base.hbar);
 
             h = 3.0 * delta_k / 8.0;
-            g_1D = 2.0 / Math.PI;
+            g_1D = 0.5 / Math.PI;
         }
 
         public void Get_SOI_parameters(Band_Data chem_pot)
@@ -81,40 +83,46 @@ namespace TwoD_ThomasFermiPoisson
             bool integrated = false;
             int count = 0;
             double k = 0;
+
+            // create initial hamiltonian and eigendecomposition
+            int max_wavefunction_old_p, max_wavefunction_old_m;
+            DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
+            DoubleHermitianEigDecomp eig_decomp_old_p = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_p);
+            DoubleHermitianEigDecomp eig_decomp_old_m = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_m);
+            
             while (!integrated)
             {
-                // generate the Hamiltonian for this k value
-                DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
-                DoubleHermitianMatrix hamiltonian_m = Create_Hamiltonian(layers, dft_pot, -1.0 * k);
-
-                // calculate density for this value of k
-                SpinResolved_Data charge_density_k = Calculate_Density(hamiltonian_p);
-                if (k != 0)
-                    charge_density_k += Calculate_Density(hamiltonian_m);
-
-                // add new k density according to Simpson's 3/8th rule
-                if (count == 0)
-                {
-                    charge_density = h * charge_density_k;
-                    // and check to see whether there is any density being added
-                    integrated = Check_Convergence(charge_density_k, eps);
-                }
-                else if (count % 3 != 0)
-                    charge_density += 3.0 * h * charge_density_k;
-                else
-                {
-                    // check whether there was any density at this wave vector to add
-                    integrated = Check_Integration_Convergence(charge_density_k, eps);
-
-                    if (integrated)
-                        charge_density += h * charge_density_k;
-                    else
-                        charge_density += 2.0 * h * charge_density_k;
-                }
-
+                // increment the wavevector
                 k += delta_k;
                 count += 1;
+
+                // create new decompositions for forwards and backwards analysis
+                int max_wavefunction_p, max_wavefunction_m;
+                DoubleHermitianEigDecomp eig_decomp_p = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, k), out max_wavefunction_p);
+                DoubleHermitianEigDecomp eig_decomp_m = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, -1.0 * k), out max_wavefunction_m);
+
+                SpinResolved_Data new_charge = new SpinResolved_Data(nx, ny);
+
+                // cycle over each of the positive bands
+                for (int i = 0; i < max_wavefunction_p; i++)
+                    new_charge += Calculate_Density(eig_decomp_old_p, eig_decomp_p, i);
+                // and negative bands
+                for (int i = 0; i < max_wavefunction_m; i++)
+                    new_charge += Calculate_Density(eig_decomp_old_m, eig_decomp_m, i);
+
+                // check whether the density has converged
+                if (Math.Abs(new_charge.Spin_Summed_Data.Min()) < eps && Math.Abs(new_charge.Spin_Summed_Data.Max()) < eps)
+                    integrated = true;
+
+                // set new eigenvalue decompositions and max_wavefunctions to the old ones
+                eig_decomp_old_m = eig_decomp_m; eig_decomp_old_p = eig_decomp_p;
+                max_wavefunction_old_m = max_wavefunction_m; max_wavefunction_old_p = max_wavefunction_p;
+
+                // and finally, add the charge density calculated
+                charge_density += new_charge;
             }
+
+            kmax = k;
         }
 
         DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, Band_Data dft_pot, double k)
@@ -241,31 +249,37 @@ namespace TwoD_ThomasFermiPoisson
             return eps > -1.0 * max_dens;
         }
 
-        SpinResolved_Data Calculate_Density(DoubleHermitianMatrix hamiltonian)
+        SpinResolved_Data Calculate_Density(DoubleHermitianEigDecomp eig_decomp_old, DoubleHermitianEigDecomp eig_decomp_new, int wavefunction)
         {
-            int max_wavefunction;
-            DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(hamiltonian, out max_wavefunction);
+                DoubleMatrix dens_up = new DoubleMatrix(nx, ny, 0.0);
+                DoubleMatrix dens_down = new DoubleMatrix(nx, ny, 0.0);
 
-            DoubleMatrix dens_up = new DoubleMatrix(nx, ny, 0.0);
-            DoubleMatrix dens_down = new DoubleMatrix(nx, ny, 0.0);
-
-            for (int i = 0; i < nx; i++)
-                for (int j = 0; j < ny; j++)
-                {
-                    // do not add anything to the density if on the edge of the domain
-                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
-                        continue;
-
-                    for (int n = 0; n < max_wavefunction; n++)
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
                     {
+                        // do not add anything to the density if on the edge of the domain
+                        if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
+                            continue;
+
                         // calculate the density of this spin configuration this hamiltonian
-                        dens_up[i, j] += g_1D * DoubleComplex.Norm(eig_decomp.EigenVector(n)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(n)[i * ny + j]) * Physics_Base.Get_Fermi_Function(eig_decomp.EigenValue(n), 0.0, temperature);
-                        dens_down[i, j] += g_1D * DoubleComplex.Norm(eig_decomp.EigenVector(n)[i * ny + j + nx * ny]) * DoubleComplex.Norm(eig_decomp.EigenVector(n)[i * ny + j + nx * ny]) * Physics_Base.Get_Fermi_Function(eig_decomp.EigenValue(n), 0.0, temperature);
+                        dens_up[i, j] += g_1D * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j]) * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j]) * Interpolate_Fermi_Function(eig_decomp_old, eig_decomp_new, wavefunction);
+                        dens_down[i, j] += g_1D * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j + nx * ny]) * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j + nx * ny]) * Interpolate_Fermi_Function(eig_decomp_old, eig_decomp_new, wavefunction);
                     }
-                }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            return -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            return -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));;
+        }
+
+        double Interpolate_Fermi_Function(DoubleHermitianEigDecomp eig_decomp_old, DoubleHermitianEigDecomp eig_decomp_new, int wavefunction)
+        {
+            double E0 = eig_decomp_old.EigenValue(wavefunction);
+            double dE_dk = (eig_decomp_new.EigenValue(wavefunction) - eig_decomp_old.EigenValue(wavefunction)) / delta_k;
+
+            double beta = 1.0 / (Physics_Base.kB * temperature);
+            OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double k) => Math.Pow(Math.Exp(beta * (E0 + dE_dk * k)) + 1, -1.0)));
+            dos_integrand.Integrator = new GaussKronrodIntegrator();
+
+            return dos_integrand.Integrate(0, delta_k);
         }
 
         DoubleHermitianEigDecomp Diagonalise_Hamiltonian(DoubleHermitianMatrix hamiltonian, out int max_wavefunction)
@@ -289,43 +303,90 @@ namespace TwoD_ThomasFermiPoisson
             return eig_decomp;
         }
 
-        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
         {
+            Get_SOI_parameters(chem_pot);
+
+            //   if (dV_x == null)
+            //       throw new Exception("Error - Band structure derivatives are null!  Have you initiated this type properly by calling Get_SOI_parameters(Band_Data chem_pot)?");
+
+            // convert the chemical potential into a quantum mechanical potential
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
+
+            // reset charge density
+            charge_density_deriv = 0.0 * charge_density_deriv;
+
+            // integrate up density from k = 0 to k = k_F
+            int count = 0;
+            double k = 0;
+
+            // create initial hamiltonian and eigendecomposition
+            int max_wavefunction_old_p, max_wavefunction_old_m;
+            DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
+            DoubleHermitianEigDecomp eig_decomp_old_p = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_p);
+            DoubleHermitianEigDecomp eig_decomp_old_m = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_m);
+
+            while (k < kmax)
+            {
+                // increment the wavevector
+                k += delta_k;
+                count += 1;
+
+                // create new decompositions for forwards and backwards analysis
+                int max_wavefunction_p, max_wavefunction_m;
+                DoubleHermitianEigDecomp eig_decomp_p = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, k), out max_wavefunction_p);
+                DoubleHermitianEigDecomp eig_decomp_m = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, -1.0 * k), out max_wavefunction_m);
+
+                SpinResolved_Data new_charge_deriv = new SpinResolved_Data(nx, ny);
+
+                // cycle over each of the positive bands
+                for (int i = 0; i < max_wavefunction_p; i++)
+                    new_charge_deriv += Calculate_Density_Derivative(eig_decomp_old_p, eig_decomp_p, i);
+                // and negative bands
+                for (int i = 0; i < max_wavefunction_m; i++)
+                    new_charge_deriv += Calculate_Density_Derivative(eig_decomp_old_m, eig_decomp_m, i);
+
+                // set new eigenvalue decompositions and max_wavefunctions to the old ones
+                eig_decomp_old_m = eig_decomp_m; eig_decomp_old_p = eig_decomp_p;
+                max_wavefunction_old_m = max_wavefunction_m; max_wavefunction_old_p = max_wavefunction_p;
+
+                // and finally, add the charge density calculated
+                charge_density_deriv += new_charge_deriv;
+            }
+        }
+
+        SpinResolved_Data Calculate_Density_Derivative(DoubleHermitianEigDecomp eig_decomp_old, DoubleHermitianEigDecomp eig_decomp_new, int wavefunction)
+        {
+            DoubleMatrix dens_up_deriv = new DoubleMatrix(nx, ny, 0.0);
+            DoubleMatrix dens_down_deriv = new DoubleMatrix(nx, ny, 0.0);
+
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                 {
-                    // leave the edges zeroed
+                    // do not add anything to the density if on the edge of the domain
                     if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
                         continue;
 
-                    double x = dx * i + xmin;
-                    double y = dy * j + ymin;
-
-                    // get the relevant layer and if it's frozen out, don't recalculate the dopent charge
-                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, x, y);
-
-                    ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
-                    if (!current_Layer.Dopents_Frozen_Out(temperature))
-                    {
-                        double local_dopent_density_deriv = charge_calc.Get_DopentDensityDeriv(chem_pot.mat[i, j]);
-                        dopent_density_deriv.Spin_Up.mat[i, j] = 0.5 * local_dopent_density_deriv;
-                        dopent_density_deriv.Spin_Down.mat[i, j] = 0.5 * local_dopent_density_deriv;
-                    }
-                    else
-                    {
-                        dopent_density_deriv.Spin_Up.mat[i, j] = 0.0;
-                        dopent_density_deriv.Spin_Down.mat[i, j] = 0.0;
-                    }
-
-                    carrier_density_deriv.Spin_Up.mat[i, j] = 0.5 * charge_calc.Get_CarrierDensityDeriv(chem_pot.mat[i, j]);
-                    carrier_density_deriv.Spin_Down.mat[i, j] = 0.5 * charge_calc.Get_CarrierDensityDeriv(chem_pot.mat[i, j]);
+                    // calculate the density of this spin configuration this hamiltonian
+                    dens_up_deriv[i, j] += g_1D * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j]) * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j]) * Interpolate_Fermi_Function_Derivative(eig_decomp_old, eig_decomp_new, wavefunction);
+                    dens_down_deriv[i, j] += g_1D * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j + nx * ny]) * DoubleComplex.Norm(eig_decomp_old.EigenVector(wavefunction)[i * ny + j + nx * ny]) * Interpolate_Fermi_Function_Derivative(eig_decomp_old, eig_decomp_new, wavefunction);
                 }
 
-            return carrier_density_deriv + dopent_density_deriv;
+            // and multiply the density by -e to get the charge density (as these are electrons)
+            return Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
         }
-        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+
+        double Interpolate_Fermi_Function_Derivative(DoubleHermitianEigDecomp eig_decomp_old, DoubleHermitianEigDecomp eig_decomp_new, int wavefunction)
         {
-            throw new NotImplementedException();
+            double E0 = eig_decomp_old.EigenValue(wavefunction);
+            double dE_dk = (eig_decomp_new.EigenValue(wavefunction) - eig_decomp_old.EigenValue(wavefunction)) / delta_k;
+
+            double beta = 1.0 / (Physics_Base.kB * temperature);
+            OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double k) => -1.0 * beta * Math.Exp(beta * (E0 + dE_dk * k)) * Math.Pow(Math.Exp(beta * (E0 + dE_dk * k)) + 1, -2.0)));
+            dos_integrand.Integrator = new GaussKronrodIntegrator();
+
+            return dos_integrand.Integrate(0, delta_k);
         }
 
         /// <summary>
