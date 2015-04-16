@@ -17,7 +17,8 @@ namespace Solver_Bases
         public const double epsilon_0 = 1.41859713;             // (zC)^2 (nm)^-1 (meV)^-1 for vacuum
         public const double epsilon_r = 13.0;                   // relative permittivity for vacuum -> GaAs
         public const double epsilon_r_GaAs = 12.9;              // relative permittivity for vacuum -> GaAs
-        public const double epsilon_r_AlGaAs = 12.0;            // relative permittivity for vacuum -> AlGaAs
+        public const double epsilon_r_InAs = 14.6;              // relative permittivity for vacuum -> InAs
+        public const double epsilon_r_AlAs = 10.1;              // relative permittivity for vacuum -> AlAs
         public const double epsilon_pmma = 2.6;                 // relative permittivity for vacuum -> PMMA
         public const double epsilon = epsilon_0 * epsilon_r;    // (zC)^2 (nm)^-1 (meV)^-1 for GaAs
         public const double kB = 0.086173324;                   // (meV) (K)^-1

@@ -89,6 +89,9 @@ namespace TwoD_ThomasFermiPoisson
 
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimension, Dictionary<string, double> boundary_conditions)
         {
+            if (natural_topbc)
+                boundary_conditions["top_V"] = 0.0;
+
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // with a factor to convert from V to meV zC^-1
             top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;
@@ -153,12 +156,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t! WELL DEPTH (in nm)");
             sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 5).ToString() + " * z_scaling");
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -180,7 +178,7 @@ namespace TwoD_ThomasFermiPoisson
                     sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
                 else
                     sw.WriteLine("\t\trho = 0.0");
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
                 sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
 
                 sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
@@ -212,7 +210,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
             sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\tband_gap = 0");
-            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
             sw.WriteLine("\t\tSTART(-ly / 2, 0)");
             // left split gate voltage
             sw.WriteLine("\t\tVALUE(u) = split_V1");
@@ -221,7 +219,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
             sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\tband_gap = 0");
-            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
             sw.WriteLine("\t\tSTART(ly / 2, 0)");
             // right split gate voltage
             sw.WriteLine("\t\tVALUE(u) = split_V2");
@@ -358,12 +356,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t! WELL DEPTH (in nm)");
             sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 5).ToString() + " * z_scaling");
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -383,7 +376,7 @@ namespace TwoD_ThomasFermiPoisson
             {
                 // minus one to get rid of the substrate
                 sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
 
                 sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
                 sw.WriteLine("\t\tLINE TO (ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
@@ -411,14 +404,14 @@ namespace TwoD_ThomasFermiPoisson
             
             // write in surface and gates
             sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
-            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
             sw.WriteLine("\t\tSTART(-ly / 2, 0)");
             // left split gate voltage
             sw.WriteLine("\t\tVALUE(u) = split_V");
             sw.WriteLine("\t\tLINE TO (-ly / 2, split_depth) TO (-split_width / 2, split_depth) TO (-split_width / 2, 0) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
-            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
             sw.WriteLine("\t\tSTART(ly / 2, 0)");
             // right split gate voltage
             sw.WriteLine("\t\tVALUE(u) = split_V");
@@ -445,13 +438,14 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tCONTOUR(u * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(xc_pot) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(xc_pot_calc) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(rho_prime) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             
             window_function_string = "(1.0 - " + window_function_string + ") - (ustep(y + 3) - ustep(y -13)) * (ustep(x + 353) - ustep(x + 347) - ustep(x - 353) + ustep(x - 347))";
 
-            string residual_report_filename = "residual_g.dat";
-            sw.WriteLine("\tSUMMARY EXPORT FILE = \'" + residual_report_filename + "\'");
-            sw.WriteLine("\t\tREPORT ( INTEGRAL (-1.0 * (" + minus_g_phi + ") * u * " + window_function_string + ") / z_scaling) AS \"residual_g_phi\"");
-            sw.WriteLine("\t\tREPORT ( INTEGRAL ((dx(eps * dx(u)) + z_scaling * dy(eps * z_scaling * dy(u))) * u * " + window_function_string + ") / z_scaling) AS \"residual_g_x\"");
+//            string residual_report_filename = "residual_g.dat";
+//            sw.WriteLine("\tSUMMARY EXPORT FILE = \'" + residual_report_filename + "\'");
+//            sw.WriteLine("\t\tREPORT ( INTEGRAL (-1.0 * (" + minus_g_phi + ") * u * " + window_function_string + ") / z_scaling) AS \"residual_g_phi\"");
+//            sw.WriteLine("\t\tREPORT ( INTEGRAL ((dx(eps * dx(u)) + z_scaling * dy(eps * z_scaling * dy(u))) * u * " + window_function_string + ") / z_scaling) AS \"residual_g_x\"");
 
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();

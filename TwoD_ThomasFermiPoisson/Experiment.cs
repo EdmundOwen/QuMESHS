@@ -167,11 +167,12 @@ namespace TwoD_ThomasFermiPoisson
             }
 
             // and then run the DFT solver at the base temperature over a limited range
-    //        TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-            TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
-            dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
-            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
-      //      TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
+      //      TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+     //       TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+            TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
+           dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
+           dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
+     //       TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
 
             bool converged = false;
             int no_runs = 1000;
@@ -185,6 +186,12 @@ namespace TwoD_ThomasFermiPoisson
 
             // run the iteration routine!
             converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, no_runs);
+            if (!converged)
+            {
+                StreamWriter sw_notconverged = new StreamWriter("not_converged" + output_suffix); 
+                sw_notconverged.WriteLine("Not converged in " + no_runs.ToString() + " iterations"); 
+                sw_notconverged.Close();
+            }
 
             // initialise output solvers
             TwoD_ThomasFermiSolver final_dens_solv = new TwoD_ThomasFermiSolver(this);
@@ -239,10 +246,13 @@ namespace TwoD_ThomasFermiPoisson
         //    Console.WriteLine("Calculating initial potential grid");
        //     pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
         //    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-        //    Console.WriteLine("Initial grid complete");
+            //    Console.WriteLine("Initial grid complete");
             dens_solv.Set_DFT_Potential(carrier_density);
-            dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-            dens_solv.Set_DFT_Potential(carrier_density); 
+            if (!no_dft)
+            {
+                dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                dens_solv.Set_DFT_Potential(carrier_density);
+            }
             
             int count = 0;
             bool converged = false;

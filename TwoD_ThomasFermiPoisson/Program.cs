@@ -35,14 +35,17 @@ namespace TwoD_ThomasFermiPoisson
    //         inputs["split_V"] = double.Parse(Console.ReadLine());
             int index = int.Parse(args[0]);
 
+            int maxval = 9;
+            int i1 = index % maxval;
+            int i2 = (index - i1) / maxval;
+
             // split gate with bias
-//            int maxval = 16;
-//            int i1 = index % maxval;
-//            int i2 = (index - i1) / maxval;
-//            if (i1 < i2)
+//            double v1 = -0.5 - 0.25 * (double)i1;
+//            double v2 = -0.5 - 0.02 * (double)i2;
+//            if (v1 + v2 < -2.2 || v1 < v2)
 //                return;
-//            inputs["split_V1"] = -0.5 - 0.1 * (double)i1;
-//            inputs["split_V2"] = -0.5 - 0.1 * (double)i2;
+//            inputs["split_V1"] = v1;
+//            inputs["split_V2"] = v2;
 //            Console.WriteLine("Setting \"split_V1\" to " + ((double)inputs["split_V1"]).ToString() + "V");
 //            Console.WriteLine("Setting \"split_V2\" to " + ((double)inputs["split_V2"]).ToString() + "V");
 //            inputs["top_V"] = 0.0;
@@ -50,11 +53,11 @@ namespace TwoD_ThomasFermiPoisson
 //            inputs["output_suffix"] = "_sg1" + ((double)inputs["split_V1"]).ToString("F2") + "_sg2" + ((double)inputs["split_V2"]).ToString("F2") + ".dat";
 
             //top gated with constant side gate
-            inputs["split_V"] = -0.5;
+            inputs["split_V"] = -1.5;// -0.46 - 0.005 * (double)i1;
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
-            inputs["top_V"] = -1.0 + -0.01 * double.Parse(args[0]);
+            inputs["top_V"] = 0.0;// -1.7 + -0.01 * (double)i2;
             Console.WriteLine("Setting \"top_V\" to " + ((double)inputs["top_V"]).ToString() + "V");
-            inputs["output_suffix"] = "_sg" + ((double)inputs["split_V"]).ToString("F2") + "_tg" + ((double)inputs["top_V"]).ToString("F2") + ".dat";
+            inputs["output_suffix"] = "_sg" + ((double)inputs["split_V"]).ToString("F3") + "_tg" + ((double)inputs["top_V"]).ToString("F3") + ".dat";
 
             ////////////////////////////////////////////////
 

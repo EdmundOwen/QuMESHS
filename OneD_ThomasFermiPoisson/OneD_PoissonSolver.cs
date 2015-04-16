@@ -272,12 +272,7 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine("\tbottom_V = " + bottom_bc.ToString());
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -295,7 +290,7 @@ namespace OneD_ThomasFermiPoisson
             {
                 sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
                 sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
                 sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
                 sw.WriteLine("\t\tSTART(" + exp.Layers[i].Zmin.ToString() + ")");
                 if (i == 1)

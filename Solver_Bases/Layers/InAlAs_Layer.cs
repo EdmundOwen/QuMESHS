@@ -6,12 +6,12 @@ using Solver_Bases.Geometry;
 
 namespace Solver_Bases.Layers
 {
-    public class AlGaAs_Layer : Layer
+    public class InAlAs_Layer : Layer
     {
         double x;
-        double permitivity_bowing_ratio = 0.0;
+        double permitivity_bowing_ratio = 12.5;
 
-        public AlGaAs_Layer(IGeom geom, int layer_no, double alloy_ratio)
+        public InAlAs_Layer(IGeom geom, int layer_no, double alloy_ratio)
             : base(geom, layer_no)
         {
             this.x = alloy_ratio;
@@ -21,15 +21,12 @@ namespace Solver_Bases.Layers
 
         protected override void Set_Material_Parameters()
         {
-            material = Material.AlGaAs;
-            permitivity = ((1 - x) * Physics_Base.epsilon_r_GaAs + x * Physics_Base.epsilon_r_AlAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
+            material = Material.InAlAs;
+            permitivity = ((1 - x) * Physics_Base.epsilon_r_InAs + x * Physics_Base.epsilon_r_AlAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
 
-            // set the AlGaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
-            if (x < 0.45)
-                this.band_gap = 1424.0 + 1247.0 * x;
-            else
-                this.band_gap = 1900.0 + 125.0 * x + 143.0 * x * x;
-
+            throw new NotImplementedException();
+            // set the InAlAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
+            this.band_gap = 0.0;
             allow_donors = true;
             this.acceptor_energy = -0.5 * band_gap + 35.0; this.donor_energy = 0.5 * band_gap - 5.0;
         }

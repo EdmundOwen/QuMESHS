@@ -19,20 +19,14 @@ namespace Solver_Bases.Layers
             ILayer tmp_layer;
 
             if (specific_material == Material.GaAs)
-            {
-                // create a temporary gaas layer to obtain the material properties from
                 tmp_layer = new GaAs_Layer(new Slab(0.0, 0.0), -1);
-                permitivity = Physics_Base.epsilon_r_GaAs * Physics_Base.epsilon_0;
-
-            }
             else if (specific_material == Material.AlGaAs)
-            {
-                // create a temporary gaas layer to obtain the material properties from
-                tmp_layer = new AlGaAs_Layer(new Slab(0.0, 0.0), -1);
-                permitivity = Physics_Base.epsilon_r_AlGaAs * Physics_Base.epsilon_0;
-            }
+                // create a temporary gaas layer to obtain the material properties from (assume typical 33% AlGaAs)
+                tmp_layer = new AlGaAs_Layer(new Slab(0.0, 0.0), -1, 0.33);
             else
                 throw new NotImplementedException();
+
+            permitivity = tmp_layer.Permitivity;
 
             // set the GaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
             this.band_gap = tmp_layer.Band_Gap;

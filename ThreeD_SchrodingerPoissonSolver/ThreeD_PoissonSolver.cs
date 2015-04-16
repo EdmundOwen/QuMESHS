@@ -162,12 +162,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\t! WELL DEPTH (in nm)");
             sw.WriteLine("\twell_depth = " + z_2DEG.ToString());
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -217,7 +212,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 else
                     sw.WriteLine("\t\trho = 0.0");
 
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
                 sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
                 sw.WriteLine();
 
@@ -225,7 +220,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 {
                     sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
                     sw.WriteLine("\t\trho = 0.0");
-                    sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i + 1].Material));
+                    sw.WriteLine("\t\teps = " + exp.Layers[i + 1].Permitivity.ToString());
                     sw.WriteLine("\t\tband_gap = " + exp.Layers[i + 1].Band_Gap.ToString());
                     sw.WriteLine();
                     layercount++;
@@ -382,12 +377,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\t! WELL DEPTH (in nm)");
             sw.WriteLine("\twell_depth = " + z_2DEG.ToString());
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -433,13 +423,13 @@ namespace ThreeD_SchrodingerPoissonSolver
                 sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
                 layercount++;
 
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
                 sw.WriteLine();
 
                 if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No || exp.Layers[i].Material == Material.PMMA)
                 {
                     sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i + 1].Material));
+                    sw.WriteLine("\t\teps = " + exp.Layers[i + 1].Permitivity.ToString());
                     sw.WriteLine();
                     layercount++;
                 }

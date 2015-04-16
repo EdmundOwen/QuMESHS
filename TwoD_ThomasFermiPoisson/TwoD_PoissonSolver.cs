@@ -142,12 +142,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t! WELL DEPTH (in nm)");
             sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 5).ToString());
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -168,7 +163,7 @@ namespace TwoD_ThomasFermiPoisson
                     sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
                 else
                     sw.WriteLine("\t\trho = 0.0");
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
                 sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
 
                 // HACK!
@@ -199,7 +194,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
             sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\tband_gap = 0");
-            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
             sw.WriteLine("\t\tSTART(-ly / 2, 0)");
             // left split gate voltage
             sw.WriteLine("\t\tVALUE(u) = split_V1");
@@ -208,7 +203,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
             sw.WriteLine("\t\trho = 0");
             sw.WriteLine("\t\tband_gap = 0");
-            sw.WriteLine("\t\teps = eps_0");
+            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
             sw.WriteLine("\t\tSTART(ly / 2, 0)");
             // right split gate voltage
             sw.WriteLine("\t\tVALUE(u) = split_V2");
@@ -344,12 +339,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\t! WELL DEPTH (in nm)");
             sw.WriteLine("\twell_depth = " + (exp.Layers[1].Zmax - 5).ToString());
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -366,7 +356,7 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 1; i < exp.Layers.Length; i++)
             {
                 sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
 
                 // HACK!
                 //if (i == 1)

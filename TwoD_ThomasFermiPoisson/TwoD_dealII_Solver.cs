@@ -61,6 +61,8 @@ namespace TwoD_ThomasFermiPoisson
 
             // check if the top layer is air... if so, we need to use natural boundary conditions on the upper surface
             bool natural_top_bc = (exp.Layers[exp.Layers.Length - 1].Material == Material.Air);
+            if (natural_top_bc)
+                device_dimensions["top_V"] = 0.0;
 
             sw_initcalc.WriteLine("subsection System Geometry");
             sw_initcalc.WriteLine("\tset zmin_pot = " + device_dimensions["zmin_pot"].ToString());

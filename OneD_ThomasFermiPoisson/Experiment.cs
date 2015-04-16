@@ -68,15 +68,15 @@ namespace OneD_ThomasFermiPoisson
 
             // try to get and the carrier and dopent density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.carrier_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
-            else this.carrier_density = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
+            else this.carrier_density = new SpinResolved_Data(nz_pot);
             if (input_dict.ContainsKey("SpinResolved_Dopent_Density")) this.dopent_density = (SpinResolved_Data)input_dict["SpinResolved_Dopent_Density"];
-            else this.dopent_density = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
+            else this.dopent_density = new SpinResolved_Data(nz_pot);
             // and instantiate their derivatives
-            carrier_density_deriv = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
-            dopent_density_deriv = new SpinResolved_Data(new Band_Data(new DoubleVector(nz_pot)), new Band_Data(new DoubleVector(nz_pot)));
+            carrier_density_deriv = new SpinResolved_Data(nz_pot);
+            dopent_density_deriv = new SpinResolved_Data(nz_pot);
 
             // and finally, try to get the chemical potential from the dictionary...
-            if (input_dict.ContainsKey("Chemical_Potential")) this.chem_pot = new Band_Data((DoubleVector)input_dict["Chemical_Potential"]); else chem_pot = new Band_Data(new DoubleVector(nz_pot));
+            if (input_dict.ContainsKey("Chemical_Potential")) this.chem_pot = new Band_Data((DoubleVector)input_dict["Chemical_Potential"]); else chem_pot = new Band_Data(nz_pot, 0.0);
 
             // Initialise potential solver
             pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
