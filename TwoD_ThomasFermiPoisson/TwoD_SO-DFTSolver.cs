@@ -35,7 +35,8 @@ namespace TwoD_ThomasFermiPoisson
         {
             tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
-            double r_so = 117.1;
+            double r_so = 117.1 * (0.01 / Physics_Base.q_e);                                                    // r^{6c6c}_{41} for InAs as reported by Winkler (Table 6.6, p.87)
+                                                                                                                // NOTE: the result there is in e A^2... to convert to nm^2, we divide by shown factors
             alpha = r_so / Physics_Base.q_e;
             
             theta_x = r_so * Physics_Base.mass * dx / (Physics_Base.q_e / Physics_Base.hbar);

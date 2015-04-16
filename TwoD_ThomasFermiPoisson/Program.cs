@@ -53,9 +53,9 @@ namespace TwoD_ThomasFermiPoisson
 //            inputs["output_suffix"] = "_sg1" + ((double)inputs["split_V1"]).ToString("F2") + "_sg2" + ((double)inputs["split_V2"]).ToString("F2") + ".dat";
 
             //top gated with constant side gate
-            inputs["split_V"] = -1.5;// -0.46 - 0.005 * (double)i1;
+            inputs["split_V"] = -0.5;// -0.46 - 0.005 * (double)i1;
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
-            inputs["top_V"] = 0.0;// -1.7 + -0.01 * (double)i2;
+            inputs["top_V"] = -1.65;// -1.7 + -0.01 * (double)i2;
             Console.WriteLine("Setting \"top_V\" to " + ((double)inputs["top_V"]).ToString() + "V");
             inputs["output_suffix"] = "_sg" + ((double)inputs["split_V"]).ToString("F3") + "_tg" + ((double)inputs["top_V"]).ToString("F3") + ".dat";
 
