@@ -90,7 +90,7 @@
 % No_kB_T_Above_E_f = 0.0
 #
 ## Temperature
-% T = 0.05
+% T = 4.0
 #
 ## Minimum of simulation domain in the transverse direction
 % ymin_dens = -110.0

@@ -20,8 +20,8 @@ namespace TwoD_ThomasFermiPoisson
         DoubleComplex I = new DoubleComplex(0.0, 1.0);
 
         double tx, ty;
+        double theta_x, theta_y;
         double alpha;
-        double h;
         double g_1D;                    // one dimensional density of states in k; g(k) = dn/dk
                                         // NOTE: this is without spin and k degeneracy and is, therefore, a factor of 1/4 times the non-SOI case
         double E_min = -100.0;          // minimum energy value for Lanczos matrix diagonalisation routine in meV
@@ -36,9 +36,11 @@ namespace TwoD_ThomasFermiPoisson
             tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
             double r_so = 117.1;
-            alpha = r_so / (Physics_Base.q_e * Physics_Base.hbar);
+            alpha = r_so / Physics_Base.q_e;
+            
+            theta_x = r_so * Physics_Base.mass * dx / (Physics_Base.q_e / Physics_Base.hbar);
+            theta_y = -1.0 * r_so * Physics_Base.mass * dy / (Physics_Base.q_e / Physics_Base.hbar);
 
-            h = 3.0 * delta_k / 8.0;
             g_1D = 0.5 / Math.PI;
         }
 
@@ -86,7 +88,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // create initial hamiltonian and eigendecomposition
             int max_wavefunction_old_p, max_wavefunction_old_m;
-            DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
+            DoubleHermitianMatrix hamiltonian_p = Create_H_Using_SOIP(dft_pot, k);
             DoubleHermitianEigDecomp eig_decomp_old_p = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_p);
             DoubleHermitianEigDecomp eig_decomp_old_m = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_m);
             
@@ -98,8 +100,8 @@ namespace TwoD_ThomasFermiPoisson
 
                 // create new decompositions for forwards and backwards analysis
                 int max_wavefunction_p, max_wavefunction_m;
-                DoubleHermitianEigDecomp eig_decomp_p = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, k), out max_wavefunction_p);
-                DoubleHermitianEigDecomp eig_decomp_m = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, -1.0 * k), out max_wavefunction_m);
+                DoubleHermitianEigDecomp eig_decomp_p = Diagonalise_Hamiltonian(Create_H_Using_SOIP(dft_pot, k), out max_wavefunction_p);
+                DoubleHermitianEigDecomp eig_decomp_m = Diagonalise_Hamiltonian(Create_H_Using_SOIP(dft_pot, -1.0 * k), out max_wavefunction_m);
 
                 SpinResolved_Data new_charge = new SpinResolved_Data(nx, ny);
 
@@ -125,7 +127,131 @@ namespace TwoD_ThomasFermiPoisson
             kmax = k;
         }
 
-        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, Band_Data dft_pot, double k)
+        DoubleHermitianMatrix Create_H_Using_SOIP(Band_Data dft_pot, double k)
+        {
+            DoubleHermitianMatrix result = new DoubleHermitianMatrix(2 * nx * ny);
+
+            // create the SOIP parts of the matrix
+            result = Create_SOIP_Matrix(Direction.x, Direction.y, Direction.z, k, nx, ny);
+            result += Create_SOIP_Matrix(Direction.y, Direction.x, Direction.z, k, nx, ny);
+
+            // and add the scalar terms from the k-direction
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                {
+                    // add momentum and potential terms
+                    result[i * ny + j, i * ny + j] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * Physics_Base.mass) + dft_pot.mat[i, j];
+                    result[i * ny + j + nx * ny, i * ny + j + nx * ny] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * Physics_Base.mass) + dft_pot.mat[i, j];
+
+                    // add spin-orbit terms
+                    result[i * ny + j, i * ny + j + nx * ny] += (-1.0 * I * alpha * dV_x.mat[i, j] - alpha * dV_y.mat[i, j]) * k;
+                    result[i * ny + j + nx * ny, i * ny + j] += (I * alpha * dV_x.mat[i, j] - alpha * dV_y.mat[i, j]) * k;
+                }
+
+            return result;
+        }
+
+        private DoubleHermitianMatrix Create_SOIP_Matrix(Direction p, Direction dV, Direction sigma, double k, int nx, int ny)
+        {
+            DoubleHermitianMatrix result = new DoubleHermitianMatrix(2 * nx * ny);
+
+            double theta;
+            Band_Data dV_data;
+
+            if (dV == Direction.x)
+            {
+                dV_data = dV_x;
+                theta = theta_x;
+            }
+            else if (dV == Direction.y)
+            {
+                dV_data = dV_y;
+                theta = theta_y;
+            }
+            else if (dV == Direction.z)
+            {
+                dV_data = new Band_Data(nx, ny, 0.0);
+                theta = 0.0;
+            }
+            else
+                throw new Exception("Error - It's completely impossible to get here");
+
+
+            if (p == Direction.x)
+                if (sigma == Direction.x)
+                    throw new InvalidArgumentException("Error - no spin-orbit interaction between p_x and sigma_x");
+                else if (sigma == Direction.y)
+                    throw new NotImplementedException();
+                else if (sigma == Direction.z)
+                {
+                    for (int i = 0; i < nx; i++)
+                        for(int j = 0; j < ny; j++)
+                        {
+                            // off-diagonal couplings in x backward
+                            if (i != 0)
+                            {
+                                // for up -> up
+                                result[i * ny + j, i * ny + j - ny] = NMathFunctions.Exp(-1.0 * I * theta * dV_data.mat[i, j]) * tx;
+                                // for down -> down
+                                result[i * ny + j + nx * ny, i * ny + j - ny + nx * ny] = NMathFunctions.Exp(I * theta * dV_data.mat[i, j]) * tx;
+                            }
+                            // off-diagonal couplings in x forward
+                            if (i != nx - 1)
+                            {
+                                // for up -> up
+                                result[i * ny + j, i * ny + j + ny] = NMathFunctions.Exp(-1.0 * I * theta * dV_data.mat[i, j]) * tx;
+                                // for down -> down
+                                result[i * ny + j + nx * ny, i * ny + j + ny + nx * ny] = NMathFunctions.Exp(I * theta * dV_data.mat[i, j]) * tx;
+                            }
+                            // and diagonal couplings
+                            result[i * ny + j, i * ny + j] = -2.0 * Math.Cos(theta * dV_data.mat[i, j]) * tx;
+                            result[i * ny + j + nx * ny, i * ny + j + nx * ny] = -2.0 * Math.Cos(theta * dV_data.mat[i, j]) * tx;
+                        }
+                }
+                else
+                    throw new Exception("Error - It's completely impossible to get here");
+            else if (p == Direction.y)
+                if (sigma == Direction.x)
+                    throw new NotImplementedException();
+                else if (sigma == Direction.y)
+                    throw new InvalidArgumentException("Error - no spin-orbit interaction between p_y and sigma_y");
+                else if (sigma == Direction.z)
+                {
+                    for (int i = 0; i < nx; i++)
+                        for (int j = 0; j < ny; j++)
+                        {
+                            // off-diagonal couplings in y backward
+                            if (j != 0)
+                            {
+                                // for up -> up
+                                result[i * ny + j, i * ny + j - 1] = NMathFunctions.Exp(-1.0 * I * theta * dV_data.mat[i, j]) * ty;
+                                // for down -> down
+                                result[i * ny + j + nx * ny, i * ny + j - 1 + nx * ny] = NMathFunctions.Exp(I * theta * dV_data.mat[i, j]) * ty;
+                            }
+                            // off-diagonal couplings in y forward
+                            if (j != ny - 1)
+                            {
+                                // for up -> up
+                                result[i * ny + j, i * ny + j + 1] = NMathFunctions.Exp(-1.0 * I * theta * dV_data.mat[i, j]) * ty;
+                                // for down -> down
+                                result[i * ny + j + nx * ny, i * ny + j + 1 + nx * ny] = NMathFunctions.Exp(I * theta * dV_data.mat[i, j]) * ty;
+                            }
+                            // and diagonal couplings
+                            result[i * ny + j, i * ny + j] = -2.0 * Math.Cos(theta * dV_data.mat[i, j]) * ty;
+                            result[i * ny + j + nx * ny, i * ny + j + nx * ny] = -2.0 * Math.Cos(theta * dV_data.mat[i, j]) * ty;
+                        }
+                }
+                else
+                    throw new Exception("Error - It's completely impossible to get here");
+            else if (p == Direction.z)
+                throw new NotImplementedException("Error - at the moment, when momentum is in the direction of the wire, you should use a different method");
+            else
+                throw new Exception("Error - It's completely impossible to get here");
+
+            return result;
+        }
+
+        DoubleHermitianMatrix Create_Hamiltonian(Band_Data dft_pot, double k)
         {
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(2 * nx * ny);
             DoubleHermitianMatrix h_upup, h_updn, h_dnup, h_dndn;
@@ -323,7 +449,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // create initial hamiltonian and eigendecomposition
             int max_wavefunction_old_p, max_wavefunction_old_m;
-            DoubleHermitianMatrix hamiltonian_p = Create_Hamiltonian(layers, dft_pot, k);
+            DoubleHermitianMatrix hamiltonian_p = Create_H_Using_SOIP(dft_pot, k);
             DoubleHermitianEigDecomp eig_decomp_old_p = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_p);
             DoubleHermitianEigDecomp eig_decomp_old_m = Diagonalise_Hamiltonian(hamiltonian_p, out max_wavefunction_old_m);
 
@@ -335,8 +461,8 @@ namespace TwoD_ThomasFermiPoisson
 
                 // create new decompositions for forwards and backwards analysis
                 int max_wavefunction_p, max_wavefunction_m;
-                DoubleHermitianEigDecomp eig_decomp_p = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, k), out max_wavefunction_p);
-                DoubleHermitianEigDecomp eig_decomp_m = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, -1.0 * k), out max_wavefunction_m);
+                DoubleHermitianEigDecomp eig_decomp_p = Diagonalise_Hamiltonian(Create_H_Using_SOIP(dft_pot, k), out max_wavefunction_p);
+                DoubleHermitianEigDecomp eig_decomp_m = Diagonalise_Hamiltonian(Create_H_Using_SOIP(dft_pot, -1.0 * k), out max_wavefunction_m);
 
                 SpinResolved_Data new_charge_deriv = new SpinResolved_Data(nx, ny);
 
@@ -409,7 +535,7 @@ namespace TwoD_ThomasFermiPoisson
                 k = i * dk;
                 Console.WriteLine(i.ToString() + ": Calculating for k = " + k.ToString());
                 // generate the Hamiltonian for this k value
-                DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot, k);
+                DoubleHermitianMatrix hamiltonian = Create_H_Using_SOIP(dft_pot, k);
                 // and diagonalise it
                 int max_wavefunction;
                 DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(hamiltonian, out max_wavefunction);
@@ -449,7 +575,7 @@ namespace TwoD_ThomasFermiPoisson
 
             // diagonalise matrix for k = 0
             int tmp = 0;
-            DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(Create_Hamiltonian(layers, dft_pot, 0.0), out tmp);
+            DoubleHermitianEigDecomp eig_decomp = Diagonalise_Hamiltonian(Create_Hamiltonian(dft_pot, 0.0), out tmp);
 
             return eig_decomp.EigenValues;
         }
