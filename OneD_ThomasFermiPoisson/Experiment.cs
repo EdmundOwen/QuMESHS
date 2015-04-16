@@ -13,7 +13,6 @@ namespace OneD_ThomasFermiPoisson
 {
     public class Experiment : Experiment_Base
     {
-        Dictionary<string, double> device_dimensions, boundary_conditions;
         Dictionary<double, double> surface_charge;
 
         bool fix_bottom_V;
@@ -27,14 +26,10 @@ namespace OneD_ThomasFermiPoisson
             Get_From_Dictionary<double>(input_dict, "dz", ref dz_dens); dz_pot = dz_dens;
             Get_From_Dictionary(input_dict, "nz", ref nz_dens); nz_pot = nz_dens;
 
-            // but try to get the specific values
-            Get_From_Dictionary<double>(input_dict, "dz_dens", ref dz_dens, true);
-            Get_From_Dictionary<double>(input_dict, "dz_pot", ref dz_pot, true);
-            Get_From_Dictionary(input_dict, "nz_dens", ref nz_dens, true);
-            Get_From_Dictionary(input_dict, "nz_pot", ref nz_pot, true);
-
             // physics parameters are done by the base method
             base.Initialise(input_dict);
+
+            Initialise_DataClasses(input_dict);
 
             // check that the size of the domain [(nz_pot-1) * dz_pot] is not larger than the band structure
             if (layers[layers.Length - 1].Zmax - Geom_Tool.Get_Zmin(layers) < (Nz_Pot - 1) * Dz_Pot)
@@ -49,23 +44,24 @@ namespace OneD_ThomasFermiPoisson
             input_dict["zmax"] = Geom_Tool.Get_Zmin(layers) + dz_pot * nz_pot;
 
             // and split gate dimensions
-            device_dimensions = new Dictionary<string, double>();
             device_dimensions.Add("bottom_position", (double)input_dict["zmin"]);
             device_dimensions.Add("top_position", (double)input_dict["zmax"]);
 
-            // gate voltages (default is zero)
-            boundary_conditions = new Dictionary<string, double>();
-            if (input_dict.ContainsKey("top_V")) boundary_conditions.Add("top_V", (double)input_dict["top_V"]); else boundary_conditions.Add("top_V", 0.0);
+            // check whether the bottom should be fixed
             if (input_dict.ContainsKey("bottom_V"))
-            {
-                boundary_conditions.Add("bottom_V", (double)input_dict["bottom_V"]);
                 fix_bottom_V = true;
-            }
-            else boundary_conditions.Add("bottom_V", 0.0);
 
             // initialise the dictionary which contains the surface charges at each temperature
             surface_charge = new Dictionary<double, double>();
 
+            // Initialise potential solver
+            pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
+            
+            Console.WriteLine("Experimental parameters initialised");
+        }
+
+        protected override void Initialise_DataClasses(Dictionary<string, object> input_dict)
+        {
             // try to get and the carrier and dopent density from the dictionary... they probably won't be there and if not... make them
             if (input_dict.ContainsKey("SpinResolved_Density")) this.carrier_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
             else this.carrier_density = new SpinResolved_Data(nz_pot);
@@ -77,11 +73,6 @@ namespace OneD_ThomasFermiPoisson
 
             // and finally, try to get the chemical potential from the dictionary...
             if (input_dict.ContainsKey("Chemical_Potential")) this.chem_pot = new Band_Data((DoubleVector)input_dict["Chemical_Potential"]); else chem_pot = new Band_Data(nz_pot, 0.0);
-
-            // Initialise potential solver
-            pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
-            
-            Console.WriteLine("Experimental parameters initialised");
         }
 
         public override void Run()
@@ -261,6 +252,11 @@ namespace OneD_ThomasFermiPoisson
                 throw new KeyNotFoundException("Error - the charge density was not calculated for T = " + temperature.ToString() + "K");
 
             return surface_charge[temperature];
+        }
+
+        protected override void Initialise_from_Hot_Start(Dictionary<string, object> input_dict)
+        {
+            throw new NotImplementedException();
         }
     }
 }

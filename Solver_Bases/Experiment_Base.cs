@@ -11,6 +11,8 @@ namespace Solver_Bases
 {
     public abstract class Experiment_Base : IExperiment
     {
+        protected Dictionary<string, double> device_dimensions, boundary_conditions;
+
         protected SpinResolved_Data carrier_density;
         protected SpinResolved_Data dopent_density;
         protected SpinResolved_Data carrier_density_deriv;
@@ -42,6 +44,7 @@ namespace Solver_Bases
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
         protected bool initialise_from_restart = false;     //is the program starting from a restart? (normally false)
+        protected bool initialise_with_1D_data = false;     // should the program use the data used to calculate the dopents in order to find the initial density for the higher dimensional structure?
 
         // suffix for data output to identify between different runs... initially empty
         protected string output_suffix = "";
@@ -79,6 +82,22 @@ namespace Solver_Bases
                 else throw new KeyNotFoundException("No band structure file found in input dictionary!");
             }
 
+            // but try to get the specific values
+            Get_From_Dictionary<double>(input_dict, "dx_dens", ref dx_dens, true);
+            Get_From_Dictionary<double>(input_dict, "dy_dens", ref dy_dens, true);
+            Get_From_Dictionary<double>(input_dict, "dz_dens", ref dz_dens, true);
+            Get_From_Dictionary<double>(input_dict, "dx_pot", ref dx_pot, true);
+            Get_From_Dictionary<double>(input_dict, "dy_pot", ref dy_pot, true);
+            Get_From_Dictionary<double>(input_dict, "dz_pot", ref dz_pot, true);
+
+            Get_From_Dictionary(input_dict, "nx_dens", ref nx_dens, true);
+            Get_From_Dictionary(input_dict, "ny_dens", ref ny_dens, true);
+            Get_From_Dictionary(input_dict, "nz_dens", ref nz_dens, true);
+            Get_From_Dictionary(input_dict, "nx_pot", ref nx_pot, true);
+            Get_From_Dictionary(input_dict, "ny_pot", ref ny_pot, true);
+            Get_From_Dictionary(input_dict, "nz_pot", ref nz_pot, true);
+
+
             // and find the domain minimum coordinate values
             xmin_pot = Geom_Tool.Get_Xmin(layers);
             ymin_pot = Geom_Tool.Get_Ymin(layers);
@@ -97,6 +116,24 @@ namespace Solver_Bases
             Get_From_Dictionary<double>(input_dict, "ymin_dens", ref ymin_dens, true);
             Get_From_Dictionary<double>(input_dict, "zmin_dens", ref zmin_dens, true);
 
+            // and try and get as much information about the split gate dimensions as possible
+            device_dimensions = new Dictionary<string, double>();
+            device_dimensions.Add("top_length", Get_From_Dictionary<double>(input_dict, "top_length", 0.0));
+            device_dimensions.Add("split_width", Get_From_Dictionary<double>(input_dict, "split_width", 0.0));
+            device_dimensions.Add("split_length", Get_From_Dictionary<double>(input_dict, "split_length", 0.0));
+            device_dimensions.Add("zmin_pot", this.Layers[1].Zmin);
+            device_dimensions.Add("pmma_depth", Geom_Tool.Find_Layer_Above_Surface(this.Layers).Zmax);
+            device_dimensions.Add("cap_depth", Geom_Tool.Find_Layer_Below_Surface(this.Layers).Zmin);
+            device_dimensions.Add("interface_depth", this.Layers[1].Zmax);
+            device_dimensions.Add("buffer_depth", this.Layers[2].Zmax);
+
+            // as well as for the gate voltages
+            boundary_conditions = new Dictionary<string, double>();
+            boundary_conditions.Add("top_V", Get_From_Dictionary<double>(input_dict, "top_V", 0.0));
+            boundary_conditions.Add("split_V1", Get_From_Dictionary<double>(input_dict, "split_V1", Get_From_Dictionary<double>(input_dict, "split_V", 0.0)));
+            boundary_conditions.Add("split_V2", Get_From_Dictionary<double>(input_dict, "split_V2", Get_From_Dictionary<double>(input_dict, "split_V", 0.0)));
+            boundary_conditions.Add("bottom_V", Get_From_Dictionary<double>(input_dict, "bottom_V", 0.0));
+
             // work out whether we are doing dft or not
             // first check that there is only one entry (else throw exception)
             if ((input_dict.ContainsKey("no_dft") && input_dict.ContainsKey("dft")) || (input_dict.ContainsKey("no_dft") && input_dict.ContainsKey("TF_only")) || (input_dict.ContainsKey("dft") && input_dict.ContainsKey("TF_only")))
@@ -107,9 +144,72 @@ namespace Solver_Bases
             Get_From_Dictionary<bool>(input_dict, "no_dft", ref no_dft, true);
             if (input_dict.ContainsKey("dft"))
                 no_dft = !(bool)input_dict["dft"];
+
+            // get keys for any interesting start-up protocols
+            if (input_dict.ContainsKey("hot_start")) hot_start = (bool)input_dict["hot_start"];
+            Get_From_Dictionary<bool>(input_dict, "initialise_with_1D_data", ref initialise_with_1D_data, true);
+            if (File.Exists("restart.flag") && input_dict.ContainsKey("with_checkpointing"))
+                if (File.ReadAllLines("restart.flag")[0] == "true" && (bool)input_dict["with_checkpointing"])
+                    initialise_from_restart = true;
+
+            // and create a restart flag file if necessary
+            if (!initialise_from_restart)
+            {
+                StreamWriter sw_flag = new StreamWriter("restart.flag"); sw_flag.WriteLine("true"); sw_flag.Close();
+            }
+        }
+        protected abstract void Initialise_DataClasses(Dictionary<string, object> input_dict);
+        protected abstract void Initialise_from_Hot_Start(Dictionary<string, object> input_dict);
+
+        protected void Initialise_from_Restart(Dictionary<string, object> input_dict)
+        {
+            Console.WriteLine("Recovering data from previous, interrupted simulation...");
+
+            // load density and chemical potential
+            string[] cardens_tmp = File.ReadAllLines("carrier_density.tmp");
+            string[] dopdens_tmp = File.ReadAllLines("dopent_density.tmp");
+            string[] chempot_tmp = File.ReadAllLines("chem_pot.tmp");
+            // and load it into the correct classes
+            for (int i = 0; i < nx_dens * ny_dens * nz_dens; i++)
+            {
+                carrier_density.Spin_Up[i] = double.Parse(cardens_tmp[i].Split(' ')[0]);
+                carrier_density.Spin_Down[i] = double.Parse(cardens_tmp[i].Split(' ')[1]);
+                dopent_density.Spin_Up[i] = double.Parse(dopdens_tmp[i].Split(' ')[0]);
+                dopent_density.Spin_Down[i] = double.Parse(dopdens_tmp[i].Split(' ')[1]);
+                chem_pot[i] = double.Parse(chempot_tmp[i]);
+            }
+            // the value of t
+            string[] t_tmp = File.ReadAllLines("t_val.tmp"); t = double.Parse(t_tmp[0]);
+
+            // and load the surface charge
+            boundary_conditions.Add("surface", (double)input_dict["surface_charge"]);
+
+            Console.WriteLine("Data recovered.  Restarting from checkpoint");
         }
 
         public abstract void Run();
+
+        public void Close(bool converged, int no_runs)
+        {
+            if (!converged)
+            {
+                StreamWriter sw_notconverged = new StreamWriter("not_converged" + output_suffix);
+                sw_notconverged.WriteLine("Not converged in " + no_runs.ToString() + " iterations");
+                sw_notconverged.Close();
+            }
+
+            // save final density out
+            carrier_density.Spin_Summed_Data.Save_Data("dens_2D_raw" + output_suffix);
+            carrier_density.Spin_Up.Save_Data("dens_2D_up_raw" + output_suffix);
+            carrier_density.Spin_Down.Save_Data("dens_2D_down_raw" + output_suffix);
+            
+            // delete the restart flag files and data
+            File.Delete("restart.flag");
+            File.Delete("t_val.tmp");
+            File.Delete("carrier_density.tmp");
+            File.Delete("dopent_density.tmp");
+            File.Delete("chem_pot.tmp");
+        }
 
         double div_fact = 0.8;
         /// <summary>

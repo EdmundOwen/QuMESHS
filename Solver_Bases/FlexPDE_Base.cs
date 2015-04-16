@@ -44,8 +44,9 @@ namespace Solver_Bases
                 data[i - first_line] = lines[i];
             return data;
         }
-
-        public abstract void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file);
-        public abstract void Create_NewtonStep_File(double split_width, string output_file, double t);
+        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

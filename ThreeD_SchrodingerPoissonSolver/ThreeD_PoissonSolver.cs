@@ -12,6 +12,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 {
     public class ThreeD_PoissonSolver: FlexPDE_Base
     {
+        bool natural_topbc = false;
 
         Experiment exp;
         string dens_filename = "car_dens.dat";
@@ -23,10 +24,9 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         string gphi_filename = "gphi.dat";
 
-        double top_bc, split_bc, bottom_bc;
+        double top_bc, split_bc1, split_bc2, bottom_bc;
         double surface;
 
-        double z_2DEG;
         double split_width, split_length, top_length;
 
         double y_scaling, z_scaling;
@@ -36,6 +36,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             : base(using_external_code, input)
         {
             this.exp = exp;
+            // check if the top layer is air... if so, we need to use natural boundary conditions on the upper surface (this is almost always going to be the case in 3D)
+            natural_topbc = (exp.Layers[exp.Layers.Length - 1].Material == Material.Air);
 
             // calculate scaling factors (x is used as the reference dimension)
             // w = a_y * y such that the y dimension has the same length as the x dimension
@@ -100,10 +102,14 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimension, Dictionary<string, double> boundary_conditions)
         {
+            if (natural_topbc)
+                boundary_conditions["top_V"] = 0.0;
+
             // change the boundary conditions to potential boundary conditions by dividing through by -q_e
             // with a factor to convert from V to meV zC^-1
             top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;
-            split_bc = boundary_conditions["split_V"] * Physics_Base.energy_V_to_meVpzC;
+            split_bc1 = boundary_conditions["split_V1"] * Physics_Base.energy_V_to_meVpzC;
+            split_bc2 = boundary_conditions["split_V2"] * Physics_Base.energy_V_to_meVpzC;
             bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
 
             // and save the split width and surface charge
@@ -113,10 +119,17 @@ namespace ThreeD_SchrodingerPoissonSolver
             this.surface = boundary_conditions["surface"];
 
             if (flexpde_script != null)
-                Create_FlexPDE_File(top_bc, split_bc, split_width, surface, bottom_bc, flexpde_script);
+                Create_FlexPDE_File(top_bc, top_length, split_bc1, split_bc2, split_width, split_length, surface, bottom_bc, flexpde_script);
         }
 
-        public override void Create_FlexPDE_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file)
+        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        {
+            Save_Data(density, dens_filename);
+
+            return Get_Data_From_External(initcalc_location, flexpde_options, initcalc_result_filename);
+        }
+
+        public void Create_FlexPDE_File(double top_bc, double top_length, double split_bc1, double split_bc2, double split_width, double split_length, double surface, double bottom_bc, string output_file)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -149,7 +162,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tsurface_bc = " + surface.ToString() + " / z_scaling");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
-            sw.WriteLine("\tsplit_V = " + split_bc.ToString());
+            sw.WriteLine("\tsplit_V1 = " + split_bc1.ToString());
+            sw.WriteLine("\tsplit_V2 = " + split_bc2.ToString());
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
@@ -234,21 +248,21 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\t\tLINE TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 2 ! left split gate");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
+            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V1");
+            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V1");
             sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
             sw.WriteLine("\t\tSTART (-split_length / 2, ly / 2 * y_scaling)");
             sw.WriteLine("\t\tLINE TO (split_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = split_V");
+            sw.WriteLine("\t\tVALUE(u) = split_V1");
             sw.WriteLine("\t\tLINE TO (split_length / 2, split_width / 2 * y_scaling) TO (-split_length / 2, split_width / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 3 ! right split gate");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
+            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V2");
+            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V2");
             sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
             sw.WriteLine("\t\tSTART (-split_length / 2, -ly / 2 * y_scaling)");
             sw.WriteLine("\t\tLINE TO (split_length / 2, -ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = split_V");
+            sw.WriteLine("\t\tVALUE(u) = split_V2");
             sw.WriteLine("\t\tLINE TO (split_length / 2, -split_width / 2 * y_scaling) TO (-split_length / 2, -split_width / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tLIMITED REGION 4 ! top gate");
@@ -291,7 +305,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             Save_Data(gphi, gphi_filename);
             Save_Data(rho_prime.Spin_Summed_Data, densderiv_filename);
-            Create_NewtonStep_File(top_bc, top_length, split_bc, split_width, split_length, surface, bottom_bc, flexpde_script, T);
+            Create_NewtonStep_File(top_length, split_width, split_length, flexpde_script, T);
 
             return Get_Data_From_External(newton_location, flexpde_options, newton_result_filename);
         }
@@ -311,7 +325,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             return Calculate_Newton_Step(rho_prime, gphi, car_dens);
         }
 
-        public override void Create_NewtonStep_File(double top_bc, double top_length, double split_bc, double split_width, double split_length, double surface, double bottom_bc, string output_file, double t)
+        public void Create_NewtonStep_File(double top_length, double split_width, double split_length, string output_file, double t)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -494,30 +508,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.Close();
         }
 
-        public SpinResolved_Data ZDens
-        {
-            get 
-            {
-                if (dens_1d == null)
-                    throw new Exception("Error - Must set 1D density");
-                else
-                    return dens_1d;
-            }
-            set 
-            {
-                dens_1d = value;
-                // calculate the z-position of the maximum of dens_1d and use this as z_2DEG
-                z_2DEG = exp.Zmin_Dens + exp.Dz_Dens * (double)Array.IndexOf(dens_1d.Spin_Summed_Data.vec.ToArray(), dens_1d.Spin_Summed_Data.vec.Min());
-            }
-        }
-
-        public double Z_2DEG
-        {
-            get { return z_2DEG; }
-            set { z_2DEG = value; }
-        }
-
-        public Band_Data Chemical_Potential
+        public override Band_Data Chemical_Potential
         {
             get
             {
@@ -527,11 +518,6 @@ namespace ThreeD_SchrodingerPoissonSolver
                 // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
                 return Physics_Base.q_e * Parse_Potential(data);
             }
-        }
-
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
-        {
-            throw new NotImplementedException();
         }
     }
 }

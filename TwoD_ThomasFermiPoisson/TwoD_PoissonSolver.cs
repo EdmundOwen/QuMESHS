@@ -97,7 +97,7 @@ namespace TwoD_ThomasFermiPoisson
             return Get_Data_From_External(initcalc_location, flexpde_options, initcalc_result_filename);
         }
 
-        public override void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
+        public void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
         {
             Create_FlexPDE_File(top_bc, split_bc1, split_bc2, split_width, surface, bottom_bc, output_file, "rho_carrier = TABLE(\'" + dens_filename + "\', x, y)" + "\t\nrho_dopent = TABLE(\'dens_2D_dopents.dat\', x, y)");
         }
@@ -261,11 +261,6 @@ namespace TwoD_ThomasFermiPoisson
                 Create_FlexPDE_File(top_bc, split_bc1, split_bc2, split_width, surface, bottom_bc, flexpde_script);
         }
 
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
-        {
-            throw new NotImplementedException();
-        }
-
         protected override void Save_Data(Band_Data density, string input_file_name)
         {
             density.Save_2D_Data(input_file_name, exp.Dy_Dens, exp.Dz_Dens, exp.Ymin_Dens, exp.Zmin_Dens);
@@ -297,7 +292,7 @@ namespace TwoD_ThomasFermiPoisson
             return Calculate_Newton_Step(rho_prime, gphi, car_dens);
         }
 
-        public override void Create_NewtonStep_File(double split_width, string output_file, double t)
+        public void Create_NewtonStep_File(double split_width, string output_file, double t)
         {
             throw new NotImplementedException();
             StreamWriter sw = new StreamWriter(output_file);
@@ -483,8 +478,5 @@ namespace TwoD_ThomasFermiPoisson
 
         public override Band_Data Chemical_Potential
         { get { throw new NotImplementedException(); } }
-
-        bool with_smoothing = false;
-        public bool With_Smoothing { set { with_smoothing = value; } }
     }
 }

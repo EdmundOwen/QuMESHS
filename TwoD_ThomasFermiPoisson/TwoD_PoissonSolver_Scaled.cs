@@ -114,7 +114,7 @@ namespace TwoD_ThomasFermiPoisson
             return Get_Data_From_External(initcalc_location, flexpde_options, initcalc_result_filename);
         }
 
-        public override void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
+        public void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -285,7 +285,7 @@ namespace TwoD_ThomasFermiPoisson
             return Calculate_Newton_Step(rho_prime, gphi, car_dens);
         }
 
-        public override void Create_NewtonStep_File(double split_width, string output_file, double t)
+        public void Create_NewtonStep_File(double split_width, string output_file, double t)
         {
             StreamWriter sw = new StreamWriter(output_file);
 
@@ -471,11 +471,6 @@ namespace TwoD_ThomasFermiPoisson
                 // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
                 return Physics_Base.q_e * Parse_Potential(data);
             }
-        }
-
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
-        {
-            throw new NotImplementedException();
         }
     }
 }

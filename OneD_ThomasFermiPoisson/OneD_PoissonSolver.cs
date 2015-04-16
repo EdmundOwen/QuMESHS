@@ -242,7 +242,7 @@ namespace OneD_ThomasFermiPoisson
         }
         */
 
-        public override void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
+        public void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
         {
             // check if an input file already exists and delete it
             if (File.Exists(output_file))
@@ -310,14 +310,10 @@ namespace OneD_ThomasFermiPoisson
             // and close the file writer
             sw.Close();
         }
+
         protected override void Save_Data(Band_Data density, string input_file_name)
         {
             density.Save_1D_Data(input_file_name, exp.Dz_Pot, exp.Zmin_Pot);
-        }
-
-        public override void Create_NewtonStep_File(double split_width, string output_file, double t)
-        {
-            throw new NotImplementedException();
         }
 
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions)

@@ -95,6 +95,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="dealII_Base.cs" />
     <Compile Include="Density_Base.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Experiment_Base.cs" />

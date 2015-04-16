@@ -14,10 +14,8 @@ namespace ThreeD_SchrodingerPoissonSolver
 {
     public class Experiment : Experiment_Base
     {
-        Dictionary<string, double> device_dimensions, boundary_conditions;
         double t_damp = 0.8, t_min = 1e-3;
 
-        ThreeD_ThomasFermiSolver dens_solv;
         IPoisson_Solve pois_solv;
 
         public void Initialise_Experiment(Dictionary<string, object> input_dict)
@@ -29,119 +27,18 @@ namespace ThreeD_SchrodingerPoissonSolver
             Get_From_Dictionary<double>(input_dict, "dy", ref dy_dens); dy_pot = dy_dens;
             Get_From_Dictionary<double>(input_dict, "dz", ref dz_dens); dz_pot = dz_dens;
 
-            Get_From_Dictionary(input_dict, "nx", ref nx_dens); nx_pot = nx_dens - 1;// subtract one from the number of potential points as this is only used to calculate the size of the domain using
-            Get_From_Dictionary(input_dict, "ny", ref ny_dens); ny_pot = ny_dens - 1;// lx = nx * dx so on a grid, this is one too many
+            Get_From_Dictionary(input_dict, "nx", ref nx_dens); nx_pot = nx_dens;
+            Get_From_Dictionary(input_dict, "ny", ref ny_dens); ny_pot = ny_dens;
             Get_From_Dictionary(input_dict, "nz", ref nz_dens); nz_pot = nz_dens;
 
-            // but try to get the specific values
-            Get_From_Dictionary<double>(input_dict, "dx_dens", ref dx_dens, true);
-            Get_From_Dictionary<double>(input_dict, "dy_dens", ref dy_dens, true);
-            Get_From_Dictionary<double>(input_dict, "dz_dens", ref dz_dens, true);
-            Get_From_Dictionary<double>(input_dict, "dx_pot", ref dx_pot, true);
-            Get_From_Dictionary<double>(input_dict, "dy_pot", ref dy_pot, true);
-            Get_From_Dictionary<double>(input_dict, "dz_pot", ref dz_pot, true);
-
-            Get_From_Dictionary(input_dict, "nx_dens", ref nx_dens, true);
-            Get_From_Dictionary(input_dict, "ny_dens", ref ny_dens, true);
-            Get_From_Dictionary(input_dict, "nz_dens", ref nz_dens, true);
-            Get_From_Dictionary(input_dict, "nx_pot", ref nx_pot, true);
-            Get_From_Dictionary(input_dict, "ny_pot", ref ny_pot, true);
-            Get_From_Dictionary(input_dict, "nz_pot", ref nz_pot, true);
-
-            // physics parameters are done by the base method
+            // physics parameters are done by the base method (the base will also try to get specific parameters detailed in the input files)
             base.Initialise(input_dict);
 
-            // and split gate dimensions
-            device_dimensions = new Dictionary<string, double>();
-            device_dimensions.Add("split_width", (double)input_dict["split_width"]);
-            device_dimensions.Add("split_length", (double)input_dict["split_length"]);
-            device_dimensions.Add("top_length", (double)input_dict["top_length"]);
-
-            // gate voltages
-            boundary_conditions = new Dictionary<string, double>();
-            boundary_conditions.Add("top_V", (double)input_dict["top_V"]);
-            boundary_conditions.Add("split_V", (double)input_dict["split_V"]);
-            boundary_conditions.Add("bottom_V", 0.0);
-
-            if (input_dict.ContainsKey("hot_start")) hot_start = (bool)input_dict["hot_start"];
-            if (hot_start)
-            {
-                // load (spin-resolved) density data
-                string[] spin_up_data, spin_down_data;
-                try
-                {
-                    spin_up_data = File.ReadAllLines((string)input_dict["spin_up_file"]);
-                    spin_down_data = File.ReadAllLines((string)input_dict["spin_down_file"]);
-                }
-                catch (KeyNotFoundException key_e)
-                { throw new Exception("Error - Are the file names for the hot start data included in the input file?\n" + key_e.Message); }
-
-                this.carrier_density = new SpinResolved_Data(Band_Data.Parse_Band_Data(spin_up_data, Nx_Dens, Ny_Dens, Nz_Dens), Band_Data.Parse_Band_Data(spin_down_data, Nx_Dens, Ny_Dens, Nz_Dens));
-
-                // and surface charge density
-                try { boundary_conditions.Add("surface", double.Parse(File.ReadAllLines((string)input_dict["surface_charge_file"])[0])); }
-                catch (KeyNotFoundException key_e) { throw new Exception("Error - Are the file names for the hot start data included in the input file?\n" + key_e.Message); }
-            }
-            // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
-            else if (input_dict.ContainsKey("SpinResolved_Density"))
-            {
-                throw new NotImplementedException();
-                this.carrier_density = new SpinResolved_Data(new Band_Data(nx_dens, ny_dens, nz_dens, 0.0), new Band_Data(nx_dens, ny_dens, nz_dens, 0.0));
-                SpinResolved_Data tmp_charge_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
-
-                int z_offset = (int)Math.Abs((Zmin_Pot - Zmin_Dens) / Dz_Pot);
-
-                for (int i = 0; i < nz_dens; i++)
-                {
-                    dens_1d.Spin_Up.vec[i] = tmp_charge_1d_density.Spin_Up.vec[z_offset + i];
-                    dens_1d.Spin_Down.vec[i] = tmp_charge_1d_density.Spin_Down.vec[z_offset + i];
-                }
-
-                // this is the charge density modulation in the (x, y) plane so, initially, just put it in uniformly
-                for (int k = 0; k < nz_dens; k++)
-                    for (int i = 0; i < nx_dens; i++)
-                        for (int j = 0; j < ny_dens; j++)
-                        {
-                            carrier_density.Spin_Up.vol[k][i, j] = dens_1d.Spin_Up.vec[k];
-                            carrier_density.Spin_Down.vol[k][i, j] = dens_1d.Spin_Down.vec[k];
-                        }
-
-                boundary_conditions.Add("surface", (double)input_dict["surface_charge"]);
-            }
-            else
-            {
-                this.carrier_density = new SpinResolved_Data(new Band_Data(nx_dens, ny_dens, nz_dens, 0.0), new Band_Data(nx_dens, ny_dens, nz_dens, 0.0));
-                boundary_conditions.Add("surface", (double)input_dict["surface_charge"]);
-            }
-
-            // and try to get the dopent density data
-            if (input_dict.ContainsKey("Dopent_Density"))
-            {
-                this.dopent_density = new SpinResolved_Data(new Band_Data(nx_dens, ny_dens, nz_dens, 0.0), new Band_Data(nx_dens, ny_dens, nz_dens, 0.0));
-                SpinResolved_Data tmp_1d_dopdens = (SpinResolved_Data)input_dict["Dopent_Density"];
-
-                int offset_min = (int)Math.Abs((Zmin_Pot - Zmin_Dens) / Dz_Pot);
-                // this is the charge density modulation in the (x, y) plane so, initially, just put it in uniformly
-                for (int k = 0; k < nz_dens; k++)
-                    for (int i = 0; i < nx_dens; i++)
-                        for (int j = 0; j < ny_dens; j++)
-                        {
-                            dopent_density.Spin_Up.vol[k][i, j] = tmp_1d_dopdens.Spin_Up.vec[k + offset_min];
-                            dopent_density.Spin_Down.vol[k][i, j] = tmp_1d_dopdens.Spin_Down.vec[k + offset_min];
-                        }
-            }
-            else
-                this.dopent_density = new SpinResolved_Data(nx_dens, ny_dens, nz_dens);
-
-            // and instantiate their derivatives
-            carrier_density_deriv = new SpinResolved_Data(nx_dens, ny_dens, nz_dens);
-            dopent_density_deriv = new SpinResolved_Data(nx_dens, ny_dens, nz_dens);
-
+            // and initialise the data classes for density, its derivatives and the chemical potential
+            Initialise_DataClasses(input_dict);
+            
             // calculate the z-position of the maximum of dens_1d and use this as z_2DEG
             double z_2DEG = zmin_dens + dz_dens * (double)Array.IndexOf(dens_1d.Spin_Summed_Data.vec.ToArray(), dens_1d.Spin_Summed_Data.vec.Min());
-
-            // create charge density solver and calculate boundary conditions
-            dens_solv = new ThreeD_ThomasFermiSolver(this);
 
             // initialise potential solver
             if (using_flexPDE)
@@ -151,42 +48,67 @@ namespace ThreeD_SchrodingerPoissonSolver
             else
                 throw new NotImplementedException("Error - Must use either FlexPDE or deal.II for 2D potential solver!");
 
+            pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
+
+            // and load the output suffix for identification of output files
+            Get_From_Dictionary<string>(input_dict, "output_suffix", ref output_suffix, true);
+
             Console.WriteLine("Experimental parameters initialised");
         }
 
+        protected override void Initialise_DataClasses(Dictionary<string, object> input_dict)
+        {
+            // initialise data classes for the density and chemical potential
+            this.carrier_density = new SpinResolved_Data(nx_dens, ny_dens, nz_dens);
+            this.dopent_density = new SpinResolved_Data(nx_dens, ny_dens, nz_dens);
+            this.chem_pot = new Band_Data(nx_dens, ny_dens, nz_dens, 0.0);
+
+            if (hot_start)
+            {
+                Initialise_from_Hot_Start(input_dict);
+            }
+            // try to get the potential and density from the dictionary... they probably won't be there and if not... make them
+            else if (initialise_with_1D_data)
+            {
+                Initialise_from_1D(input_dict);
+            }
+            else if (initialise_from_restart)
+            {
+                Initialise_from_Restart(input_dict);
+            }
+            else
+            {
+                boundary_conditions.Add("surface", (double)input_dict["surface_charge"]);
+            }
+
+            // and instantiate their derivatives
+            carrier_density_deriv = new SpinResolved_Data(nx_dens, ny_dens, nz_dens);
+            dopent_density_deriv = new SpinResolved_Data(nx_dens, ny_dens, nz_dens);
+        }
+        
         public override void Run()
         {
-            // calculate the bare potential
-            Console.WriteLine("Calculating bare potential");
-            pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
-            chem_pot = pois_solv.Get_Chemical_Potential(0.0 * carrier_density.Spin_Summed_Data);
-            Console.WriteLine("Saving bare potential");
-            (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("bare_pot.dat");
-            Console.WriteLine("Bare potential saved");
+            if (!initialise_from_restart)
+            {
+                // calculate the bare potential
+                Console.WriteLine("Calculating bare potential");
+                chem_pot = pois_solv.Get_Chemical_Potential(0.0 * carrier_density.Spin_Summed_Data);
+                Console.WriteLine("Saving bare potential");
+                (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("bare_pot.dat");
+                Console.WriteLine("Bare potential saved");
+            }
 
-            // and then run the DFT solver at the base temperature over a limited range
-            //TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
             ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
 
             bool converged = false;
             int no_runs = 2500;
-            if (no_dft)
+            // start without dft if carrier density is empty
+            if (no_dft || carrier_density.Spin_Summed_Data.Min() == 0.0)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
             else
                 dft_solv.DFT_Mixing_Parameter = 0.1;
-            // start without dft if carrier density is empty
-            if (carrier_density.Spin_Summed_Data.Min() == 0.0)
-                dft_solv.DFT_Mixing_Parameter = 0.0;
 
             converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
-
-            // initialise output solvers
-            ThreeD_ThomasFermiSolver final_dens_solv = new ThreeD_ThomasFermiSolver(this);
-
-            // save final density out
-            carrier_density.Spin_Summed_Data.Save_Data("dens_3D.dat");
-            carrier_density.Spin_Up.Save_Data("dens_3D_up.dat");
-            carrier_density.Spin_Down.Save_Data("dens_3D_down.dat");
 
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(boundary_conditions["surface"].ToString()); sw.Close();
@@ -197,8 +119,8 @@ namespace ThreeD_SchrodingerPoissonSolver
                 sw_e.WriteLine(energies[i]);
             sw_e.Close();
 
-            final_dens_solv.Output(carrier_density, "carrier_density.dat");
-            final_dens_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot), "density_error.dat");
+            dft_solv.Output(carrier_density, "carrier_density.dat");
+            dft_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot), "density_error.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential.dat");
             Band_Data pot_exc = dft_solv.DFT_diff(carrier_density) + Physics_Base.Get_XC_Potential(carrier_density);
             pot_exc.Save_Data("xc_pot.dat");
@@ -206,7 +128,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 //            Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
 //            ks_ke.Save_Data("ks_ke.dat");
 
-            throw new NotImplementedException();
+            Close(converged, no_runs);
         }
 
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim)
@@ -303,8 +225,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                         converged = true;
                 }
 
-                // update band energy phi_new = phi_old + t * x
- //               chem_pot = chem_pot + t * x;
+                // update t for Poisson solver
                 pois_solv.T = t;
 
                 stpwch.Stop();
@@ -328,13 +249,13 @@ namespace ThreeD_SchrodingerPoissonSolver
         /// traditionally, would expect the edges to have zero charge but this will be different for simulations in the plane of the 2deg
         /// </summary>
         /// <param name="carrier_density"></param>
-        private void Set_Edges(SpinResolved_Data carrier_density)
+        void Set_Edges(SpinResolved_Data carrier_density)
         {
             Set_Edges(carrier_density.Spin_Up);
             Set_Edges(carrier_density.Spin_Down);
         }
 
-        private void Set_Edges(Band_Data data)
+        void Set_Edges(Band_Data data)
         {
             for (int k = 0; k < nz_dens; k++)
                 for (int i = 0; i < nx_dens; i++)
@@ -358,5 +279,53 @@ namespace ThreeD_SchrodingerPoissonSolver
                     data.vol[nz_dens - 1][i, j] = data.vol[nz_dens - 2][i, j];
                 }
         }
+        void Initialise_from_1D(Dictionary<string, object> input_dict)
+        {
+
+            throw new NotImplementedException();
+            this.carrier_density = new SpinResolved_Data(new Band_Data(nx_dens, ny_dens, nz_dens, 0.0), new Band_Data(nx_dens, ny_dens, nz_dens, 0.0));
+            SpinResolved_Data tmp_charge_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
+
+            int z_offset = (int)Math.Abs((Zmin_Pot - Zmin_Dens) / Dz_Pot);
+
+            for (int i = 0; i < nz_dens; i++)
+            {
+                dens_1d.Spin_Up.vec[i] = tmp_charge_1d_density.Spin_Up.vec[z_offset + i];
+                dens_1d.Spin_Down.vec[i] = tmp_charge_1d_density.Spin_Down.vec[z_offset + i];
+            }
+
+            // this is the charge density modulation in the (x, y) plane so, initially, just put it in uniformly
+            for (int k = 0; k < nz_dens; k++)
+                for (int i = 0; i < nx_dens; i++)
+                    for (int j = 0; j < ny_dens; j++)
+                    {
+                        carrier_density.Spin_Up.vol[k][i, j] = dens_1d.Spin_Up.vec[k];
+                        carrier_density.Spin_Down.vol[k][i, j] = dens_1d.Spin_Down.vec[k];
+                    }
+
+            boundary_conditions.Add("surface", (double)input_dict["surface_charge"]);
+        }
+
+        protected override void Initialise_from_Hot_Start(Dictionary<string, object> input_dict)
+        {
+
+            // load (spin-resolved) density data
+            string[] spin_up_data, spin_down_data;
+            try
+            {
+                spin_up_data = File.ReadAllLines((string)input_dict["spin_up_file"]);
+                spin_down_data = File.ReadAllLines((string)input_dict["spin_down_file"]);
+            }
+            catch (KeyNotFoundException key_e)
+            { throw new Exception("Error - Are the file names for the hot start data included in the input file?\n" + key_e.Message); }
+
+            this.carrier_density.Spin_Up = Band_Data.Parse_Band_Data(spin_up_data, Nx_Dens, Ny_Dens, Nz_Dens);
+            this.carrier_density.Spin_Down = Band_Data.Parse_Band_Data(spin_down_data, Nx_Dens, Ny_Dens, Nz_Dens);
+
+            // and surface charge density
+            try { boundary_conditions.Add("surface", double.Parse(File.ReadAllLines((string)input_dict["surface_charge_file"])[0])); }
+            catch (KeyNotFoundException key_e) { throw new Exception("Error - Are the file names for the hot start data included in the input file?\n" + key_e.Message); }
+        }
+
     }
 }
