@@ -16,7 +16,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         Experiment exp;
         string dens_filename = "car_dens.dat";
-        string densdopent_filename = "dens_2D_dopents.dat";
+        string densdopent_filename = "dens_3D_dopents.dat";
         string densderiv_filename = "rho_prime.dat";
         string pot_filename = "phi.dat";
         string new_pot_filename = "new_phi.dat";
@@ -28,6 +28,8 @@ namespace ThreeD_SchrodingerPoissonSolver
         double surface;
 
         double split_width, split_length, top_length;
+
+        double z_2DEG;
 
         double y_scaling, z_scaling;
         double t = 0.0;
@@ -56,7 +58,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             // check that the data isn't all zeros and if it is, add a small 1e-8 perturbation at the centre
             if (density.Min() > -1e-8 && density.Max() < 1e-8)
-                density.vol[density.Length / 2][(int)(density.vol[density.Length / 2].Rows / 2), (int)(density.vol[density.Length / 2].Cols / 2)] = 1e-8;
+                density.vol[density.vol.Length / 2][(int)(density.vol[density.vol.Length / 2].Rows / 2), (int)(density.vol[density.vol.Length / 2].Cols / 2)] = 1e-8;
 
             density.Save_3D_Data(input_file_name, exp.Dx_Dens, exp.Dy_Dens * y_scaling, exp.Dz_Dens * z_scaling, exp.Xmin_Dens, exp.Ymin_Dens * y_scaling, exp.Zmin_Dens * z_scaling);
         }
@@ -118,6 +120,9 @@ namespace ThreeD_SchrodingerPoissonSolver
             this.split_length = device_dimension["split_length"];
             this.surface = boundary_conditions["surface"];
 
+            // and find the interface depth (for plotting)
+            this.z_2DEG = device_dimension["interface_depth"] - 5.0;
+
             if (flexpde_script != null)
                 Create_FlexPDE_File(top_bc, top_length, split_bc1, split_bc2, split_width, split_length, surface, bottom_bc, flexpde_script);
         }
@@ -140,7 +145,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-3");
+            sw.WriteLine("\tERRLIM=1e-2");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             sw.WriteLine("\trho");
@@ -148,7 +153,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine();
             // and the tables for carrier and donor densities
             sw.WriteLine("\trho_carrier = TABLE(\'" + dens_filename + "\', x, y, z)");
-            sw.WriteLine("\trho_dopent = TABLE(\'dens_3D_dopents.dat\', x, y, z)");
+            sw.WriteLine("\trho_dopent = TABLE(\'" + densdopent_filename + "\', x, y, z)");
             sw.WriteLine();
             // simulation dimension
             sw.WriteLine("\tlx = " + (exp.Dx_Pot * exp.Nx_Pot).ToString());
@@ -159,7 +164,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
             sw.WriteLine();
             sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
-            sw.WriteLine("\tsurface_bc = " + surface.ToString() + " / z_scaling");
+            sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
             sw.WriteLine("\tsplit_V1 = " + split_bc1.ToString());
@@ -351,6 +356,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tu");
             sw.WriteLine();
             sw.WriteLine("SELECT");
+            sw.WriteLine("\tERRLIM=1e-2");
+            sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -363,7 +370,6 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\txc_pot = TABLE(\'" + xc_pot_filename + "\')");
             sw.WriteLine("\txc_pot_calc = TABLE(\'xc_pot_calc.dat\')");
             sw.WriteLine("\tcar_dens = TABLE(\'" + dens_filename + "\')");
-            sw.WriteLine("\tdop_dens = TABLE(\'" + densdopent_filename + "\')");
             sw.WriteLine("\trho_prime = TABLE(\'" + densderiv_filename + "\')");
             sw.WriteLine();
             // simulation dimension

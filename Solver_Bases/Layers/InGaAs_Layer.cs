@@ -22,10 +22,10 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.InGaAs;
-            permitivity = ((1 - x) * Physics_Base.epsilon_r_InAs + x * Physics_Base.epsilon_r_GaAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
+            permitivity = (x * Physics_Base.epsilon_r_InAs + (1 - x) * Physics_Base.epsilon_r_GaAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
 
             // set the InGaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
-            this.band_gap = (410.5 + 633.7 * x + 475.0 * x * x);
+            this.band_gap = (1519.2 - 1583.7 * x + 475.0 * x * x);
             allow_donors = false;
         }
 

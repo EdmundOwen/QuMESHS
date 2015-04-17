@@ -12,13 +12,13 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the longitudinal direction for the density calculation
-% nx = 101
+% nx = 100
 #
 ## Spacing of lattice sites in the longitudinal direction for the density calculation
 % dx = 50
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 41
+% ny = 40
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
 % dy = 50
@@ -100,3 +100,4 @@
 % nz_dens = 20
 #
 #
+% initialise_with_1D_data = true

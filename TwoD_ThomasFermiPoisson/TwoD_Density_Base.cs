@@ -101,11 +101,6 @@ namespace TwoD_ThomasFermiPoisson
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }
 
-        public override void Close()
-        {
-            Console.WriteLine("Closing density solver");
-        }
-
         protected void Get_Potential(ref Band_Data dft_band_offset, ILayer[] layers)
         {
             for (int i = 0; i < nx; i++)

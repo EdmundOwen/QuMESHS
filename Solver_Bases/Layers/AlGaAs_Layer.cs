@@ -22,7 +22,7 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.AlGaAs;
-            permitivity = ((1 - x) * Physics_Base.epsilon_r_GaAs + x * Physics_Base.epsilon_r_AlAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
+            permitivity = (x * Physics_Base.epsilon_r_AlAs + (1 - x) * Physics_Base.epsilon_r_GaAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
 
             // set the AlGaAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
             if (x < 0.45)

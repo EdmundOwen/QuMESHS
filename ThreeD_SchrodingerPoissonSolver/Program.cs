@@ -14,7 +14,6 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             // set nmath license key
 
-            Console.BufferHeight = Int16.MaxValue - 1;
             Console.WriteLine("Program starting");
 
             Console.WriteLine("Loading input parameters from file");
@@ -44,20 +43,36 @@ namespace ThreeD_SchrodingerPoissonSolver
             exp_init.Initialise(inputs_init);
             exp_init.Run();
             inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
+            inputs.Add("Dopent_Density", exp_init.Dopent_Density);
             inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
+            inputs.Add("nz_pot_1d", inputs_init["nz"]);
+            inputs.Add("zmin_pot_1d", inputs_init["zmin"]);
+            inputs.Add("zmax_pot_1d", inputs_init["zmax"]);
             // get the frozen out surface charge at 70K
             if (!inputs.ContainsKey("surface_charge")) inputs.Add("surface_charge", exp_init.Surface_Charge(70.0));
             else Console.WriteLine("Surface charge set from Input_Parameters.txt to " + ((double)inputs["surface_charge"]).ToString());
             Console.WriteLine("Calculated 1D density for dopents");
 
-            int nx_init = (int)(double)inputs_init["nx_1d"]; int ny_init = (int)(double)inputs_init["ny_1d"];
-            double dx_init = (double)inputs["nx"] * (double)inputs["dx"] / nx_init; double dy_init = (double)inputs["ny"] * (double)inputs["ny"] / ny_init;
-
             // this is a scaled version for the dopents!
             double y_scaling = ((double)inputs["nx"] * (double)inputs["dx"]) / ((double)inputs["ny"] * (double)inputs["dy"]);
             double z_scaling = ((double)inputs["nx"] * (double)inputs["dx"]) / ((double)inputs["nz"] * (double)inputs["dz"]);
-            Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D_dopents.dat", dx_init, dy_init * y_scaling, (double)inputs["dz"] * z_scaling, (double)inputs["xmin_pot"], (double)inputs["ymin_pot"] * y_scaling, Geom_Tool.Get_Zmin(exp_init.Layers) * z_scaling);
-            Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, nx_init, ny_init).Spin_Summed_Data.Save_3D_Data("dens_3D.dat", dx_init, dy_init * y_scaling, (double)inputs["dz"] * z_scaling, (double)inputs["xmin_pot"], (double)inputs["ymin_pot"] * y_scaling, Geom_Tool.Get_Zmin(exp_init.Layers) * z_scaling);
+            // extract the dopent layer (leaving the top and bottom set to zero)
+            int dopent_min = -1;
+            int dopent_max = -2;
+            ILayer dopent_layer = exp_init.Layers[0];
+            for (int i = 0; i < exp_init.Layers.Length; i++)
+                if (exp_init.Layers[i].Donor_Conc != 0.0 || exp_init.Layers[i].Acceptor_Conc != 0)
+                {
+                    dopent_layer = exp_init.Layers[i];
+                    dopent_min = (int)Math.Round((dopent_layer.Zmin - Geom_Tool.Get_Zmin(exp_init.Layers)) / (int)(double)inputs_init["dz"]);
+                    dopent_max = (int)Math.Round((dopent_layer.Zmax - Geom_Tool.Get_Zmin(exp_init.Layers)) / (int)(double)inputs_init["dz"]);
+                }
+            Band_Data tmp_dop_dens_1D = new Band_Data(dopent_max - dopent_min, 0.0);
+            for (int i = dopent_min + 1; i < dopent_max - 1; i++)
+                tmp_dop_dens_1D.vec[i - dopent_min] = exp_init.Dopent_Density.Spin_Summed_Data.vec[i];
+            // and expand into the correct data structure
+            Band_Data tmp_dop_dens = Input_Band_Structure.Expand_BandStructure(tmp_dop_dens_1D.vec, (int)(double)inputs_init["nx_1d"], (int)(double)inputs_init["ny_1d"]);
+            tmp_dop_dens.Save_3D_Data("dens_3D_dopents.dat", (double)inputs["dx"] * ((double)inputs["nx"] + 1.0) / ((double)inputs_init["nx_1d"] - 1.0), y_scaling * (double)inputs["dy"] * ((double)inputs["ny"] + 1.0) / ((double)inputs_init["ny_1d"] - 1.0),  z_scaling * (double)inputs_init["dz"], -1.0 * (double)inputs["dx"] * ((double)inputs["nx"] + 1.0) / 2.0, -1.0 * y_scaling * (double)inputs["dy"] * ((double)inputs["ny"] + 1.0) / 2.0, z_scaling * dopent_layer.Zmin);
             Console.WriteLine("Saved 1D dopent density");
             
             Console.WriteLine("Starting experiment");

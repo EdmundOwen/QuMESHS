@@ -353,7 +353,7 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < ny_dens; i++)
                 for (int j = 0; j < nz_dens; j++)
                 {
-                    chem_pot.mat[i, j] = tmp_pot_1d.vec[offset_min + j - 1];
+                    chem_pot.mat[i, j] = tmp_pot_1d.vec[offset_min + j];
 
                     // do not add anything to the density if on the edge of the domain
                     if (i == 0 || i == ny_dens - 1 || j == 0 || j == nz_dens - 1)

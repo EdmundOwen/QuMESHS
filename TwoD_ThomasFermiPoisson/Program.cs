@@ -35,7 +35,7 @@ namespace TwoD_ThomasFermiPoisson
    //         inputs["split_V"] = double.Parse(Console.ReadLine());
             int index = int.Parse(args[0]);
 
-            int maxval = 9;
+            int maxval = 36;
             int i1 = index % maxval;
             int i2 = (index - i1) / maxval;
 
@@ -53,9 +53,9 @@ namespace TwoD_ThomasFermiPoisson
 //            inputs["output_suffix"] = "_sg1" + ((double)inputs["split_V1"]).ToString("F2") + "_sg2" + ((double)inputs["split_V2"]).ToString("F2") + ".dat";
 
             //top gated with constant side gate
-            inputs["split_V"] = -0.5;// -0.46 - 0.005 * (double)i1;
+            inputs["split_V"] = -0.465 - 0.001 * (double)i1;
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
-            inputs["top_V"] = -1.65;// -1.7 + -0.01 * (double)i2;
+            inputs["top_V"] = -1.65 + -0.005 * (double)i2;
             Console.WriteLine("Setting \"top_V\" to " + ((double)inputs["top_V"]).ToString() + "V");
             inputs["output_suffix"] = "_sg" + ((double)inputs["split_V"]).ToString("F3") + "_tg" + ((double)inputs["top_V"]).ToString("F3") + ".dat";
 

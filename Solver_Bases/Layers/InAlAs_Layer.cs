@@ -14,6 +14,10 @@ namespace Solver_Bases.Layers
         public InAlAs_Layer(IGeom geom, int layer_no, double alloy_ratio)
             : base(geom, layer_no)
         {
+            // if alloy ratio is below 53% In, this is an indirect band gap material and I don't have the parameters for it
+            if (alloy_ratio < 0.53)
+                throw new NotImplementedException("Error - Below an indium concentration of 53%, the material has an indirect band gap.\nMaterial properties are not implemented for this material");
+
             this.x = alloy_ratio;
             // re-set material parameters with correct alloy ratio
             Set_Material_Parameters();
@@ -22,11 +26,10 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.InAlAs;
-            permitivity = ((1 - x) * Physics_Base.epsilon_r_InAs + x * Physics_Base.epsilon_r_AlAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
+            permitivity = (x * Physics_Base.epsilon_r_InAs + (1 - x) * Physics_Base.epsilon_r_AlAs + permitivity_bowing_ratio * x * (1 - x)) * Physics_Base.epsilon_0;
 
-            throw new NotImplementedException();
             // set the InAlAs band gap and acceptor/donor energies are positivie and show how far from the band gap centre the donors are
-            this.band_gap = 0.0;
+            this.band_gap = 2640.0 - 2280.0 * x;
             allow_donors = true;
             this.acceptor_energy = -0.5 * band_gap + 35.0; this.donor_energy = 0.5 * band_gap - 5.0;
         }

@@ -26,11 +26,6 @@ namespace ThreeD_SchrodingerPoissonSolver
             this.nx = exp.Nx_Dens; this.ny = exp.Ny_Dens; this.nz = exp.Nz_Dens;
         }
 
-        public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
-        {
-            throw new NotImplementedException();
-        }
-
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
@@ -100,11 +95,6 @@ namespace ThreeD_SchrodingerPoissonSolver
 
                         dft_band_offset.vol[k][i, j] = 0.5 * band_gap - dft_band_offset.vol[k][i, j] + dft_pot.vol[k][i, j];
                     }
-        }
-
-        public override void Close()
-        {
-            Console.WriteLine("Closing density solver");
         }
 
         double xmin_pot;

@@ -36,9 +36,6 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             // and initialise the data classes for density, its derivatives and the chemical potential
             Initialise_DataClasses(input_dict);
-            
-            // calculate the z-position of the maximum of dens_1d and use this as z_2DEG
-            double z_2DEG = zmin_dens + dz_dens * (double)Array.IndexOf(dens_1d.Spin_Summed_Data.vec.ToArray(), dens_1d.Spin_Summed_Data.vec.Min());
 
             // initialise potential solver
             if (using_flexPDE)
@@ -145,10 +142,13 @@ namespace ThreeD_SchrodingerPoissonSolver
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim, int max_count)
         {
             // calculate initial potential with the given charge distribution
-          //  Console.WriteLine("Calculating initial potential grid");
-          //  pois_solv.Set_Boundary_Conditions(top_V, split_V, top_length, split_width, split_length, bottom_V, surface_charge);
-          //  chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-         //   Console.WriteLine("Initial grid complete");
+            if (initialise_with_1D_data || hot_start)
+            {
+                Console.WriteLine("Calculating initial potential grid");
+                //  pois_solv.Set_Boundary_Conditions(top_V, split_V, top_length, split_width, split_length, bottom_V, surface_charge);
+                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
+                Console.WriteLine("Initial grid complete");
+            }
             dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
             dens_solv.Set_DFT_Potential(carrier_density); 
@@ -281,26 +281,32 @@ namespace ThreeD_SchrodingerPoissonSolver
         }
         void Initialise_from_1D(Dictionary<string, object> input_dict)
         {
+            // get data from dictionary
+            SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
+            SpinResolved_Data tmp_1d_dopdens = (SpinResolved_Data)input_dict["Dopent_Density"];
+            Band_Data tmp_pot_1d = (Band_Data)input_dict["Chemical_Potential"];
 
-            throw new NotImplementedException();
-            this.carrier_density = new SpinResolved_Data(new Band_Data(nx_dens, ny_dens, nz_dens, 0.0), new Band_Data(nx_dens, ny_dens, nz_dens, 0.0));
-            SpinResolved_Data tmp_charge_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
-
-            int z_offset = (int)Math.Abs((Zmin_Pot - Zmin_Dens) / Dz_Pot);
-
-            for (int i = 0; i < nz_dens; i++)
-            {
-                dens_1d.Spin_Up.vec[i] = tmp_charge_1d_density.Spin_Up.vec[z_offset + i];
-                dens_1d.Spin_Down.vec[i] = tmp_charge_1d_density.Spin_Down.vec[z_offset + i];
-            }
+            // calculate where the bottom of the 3D data is
+            int offset_min = (int)Math.Round((zmin_dens - zmin_pot) / dz_pot);
 
             // this is the charge density modulation in the (x, y) plane so, initially, just put it in uniformly
             for (int k = 0; k < nz_dens; k++)
                 for (int i = 0; i < nx_dens; i++)
                     for (int j = 0; j < ny_dens; j++)
                     {
-                        carrier_density.Spin_Up.vol[k][i, j] = dens_1d.Spin_Up.vec[k];
-                        carrier_density.Spin_Down.vol[k][i, j] = dens_1d.Spin_Down.vec[k];
+                        chem_pot.vol[k][i, j] = tmp_pot_1d.vec[offset_min + j];
+
+                        // do not add anything to the density at the top or bottom of the domain
+                        if (k == 0 || k == nz_dens - 1)
+                            continue;
+
+                        // carrier data
+                        carrier_density.Spin_Up.vol[k][i, j] = tmp_1d_density.Spin_Up.vec[k + offset_min];
+                        carrier_density.Spin_Down.vol[k][i, j] = tmp_1d_density.Spin_Down.vec[k + offset_min];
+                        
+                        // dopent data
+                        dopent_density.Spin_Up.vol[k][i, j] = tmp_1d_dopdens.Spin_Up.vec[k + offset_min];
+                        dopent_density.Spin_Down.vol[k][i, j] = tmp_1d_dopdens.Spin_Down.vec[k + offset_min];
                     }
 
             boundary_conditions.Add("surface", (double)input_dict["surface_charge"]);

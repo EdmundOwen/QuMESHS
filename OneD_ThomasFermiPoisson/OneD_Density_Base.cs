@@ -60,10 +60,5 @@ namespace OneD_ThomasFermiPoisson
 
             return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
         }
-
-        public override void Close()
-        {
-            Console.WriteLine("Closing density solver");
-        }
     }
 }
