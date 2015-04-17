@@ -129,6 +129,9 @@ namespace OneD_ThomasFermiPoisson
                                where val < 0.0
                                select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
             Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens.ToString("e3") + " cm^-2");
+
+            // there is no iteration timeout for the 1D solver so if it gets to this point the solution will definitely have converged
+            Close(true, int.MaxValue);
         }
 
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim)
