@@ -62,11 +62,11 @@ namespace Solver_Bases
                     break;
 
                 case Geometry_Type.strip:
-                    geom = new Strip((double)data["zmin"], (double)data["zmax"], (double)data["dy"], (double)data["width"], (double)data["theta"]);
+                    geom = new Strip((double)data["zmin"], (double)data["zmax"], (double)data["dx"], (double)data["dy"], (double)data["width"], (double)data["theta"]);
                     break;
 
                 case Geometry_Type.half_slab:
-                    geom = new Half_Slab((double)data["zmin"], (double)data["zmax"], (double)data["dy"], (double)data["theta"]);
+                    geom = new Half_Slab((double)data["zmin"], (double)data["zmax"], (double)data["dx"], (double)data["dy"], (double)data["theta"]);
                     break;
 
                 case Geometry_Type.triangle_slab:
@@ -79,6 +79,7 @@ namespace Solver_Bases
 
             // create layer
             ILayer result;
+
             switch (mat)
             {
                 case Material.GaAs:
@@ -101,6 +102,10 @@ namespace Solver_Bases
                     result = new PMMA_Layer(geom, (int)data["layer_no"]);
                     break;
 
+                case Material.Metal:
+                    result = new Metal_Layer(geom, (int)data["layer_no"]);
+                    break;
+
                 case Material.Air:
                     result = new Air_Layer(geom, (int)data["layer_no"]);
                     break;
@@ -113,6 +118,11 @@ namespace Solver_Bases
                 default:
                     throw new NotImplementedException("Error - Unknown material");
             }
+
+            // if this is actually a composite layer, then rewrite result... (this is simpler than putting a "Composite" material for the switch above)
+            if (data.ContainsKey("composite"))
+                if ((bool)data["composite"])
+                    result = Create_Composite_Layer(result, data, geom);
 
             // and set dopent levels if necessary
             if (data.ContainsKey("nd") || data.ContainsKey("na"))
@@ -132,6 +142,59 @@ namespace Solver_Bases
             return result;
         }
 
+        private static ILayer Create_Composite_Layer(ILayer default_layer, Dictionary<string, object> data, IGeom default_geom)
+        {
+            int no_components = (int)(double)data["no_components"];
+            ILayer[] result = new ILayer[no_components];
+
+            // set the default layer
+            result[0] = default_layer;
+
+            // unpack the rest of the composite data
+            Dictionary<int, Dictionary<string, object>> composite_data = new Dictionary<int, Dictionary<string, object>>();
+            Unpack_CompositeData(composite_data, data, default_geom);
+
+            // and create the new layers from this
+            for (int i = 1; i < no_components; i++)
+                result[i] = Create_Layer(composite_data[i]);
+
+            return new Composite_Layer(result, (int)data["layer_no"]);
+        }
+
+        static void Unpack_CompositeData(Dictionary<int, Dictionary<string, object>> composite_data, Dictionary<string, object> data, IGeom default_geom)
+        {
+            // cycle over the composite data (minus the default layer)
+            for (int i = 1; i < (int)(double)data["no_components"]; i++)
+            {
+                string[] raw_component_data = ((string)data["component" + i]).TrimStart('{').TrimEnd('}').Split(',');
+
+                Dictionary<string, object> component_data = new Dictionary<string, object>();
+
+                // get the component data
+                for (int j = 0; j < raw_component_data.Length; j++)
+                {
+                    string tmp_key = raw_component_data[j].Split('=')[0].ToLower();
+                    string tmp_value = raw_component_data[j].Split('=')[1].ToLower();
+
+                    // try and pass tmp_value by any means possible
+                    double d_val; bool b_val;
+                    if (double.TryParse(tmp_value, out d_val))
+                        component_data.Add(tmp_key, d_val);
+                    else if (bool.TryParse(tmp_value, out b_val))
+                        component_data.Add(tmp_key, b_val);
+                    else
+                        component_data.Add(tmp_key, tmp_value);
+                }
+
+                // and add some geometry data
+                component_data.Add("zmin", default_geom.Zmin);
+                component_data.Add("zmax", default_geom.Zmax);
+                component_data.Add("layer_no", i);
+
+                composite_data[i] = component_data;
+            }
+        }
+
         static void Unpack_RawData(Dictionary<int, Dictionary<string, object>> data)
         {
             int layer_no = 1;
@@ -139,8 +202,18 @@ namespace Solver_Bases
             for (int i = 0; i < data.Count; i++)
             {
                 string[] raw_layer_data = ((string)data[i]["raw_data"]).Trim().Split(' ');
+                int component_no = 1;
+
                 for (int j = 0; j < raw_layer_data.Length; j++)
                 {
+                    //check if this is a composite layer, if so... just input the data in its raw format (ie. don't break it up into key/value pairs)
+                    if (raw_layer_data[j].StartsWith("{"))
+                    {
+                        data[i].Add("component" + component_no, raw_layer_data[j]);
+                        component_no++;
+                        continue;
+                    }
+
                     string tmp_key = raw_layer_data[j].Split('=')[0].ToLower();
                     string tmp_value = raw_layer_data[j].Split('=')[1].ToLower();
 

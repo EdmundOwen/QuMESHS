@@ -13,6 +13,10 @@ namespace Solver_Bases.Geometry
         public Triangle_Slab(double zmin, double zmax, double x0, double y0, double theta1, double theta2)
             : base (zmin, zmax)
         {
+            // convert thetas to radians
+            theta1 *= 2.0 * Math.PI / 360.0;
+            theta2 *= 2.0 * Math.PI / 360.0;
+
             this.x0 = x0; this.y0 = y0;
             this.theta1 = theta1; this.theta2 = theta2;
         }
@@ -23,7 +27,7 @@ namespace Solver_Bases.Geometry
             double xprime = x - x0; double yprime = y - y0;
             // and check that this point is within the triangle bounded from theta1 to theta2
             bool intriangle = (Math.Atan2(yprime, xprime) > theta1 && Math.Atan2(yprime, xprime) < theta2);
-            return base.InLayer(z) && intriangle;
+            return base.InLayer(0.0, 0.0, z) && intriangle;
         }
 
         public new Geometry_Type Get_Geometry

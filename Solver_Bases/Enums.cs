@@ -37,6 +37,7 @@ namespace Solver_Bases
         InAs,
         PMMA,
         Air,
+        Metal,
         Substrate
     }
 

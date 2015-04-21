@@ -17,12 +17,12 @@ namespace Solver_Bases.Geometry
 
         public bool InLayer(double z)
         {
-            return InLayer(0.0, 0.0, z);
+            return this.InLayer(0.0, 0.0, z);
         }
 
         public bool InLayer(double y, double z)
         {
-            return InLayer(0.0, y, z);
+            return this.InLayer(0.0, y, z);
         }
 
         public virtual bool InLayer(double x, double y, double z)
@@ -30,7 +30,7 @@ namespace Solver_Bases.Geometry
             return (z <= zmax && z > zmin);
         }
 
-        public Geometry_Type Get_Geometry
+        public virtual Geometry_Type Get_Geometry
         {
             get { return Geometry_Type.slab; }
         }

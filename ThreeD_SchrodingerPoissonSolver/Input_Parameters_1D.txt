@@ -57,7 +57,7 @@
 ############## DFT density solver detials #############################
 #
 ## Whether to use dft at the final temperature or not
-% dft = true
+% dft = false
 #
 ## Number of data points over which to calculate the density using dft
 % nz_dens = 20
@@ -69,6 +69,6 @@
 ############## Physical parameters ####################################
 #
 ## Temperature
-% T = 1
+% T = 4
 #
 

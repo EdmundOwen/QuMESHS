@@ -122,6 +122,7 @@
     <Compile Include="Layers\InGaAs_Layer.cs" />
     <Compile Include="Layers\Layer.cs" />
     <Compile Include="Layers\Layer_Tool.cs" />
+    <Compile Include="Layers\Metal_Layer.cs" />
     <Compile Include="Layers\PMMA_Layer.cs" />
     <Compile Include="Layers\Substrate_Layer.cs" />
     <Compile Include="Mixing_Schedulers\Constant_Scheduler.cs" />

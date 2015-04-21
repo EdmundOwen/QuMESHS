@@ -39,10 +39,14 @@ namespace Solver_Bases.Geometry
             return result;
         }
 
+        /// <summary>
+        /// return the first layer you come across at this location (starting at component n and looking down)
+        /// note that this does not check for overlap and will only return the default layer if there are no components at (x, y, z)
+        /// </summary>
         private static ILayer Extract_Layer_From_Composite(ILayer composite, double x, double y, double z)
         {
             for (int i = composite.No_Components - 1; i >= 0; i--)
-                if (composite.InLayer(x, y, z))
+                if (composite.Get_Component(i).InLayer(x, y, z))
                     return composite.Get_Component(i);
 
             throw new FormatException("Error - We should have found the correct layer by this point.\nTheoretically impossible to get to this exception...");

@@ -4,6 +4,8 @@
 #
 #mat=air t=2000
 mat=pmma t=150
+#mat=PMMA t=140
+#mat=PMMA t=10 {mat=metal,geom=half,dx=0.0,dy=-400.0,theta=90.0} {mat=metal,geom=half,dx=0.0,dy=400.0,theta=270.0} composite=true no_components=3
 surface=true
 #
 #

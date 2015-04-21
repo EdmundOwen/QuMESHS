@@ -108,7 +108,7 @@ namespace Solver_Bases.Layers
 
         public void Set_Dopents(double acceptor_concentration, double donor_concentration)
         {
-            throw new NotImplementedException("Error - trying to set dopent concentration for a composite layer");
+            this.default_layer.Set_Dopents(acceptor_concentration, donor_concentration);
         }
 
         public bool InLayer(double z)
@@ -168,7 +168,7 @@ namespace Solver_Bases.Layers
 
         public double Permitivity
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the permitivity"); }
+            get { return default_layer.Permitivity; }
         }
 
         public double Band_Gap

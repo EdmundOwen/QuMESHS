@@ -7,31 +7,34 @@ namespace Solver_Bases.Geometry
 {
     class Half_Slab : Slab
     {
-        double dx;
+        double dx, dy;
         double cos_theta, sin_theta;
 
         public Half_Slab(double zmin, double zmax, double dx, double dy, double theta)
-            : this (zmin, zmax, dx - dy / Math.Tan(theta), theta)
+            : base (zmin, zmax)
         {
+            // convert theta to radians
+            theta *= 2.0 * Math.PI / 360.0;
+
+            this.dx = dx; this.dy = dy;
+            this.cos_theta = Math.Cos(theta); this.sin_theta = Math.Sin(theta);
         }
 
         public Half_Slab(double zmin, double zmax, double dx, double theta)
-            : base (zmin, zmax)
+            : this (zmin, zmax, dx, 0.0, theta)
         {
-            this.dx = dx;
-            this.cos_theta = Math.Cos(theta); this.sin_theta = Math.Sin(theta);
         }
 
         public override bool InLayer(double x, double y, double z)
         {
             // transform y coordinate
-            double xprime = x - dx; double yprime = y;
+            double xprime = (x - dx) * cos_theta; double yprime = (y - dy) * sin_theta;
             // rotate the point by -theta and calculate if x is negative
-            bool inhalfslab = (xprime * cos_theta - yprime * sin_theta < 0);
-            return base.InLayer(z) && inhalfslab;
+            bool inhalfslab = (xprime + yprime < 0);
+            return base.InLayer(0.0, 0.0, z) && inhalfslab;
         }
 
-        public new Geometry_Type Get_Geometry
+        public override Geometry_Type Get_Geometry
         {
             get { return Geometry_Type.half_slab; }
         }

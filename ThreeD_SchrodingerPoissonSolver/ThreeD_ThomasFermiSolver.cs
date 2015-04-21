@@ -44,7 +44,6 @@ namespace ThreeD_SchrodingerPoissonSolver
                 for (int j = 0; j < ny; j++)
                     for (int k = 0; k < nz; k++)
                     {
-
                         double x = dx * i + xmin;
                         double y = dy * j + ymin;
                         double z = dz * k + zmin;

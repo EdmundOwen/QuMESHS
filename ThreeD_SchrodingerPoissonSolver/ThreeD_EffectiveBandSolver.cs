@@ -22,7 +22,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
-            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
+            tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
         }
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
@@ -105,27 +105,27 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             // cycle over xy-plane calculating the ground state energy and eigenstate in the growth direction
             for (int i = 0; i < nx; i++)
-                for (int j =0 ; j < ny;j++)
-            {
-                // pull out the chemical potential for this slice
-                double[] z_dft_pot = new double[nz];
-                for (int k = 0; k < nz; k++)
-                    z_dft_pot[k] = dft_pot.vol[k][i, j];
-
-                // calculate its eigendecomposition
-                DoubleHermitianMatrix h_z = Create_Hamiltonian(z_dft_pot, tz, nz);
-
-                eig_decomp = new DoubleHermitianEigDecomp(h_z);
-
-                // insert the eigenstate into density and record the local confinement energy
-                xy_energy[i,j] = eig_decomp.EigenValue(0);
-                for (int k = 0; k < nz; k++)
+                for (int j = 0; j < ny; j++)
                 {
-                    double dens_tot = DoubleComplex.Norm(eig_decomp.EigenVector(0)[k]) * DoubleComplex.Norm(eig_decomp.EigenVector(0)[k]);
-                    dens_up.vol[k][i, j] = 0.5 * dens_tot;
-                    dens_down.vol[k][i, j] = 0.5 * dens_tot;
+                    // pull out the chemical potential for this slice
+                    double[] z_dft_pot = new double[nz];
+                    for (int k = 0; k < nz; k++)
+                        z_dft_pot[k] = dft_pot.vol[k][i, j];
+
+                    // calculate its eigendecomposition
+                    DoubleHermitianMatrix h_z = Create_Hamiltonian(z_dft_pot, tz, nz);
+
+                    eig_decomp = new DoubleHermitianEigDecomp(h_z);
+
+                    // insert the eigenstate into density and record the local confinement energy
+                    xy_energy[i, j] = eig_decomp.EigenValue(0);
+                    for (int k = 0; k < nz; k++)
+                    {
+                        double dens_tot = DoubleComplex.Norm(eig_decomp.EigenVector(0)[k]) * DoubleComplex.Norm(eig_decomp.EigenVector(0)[k]);
+                        dens_up.vol[k][i, j] = 0.5 * dens_tot;
+                        dens_down.vol[k][i, j] = 0.5 * dens_tot;
+                    }
                 }
-            }
 
             // calculate the eigenstates in the xy-plane
             DoubleHermitianMatrix h_xy = Create_2DEG_Hamiltonian(xy_energy, tx, ty, nx, ny, true, false);

@@ -95,7 +95,8 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Bare potential saved");
             }
 
-            ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
+            ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
+          //  ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
 
             bool converged = false;
             int no_runs = 2500;
@@ -232,6 +233,8 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Iter = " + count.ToString() + "\tDens Conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
 
+                File.Copy("split_gate.pg6", "split_gate_" + count.ToString("000") + ".pg6");
+
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_count)
                 {
@@ -271,12 +274,13 @@ namespace ThreeD_SchrodingerPoissonSolver
                     data.vol[k][nx_dens - 1, j] = data.vol[k][nx_dens - 2, j];
                 }
 
+            // top and bottom must be set to zero
             for (int i = 0; i < nx_dens; i++)
                 for (int j = 0; j < ny_dens; j++)
                 {
 
-                    data.vol[0][i, j] = data.vol[1][i, j];
-                    data.vol[nz_dens - 1][i, j] = data.vol[nz_dens - 2][i, j];
+                    data.vol[0][i, j] = 0.0;
+                    data.vol[nz_dens - 1][i, j] = 0.0;
                 }
         }
         void Initialise_from_1D(Dictionary<string, object> input_dict)
