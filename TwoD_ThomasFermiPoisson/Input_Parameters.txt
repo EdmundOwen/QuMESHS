@@ -59,6 +59,9 @@
 ## Split gate voltage
 % split_V = -1.0
 #
+## Voltage array (for general voltage input)
+% voltages = {-1.0, -1.0}
+#
 ## Surface charge (by default, this is set by the 1D solver)
 # % surface_charge = -2.677
 #

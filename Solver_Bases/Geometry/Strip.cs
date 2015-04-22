@@ -7,8 +7,8 @@ namespace Solver_Bases.Geometry
 {
     class Strip : Slab
     {
-        double dx, dy, half_width;
-        double cos_theta, sin_theta;
+        protected double dx, dy, half_width;
+        protected double cos_theta, sin_theta;
 
         public Strip(double zmin, double zmax, double dx, double dy, double width, double theta)
             : base (zmin, zmax)
@@ -18,6 +18,16 @@ namespace Solver_Bases.Geometry
 
             this.dx = dx; this.dy = dy; this.half_width = 0.5 * width;
             this.cos_theta = Math.Cos(theta); this.sin_theta = Math.Sin(theta);
+
+            // if the strip is parallel to one of the cardinal axes, set min/max values
+            if (theta == 0.0 || theta == Math.PI)
+            {
+                xmin = -1.0 * half_width + dx; xmax = half_width + dx;
+            }
+            else if (theta == 0.5 * Math.PI || theta == 1.5 * Math.PI)
+            {
+                ymin = -1.0 * half_width + dy; ymax = half_width + dy;
+            }
         }
 
         public override bool InLayer(double x, double y, double z)
@@ -25,8 +35,8 @@ namespace Solver_Bases.Geometry
             // transform y coordinate
             double xprime = (x - dx) * cos_theta; double yprime = (y - dy) * sin_theta;
             // rotate the point by -theta and calculate if x is within half the width
-            bool inhalfslab = (Math.Abs(xprime + yprime) < 0);
-            return base.InLayer(0.0, 0.0, z) && inhalfslab;
+            bool instrip = (Math.Abs(xprime + yprime) < half_width);
+            return base.InLayer(0.0, 0.0, z) && instrip;
         }
 
         public new Geometry_Type Get_Geometry

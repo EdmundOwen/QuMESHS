@@ -103,6 +103,7 @@
     <Compile Include="Geometry\Geom_Base.cs" />
     <Compile Include="Geometry\Geom_Tool.cs" />
     <Compile Include="Geometry\Half_Slab.cs" />
+    <Compile Include="Geometry\Half_Strip.cs" />
     <Compile Include="Geometry\IGeom.cs" />
     <Compile Include="Geometry\Sheet.cs" />
     <Compile Include="Geometry\Slab.cs" />

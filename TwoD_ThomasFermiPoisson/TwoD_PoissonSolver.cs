@@ -33,6 +33,7 @@ namespace TwoD_ThomasFermiPoisson
         public TwoD_PoissonSolver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
             : base(using_external_code, input)
         {
+            throw new NotImplementedException();
             this.exp = exp;
         }
 

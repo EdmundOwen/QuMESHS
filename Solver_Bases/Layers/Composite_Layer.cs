@@ -163,7 +163,7 @@ namespace Solver_Bases.Layers
 
         public Material Material
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the material"); }
+            get { return default_layer.Material; }
         }
 
         public double Permitivity
@@ -173,32 +173,32 @@ namespace Solver_Bases.Layers
 
         public double Band_Gap
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the band gap"); }
+            get { return default_layer.Band_Gap; }
         }
 
         public double Donor_Energy
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the donor energy"); }
+            get { return default_layer.Donor_Energy; }
         }
 
         public double Acceptor_Energy
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the acceptor energy"); }
+            get { return default_layer.Acceptor_Energy; }
         }
 
         public double Donor_Conc
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the donor concentration"); }
+            get { return default_layer.Donor_Conc; }
         }
 
         public double Acceptor_Conc
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the acceptor concentration"); }
+            get { return default_layer.Acceptor_Conc; }
         }
 
         public double Dopent_FreezeOut_T
         {
-            get { throw new FormatException("Error - This is a composite layer! Use the Get_Layer(x, y, z) methods to find the dopent freeze-out temperature"); }
+            get { return default_layer.Dopent_FreezeOut_T; }
         }
     }
 }

@@ -53,6 +53,9 @@
 ## Split gate voltage
 % split_V = -1.0
 #
+## Voltage array (for general voltage input)
+% voltages = {-1.0, -1.0, -1.0}
+#
 ## Width of the split gate (in the transverse direction)
 % split_width = 800
 #
@@ -91,7 +94,7 @@
 % ymin_dens = -1000.0
 #
 ## Minimum of simulation domain in the growth direction
-% zmin_dens = -320.0
+% zmin_dens = -315.0
 #
 ## Lattice spacing in the growth direction
 % dz_dens = 2.0

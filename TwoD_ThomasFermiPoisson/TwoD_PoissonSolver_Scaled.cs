@@ -27,6 +27,7 @@ namespace TwoD_ThomasFermiPoisson
         string chempot_result_filename = "y.dat";
 
         double top_bc, split_bc1, split_bc2, bottom_bc;
+        List<double> gate_bcs;
         double split_width;
         double surface;
 
@@ -36,7 +37,7 @@ namespace TwoD_ThomasFermiPoisson
             : base(using_external_code, input)
         {
             this.exp = exp;
-            // check if the top layer is air... if so, we need to use natural boundary conditions on the upper surface
+            // check if the top layer is air... if so, we need to use natural boundary conditions on the upper surface (which must be zero)
             natural_topbc = (exp.Layers[exp.Layers.Length - 1].Material == Material.Air);
 
             // calculate scaling factor w = a * z such that the z dimension has the same length as the y dimension
@@ -99,6 +100,15 @@ namespace TwoD_ThomasFermiPoisson
             split_bc2 = boundary_conditions["split_V2"] * Physics_Base.energy_V_to_meVpzC;
             bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
 
+            // and load generic gate boundary conditions
+            gate_bcs = new List<double>();
+            int count = 0;
+            while (boundary_conditions.ContainsKey("V" + count.ToString()))
+            { 
+                gate_bcs.Add(boundary_conditions["V" + count.ToString()] * Physics_Base.energy_V_to_meVpzC);
+                count++;
+            }
+
             // and save the split width and surface charge
             this.split_width = device_dimension["split_width"];
             this.surface = boundary_conditions["surface"];
@@ -145,8 +155,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling ");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
-            sw.WriteLine("\tsplit_V1 = " + split_bc1.ToString());
-            sw.WriteLine("\tsplit_V2 = " + split_bc2.ToString());
+            for (int i = 0; i < gate_bcs.Count; i++)
+                sw.WriteLine("\tV" + i.ToString() + " = " + gate_bcs[i].ToString());
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
@@ -168,64 +178,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
+            Draw_Domain(sw);
 
-            // cycle through layers below surface
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                // minus one to get rid of the substrate
-                sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
-                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
-                    sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
-                else
-                    sw.WriteLine("\t\trho = 0.0");
-                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
-                sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
-
-                sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
-                sw.WriteLine("\t\tLINE TO (ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
-
-                // set top gate here
-                if (i == exp.Layers.Length - 1)
-                {
-                    // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = surface_bc\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
-                                        sw.WriteLine("\t\tVALUE(u) = top_V");
-                    if (natural_topbc)
-                    sw.WriteLine("\t\tNATURAL(u) = top_V");
-            }
-                // or surface condition
-                if (exp.Layers[i].Zmax == 0.0)
-                    sw.WriteLine("\t\tNATURAL(u) = surface_bc * (ustep(x + split_width / 2 - 20) - ustep(x - split_width / 2 + 20))");
-
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
-                sw.WriteLine("\t\tNATURAL(u) = 0");
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
-                // set bottom boundary condition
-                if (i == 1)
-                    sw.WriteLine("\t\tVALUE(u) = bottom_bc");
-                sw.WriteLine("\t\tLINE TO CLOSE");
-                sw.WriteLine();
-            }
-            
-            // write in surface and gates
-            sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
-            sw.WriteLine("\t\trho = 0");
-            sw.WriteLine("\t\tband_gap = 0");
-            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
-            sw.WriteLine("\t\tSTART(-ly / 2, 0)");
-            // left split gate voltage
-            sw.WriteLine("\t\tVALUE(u) = split_V1");
-            sw.WriteLine("\t\tLINE TO (-ly / 2, split_depth) TO (-split_width / 2, split_depth) TO (-split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
-            sw.WriteLine("\t\trho = 0");
-            sw.WriteLine("\t\tband_gap = 0");
-            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
-            sw.WriteLine("\t\tSTART(ly / 2, 0)");
-            // right split gate voltage
-            sw.WriteLine("\t\tVALUE(u) = split_V2");
-            sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
-            
             // add a front commmand at the well depth to introduce a higher density of points at the interface
             sw.WriteLine("\tFRONT(y - well_depth, z_scaling * 20)");
             sw.WriteLine();
@@ -259,6 +213,74 @@ namespace TwoD_ThomasFermiPoisson
 
             // and close the file writer
             sw.Close();
+        }
+
+        void Draw_Domain(StreamWriter sw)
+        {
+            // cycle through layers below surface
+            int count = 1;
+            int voltage_count = 0;
+            for (int i = 1; i < exp.Layers.Length; i++)
+            {
+                for (int j = 0; j < exp.Layers[i].No_Components; j++)
+                {
+                    ILayer current_layer = exp.Layers[i].Get_Component(j);
+
+                    // set the minimum and maximum positions (which are limited here by the FlexPDE solution domain)
+                    string ymin, ymax;
+                    if (current_layer.Ymin != double.MinValue)
+                        ymin = current_layer.Ymin.ToString();
+                    else ymin = "-ly / 2";
+                    if (current_layer.Ymax != double.MaxValue)
+                        ymax = current_layer.Ymax.ToString();
+                    else ymax = "ly / 2";
+
+                    // output region data
+                    sw.WriteLine("\tREGION " + count.ToString());
+                    if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
+                        sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
+                    else
+                        sw.WriteLine("\t\trho = 0.0");
+                    sw.WriteLine("\t\teps = " + current_layer.Permitivity.ToString());
+                    sw.WriteLine("\t\tband_gap = " + current_layer.Band_Gap.ToString());
+
+                    // start defining the domain
+                    sw.WriteLine("\t\tSTART(" + ymax + ", " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
+                    // if a metal, use a predefined voltage
+                    if (current_layer.Material == Material.Metal)
+                    {
+                        sw.WriteLine("\t\tVALUE(u) = V" + voltage_count.ToString());
+                        voltage_count++;
+                    }
+                    sw.WriteLine("\t\tLINE TO (" + ymax + ", " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
+
+                    // set top gate here
+                    if (i == exp.Layers.Length - 1)
+                    {
+                        // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = surface_bc\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
+                        sw.WriteLine("\t\tVALUE(u) = top_V");
+                        if (natural_topbc)
+                            sw.WriteLine("\t\tNATURAL(u) = top_V");
+                    }
+                    // or surface condition
+                    if (exp.Layers[i].Zmax == 0.0)
+                        sw.WriteLine("\t\tNATURAL(u) = surface_bc * (ustep(x + split_width / 2 - 20) - ustep(x - split_width / 2 + 20))");
+
+                    sw.WriteLine("\t\tLINE TO (" + ymin + ", " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
+                    // reset the boundary coondition if this is the top or surface
+                    if (i == exp.Layers.Length - 1 || exp.Layers[i].Zmax == 0.0)
+                        sw.WriteLine("\t\tNATURAL(u) = 0");
+                    sw.WriteLine("\t\tLINE TO (" + ymin + ", " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
+                    // set bottom boundary condition
+                    if (i == 1)
+                        sw.WriteLine("\t\tVALUE(u) = bottom_bc");
+                    sw.WriteLine("\t\tLINE TO CLOSE");
+                    sw.WriteLine();
+
+                    count++;
+                }
+            }
+
         }
 
         public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi)
@@ -342,12 +364,13 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tlz = " + (exp.Dz_Pot * exp.Nz_Pot).ToString());
             sw.WriteLine();
             // boundary conditions
-            sw.WriteLine("\tbottom_bc = 0.0");// + bottom_bc.ToString());
-            sw.WriteLine("\tsurface_bc = 0.0");// + surface.ToString());
+            sw.WriteLine("\tbottom_bc = 0.0");
+            sw.WriteLine("\tsurface_bc = 0.0");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
-            sw.WriteLine("\tsplit_V = 0.0");// + split_bc.ToString());
-            sw.WriteLine("\ttop_V = 0.0");// + top_bc.ToString());
+            for (int i = 0; i < gate_bcs.Count; i++)
+                sw.WriteLine("\tV" + i.ToString() + " = 0.0");
+            sw.WriteLine("\ttop_V = 0.0");
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
             sw.WriteLine("\tsplit_width = " + split_width.ToString());
@@ -370,53 +393,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             // the boundary definitions for the different layers
             sw.WriteLine("BOUNDARIES");
-
-            // cycle through layers below surface
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                // minus one to get rid of the substrate
-                sw.WriteLine("\tREGION " + (exp.Layers[i].Layer_No - 1).ToString());
-                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
-
-                sw.WriteLine("\t\tSTART(ly / 2, " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
-                sw.WriteLine("\t\tLINE TO (ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
-
-                // set top gate here
-                if (i == exp.Layers.Length - 1)
-                { 
-                    // sw.WriteLine("\t\tVALUE(u) = split_V\n\t\tline TO (split_width / 2, 0)\n\t\tNATURAL(u) = 0\n\t\tLINE TO (-split_width / 2, 0)\n\t\tVALUE(u) = split_V");
-                     sw.WriteLine("\t\tVALUE(u) = top_V");
-                if (natural_topbc)
-                    sw.WriteLine("\t\tNATURAL(u) = top_V");
-            }// or surface condition
-                if (exp.Layers[i].Zmax == 0.0)
-                    sw.WriteLine("\t\tNATURAL(u) = surface_bc * upulse(x + split_width / 2 - 20, x - split_width / 2 + 20)");
-
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmax.ToString() + " * z_scaling)");
-                sw.WriteLine("\t\tNATURAL(u) = 0");
-                sw.WriteLine("\t\tLINE TO (-ly / 2, " + exp.Layers[i].Zmin.ToString() + " * z_scaling)");
-                // set bottom boundary condition
-                if (i == 1)
-                    sw.WriteLine("\t\tVALUE(u) = bottom_bc");
-                sw.WriteLine("\t\tLINE TO CLOSE");
-                sw.WriteLine();
-            }
-            
-            // write in surface and gates
-            sw.WriteLine("\tREGION " + exp.Layers.Length.ToString() + " ! Left split gate");
-            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
-            sw.WriteLine("\t\tSTART(-ly / 2, 0)");
-            // left split gate voltage
-            sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (-ly / 2, split_depth) TO (-split_width / 2, split_depth) TO (-split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tREGION " + (exp.Layers.Length + 1).ToString() + "! Right split gate");
-            sw.WriteLine("\t\teps = " + Physics_Base.epsilon_0);
-            sw.WriteLine("\t\tSTART(ly / 2, 0)");
-            // right split gate voltage
-            sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (ly / 2, split_depth) TO (split_width / 2, split_depth) TO (split_width / 2, 0) TO CLOSE");
-            sw.WriteLine();
+            Draw_Domain(sw);
             
             sw.WriteLine("\tRESOLVE(" + minus_g_phi + ")");
             sw.WriteLine();

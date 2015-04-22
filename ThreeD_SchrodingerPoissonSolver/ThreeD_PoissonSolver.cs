@@ -25,6 +25,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         string gphi_filename = "gphi.dat";
 
         double top_bc, split_bc1, split_bc2, bottom_bc;
+        List<double> gate_bcs;
         double surface;
 
         double split_width, split_length, top_length;
@@ -115,10 +116,19 @@ namespace ThreeD_SchrodingerPoissonSolver
             bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
 
             // and save the split width and surface charge
-            this.top_length = device_dimension["top_length"];
-            this.split_width = device_dimension["split_width"];
-            this.split_length = device_dimension["split_length"];
-            this.surface = boundary_conditions["surface"];
+            top_length = device_dimension["top_length"];
+            split_width = device_dimension["split_width"];
+            split_length = device_dimension["split_length"];
+            surface = boundary_conditions["surface"];
+
+            // and load generic gate boundary conditions
+            gate_bcs = new List<double>();
+            int count = 0;
+            while (boundary_conditions.ContainsKey("V" + count.ToString()))
+            {
+                gate_bcs.Add(boundary_conditions["V" + count.ToString()] * Physics_Base.energy_V_to_meVpzC);
+                count++;
+            }
 
             // and find the interface depth (for plotting)
             this.z_2DEG = device_dimension["interface_depth"] - 5.0;
@@ -167,9 +177,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
-            sw.WriteLine("\tsplit_V1 = " + split_bc1.ToString());
-            sw.WriteLine("\tsplit_V2 = " + split_bc2.ToString());
-            sw.WriteLine("\ttop_V = " + top_bc.ToString());
+            for (int i = 0; i < gate_bcs.Count; i++)
+                sw.WriteLine("\tV" + i.ToString() + " = " + gate_bcs[i].ToString());
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
             sw.WriteLine("\tsplit_width = " + split_width.ToString() + "");
@@ -191,93 +200,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             // Poisson's equation
             sw.WriteLine("\tu: dx(eps * dx(u)) + y_scaling * dy(eps * y_scaling * dy(u)) + z_scaling * dz(eps * z_scaling * dz(u)) = - rho\t! Poisson's equation");
             sw.WriteLine();
-            sw.WriteLine("EXTRUSION");
-            sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " * z_scaling");
-            int layercount = 1;
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                sw.WriteLine("\tSURFACE	\"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling");
-                layercount++;
+            
+            // draw the domain
+            Draw_Domain(sw);
 
-                if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
-                {
-                    sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = split_depth * z_scaling");
-                    layercount++;
-                }
-                else if (exp.Layers[i].Material == Material.PMMA)
-                {
-                    sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling + top_depth * z_scaling");
-                    layercount++;
-                }
-            }
-            sw.WriteLine();
-            sw.WriteLine("BOUNDARIES");
-            sw.WriteLine("\tSURFACE \"Substrate\"	VALUE(u) = bottom_bc");
-            sw.WriteLine("\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" NATURAL(u) = surface_bc");
-            sw.WriteLine("\tSURFACE \"" + (layercount - 1).ToString() + "\" NATURAL(u) = 0");
-            sw.WriteLine();
-            sw.WriteLine("\tREGION 1");
-            layercount = 1;
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                layercount++;
-
-                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
-                    sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
-                else
-                    sw.WriteLine("\t\trho = 0.0");
-
-                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
-                sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
-                sw.WriteLine();
-
-                if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No || exp.Layers[i].Material == Material.PMMA)
-                {
-                    sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\t\trho = 0.0");
-                    sw.WriteLine("\t\teps = " + exp.Layers[i + 1].Permitivity.ToString());
-                    sw.WriteLine("\t\tband_gap = " + exp.Layers[i + 1].Band_Gap.ToString());
-                    sw.WriteLine();
-                    layercount++;
-                }
-            }
-            int max_layers = layercount - 1;
-            sw.WriteLine("\t\tSTART(-lx / 2, -ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (-lx / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, -ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tLIMITED REGION 2 ! left split gate");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V1");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V1");
-            sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = split_V1");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, split_width / 2 * y_scaling) TO (-split_length / 2, split_width / 2 * y_scaling) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tLIMITED REGION 3 ! right split gate");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V2");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V2");
-            sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, -ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = split_V2");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -split_width / 2 * y_scaling) TO (-split_length / 2, -split_width / 2 * y_scaling) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tLIMITED REGION 4 ! top gate");
-            sw.WriteLine("\t\tSURFACE \"" + (max_layers - 2).ToString() + "\" VALUE(u) = top_V");
-            sw.WriteLine("\t\tSURFACE \"" + (max_layers - 1).ToString() + "\" VALUE(u) = top_V");
-            sw.WriteLine("\t\tLAYER \"" + (max_layers - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-top_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = top_V");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, -ly / 2 * y_scaling) TO (-top_length / 2, -ly / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\t\tFRONT(z - well_depth * z_scaling, 20 * z_scaling)");
             sw.WriteLine();
@@ -304,6 +230,75 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("END");
 
             sw.Close();
+        }
+
+        private void Draw_Domain(StreamWriter sw)
+        {
+
+            sw.WriteLine("EXTRUSION");
+            sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " * z_scaling");
+            for (int i = 1; i < exp.Layers.Length; i++)
+            {
+                sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\"");
+                sw.WriteLine("\tSURFACE	\"" + i.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling");
+            }
+            sw.WriteLine();
+            sw.WriteLine("BOUNDARIES");
+            sw.WriteLine("\tSURFACE \"Substrate\"	VALUE(u) = bottom_bc");
+            sw.WriteLine("\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" NATURAL(u) = surface_bc");
+            sw.WriteLine("\tSURFACE \"" + (exp.Layers.Length - 1).ToString() + "\" NATURAL(u) = 0");
+            sw.WriteLine();
+            sw.WriteLine("\tREGION 1");
+            for (int i = 1; i < exp.Layers.Length; i++)
+            {
+                sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\"");
+
+                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
+                    sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
+                else
+                    sw.WriteLine("\t\trho = 0.0");
+
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
+                sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
+                sw.WriteLine();
+            }
+            sw.WriteLine("\t\tSTART(-lx / 2, -ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (-lx / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (lx / 2, ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO (lx / 2, -ly / 2 * y_scaling)");
+            sw.WriteLine("\t\tLINE TO CLOSE");
+            sw.WriteLine();
+
+            int count = 2;
+            int voltage_count = 0;
+            for (int i = 0; i < exp.Layers.Length; i++)
+                if (exp.Layers[i].No_Components > 1)
+                    for (int j = 1; j < exp.Layers[i].No_Components; j++)
+                    {
+                        ILayer current_layer = exp.Layers[i].Get_Component(j);
+
+                        string xmin = "-ly / 2";
+                        string xmax = "ly / 2";
+                        string ymin = "-ly / 2";
+                        string ymax = "ly / 2";
+                        if (current_layer.Xmin != double.MinValue) xmin = current_layer.Xmin.ToString();
+                        if (current_layer.Xmax != double.MaxValue) xmax = current_layer.Xmax.ToString();
+                        if (current_layer.Ymin != double.MinValue) ymin = current_layer.Ymin.ToString();
+                        if (current_layer.Ymax != double.MaxValue) ymax = current_layer.Ymax.ToString();
+
+                        sw.WriteLine("\tLIMITED REGION " + count.ToString() + " ! left split gate");
+                        sw.WriteLine("\t\tSURFACE \"" + (i - 1).ToString() + "\" VALUE(u) = V" + voltage_count.ToString());
+                        sw.WriteLine("\t\tSURFACE \"" + i.ToString() + "\" VALUE(u) = V" + voltage_count.ToString());
+                        sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\" VOID");
+                        sw.WriteLine("\t\tSTART (" + xmin + ", " + ymax + " * y_scaling)");
+                        sw.WriteLine("\t\tVALUE(u) = V" + voltage_count.ToString());
+                        sw.WriteLine("\t\tLINE TO (" + xmax + ", " + ymax + " * y_scaling)");
+                        sw.WriteLine("\t\tLINE TO (" + xmax + ", " + ymin + " * y_scaling) TO (" + xmin + ", " + ymin + " * y_scaling) TO CLOSE");
+                        sw.WriteLine();
+
+                        count++;
+                        voltage_count++;
+                    }
         }
         
         public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi)
@@ -384,8 +379,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tsurface_bc = 0.0");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
-            sw.WriteLine("\tsplit_V = 0.0");
-            sw.WriteLine("\ttop_V = 0.0");
+            for (int i = 0; i < gate_bcs.Count; i++)
+                sw.WriteLine("\tV" + i.ToString() + " = 0.0");
             sw.WriteLine();
             sw.WriteLine("\t! SPLIT GATE DIMENSIONS (in nm)");
             sw.WriteLine("\tsplit_width = " + split_width.ToString() + "");
@@ -409,84 +404,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             // Poisson's equation
             sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * y_scaling * dy(eps * y_scaling * dy(u)) - 1.0 * z_scaling * dz(eps * z_scaling * dz(u)) - rho_prime * u = " + minus_g_phi + " \t! Poisson's equation");
             sw.WriteLine();
-            sw.WriteLine("EXTRUSION");
-            sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " * z_scaling");
-            int layercount = 1;
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                sw.WriteLine("\tSURFACE	\"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling");
-                layercount++;
 
-                if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
-                {
-                    sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = split_depth * z_scaling");
-                    layercount++;
-                }
-                else if (exp.Layers[i].Material == Material.PMMA)
-                {
-                    sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\tSURFACE \"" + layercount.ToString() + "\"\tz = " + exp.Layers[i].Zmax.ToString() + " * z_scaling + top_depth * z_scaling");
-                    layercount++;
-                }
-            }
-            sw.WriteLine();
-            sw.WriteLine("BOUNDARIES");
-            sw.WriteLine("\tSURFACE \"Substrate\"	VALUE(u) = 0");
-            sw.WriteLine("\tSURFACE \"" + (layercount - 1).ToString() + "\" NATURAL(u) = 0");
-            sw.WriteLine();
-            sw.WriteLine("\tREGION 1");
-            layercount = 1;
-            for (int i = 1; i < exp.Layers.Length; i++)
-            {
-                sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                layercount++;
+            // Draw the domain
+            Draw_Domain(sw);
 
-                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
-                sw.WriteLine();
-
-                if (exp.Layers[i].Layer_No == Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No || exp.Layers[i].Material == Material.PMMA)
-                {
-                    sw.WriteLine("\t\tLAYER \"" + layercount.ToString() + "\"");
-                    sw.WriteLine("\t\teps = " + exp.Layers[i + 1].Permitivity.ToString());
-                    sw.WriteLine();
-                    layercount++;
-                }
-            }
-            int max_layers = layercount - 1;
-            sw.WriteLine("\t\tSTART(-lx / 2, -ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (-lx / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (lx / 2, -ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tLIMITED REGION 2 ! left split gate");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
-            sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, split_width / 2 * y_scaling) TO (-split_length / 2, split_width / 2 * y_scaling) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tLIMITED REGION 3 ! right split gate");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
-            sw.WriteLine("\t\tSURFACE \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VALUE(u) = split_V");
-            sw.WriteLine("\t\tLAYER \"" + (Geom_Tool.Find_Layer_Above_Surface(exp.Layers).Layer_No - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-split_length / 2, -ly / 2 *  y_scaling)");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -ly / 2 *  y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = split_V");
-            sw.WriteLine("\t\tLINE TO (split_length / 2, -split_width / 2 *  y_scaling) TO (-split_length / 2, -split_width / 2 *  y_scaling) TO CLOSE");
-            sw.WriteLine();
-            sw.WriteLine("\tLIMITED REGION 4 ! top gate");
-            sw.WriteLine("\t\tSURFACE \"" + (max_layers - 2).ToString() + "\" VALUE(u) = top_V");
-            sw.WriteLine("\t\tSURFACE \"" + (max_layers - 1).ToString() + "\" VALUE(u) = top_V");
-            sw.WriteLine("\t\tLAYER \"" + (max_layers - 1).ToString() + "\" VOID");
-            sw.WriteLine("\t\tSTART (-top_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, ly / 2 * y_scaling)");
-            sw.WriteLine("\t\tVALUE(u) = top_V");
-            sw.WriteLine("\t\tLINE TO (top_length / 2, -ly / 2 * y_scaling) TO (-top_length / 2, -ly / 2 * y_scaling) TO CLOSE");
             sw.WriteLine();
             sw.WriteLine("\tRESOLVE(" + minus_g_phi + ")");
             sw.WriteLine();

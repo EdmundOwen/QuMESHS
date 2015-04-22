@@ -52,6 +52,7 @@ namespace Solver_Bases
         triangle_slab,
         half_slab,
         strip,
+        half_strip,
         slab,
         sheet, 
         composite
