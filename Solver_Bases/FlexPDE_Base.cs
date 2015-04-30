@@ -9,6 +9,7 @@ namespace Solver_Bases
     {
         protected string flexpde_options;
         protected string flexpde_script;
+        protected string flexpde_output;
 
         public FlexPDE_Base(bool external_code, Dictionary<string, object> input)
             : base(external_code) 
@@ -22,6 +23,7 @@ namespace Solver_Bases
             this.newton_location = flexpde_location;
 
             this.flexpde_script = (string)input["FlexPDE_file"];
+            this.flexpde_output = flexpde_script.Remove(flexpde_script.Length - 4) + (string)input["output_suffix"] + ".pg6";
 
             // for flexpde, we need the -S parameter included in the input
             flexpde_options = "-S " + flexpde_script;
@@ -29,6 +31,9 @@ namespace Solver_Bases
 
         protected override string[] Trim_Potential_File(string[] lines)
         {
+            // copy the pg6 file to a saved location
+            System.IO.File.Copy(flexpde_script.Remove(flexpde_script.Length - 4) + ".pg6", flexpde_output, true);
+
             // work out where the data starts (this is flexPDE specific)
             int first_line = 0;
             for (int i = 0; i < lines.Length; i++)
@@ -44,6 +49,7 @@ namespace Solver_Bases
                 data[i - first_line] = lines[i];
             return data;
         }
+
         protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
         {
             throw new NotImplementedException();

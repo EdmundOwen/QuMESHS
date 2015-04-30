@@ -18,6 +18,16 @@ namespace Solver_Bases.Geometry
 
             this.dx = dx; this.dy = dy;
             this.cos_theta = Math.Cos(theta); this.sin_theta = Math.Sin(theta);
+
+            // if the slab is parallel to one of the cardinal axes, set min/max values
+            if (theta == 0.0)
+                xmin = dx;
+            else if (theta == 0.5 * Math.PI)
+                ymax = dy;
+            else if (theta == Math.PI)
+                xmax = dx;
+            else if (theta == 1.5 * Math.PI)
+                ymin = dy;
         }
 
         public Half_Slab(double zmin, double zmax, double dx, double theta)

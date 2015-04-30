@@ -101,6 +101,7 @@
     <Compile Include="ThreeD_EffectiveBandSolver.cs" />
     <Compile Include="ThreeD_PoissonSolver.cs" />
     <Compile Include="ThreeD_ThomasFermiSolver.cs" />
+    <Compile Include="TwoplusOneD_ThomasFermiSolver.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Band_Structure.txt">
@@ -109,7 +110,7 @@
     <Content Include="Input_Parameters.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Input_Parameters_1D.txt">
+    <Content Include="Solver_Config.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

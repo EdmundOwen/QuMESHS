@@ -103,7 +103,6 @@ namespace TwoD_ThomasFermiPoisson
      //       TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
 
             bool converged = false;
-            int no_runs = 1000;
             // start without dft if carrier density is empty
             if (no_dft || carrier_density.Spin_Summed_Data.Min() == 0.0)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
@@ -123,14 +122,27 @@ namespace TwoD_ThomasFermiPoisson
             sw_e.Close();
 
    //         dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot).Spin_Summed_Data.Save_Data("dens_2D_raw_calc.dat");
-            dft_solv.Output(carrier_density, "carrier_density" + output_suffix);
-            dft_solv.Output(carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot), "density_error" + output_suffix);
+            (carrier_density - dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot)).Spin_Summed_Data.Save_Data("density_error" + output_suffix);
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential" + output_suffix);
             Band_Data pot_exc = dft_solv.DFT_diff(carrier_density) + Physics_Base.Get_XC_Potential(carrier_density);
             pot_exc.Save_Data("xc_pot" + output_suffix);
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS" + output_suffix);
    //         Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
    //         ks_ke.Save_Data("ks_ke.dat");
+            
+            // clean up intermediate data files
+            File.Delete("phi.dat");
+            File.Delete("new_phi.dat");
+            File.Delete("x.dat");
+            File.Delete("y.dat");
+            File.Delete("gphi.dat");
+            File.Delete("car_dens.dat");
+            File.Delete("rho_prime.dat");
+            File.Delete("xc_pot.dat");
+            File.Delete("xc_pot_calc.dat");
+            File.Delete("pot.dat");
+            File.Delete("charge_density.dat");
+            File.Delete("potential.dat");
 
             Close(converged, no_runs);
         }
@@ -196,8 +208,8 @@ namespace TwoD_ThomasFermiPoisson
    //             }
 
                 // and check convergence of density
-                Band_Data dens_diff = carrier_density.Spin_Summed_Data - dens_old;
                 Band_Data car_dens_spin_summed = carrier_density.Spin_Summed_Data;
+                Band_Data dens_diff = car_dens_spin_summed - dens_old;
                 double carrier_dens_min = Math.Abs(car_dens_spin_summed.Min());
                 // using the relative absolute density difference
                 for (int i = 0; i < dens_diff.Length; i++)

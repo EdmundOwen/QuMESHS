@@ -69,6 +69,10 @@ namespace Solver_Bases
                     geom = new Half_Slab((double)data["zmin"], (double)data["zmax"], (double)data["dx"], (double)data["dy"], (double)data["theta"]);
                     break;
 
+                case Geometry_Type.half_strip:
+                    geom = new Half_Strip((double)data["zmin"], (double)data["zmax"], (double)data["dx"], (double)data["dy"], (double)data["width"], (double)data["theta"]);
+                    break;
+
                 case Geometry_Type.triangle_slab:
                     geom = new Triangle_Slab((double)data["zmin"], (double)data["zmax"], (double)data["x0"], (double)data["y0"], (double)data["theta1"], (double)data["theta2"]);
                     break;
@@ -166,7 +170,7 @@ namespace Solver_Bases
             // cycle over the composite data (minus the default layer)
             for (int i = 1; i < (int)(double)data["no_components"]; i++)
             {
-                string[] raw_component_data = ((string)data["component" + i]).TrimStart('{').TrimEnd('}').Split(',');
+                string[] raw_component_data = ((string)data["component" + i.ToString()]).TrimStart('{').TrimEnd('}').Split(',');
 
                 Dictionary<string, object> component_data = new Dictionary<string, object>();
 
@@ -209,7 +213,7 @@ namespace Solver_Bases
                     //check if this is a composite layer, if so... just input the data in its raw format (ie. don't break it up into key/value pairs)
                     if (raw_layer_data[j].StartsWith("{"))
                     {
-                        data[i].Add("component" + component_no, raw_layer_data[j]);
+                        data[i].Add("component" + component_no.ToString(), raw_layer_data[j]);
                         component_no++;
                         continue;
                     }
@@ -283,8 +287,11 @@ namespace Solver_Bases
                 case "strip":
                     return Geometry_Type.strip;
 
-                case "half":
+                case "half_slab":
                     return Geometry_Type.half_slab;
+
+                case "half_strip":
+                    return Geometry_Type.half_strip;
 
                 case "tria":
                     return Geometry_Type.triangle_slab;

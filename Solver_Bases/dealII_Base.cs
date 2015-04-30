@@ -19,7 +19,7 @@ namespace Solver_Bases
         protected string initcalc_parameterfile = "split_gate.in";
         protected string newton_parameterfile = "newton.in";
 
-        string densdopent_filename = "donor_1D.dat";
+        string densdopent_filename = "dopent_1D.dat";
 
         public dealII_Base(bool external_code, Dictionary<string, object> input)
             : base(external_code)

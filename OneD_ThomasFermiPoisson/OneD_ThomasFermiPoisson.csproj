@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -79,8 +79,8 @@
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>	
-	<NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath\Assemblies\NMath.dll</NMathLibraryPath>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath\Assemblies\NMath.dll</NMathLibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_Linux|x86'">
     <OutputPath>bin\x86\Release_Linux\</OutputPath>
@@ -91,7 +91,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset
 </CodeAnalysisRuleSet>
-	<NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath\Assemblies\NMath.dll</NMathLibraryPath>
+    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath\Assemblies\NMath.dll</NMathLibraryPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NMath">
@@ -123,6 +123,7 @@
     <Content Include="Input_Parameters.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Solver_Config.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Solver_Bases\Solver_Bases.csproj">

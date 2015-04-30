@@ -14,6 +14,7 @@ namespace OneD_ThomasFermiPoisson
 
             Dictionary<string,object> input = new Dictionary<string,object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref input, "Input_Parameters.txt");
+            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref input, "Solver_Config.txt");
 
             Experiment exp = new Experiment();
             exp.Initialise(input);

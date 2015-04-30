@@ -95,11 +95,11 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Bare potential saved");
             }
 
-            ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
+          //  ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
           //  ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
+            TwoplusOneD_ThomasFermiSolver dft_solv = new TwoplusOneD_ThomasFermiSolver(this);
 
             bool converged = false;
-            int no_runs = 2500;
             // start without dft if carrier density is empty
             if (no_dft || carrier_density.Spin_Summed_Data.Min() == 0.0)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
@@ -125,6 +125,24 @@ namespace ThreeD_SchrodingerPoissonSolver
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS.dat");
 //            Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
 //            ks_ke.Save_Data("ks_ke.dat");
+
+            // clean up intermediate data files
+            File.Delete("phi.dat");
+            File.Delete("new_phi.dat");
+            File.Delete("x.dat");
+            File.Delete("y.dat");
+            File.Delete("gphi.dat");
+            File.Delete("car_dens.dat");
+            File.Delete("rho_prime.dat");
+            File.Delete("xc_pot.dat");
+            File.Delete("xc_pot_calc.dat");
+            File.Delete("pot.dat");
+            File.Delete("carrier_density.dat");
+            File.Delete("charge_density.dat");
+            File.Delete("dens_1D.dat");
+            File.Delete("dens_1D_down.dat");
+            File.Delete("dens_1D_up.dat");
+            File.Delete("potential.dat");
 
             Close(converged, no_runs);
         }
@@ -233,7 +251,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Iter = " + count.ToString() + "\tDens Conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
 
-                File.Copy("split_gate.pg6", "split_gate_" + count.ToString("000") + ".pg6");
+            //    File.Copy("split_gate.pg6", "split_gate_" + count.ToString("000") + ".pg6");
 
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_count)

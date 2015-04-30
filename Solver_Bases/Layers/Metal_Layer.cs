@@ -15,7 +15,7 @@ namespace Solver_Bases.Layers
         protected override void Set_Material_Parameters()
         {
             material = Material.Metal;
-            permitivity = 0.0;
+            permitivity = 1.0;
 
             // no band gap in a metal...
             this.band_gap = 0.0;

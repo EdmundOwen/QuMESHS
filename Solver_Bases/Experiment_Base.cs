@@ -41,7 +41,10 @@ namespace Solver_Bases
         protected double initial_temperature = 300.0;
         protected double temperature;
 
+        protected int no_runs = 1000;       // maximum number of runs before giving up and just outputting the data with a "not_converged" file flag
+
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
+        protected bool TF_only = false;      // only run Thomas-Fermi semi-classical approximation... no quantum mechanics
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
         protected bool initialise_from_restart = false;     //is the program starting from a restart? (normally false)
         protected bool initialise_with_1D_data = false;     // should the program use the data used to calculate the dopents in order to find the initial density for the higher dimensional structure?
@@ -55,6 +58,7 @@ namespace Solver_Bases
             Get_From_Dictionary<double>(input_dict, "tolerance", ref tol);
             Get_From_Dictionary<double>(input_dict, "alpha", ref alpha);
             Get_From_Dictionary<double>(input_dict, "alpha", ref alpha_prime);
+            Get_From_Dictionary(input_dict, "max_iterations", ref no_runs, true);
 
             // will not use FlexPDE unless told to
             if (input_dict.ContainsKey("use_FlexPDE")) this.using_flexPDE = (bool)input_dict["use_FlexPDE"]; else using_flexPDE = false;
@@ -133,14 +137,20 @@ namespace Solver_Bases
             boundary_conditions.Add("split_V1", Get_From_Dictionary<double>(input_dict, "split_V1", Get_From_Dictionary<double>(input_dict, "split_V", 0.0)));
             boundary_conditions.Add("split_V2", Get_From_Dictionary<double>(input_dict, "split_V2", Get_From_Dictionary<double>(input_dict, "split_V", 0.0)));
             boundary_conditions.Add("bottom_V", Get_From_Dictionary<double>(input_dict, "bottom_V", 0.0));
+            // or just take the list of voltages (if they're available)
+            if (input_dict.ContainsKey("voltages"))
+            {
+                int count = 0;
+                string[] raw_voltages = ((string)input_dict["voltages"]).TrimStart('{').TrimEnd('}').Split(',');
+                for (int i = 0; i < raw_voltages.Length; i++)
+                {
+                    boundary_conditions.Add("V" + count.ToString(), double.Parse(raw_voltages[i]));
+                    count++;
+                }
+            }
 
             // work out whether we are doing dft or not
-            // first check that there is only one entry (else throw exception)
-            if ((input_dict.ContainsKey("no_dft") && input_dict.ContainsKey("dft")) || (input_dict.ContainsKey("no_dft") && input_dict.ContainsKey("TF_only")) || (input_dict.ContainsKey("dft") && input_dict.ContainsKey("TF_only")))
-                throw new Exception("Error - more that one key specifying whether dft should be used!");
-
-            // then input from dictionary
-            Get_From_Dictionary<bool>(input_dict, "TF_only", ref no_dft, true);
+            Get_From_Dictionary<bool>(input_dict, "TF_only", ref TF_only, true);
             Get_From_Dictionary<bool>(input_dict, "no_dft", ref no_dft, true);
             if (input_dict.ContainsKey("dft"))
                 no_dft = !(bool)input_dict["dft"];
@@ -157,9 +167,33 @@ namespace Solver_Bases
             {
                 StreamWriter sw_flag = new StreamWriter("restart.flag"); sw_flag.WriteLine("true"); sw_flag.Close();
             }
+
+            if (!Check_Boundary_Points(layers, Zmin_Dens, Zmin_Dens + Dz_Dens * Nz_Dens, Dz_Dens))
+                throw new Exception("Error - there must be lattice points on all of the boundaries between zmin = " + Zmin_Dens.ToString() + " and zmax = " + (Zmin_Dens + Dz_Dens * Nz_Dens).ToString());
         }
         protected abstract void Initialise_DataClasses(Dictionary<string, object> input_dict);
         protected abstract void Initialise_from_Hot_Start(Dictionary<string, object> input_dict);
+
+        /// <summary>
+        /// The density calculations must have lattice points on all of the boundaries between zmin and zmax
+        /// This method finds these boundaries and checks that the lattice has points on them
+        /// </summary>
+        protected bool Check_Boundary_Points(ILayer[] layers, double zmin, double zmax, double dx)
+        {
+            // find out how many layer iterfaces are between zmin and zmax
+            int init_layer_no = Geom_Tool.GetLayer(layers, zmin).Layer_No - 1;
+            int count = Geom_Tool.GetLayer(layers, zmax).Layer_No - Geom_Tool.GetLayer(layers, zmin).Layer_No;
+
+            // check that these interfaces have lattice points on them
+            for (int i = 0; i < count; i++)
+                if (Math.IEEERemainder(layers[init_layer_no + i].Zmax - zmin, dx) != 0.0)
+                {
+                    Console.WriteLine("WARNING - I don't think there's a lattice point on the interface at z = " + layers[init_layer_no + i].Zmax.ToString());
+                    return false;
+                }
+
+            return true;
+        }
 
         protected void Initialise_from_Restart(Dictionary<string, object> input_dict)
         {
@@ -199,9 +233,9 @@ namespace Solver_Bases
             }
 
             // save final density out
-            carrier_density.Spin_Summed_Data.Save_Data("dens_2D_raw" + output_suffix);
-            carrier_density.Spin_Up.Save_Data("dens_2D_up_raw" + output_suffix);
-            carrier_density.Spin_Down.Save_Data("dens_2D_down_raw" + output_suffix);
+            carrier_density.Spin_Summed_Data.Save_Data("den" + output_suffix);
+            carrier_density.Spin_Up.Save_Data("dens_up" + output_suffix);
+            carrier_density.Spin_Down.Save_Data("dens_down" + output_suffix);
             
             // delete the restart flag files and data
             File.Delete("restart.flag");
