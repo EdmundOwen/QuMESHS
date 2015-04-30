@@ -99,7 +99,7 @@ namespace OneD_ThomasFermiPoisson
                 pois_solv.Reset();
             }
 
-            if (!no_dft)
+            if (!TF_only)
             {
                 // and then run the DFT solver at the base temperature
                 OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
@@ -159,14 +159,14 @@ namespace OneD_ThomasFermiPoisson
                 SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
                 // Get charge rho(phi)
+                Band_Data dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
                 dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-                Band_Data charge_dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
 
                 // Calculate Laplacian operating on the given band energy, d(eps * d(phi))
                 Band_Data tmp_g = pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                Band_Data g_phi = -1.0 * tmp_g - charge_dens_old;
+                Band_Data g_phi = -1.0 * tmp_g - carrier_density.Spin_Summed_Data - dopent_density.Spin_Summed_Data;
                 g_phi[0] = 0.0; g_phi[g_phi.Length - 1] = 0.0;
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, g_phi);
 
@@ -174,6 +174,16 @@ namespace OneD_ThomasFermiPoisson
                 t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
 
                 // Check convergence
+                Band_Data dens_spin_summed = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
+                Band_Data dens_diff = dens_spin_summed - dens_old;
+                double dens_min = Math.Max(Math.Abs(dens_spin_summed.Max()), Math.Abs(dens_spin_summed.Min()));
+                for (int i = 0; i < dens_diff.Length; i++)
+                    // only calculate density difference for densities more than 1% of the maximum value
+                    if (Math.Abs(dens_spin_summed[i]) > 0.01 * dens_min)
+                        dens_diff[i] = Math.Abs(dens_diff[i] / dens_spin_summed[i]);
+                    else
+                        dens_diff[i] = 0.0;
+
                 double[] diff = new double[Nz_Pot];
                 for (int j = 0; j < nz_pot; j++)
                     diff[j] = Math.Abs(g_phi.vec[j]);
@@ -182,7 +192,7 @@ namespace OneD_ThomasFermiPoisson
                     converged = true;
 
                 // update band energy phi_new = phi_old + t * x
-               Console.WriteLine("Iter = " + count.ToString() + "\tConv = " + convergence.ToString() + "\tt = " + t.ToString());
+               Console.WriteLine("Iter = " + count.ToString() + "\tDens conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString());
                 chem_pot = chem_pot + t * x;
                 count++;
 

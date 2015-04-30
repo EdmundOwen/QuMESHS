@@ -155,10 +155,9 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-2");
+            sw.WriteLine("\tERRLIM=5e-3");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
-            sw.WriteLine("\trho");
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
             // and the tables for carrier and donor densities
@@ -198,7 +197,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
-            sw.WriteLine("\tu: dx(eps * dx(u)) + y_scaling * dy(eps * y_scaling * dy(u)) + z_scaling * dz(eps * z_scaling * dz(u)) = - rho\t! Poisson's equation");
+            sw.WriteLine("\tu: dx(eps * dx(u)) + y_scaling * dy(eps * y_scaling * dy(u)) + z_scaling * dz(eps * z_scaling * dz(u)) = - (rho_carrier + rho_dopent)\t! Poisson's equation");
             sw.WriteLine();
             
             // draw the domain
@@ -208,20 +207,20 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\t\tFRONT(z - well_depth * z_scaling, 20 * z_scaling)");
             sw.WriteLine();
             sw.WriteLine("!MONITORS");
-            sw.WriteLine("\t!CONTOUR(rho) ON z = well_depth * z_scaling");
+            sw.WriteLine("\t!CONTOUR(rho_carrier) ON z = well_depth * z_scaling");
             sw.WriteLine("\t!CONTOUR(u) ON z = well_depth * z_scaling");
             sw.WriteLine("\t!CONTOUR(u) ON x = 0");
             sw.WriteLine("\t!CONTOUR(u) ON y = 0");
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\t!CONTOUR(rho) ON x = 0");
-            sw.WriteLine("\t!CONTOUR(u) ON x = 0");
-            sw.WriteLine("\t!CONTOUR(u) ON y = 0");
-            sw.WriteLine("\t!CONTOUR(rho) ON z = well_depth * z_scaling");
-            sw.WriteLine("\t!CONTOUR(- q_e * u + 0.5 * band_gap) ON z = well_depth * z_scaling");
-            sw.WriteLine("\t!ELEVATION(rho) FROM (0,0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " * z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " * z_scaling)");
-            sw.WriteLine("\t!ELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, 0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " * z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " * z_scaling)");
-            sw.WriteLine("\t!ELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, -ly / 2 * y_scaling, well_depth * z_scaling) TO (0, ly / 2 * y_scaling, well_depth * z_scaling)");
-            sw.WriteLine("\t!ELEVATION(- q_e * u + 0.5 * band_gap) FROM (-lx/2, 0, well_depth * z_scaling) TO (lx / 2, 0, well_depth * z_scaling)");
+            sw.WriteLine("\tCONTOUR(rho_carrier + rho_dopent) ON x = 0");
+            sw.WriteLine("\tCONTOUR(u) ON x = 0");
+            sw.WriteLine("\tCONTOUR(u) ON y = 0");
+            sw.WriteLine("\tCONTOUR(rho_carrier) ON z = well_depth * z_scaling");
+            sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON z = well_depth * z_scaling");
+            sw.WriteLine("\tELEVATION(rho_carrier + rho_dopent) FROM (0,0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " * z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " * z_scaling)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, 0, " + Geom_Tool.Get_Zmin(exp.Layers).ToString() + " * z_scaling) TO (0, 0, " + exp.Layers[exp.Layers.Length - 1].Zmax.ToString() + " * z_scaling)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, -ly / 2 * y_scaling, well_depth * z_scaling) TO (0, ly / 2 * y_scaling, well_depth * z_scaling)");
+            sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-lx/2, 0, well_depth * z_scaling) TO (lx / 2, 0, well_depth * z_scaling)");
             sw.WriteLine();
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"pot.dat\"");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + pot_filename + "\'");
@@ -234,7 +233,6 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         private void Draw_Domain(StreamWriter sw)
         {
-
             sw.WriteLine("EXTRUSION");
             sw.WriteLine("\tSURFACE \"Substrate\"\tz = " + exp.Layers[0].Zmax.ToString() + " * z_scaling");
             for (int i = 1; i < exp.Layers.Length; i++)
@@ -252,11 +250,6 @@ namespace ThreeD_SchrodingerPoissonSolver
             for (int i = 1; i < exp.Layers.Length; i++)
             {
                 sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\"");
-
-                if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
-                    sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
-                else
-                    sw.WriteLine("\t\trho = 0.0");
 
                 sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
                 sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
@@ -276,6 +269,8 @@ namespace ThreeD_SchrodingerPoissonSolver
                     for (int j = 1; j < exp.Layers[i].No_Components; j++)
                     {
                         ILayer current_layer = exp.Layers[i].Get_Component(j);
+                        if (current_layer.Geometry == Geometry_Type.triangle_slab)
+                            throw new NotImplementedException("Triangles are not currently implemented...  Sorry");
 
                         string xmin = "-ly / 2";
                         string xmax = "ly / 2";
@@ -286,11 +281,12 @@ namespace ThreeD_SchrodingerPoissonSolver
                         if (current_layer.Ymin != double.MinValue) ymin = current_layer.Ymin.ToString();
                         if (current_layer.Ymax != double.MaxValue) ymax = current_layer.Ymax.ToString();
 
-                        sw.WriteLine("\tLIMITED REGION " + count.ToString() + " ! left split gate");
+                        sw.WriteLine("\tLIMITED REGION " + count.ToString());
                         sw.WriteLine("\t\tSURFACE \"" + (i - 1).ToString() + "\" VALUE(u) = V" + voltage_count.ToString());
                         sw.WriteLine("\t\tSURFACE \"" + i.ToString() + "\" VALUE(u) = V" + voltage_count.ToString());
                         sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\" VOID");
                         sw.WriteLine("\t\tSTART (" + xmin + ", " + ymax + " * y_scaling)");
+                        sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\"");
                         sw.WriteLine("\t\tVALUE(u) = V" + voltage_count.ToString());
                         sw.WriteLine("\t\tLINE TO (" + xmax + ", " + ymax + " * y_scaling)");
                         sw.WriteLine("\t\tLINE TO (" + xmax + ", " + ymin + " * y_scaling) TO (" + xmin + ", " + ymin + " * y_scaling) TO CLOSE");
@@ -299,6 +295,12 @@ namespace ThreeD_SchrodingerPoissonSolver
                         count++;
                         voltage_count++;
                     }
+
+            if (voltage_count != gate_bcs.Count)
+            {
+                sw.Close();
+                throw new Exception("Error - not enough voltages for the number of gates... see FlexPDE file...");
+            }
         }
         
         public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi)
@@ -351,10 +353,12 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tu");
             sw.WriteLine();
             sw.WriteLine("SELECT");
-            sw.WriteLine("\tERRLIM=1e-2");
+            sw.WriteLine("\tERRLIM=5e-3");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
+            sw.WriteLine("\tband_gap");
+            sw.WriteLine();
             // this is where the density variable
             sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi)");
             sw.WriteLine("\tTRANSFER(\'" + new_pot_filename + "\', new_phi)");

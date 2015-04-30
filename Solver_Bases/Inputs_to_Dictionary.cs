@@ -13,8 +13,6 @@ namespace Solver_Bases
         /// <\summary>
         public static void Add_Input_Parameters_to_Dictionary(ref Dictionary<string, object> inputs, string filename)
         {
-            inputs = new Dictionary<string, object>();
-
             // check that the input file exists
             if (!File.Exists(filename))
                 throw new FileNotFoundException();

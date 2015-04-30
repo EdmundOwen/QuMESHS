@@ -9,24 +9,9 @@
 # Some inputs override others; typically, refer to the example input file to see
 # which inputs are default... one's with #% tend to be overriden
 #
-############## Simulation domain details ##############################
-#
-## Number of lattice sites for the density calculation
-% nz = 950
-#
-## Spacing of lattice sites for the density calculation
-% dz = 2
-#
-## Number of lattice sites in the transverse direction to save to
-% ny_1d = 11
-#
-## Number of lattice sites in the transverse direction to save to
-% nx_1d = 11
-#
-#
 ############## Poisson solver details #################################
 #
-## Potential mixing parameter
+## Potential mixing parameter. (this is adaptive)
 % alpha = 0.01
 #
 ## File name with band structure in
@@ -41,8 +26,8 @@
 ## FlexPDE file executable location
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
-#
 ############## Generic density solver details #########################
+#
 #
 ## Final solution tolerance
 % tolerance = 1e-4
@@ -53,22 +38,3 @@
 ## Number of k_B T to calculate above the Fermi energy
 % No_kB_T_Above_E_f = 0.0
 #
-#
-############## DFT density solver detials #############################
-#
-## Whether to use dft at the final temperature or not
-% dft = false
-#
-## Number of data points over which to calculate the density using dft
-% nz_dens = 20
-#
-## Minimum z value of the dft calculation domain
-% zmin_dens = -315.0
-#
-#
-############## Physical parameters ####################################
-#
-## Temperature
-% T = 4
-#
-

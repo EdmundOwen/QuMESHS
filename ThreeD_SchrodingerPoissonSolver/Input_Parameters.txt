@@ -32,21 +32,6 @@
 #
 ############## Poisson solver details #################################
 #
-## Potential mixing parameter
-% alpha = 0.3
-#
-## File name with band structure in
-% BandStructure_File = band_structure.txt
-#
-## Use FlexPDE?
-% use_FlexPDE = true
-#
-## FlexPDE input file
-% FlexPDE_file = split_gate.pde
-#
-## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
-#
 # Top gate voltage
 % top_V = -0.0
 #
@@ -65,23 +50,11 @@
 ## Top gate length (in transport direction)
 % top_length = 400
 #
-## Minimum of simulation domain in the longitudinal direction
-% xmin_pot = -2500.0
-#
-## Minimum of simulation domain in the transverse direction
-% ymin_pot = -1000.0
-#
 #
 ############## Generic density solver details #########################
 #
-## Final solution tolerance
-% tolerance = 1e-5
-#
-## Fermi energy
-% E_f = 0.0
-#
-## Number of k_B T to calculate above the Fermi energy
-% No_kB_T_Above_E_f = 0.0
+## Use DFT or not
+% no_dft = true
 #
 ## Temperature
 % T = 4
@@ -103,4 +76,32 @@
 % nz_dens = 20
 #
 #
-% initialise_with_1D_data = true
+% initialise_with_1d_data = true
+
+############## Simulation domain details for dopents ##############################
+#
+## Number of lattice sites for the density calculation
+% nz_1d = 950
+#
+## Spacing of lattice sites for the density calculation
+% dz_1d = 2
+#
+## Number of lattice sites in the transverse direction to save to
+% ny_1d = 11
+#
+## Number of lattice sites in the transverse direction to save to
+% nx_1d = 11
+#
+#
+############## DFT density solver detials for dopents #############################
+#
+## Whether to use dft at the final temperature or not
+% dft_1d = true
+#
+## Number of data points over which to calculate the density using dft
+% nz_dens_1d = 35
+#
+## Minimum z value of the dft calculation domain
+% zmin_dens_1d = -335.0
+#
+

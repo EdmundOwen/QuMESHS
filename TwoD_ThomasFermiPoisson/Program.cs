@@ -22,6 +22,7 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Loading input parameters from file");
             Dictionary<string, object> inputs = new Dictionary<string, object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Input_Parameters.txt");
+            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Solver_Config.txt");
             Console.WriteLine("Input parameters loaded");
 
             ////////////////////////////////////////////////
@@ -35,7 +36,7 @@ namespace TwoD_ThomasFermiPoisson
    //         inputs["split_V"] = double.Parse(Console.ReadLine());
             int index = int.Parse(args[0]);
 
-            int maxval = 36;
+            int maxval = (int)(double)inputs["nVsg"];
             int i1 = index % maxval;
             int i2 = (index - i1) / maxval;
 
@@ -46,6 +47,7 @@ namespace TwoD_ThomasFermiPoisson
 //                return;
 //            inputs["split_V1"] = v1;
 //            inputs["split_V2"] = v2;
+//            inputs["voltages"] = "{" + v1.ToString() + ", " + v2.ToString() + "}";
 //            Console.WriteLine("Setting \"split_V1\" to " + ((double)inputs["split_V1"]).ToString() + "V");
 //            Console.WriteLine("Setting \"split_V2\" to " + ((double)inputs["split_V2"]).ToString() + "V");
 //            inputs["top_V"] = 0.0;
@@ -53,14 +55,17 @@ namespace TwoD_ThomasFermiPoisson
 //            inputs["output_suffix"] = "_sg1" + ((double)inputs["split_V1"]).ToString("F2") + "_sg2" + ((double)inputs["split_V2"]).ToString("F2") + ".dat";
 
             //top gated with constant side gate
-            inputs["split_V"] = -0.465 - 0.001 * (double)i1;
+            double v1 = (double)inputs["sg_init"] + (double)inputs["dVsg"] * (double)i1;
+
+            inputs["split_V"] = v1;
             Console.WriteLine("Setting \"split_V\" to " + ((double)inputs["split_V"]).ToString() + "V");
-            inputs["top_V"] = -1.65 + -0.005 * (double)i2;
+            inputs["top_V"] = (double)inputs["tg_init"] + (double)inputs["dVtg"] * (double)i2;
             Console.WriteLine("Setting \"top_V\" to " + ((double)inputs["top_V"]).ToString() + "V");
             inputs["output_suffix"] = "_sg" + ((double)inputs["split_V"]).ToString("F3") + "_tg" + ((double)inputs["top_V"]).ToString("F3") + ".dat";
 
             ////////////////////////////////////////////////
 
+            inputs["voltages"] = "{" + v1.ToString() + ", " + v1.ToString() + "}";
             // check to make sure it's negative
             if ((double)inputs["split_V"] > 0)
             {
@@ -78,7 +83,11 @@ namespace TwoD_ThomasFermiPoisson
             {
                 Console.WriteLine("Performing density dopent calculation");
                 Dictionary<string, object> inputs_init = new Dictionary<string, object>();
-                Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs_init, "Input_Parameters_1D.txt");
+                inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("_1d")).ToDictionary(dict => dict.Key.Remove(dict.Key.Length - 3), dict => dict.Value);
+                inputs_init.Add("BandStructure_File", inputs["BandStructure_File"]);
+                inputs_init.Add("T", inputs["T"]);
+
+            //    Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs_init, "Input_Parameters_1D.txt");
                 exp_init.Initialise(inputs_init);
                 exp_init.Run();
                 inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
@@ -96,7 +105,7 @@ namespace TwoD_ThomasFermiPoisson
                
                 // this is a scaled version for the dopents!
                 double scaling_factor = ((double)inputs["ny"] * (double)inputs["dy"]) / ((double)inputs["nz"] * (double)inputs["dz"]);
-                Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D_dopents.dat", (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / ((double)inputs_init["ny_1d"] - 1.0), scaling_factor * (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / 2.0, scaling_factor * Geom_Tool.Get_Zmin(exp_init.Layers));
+                Input_Band_Structure.Expand_BandStructure(exp_init.Dopent_Density, (int)(double)inputs["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D_dopents.dat", (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / ((double)inputs["ny_1d"] - 1.0), scaling_factor * (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / 2.0, scaling_factor * Geom_Tool.Get_Zmin(exp_init.Layers));
          //       Input_Band_Structure.Expand_BandStructure(exp_init.Carrier_Density, (int)(double)inputs_init["ny_1d"]).Spin_Summed_Data.Save_2D_Data("dens_2D.dat", (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / ((double)inputs_init["ny_1d"] - 1.0), (double)inputs_init["dz"], -1.0 * (double)inputs["dy"] * ((double)inputs["ny"] + 2.0) / 2.0, Geom_Tool.Get_Zmin(exp_init.Layers));
                 Console.WriteLine("Saved 1D dopent density");
             }

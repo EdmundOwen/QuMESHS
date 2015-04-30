@@ -138,7 +138,6 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
-            sw.WriteLine("\trho");
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
             // and the tables for carrier and donor densities
@@ -174,7 +173,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
-            sw.WriteLine("\tu: dx(eps * dx(u)) + z_scaling * dy(eps * z_scaling * dy(u)) = - rho\t! Poisson's equation");
+            sw.WriteLine("\tu: dx(eps * dx(u)) + z_scaling * dy(eps * z_scaling * dy(u)) = - (rho_carrier + rho_dopent) \t! Poisson's equation");
             sw.WriteLine();
             // the boundary definitions for the differnet layers
             sw.WriteLine("BOUNDARIES");
@@ -188,19 +187,19 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("MONITORS");
             sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
-            sw.WriteLine("\tCONTOUR(rho) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(rho_carrier + rho_dopent) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
             sw.WriteLine("\tELEVATION(u) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
-            sw.WriteLine("\tELEVATION(rho) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
+            sw.WriteLine("\tELEVATION(rho_carrier) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(- q_e * u + 0.5 * band_gap) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
-            sw.WriteLine("\tCONTOUR(rho) ON GRID(x, y / z_scaling)");
-            sw.WriteLine("\tELEVATION(rho) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
-            sw.WriteLine("\tELEVATION(-1.0e21*rho/q_e) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
+            sw.WriteLine("\tCONTOUR(rho_carrier + rho_dopent) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tELEVATION(rho_carrier + rho_dopent) FROM (0, " + (z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens + 1) * exp.Dz_Dens)).ToString() + ") TO (0, " + (z_scaling * (exp.Zmin_Dens - 2.0 * exp.Dz_Dens)).ToString() + ")");
+            sw.WriteLine("\tELEVATION(-1.0e21*rho_carrier/q_e) FROM (-" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth) TO (" + Math.Abs(1.2 * exp.Ymin_Dens).ToString() + ", well_depth)");
 
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
@@ -237,10 +236,6 @@ namespace TwoD_ThomasFermiPoisson
 
                     // output region data
                     sw.WriteLine("\tREGION " + count.ToString());
-                    if (exp.Layers[i].Layer_No <= Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No)
-                        sw.WriteLine("\t\trho = rho_carrier + rho_dopent");
-                    else
-                        sw.WriteLine("\t\trho = 0.0");
                     sw.WriteLine("\t\teps = " + current_layer.Permitivity.ToString());
                     sw.WriteLine("\t\tband_gap = " + current_layer.Band_Gap.ToString());
 
@@ -346,6 +341,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
+            sw.WriteLine("\tband_gap");
+            sw.WriteLine();
             sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi)");
             sw.WriteLine("\tTRANSFER(\'" + new_pot_filename + "\', new_phi)");
             sw.WriteLine();

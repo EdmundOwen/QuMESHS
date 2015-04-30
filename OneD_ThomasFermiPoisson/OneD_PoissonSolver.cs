@@ -13,7 +13,7 @@ using Solver_Bases.Geometry;
 
 namespace OneD_ThomasFermiPoisson
 {
-    public class OneD_PoissonSolver : FlexPDE_Base
+    public class OneD_PoissonSolver : Potential_Base
     {
         Experiment exp;
 
@@ -27,7 +27,7 @@ namespace OneD_ThomasFermiPoisson
         string dens_filename = "dens_1D.dat";
 
         public OneD_PoissonSolver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
-            : base(using_external_code, input)
+            : base(using_external_code)
         {
             this.exp = exp;
             
@@ -57,12 +57,12 @@ namespace OneD_ThomasFermiPoisson
             return Physics_Base.q_e * potential;
         }
 
-        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
-        {
-            Save_Data(density, dens_filename);
-
-            return Get_Data_From_External(flexpde_script, initcalc_result_filename);
-        }
+ //       protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+ //       {
+ //           Save_Data(density, dens_filename);
+ //
+ //           return Get_Data_From_External(flexpde_script, initcalc_result_filename);
+ //       }
 
         /// <summary>
         /// Calculates the Laplacian for the given band structure of the input potential
@@ -331,6 +331,16 @@ namespace OneD_ThomasFermiPoisson
         public override Band_Data Chemical_Potential
         {
             get { throw new NotImplementedException(); }
+        }
+
+        protected override string[] Trim_Potential_File(string[] lines)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        {
+            throw new NotImplementedException();
         }
     }
 }

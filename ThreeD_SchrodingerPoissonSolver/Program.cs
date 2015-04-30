@@ -19,6 +19,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             Console.WriteLine("Loading input parameters from file");
             Dictionary<string, object> inputs = new Dictionary<string, object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Input_Parameters.txt");
+            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Solver_Config.txt");
             Console.WriteLine("Input parameters loaded");
 
             // read in the value of vsg to be used
@@ -39,7 +40,10 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             Console.WriteLine("Performing density dopent calculation");
             Dictionary<string, object> inputs_init = new Dictionary<string, object>();
-            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs_init, "Input_Parameters_1D.txt");
+            inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("_1d")).ToDictionary(dict => dict.Key.Remove(dict.Key.Length - 3), dict => dict.Value);
+            inputs_init.Add("BandStructure_File", inputs["BandStructure_File"]);
+            inputs_init.Add("T", inputs["T"]);
+
             exp_init.Initialise(inputs_init);
             exp_init.Run();
             inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
@@ -71,8 +75,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             for (int i = dopent_min + 1; i < dopent_max - 1; i++)
                 tmp_dop_dens_1D.vec[i - dopent_min] = exp_init.Dopent_Density.Spin_Summed_Data.vec[i];
             // and expand into the correct data structure
-            Band_Data tmp_dop_dens = Input_Band_Structure.Expand_BandStructure(tmp_dop_dens_1D.vec, (int)(double)inputs_init["nx_1d"], (int)(double)inputs_init["ny_1d"]);
-            tmp_dop_dens.Save_3D_Data("dens_3D_dopents.dat", (double)inputs["dx"] * ((double)inputs["nx"] + 1.0) / ((double)inputs_init["nx_1d"] - 1.0), y_scaling * (double)inputs["dy"] * ((double)inputs["ny"] + 1.0) / ((double)inputs_init["ny_1d"] - 1.0),  z_scaling * (double)inputs_init["dz"], -1.0 * (double)inputs["dx"] * ((double)inputs["nx"] + 1.0) / 2.0, -1.0 * y_scaling * (double)inputs["dy"] * ((double)inputs["ny"] + 1.0) / 2.0, z_scaling * dopent_layer.Zmin);
+            Band_Data tmp_dop_dens = Input_Band_Structure.Expand_BandStructure(tmp_dop_dens_1D.vec, (int)(double)inputs["nx_1d"], (int)(double)inputs["ny_1d"]);
+            tmp_dop_dens.Save_3D_Data("dens_3D_dopents.dat", (double)inputs["dx"] * ((double)inputs["nx"] + 1.0) / ((double)inputs["nx_1d"] - 1.0), y_scaling * (double)inputs["dy"] * ((double)inputs["ny"] + 1.0) / ((double)inputs["ny_1d"] - 1.0),  z_scaling * (double)inputs["dz_1d"], -1.0 * (double)inputs["dx"] * ((double)inputs["nx"] + 1.0) / 2.0, -1.0 * y_scaling * (double)inputs["dy"] * ((double)inputs["ny"] + 1.0) / 2.0, z_scaling * dopent_layer.Zmin);
             Console.WriteLine("Saved 1D dopent density");
             
             Console.WriteLine("Starting experiment");

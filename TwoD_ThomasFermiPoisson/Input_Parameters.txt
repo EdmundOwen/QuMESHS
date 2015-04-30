@@ -26,33 +26,6 @@
 #
 ############## Poisson solver details #################################
 #
-## File name with band structure in
-% BandStructure_File = Band_Structure.txt
-#
-## Use FlexPDE?
-% use_FlexPDE = true
-#
-## FlexPDE input file
-% FlexPDE_file = split_gate.pde
-#
-## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
-#
-## Use deal.II?
-% use_deal.II = false
-#
-## Location of initial potential calculator for deal.II
-% initcalc_location = split_gate
-#
-## Location of newton step calculator for deal.II
-% newton_location = newton
-#
-## Optional location to write initial potential calculator parameter file for deal.II (default is "split_gate.in")
-# % initcalc_parameterfile = split_gate.in
-#
-## Optional location to write newton step calculator parameter file for deal.II (default is "newton.in")
-# % newton_parameterfile = newton.in
-#
 # Top gate voltage
 % top_V = -0.0
 #
@@ -60,7 +33,7 @@
 % split_V = -1.0
 #
 ## Voltage array (for general voltage input)
-% voltages = {-1.0, -1.0}
+#% voltages = {-1.0, -1.0}
 #
 ## Surface charge (by default, this is set by the 1D solver)
 # % surface_charge = -2.677
@@ -68,29 +41,14 @@
 ## Split gate width
 % split_width = 800
 #
-## Minimum of simulation domain in the transverse direction
-% ymin_pot = -2000.0
-#
 #
 ############## Generic density solver details #########################
 #
 ## Use DFT or not
 % no_dft = true
 #
-## Scheduler data file
-% scheduler_file = Scheduler_Data.txt
-#
-## Density mixing parameter
-% alpha = 0.001
-#
-## Final solution tolerance
-% tolerance = 1e-2
-#
-## Fermi energy
-% E_f = 0.0
-#
-## Number of k_B T to calculate above the Fermi energy
-% No_kB_T_Above_E_f = 0.0
+## Maximum number of iterations before giving up
+% max_iterations = 1000
 #
 ## Temperature
 % T = 0.05
@@ -102,7 +60,7 @@
 ## Lattice spacing in the transverse direction
 % dy_dens =  5.0
 #
-## Number of lattice points in transverse direction
+## Number of lattice points in transverse direction 
 #% ny_dens = 81
 % ny_dens = 401
 #
@@ -117,9 +75,6 @@
 #
 #
 ############## Data transfer details ##############################
-#
-## Whether to try restarting if the program was terminated before completion
-% with_checkpointing = false
 #
 ## Whether to start a simulation "hot" with previous data
 % hot_start = false
@@ -140,16 +95,41 @@
 % batch_run = false
 #
 ## 
-% init_val = 385
+% sg_init = -0.465
 #
 ##
-% final_val = 390
+% dVsg = -0.001
 #
 ##
-% interval = -0.02
+% nVsg = 36
 #
 ##
-% no_Vsg = 2
+% tg_init = -1.9
 #
 ##
-% delta_Vsg = 0.005
+% dVtg = 0.005
+#
+############## Simulation domain details for dopents ##############################
+#
+## Number of lattice sites for the density calculation
+% nz_1d = 1900
+#
+## Spacing of lattice sites for the density calculation
+% dz_1d = 1
+#
+## Number of lattice sites in the transverse direction to save to
+% ny_1d = 21
+#
+#
+############## DFT density solver detials for dopents #############################
+#
+## Whether to use dft at the final temperature or not
+% dft_1d = true
+#
+## Number of data points over which to calculate the density using dft
+% nz_dens_1d = 65
+#
+## Minimum z value of the dft calculation domain
+% zmin_dens_1d = -340.0
+#
+#
