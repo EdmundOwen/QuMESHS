@@ -113,16 +113,7 @@ namespace OneD_ThomasFermiPoisson
                 // initialise output solvers
                 OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
 
-                // save final density out
-                final_dens_solv.Output(carrier_density, "carrier_density.dat", false);
-
-                carrier_density.Spin_Summed_Data.Save_1D_Data("dens_1D.dat", dz_dens, zmin_dens);
-                carrier_density.Spin_Up.Save_1D_Data("dens_1D_up.dat", dz_dens, zmin_dens);
-                carrier_density.Spin_Down.Save_1D_Data("dens_1D_down.dat", dz_dens, zmin_dens);
-
-                final_dens_solv.Output(carrier_density + dopent_density, "charge_density.dat", false);
-                pois_solv.Output(Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot, "potential.dat");
-
+                (Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot).Save_Data("potential" + output_suffix);
             }
 
             double tot_dens = (from val in carrier_density.Spin_Summed_Data.vec

@@ -125,11 +125,6 @@ namespace Solver_Bases
             device_dimensions.Add("top_length", Get_From_Dictionary<double>(input_dict, "top_length", 0.0));
             device_dimensions.Add("split_width", Get_From_Dictionary<double>(input_dict, "split_width", 0.0));
             device_dimensions.Add("split_length", Get_From_Dictionary<double>(input_dict, "split_length", 0.0));
-            device_dimensions.Add("zmin_pot", this.Layers[1].Zmin);
-            device_dimensions.Add("pmma_depth", Geom_Tool.Find_Layer_Above_Surface(this.Layers).Zmax);
-            device_dimensions.Add("cap_depth", Geom_Tool.Find_Layer_Below_Surface(this.Layers).Zmin);
-            device_dimensions.Add("interface_depth", this.Layers[1].Zmax);
-            device_dimensions.Add("buffer_depth", this.Layers[2].Zmax);
 
             // as well as for the gate voltages
             boundary_conditions = new Dictionary<string, double>();
@@ -170,6 +165,9 @@ namespace Solver_Bases
 
             if (!Check_Boundary_Points(layers, Zmin_Dens, Zmin_Dens + Dz_Dens * Nz_Dens, Dz_Dens))
                 throw new Exception("Error - there must be lattice points on all of the boundaries between zmin = " + Zmin_Dens.ToString() + " and zmax = " + (Zmin_Dens + Dz_Dens * Nz_Dens).ToString());
+
+            // and load the output suffix for identification of output files
+            Get_From_Dictionary<string>(input_dict, "output_suffix", ref output_suffix, true);
         }
         protected abstract void Initialise_DataClasses(Dictionary<string, object> input_dict);
         protected abstract void Initialise_from_Hot_Start(Dictionary<string, object> input_dict);
@@ -233,7 +231,7 @@ namespace Solver_Bases
             }
 
             // save final density out
-            carrier_density.Spin_Summed_Data.Save_Data("den" + output_suffix);
+            carrier_density.Spin_Summed_Data.Save_Data("dens" + output_suffix);
             carrier_density.Spin_Up.Save_Data("dens_up" + output_suffix);
             carrier_density.Spin_Down.Save_Data("dens_down" + output_suffix);
             

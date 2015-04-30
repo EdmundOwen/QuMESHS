@@ -45,9 +45,6 @@ namespace TwoD_ThomasFermiPoisson
 
             pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
 
-            // and load the output suffix for identification of output files
-            Get_From_Dictionary<string>(input_dict, "output_suffix", ref output_suffix, true);
-
             Console.WriteLine("Experimental parameters initialised");
         }
 
@@ -143,6 +140,9 @@ namespace TwoD_ThomasFermiPoisson
             File.Delete("pot.dat");
             File.Delete("charge_density.dat");
             File.Delete("potential.dat");
+            File.Delete("dens");
+            File.Delete("dens_up");
+            File.Delete("dens_down");
 
             Close(converged, no_runs);
         }
