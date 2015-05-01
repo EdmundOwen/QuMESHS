@@ -14,7 +14,7 @@ namespace TwoD_ThomasFermiPoisson
 {
     public class Experiment : Experiment_Base
     {
-        double t_damp = 0.8, t_min = 1e-3;
+        double t_damp = 1.0, t_min = 1e-3;
 
         IPoisson_Solve pois_solv;
 
@@ -89,6 +89,10 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Saving bare potential");
                 (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("bare_pot" + output_suffix);
                 Console.WriteLine("Bare potential saved");
+
+                // if the initial carrier density was not zero, recalculate the chemical potential
+                if (carrier_density.Spin_Summed_Data.Max() != 0.0 && carrier_density.Spin_Summed_Data.Min() != 0.0)
+                    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             }
 
             // and then run the DFT solver at the base temperature over a limited range
@@ -174,8 +178,6 @@ namespace TwoD_ThomasFermiPoisson
             
             int count = 0;
             bool converged = false;
-            if (!no_dft)
-                dens_solv.DFT_Mixing_Parameter = 0.1;
             dens_diff_lim = 0.12;
             while (!converged)
             {
@@ -194,7 +196,7 @@ namespace TwoD_ThomasFermiPoisson
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 Band_Data gphi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_density, dens_solv.DFT_diff(carrier_density));
-                chem_pot = pois_solv.Chemical_Potential;
+                //chem_pot = pois_solv.Chemical_Potential;
                 
                 // Calculate optimal damping parameter, t, (but damped damping....)
                 if (t == 0.0)
@@ -313,7 +315,7 @@ namespace TwoD_ThomasFermiPoisson
                 }*/
                 
                 // update band energy phi_new = phi_old + t * x
-  //              chem_pot = chem_pot + t * x;
+                chem_pot = chem_pot + t * x;
                 pois_solv.T = t;
 
                 //// and set the DFT potential

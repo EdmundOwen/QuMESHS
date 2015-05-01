@@ -70,7 +70,6 @@ namespace Solver_Bases
             Save_Data(gphi, gphi_filename);
 
             Band_Data x = Get_Data_From_External(newton_location, "-p " + newton_parameterfile, newton_result_filename);
-            chempot += base.T * x;
             return x;
         }
 

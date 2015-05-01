@@ -146,18 +146,17 @@ namespace OneD_ThomasFermiPoisson
             bool converged = false;
             while (!converged)
             {
+                Band_Data dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
+
+                // Get charge rho(phi)
+                dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+
                 // Generate charge-dependent part of the Jacobian, g'(phi) = -d(eps * d( )) - rho'(phi)
                 SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_density_deriv, dopent_density_deriv, chem_pot);
 
-                // Get charge rho(phi)
-                Band_Data dens_old = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
-                dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-
-                // Calculate Laplacian operating on the given band energy, d(eps * d(phi))
-                Band_Data tmp_g = pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e);
-
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                Band_Data g_phi = -1.0 * tmp_g - carrier_density.Spin_Summed_Data - dopent_density.Spin_Summed_Data;
+                // Calculate Laplacian operating on the given band energy, d(eps * d(phi))
+                Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data - dopent_density.Spin_Summed_Data;
                 g_phi[0] = 0.0; g_phi[g_phi.Length - 1] = 0.0;
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, g_phi);
 

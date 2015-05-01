@@ -343,8 +343,8 @@ namespace TwoD_ThomasFermiPoisson
             // this is where the density variable
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
-            sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi)");
-            sw.WriteLine("\tTRANSFER(\'" + new_pot_filename + "\', new_phi)");
+            sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi_old)");
+            sw.WriteLine("\tTRANSFER(\'" + new_pot_filename + "\', x_old)");
             sw.WriteLine();
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
@@ -404,8 +404,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tELEVATION(" + minus_g_phi + ") FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
-            sw.WriteLine("\tCONTOUR(phi + t * new_phi) ON GRID(x, y / z_scaling)");
-            sw.WriteLine("\tCONTOUR((phi + t * new_phi) * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(phi_old + t * x_old) ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR((phi_old + t * x_old) * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(car_dens * " + window_function_string + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
@@ -423,9 +423,9 @@ namespace TwoD_ThomasFermiPoisson
 
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
-            sw.WriteLine("\tTRANSFER(phi + t * new_phi) FILE = \'" + pot_filename + "\'");
+            sw.WriteLine("\tTRANSFER(phi_old + t * x_old) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + new_pot_filename + "\'");
-            sw.WriteLine("\tTABLE(phi + t * new_phi) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + chempot_result_filename + "\"");
+            sw.WriteLine("\tTABLE(phi_old + t * x_old) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + chempot_result_filename + "\"");
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + newton_result_filename + "\"");
             sw.WriteLine();
 

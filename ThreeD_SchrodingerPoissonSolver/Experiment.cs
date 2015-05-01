@@ -197,7 +197,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Band_Data gphi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
                 Set_Edges(gphi);
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_density, dens_solv.DFT_diff(carrier_density));
-                chem_pot = pois_solv.Chemical_Potential;
+               // chem_pot = pois_solv.Chemical_Potential;
 
                 // Calculate optimal damping parameter, t, (but damped damping....)
                 if (t == 0.0)
@@ -246,6 +246,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
                 // update t for Poisson solver
                 pois_solv.T = t;
+                chem_pot = chem_pot + t * x;
 
                 stpwch.Stop();
                 Console.WriteLine("Iter = " + count.ToString() + "\tDens Conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));

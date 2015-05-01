@@ -275,32 +275,14 @@ namespace Solver_Bases
                 {
                     t = div_fact * t;
                     if (t < minval)
-                    {
-                        // evaluate vp at zero
-                        double vpc = calc_vp(0.0, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
-                        // if there is a root between minval and zero, return minval
-                        if (Math.Sign(vpb) != Math.Sign(vpc))
-                            return minval;
-                        /*
-                    // otherwise, return a negative value which can be used as a flag or, if not, will still
-                    // generate weird behavious which should push the iterator into an active regime
-                    else
-                        return -1.0 * minval;
-                         */
-                        // new behaviour is to just set the blend parameter to the minimum value so that at least something happens
-                        else
-                            return minval;
-                    }
-
+                        return minval;
+                    
                     vpa = vpb;
                     vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
-                // check that t is not less than the minimum possible value (just in case)
-                if (t < minval)
-                    return minval;
-
-                return 0.5 * ((1.0 + div_fact) / div_fact) * t;
+                //return 0.5 * (1.0 + (1.0 / div_fact)) * t;
+                return t - t * (1.0 - 1.0 / div_fact) * vpb / (vpa - vpb);
             }
             else
             {
@@ -312,10 +294,11 @@ namespace Solver_Bases
                         return maxval;
 
                     vpa = vpb;
-                    vpb = calc_vp((1.0 / div_fact) * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+                    vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
-                return 0.5 * (1.0 + div_fact) * t;
+                //return 0.5 * (1.0 + div_fact) * t;
+                return t - t * (1.0 - div_fact) * vpb / (vpb - vpa);
             }
         }
 
