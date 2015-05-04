@@ -39,12 +39,12 @@ namespace OneD_ThomasFermiPoisson
             }
         }
 
-        protected override Band_Data Parse_Potential(string[] data)
+        protected override Band_Data Parse_Potential(string location, string[] data)
         {
-            return Band_Data.Parse_Band_Data(data, exp.Nz_Dens);
+            return Band_Data.Parse_Band_Data(location, data, exp.Nz_Dens);
         }
 
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data charge_density)
+        protected override Band_Data Get_Pot_On_Regular_Grid(Band_Data charge_density)
         {
             // set the top and bottom boundary conditions where [0] is the bottom of the device
             charge_density.vec[0] = bottom_bc * -1.0 * bottom_eps / (exp.Dz_Pot * exp.Dz_Pot);
@@ -52,9 +52,10 @@ namespace OneD_ThomasFermiPoisson
 
             // solve Poisson's equation
             Band_Data potential = new Band_Data(lu_fact.Solve(-1.0 * charge_density.vec));
+            // and save its laplacian
+            potential.Laplacian = Calculate_Phi_Laplacian(potential);
 
-            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * potential;
+            return potential;
         }
 
  //       protected override Band_Data Get_ChemPot_From_External(Band_Data density)
@@ -69,7 +70,7 @@ namespace OneD_ThomasFermiPoisson
         /// ie. returns d(eps * d(input))
         /// NOTE: the input should be a potential so make sure you divide all band energies by q_e
         /// </summary>
-        public override Band_Data Calculate_Laplacian(Band_Data input)
+        Band_Data Calculate_Phi_Laplacian(Band_Data input)
         {
             DoubleTriDiagMatrix lap_mat = Generate_Laplacian(exp.Layers);
             return new Band_Data(MatrixFunctions.Product(lap_mat, input.vec));
@@ -89,7 +90,11 @@ namespace OneD_ThomasFermiPoisson
 
             DoubleTriDiagFact lu_newt_step = new DoubleTriDiagFact(lap_mat);
 
-            return Physics_Base.q_e * new Band_Data(lu_newt_step.Solve(-1.0 * g_phi.vec));
+            // calculate newton step and its laplacian
+            Band_Data result = new Band_Data(lu_newt_step.Solve(-1.0 * g_phi.vec));
+            result.Laplacian = Calculate_Phi_Laplacian(result);
+
+            return result;
         }
 
         /// <summary>
@@ -338,7 +343,7 @@ namespace OneD_ThomasFermiPoisson
             throw new NotImplementedException();
         }
 
-        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        protected override Band_Data Get_Pot_From_External(Band_Data density)
         {
             throw new NotImplementedException();
         }

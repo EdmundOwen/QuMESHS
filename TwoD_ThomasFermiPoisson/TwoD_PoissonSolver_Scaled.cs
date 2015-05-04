@@ -24,7 +24,9 @@ namespace TwoD_ThomasFermiPoisson
 
         string gphi_filename = "gphi.dat";
 
-        string chempot_result_filename = "y.dat";
+        string pot_result_filename = "y.dat";
+
+        string laplacian_file = "lap.dat";
 
         double top_bc, split_bc1, split_bc2, bottom_bc;
         List<double> gate_bcs;
@@ -44,10 +46,17 @@ namespace TwoD_ThomasFermiPoisson
             z_scaling = (exp.Ny_Pot * exp.Dy_Pot) / (exp.Nz_Pot * exp.Dz_Pot);
         }
 
-        protected override Band_Data Parse_Potential(string[] data)
+        protected override Band_Data Parse_Potential(string location, string[] data)
         {
             string[] new_data = Trim_Potential_File(data);
-            return Band_Data.Parse_Band_Data(new_data, exp.Ny_Dens, exp.Nz_Dens);
+            Band_Data result = Band_Data.Parse_Band_Data(location, new_data, exp.Ny_Dens, exp.Nz_Dens);
+
+            // also parse the laplacian data from file
+            string[] lines = File.ReadAllLines(laplacian_file);
+            string[] lap_data = Trim_Potential_File(lines);
+            result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Ny_Dens, exp.Nz_Dens);
+
+            return result;
         }
 
         protected override void Save_Data(Band_Data density, string input_file_name)
@@ -58,36 +67,7 @@ namespace TwoD_ThomasFermiPoisson
 
             density.Save_2D_Data(input_file_name, exp.Dy_Dens, z_scaling * exp.Dz_Dens, exp.Ymin_Dens, z_scaling * exp.Zmin_Dens);
         }
-
-        /// <summary>
-        /// calculates the Laplacian
-        /// NOTE! this is not scaled as this is not (or at least should not) be used inside TwoD_PoissonSolver_Scaled
-        /// </summary>
-        public override Band_Data Calculate_Laplacian(Band_Data input_data)
-        {
-            DoubleMatrix result = new DoubleMatrix(exp.Ny_Dens, exp.Nz_Dens);
-            DoubleMatrix data = input_data.mat;
-
-            for (int i = 1; i < exp.Ny_Dens - 1; i++)
-                for (int j = 1; j < exp.Nz_Dens - 1; j++)
-                {
-                    double pos_y = i * exp.Dy_Dens + exp.Ymin_Dens;
-                    double pos_z = j * exp.Dz_Dens + exp.Zmin_Dens;
-
-                    // the factors multiplying the Laplacian in the transverse direction
-                    double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y + 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                    double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y - 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                    result[i, j] = (factor_minus * data[i - 1, j] + factor_plus * data[i + 1, j] - (factor_plus + factor_minus) * data[i, j]);
-
-                    // and in the growth direction
-                    factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z + 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                    factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z - 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                    result[i, j] += (factor_minus * data[i, j - 1] + factor_plus * data[i, j + 1] - (factor_plus + factor_minus) * data[i, j]);
-                }
-
-            return new Band_Data(result);
-        }
-
+        
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimension, Dictionary<string, double> boundary_conditions)
         {
             if (natural_topbc)
@@ -117,7 +97,7 @@ namespace TwoD_ThomasFermiPoisson
                 Create_FlexPDE_File(top_bc, split_bc1, split_bc2, split_width, surface, bottom_bc, flexpde_script);
         }
 
-        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        protected override Band_Data Get_Pot_From_External(Band_Data density)
         {
             Save_Data(density, dens_filename);
 
@@ -204,6 +184,7 @@ namespace TwoD_ThomasFermiPoisson
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + initcalc_result_filename + "\"");
+            sw.WriteLine("\tTABLE(dx(eps * dx(u)) + z_scaling * dy(eps * z_scaling * dy(u))) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(0.0 * u) FILE = \'" + new_pot_filename + "\' ! dummy file for smoother function");
             sw.WriteLine();
@@ -329,7 +310,7 @@ namespace TwoD_ThomasFermiPoisson
 
             //string minus_g_phi = "(dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + " +  window_function_string + " * car_dens + dop_dens)";
             //minus_g_phi += " * upulse(y - well_depth + 200, y - well_depth - 100)";
-            string minus_g_phi = "-1.0 * gphi * " + window_function_string;
+            string g_phi = "gphi * " + window_function_string;
 
             sw.WriteLine("TITLE \'Split Gate\'");
             sw.WriteLine("COORDINATES cartesian2");
@@ -386,28 +367,28 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
-            sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * z_scaling * dy(eps * z_scaling * dy(u)) - rho_prime * u = " + minus_g_phi + " \t! Poisson's equation");
+            sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * z_scaling * dy(eps * z_scaling * dy(u)) - rho_prime * u = -1.0 * " + g_phi + " \t! Poisson's equation");
             sw.WriteLine();
             // the boundary definitions for the different layers
             sw.WriteLine("BOUNDARIES");
             Draw_Domain(sw);
             
-            sw.WriteLine("\tRESOLVE(" + minus_g_phi + ")");
+            sw.WriteLine("\tRESOLVE(-1.0 * " + g_phi + ")");
             sw.WriteLine();
 
             // write out plotting routines
 
             sw.WriteLine("MONITORS");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling)");
+            sw.WriteLine("\tCONTOUR(-1.0 * " + g_phi + ") ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tELEVATION(u) FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
-            sw.WriteLine("\tELEVATION(" + minus_g_phi + ") FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
+            sw.WriteLine("\tELEVATION(-1.0 * " + g_phi + ") FROM (-ly / 2, well_depth) TO (ly / 2, well_depth)");
 
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(phi_old + t * x_old) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR((phi_old + t * x_old) * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(car_dens * " + window_function_string + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
+            sw.WriteLine("\tCONTOUR(-1.0 * " + g_phi + ") ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(u) ON GRID(x, y / z_scaling)");
             sw.WriteLine("\tCONTOUR(u * q_e) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
             sw.WriteLine("\tCONTOUR(xc_pot) ON GRID(x, y / z_scaling) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ")");
@@ -425,7 +406,8 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine();
             sw.WriteLine("\tTRANSFER(phi_old + t * x_old) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + new_pot_filename + "\'");
-            sw.WriteLine("\tTABLE(phi_old + t * x_old) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + chempot_result_filename + "\"");
+            sw.WriteLine("\tTABLE(phi_old + t * x_old) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + pot_result_filename + "\"");
+            sw.WriteLine("\tTABLE(-rho_prime * u + " + g_phi + ") ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + newton_result_filename + "\"");
             sw.WriteLine();
 
@@ -439,11 +421,11 @@ namespace TwoD_ThomasFermiPoisson
         {
             get
             {
-                string[] lines = File.ReadAllLines(chempot_result_filename);
+                string[] lines = File.ReadAllLines(pot_result_filename);
                 string[] data = Trim_Potential_File(lines);
 
                 // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-                return Physics_Base.q_e * Parse_Potential(data);
+                return Physics_Base.q_e * Parse_Potential(pot_result_filename, data);
             }
         }
     }

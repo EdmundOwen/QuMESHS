@@ -248,21 +248,21 @@ namespace Solver_Bases
         /// calculates an optimal t based on bisection
         /// </summary>
         /// <param name="t"></param>
-        /// <param name="band_energy"></param>
+        /// <param name="phi"></param>
         /// <param name="x"></param>
         /// <param name="car_dens"></param>
         /// <param name="dop_dens"></param>
         /// <param name="pois_solv"></param>
         /// <param name="dens_solv"></param>
         /// <returns></returns>
-        protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
+        protected double Calculate_optimal_t(double t, Band_Data phi, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
         {
             double maxval = 1.0;
             SpinResolved_Data car_dens_copy = car_dens.DeepenThisCopy();
             SpinResolved_Data dop_dens_copy = dop_dens.DeepenThisCopy();
 
-            double vpa = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
-            double vpb = calc_vp(div_fact * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+            double vpa = calc_vp(t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+            double vpb = calc_vp(div_fact * t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
             double t_orig = t;
 
             // work out whether this is going in the right direction (assuming vp is monotonic)
@@ -275,10 +275,14 @@ namespace Solver_Bases
                 {
                     t = div_fact * t;
                     if (t < minval)
-                        return minval;
+                        if (Math.Sign(calc_vp(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv)) == Math.Sign(vpb))
+                            return 1.0 / div_fact;
+                        else
+                            return Calculate_optimal_t(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv, minval);
+                    
                     
                     vpa = vpb;
-                    vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+                    vpb = calc_vp(t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
                 //return 0.5 * (1.0 + (1.0 / div_fact)) * t;
@@ -294,7 +298,7 @@ namespace Solver_Bases
                         return maxval;
 
                     vpa = vpb;
-                    vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+                    vpb = calc_vp(t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
                 //return 0.5 * (1.0 + div_fact) * t;
@@ -302,12 +306,12 @@ namespace Solver_Bases
             }
         }
 
-        protected virtual double calc_vp(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        protected virtual double calc_vp(double t, Band_Data phi, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
         {
             double vp;
 
-            SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, band_energy + t * x);
-            Band_Data V_Prime = -1.0 * pois_solv.Calculate_Laplacian((band_energy + t * x) / Physics_Base.q_e) - tmp_dens.Spin_Summed_Data;
+            SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, Physics_Base.q_e * (phi + t * x));
+            Band_Data V_Prime = -1.0 * (phi.Laplacian + t * x.Laplacian) - tmp_dens.Spin_Summed_Data;
 
             vp = 0.0;
             for (int i = 0; i < x.Length; i++)

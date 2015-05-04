@@ -104,10 +104,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw_newton.Close();
         }
 
-        protected override Band_Data Parse_Potential(string[] data)
+        protected override Band_Data Parse_Potential(string location, string[] data)
         {
             string[] new_data = Trim_Potential_File(data);
-            return Band_Data.Parse_Band_Data(new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+            return Band_Data.Parse_Band_Data(location, new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
         }
 
         protected override void Save_Data(Band_Data density, string input_file_name)

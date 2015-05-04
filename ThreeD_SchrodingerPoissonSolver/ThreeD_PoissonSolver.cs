@@ -49,10 +49,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             z_scaling = (exp.Nx_Pot * exp.Dx_Pot) / (exp.Nz_Pot * exp.Dz_Pot);
         }
 
-        protected override Band_Data Parse_Potential(string[] data)
+        protected override Band_Data Parse_Potential(string location, string[] data)
         {
             string[] new_data = Trim_Potential_File(data);
-            return Band_Data.Parse_Band_Data(new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+            return Band_Data.Parse_Band_Data(location, new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
         }
 
         protected override void Save_Data(Band_Data density, string input_file_name)
@@ -450,7 +450,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 string[] data = Trim_Potential_File(lines);
 
                 // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-                return Physics_Base.q_e * Parse_Potential(data);
+                return Physics_Base.q_e * Parse_Potential("y.dat", data);
             }
         }
     }

@@ -50,7 +50,7 @@ namespace Solver_Bases
             return data;
         }
 
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
+        protected override Band_Data Get_Pot_On_Regular_Grid(Band_Data density)
         {
             throw new NotImplementedException();
         }

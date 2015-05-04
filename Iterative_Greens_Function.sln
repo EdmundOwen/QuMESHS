@@ -255,7 +255,6 @@ Global
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release|Mixed Platforms.ActiveCfg = Release|x86
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release|Mixed Platforms.Build.0 = Release|x86
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release|x64.ActiveCfg = Release|x64
-		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release|x64.Build.0 = Release|x64
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release13|Any CPU.ActiveCfg = Release|x86
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release13|Mixed Platforms.ActiveCfg = Release|x86
 		{E3499505-85C9-46F8-B419-E9841CDD3399}.Release13|Mixed Platforms.Build.0 = Release|x86

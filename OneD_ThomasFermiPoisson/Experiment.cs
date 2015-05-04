@@ -135,7 +135,8 @@ namespace OneD_ThomasFermiPoisson
             // calculate initial potential with the given charge distribution
             Console.WriteLine("Calculating initial potential grid");
             pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
-            chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
+
+            chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data);
             Console.WriteLine("Initial grid complete");
             dens_solv.Set_DFT_Potential(carrier_density);
             dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
@@ -156,12 +157,12 @@ namespace OneD_ThomasFermiPoisson
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 // Calculate Laplacian operating on the given band energy, d(eps * d(phi))
-                Band_Data g_phi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data - dopent_density.Spin_Summed_Data;
+                Band_Data g_phi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_density.Spin_Summed_Data - dopent_density.Spin_Summed_Data;
                 g_phi[0] = 0.0; g_phi[g_phi.Length - 1] = 0.0;
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, g_phi);
 
                 // Calculate optimal damping parameter, t
-                t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
+                t = t_damp * Calculate_optimal_t(t / t_damp, (chem_pot / Physics_Base.q_e), x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
 
                 // Check convergence
                 Band_Data dens_spin_summed = carrier_density.Spin_Summed_Data + dopent_density.Spin_Summed_Data;
@@ -178,18 +179,18 @@ namespace OneD_ThomasFermiPoisson
                 for (int j = 0; j < nz_pot; j++)
                     diff[j] = Math.Abs(g_phi.vec[j]);
                 double convergence = diff.Sum();
-                if (diff.Max() < tol)
+                if (x.InfinityNorm() < tol)
                     converged = true;
 
                 // update band energy phi_new = phi_old + t * x
                Console.WriteLine("Iter = " + count.ToString() + "\tDens conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString());
-                chem_pot = chem_pot + t * x;
+               chem_pot = chem_pot + t * Physics_Base.q_e * x;
                 count++;
 
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_count)
                 {
-                    Console.WriteLine("Maximum potential change at end of iteration was " + Math.Max(t * x.Max(), (-t * x).Max()).ToString());
+                    Console.WriteLine("Maximum potential change at end of iteration was " + (t * x.InfinityNorm()).ToString());
                     break;
                 }
             }
