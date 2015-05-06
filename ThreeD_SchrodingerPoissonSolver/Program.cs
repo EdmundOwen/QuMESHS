@@ -34,6 +34,9 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.ReadKey();
             }
 
+            // temporarily, just set the output suffix to something boring
+            inputs.Add("output_suffix", ".dat");
+
             // initialise the band structure experiment
             Experiment exp = new Experiment();
             OneD_ThomasFermiPoisson.Experiment exp_init = new OneD_ThomasFermiPoisson.Experiment();
@@ -43,6 +46,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("_1d")).ToDictionary(dict => dict.Key.Remove(dict.Key.Length - 3), dict => dict.Value);
             inputs_init.Add("BandStructure_File", inputs["BandStructure_File"]);
             inputs_init.Add("T", inputs["T"]);
+            inputs_init.Add("output_suffix", "_1d.dat");
 
             exp_init.Initialise(inputs_init);
             exp_init.Run();

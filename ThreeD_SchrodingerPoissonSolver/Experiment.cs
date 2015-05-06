@@ -45,6 +45,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             else
                 throw new NotImplementedException("Error - Must use either FlexPDE or deal.II for 2D potential solver!");
 
+            device_dimensions.Add("interface_depth", Layers[1].Zmax);
             pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
 
             // and load the output suffix for identification of output files
@@ -89,15 +90,19 @@ namespace ThreeD_SchrodingerPoissonSolver
             {
                 // calculate the bare potential
                 Console.WriteLine("Calculating bare potential");
-                chem_pot = pois_solv.Get_Chemical_Potential(0.0 * carrier_density.Spin_Summed_Data);
+                chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(0.0 * carrier_density.Spin_Summed_Data);
                 Console.WriteLine("Saving bare potential");
                 (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("bare_pot.dat");
                 Console.WriteLine("Bare potential saved");
+
+                // if the initial carrier density was not zero, recalculate the chemical potential
+                if (carrier_density.Spin_Summed_Data.Max() != 0.0 || carrier_density.Spin_Summed_Data.Min() != 0.0)
+                    chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_density.Spin_Summed_Data);
             }
 
-          //  ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
+            ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
           //  ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
-            TwoplusOneD_ThomasFermiSolver dft_solv = new TwoplusOneD_ThomasFermiSolver(this);
+          //  TwoplusOneD_ThomasFermiSolver dft_solv = new TwoplusOneD_ThomasFermiSolver(this);
 
             bool converged = false;
             // start without dft if carrier density is empty
@@ -139,10 +144,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             File.Delete("pot.dat");
             File.Delete("carrier_density.dat");
             File.Delete("charge_density.dat");
-            File.Delete("dens_1D.dat");
-            File.Delete("dens_1D_down.dat");
-            File.Delete("dens_1D_up.dat");
             File.Delete("potential.dat");
+            File.Delete("lap.dat");
 
             Close(converged, no_runs);
         }
@@ -160,17 +163,12 @@ namespace ThreeD_SchrodingerPoissonSolver
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim, int max_count)
         {
-            // calculate initial potential with the given charge distribution
-            if (initialise_with_1D_data || hot_start)
-            {
-                Console.WriteLine("Calculating initial potential grid");
-                //  pois_solv.Set_Boundary_Conditions(top_V, split_V, top_length, split_width, split_length, bottom_V, surface_charge);
-                chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
-                Console.WriteLine("Initial grid complete");
-            }
             dens_solv.Set_DFT_Potential(carrier_density);
-            dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
-            dens_solv.Set_DFT_Potential(carrier_density); 
+            if (!no_dft)
+            {
+                dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
+                dens_solv.Set_DFT_Potential(carrier_density);
+            }
 
             int count = 0;
             bool converged = false;
@@ -194,7 +192,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Set_Edges(rho_prime);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                Band_Data gphi = -1.0 * pois_solv.Calculate_Laplacian(chem_pot / Physics_Base.q_e) - carrier_density.Spin_Summed_Data;
+                Band_Data gphi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_density.Spin_Summed_Data;
                 Set_Edges(gphi);
                 Band_Data x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_density, dens_solv.DFT_diff(carrier_density));
                // chem_pot = pois_solv.Chemical_Potential;
@@ -203,7 +201,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 if (t == 0.0)
                     t = t_min;
 
-                t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
+                t = t_damp * Calculate_optimal_t(t / t_damp, chem_pot / Physics_Base.q_e, x, carrier_density, dopent_density, pois_solv, dens_solv, t_min);
                 if (t < 0.0)
                 {
                     Console.WriteLine("Iterator has stalled, setting t = 0");
@@ -240,13 +238,13 @@ namespace ThreeD_SchrodingerPoissonSolver
                     max_vxc_diff = current_vxc_diff;
 
                     // solution is converged if the density accuracy is better than half the minimum possible value for changing the dft potential
-                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && t * x.InfinityNorm() < pot_diff_lim)
+                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && x.InfinityNorm() < pot_diff_lim && t != t_min)
                         converged = true;
                 }
 
                 // update t for Poisson solver
                 pois_solv.T = t;
-                chem_pot = chem_pot + t * x;
+                chem_pot = chem_pot + t * Physics_Base.q_e * x;
 
                 stpwch.Stop();
                 Console.WriteLine("Iter = " + count.ToString() + "\tDens Conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
@@ -337,19 +335,21 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         protected override void Initialise_from_Hot_Start(Dictionary<string, object> input_dict)
         {
+            string spin_up_location = (string)input_dict["spin_up_file"];
+            string spin_down_location = (string)input_dict["spin_down_file"];
 
             // load (spin-resolved) density data
             string[] spin_up_data, spin_down_data;
             try
             {
-                spin_up_data = File.ReadAllLines((string)input_dict["spin_up_file"]);
-                spin_down_data = File.ReadAllLines((string)input_dict["spin_down_file"]);
+                spin_up_data = File.ReadAllLines(spin_up_location);
+                spin_down_data = File.ReadAllLines(spin_down_location);
             }
             catch (KeyNotFoundException key_e)
             { throw new Exception("Error - Are the file names for the hot start data included in the input file?\n" + key_e.Message); }
 
-            this.carrier_density.Spin_Up = Band_Data.Parse_Band_Data(spin_up_data, Nx_Dens, Ny_Dens, Nz_Dens);
-            this.carrier_density.Spin_Down = Band_Data.Parse_Band_Data(spin_down_data, Nx_Dens, Ny_Dens, Nz_Dens);
+            this.carrier_density.Spin_Up = Band_Data.Parse_Band_Data(spin_up_location, spin_up_data, Nx_Dens, Ny_Dens, Nz_Dens);
+            this.carrier_density.Spin_Down = Band_Data.Parse_Band_Data(spin_down_location, spin_down_data, Nx_Dens, Ny_Dens, Nz_Dens);
 
             // and surface charge density
             try { boundary_conditions.Add("surface", double.Parse(File.ReadAllLines((string)input_dict["surface_charge_file"])[0])); }

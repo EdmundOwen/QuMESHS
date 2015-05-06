@@ -86,6 +86,7 @@ namespace TwoD_ThomasFermiPoisson
                 inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("_1d")).ToDictionary(dict => dict.Key.Remove(dict.Key.Length - 3), dict => dict.Value);
                 inputs_init.Add("BandStructure_File", inputs["BandStructure_File"]);
                 inputs_init.Add("T", inputs["T"]);
+                inputs_init.Add("output_suffix", "_1d.dat");
 
             //    Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs_init, "Input_Parameters_1D.txt");
                 exp_init.Initialise(inputs_init);

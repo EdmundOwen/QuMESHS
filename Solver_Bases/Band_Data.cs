@@ -206,6 +206,14 @@ namespace Solver_Bases
             return (1.0 / scalar) * data;
         }
 
+        /// <summary>
+        /// Initiates a laplacian for this Band_Data class of the correct size
+        /// </summary>
+        public void Initiate_Laplacian()
+        {
+            this.laplacian_band_data = 0.0 * this;
+        }
+
         public void Save_1D_Data(string filename, double dz, double zmin)
         {
             this.value_location = filename;

@@ -107,10 +107,16 @@ namespace TwoD_ThomasFermiPoisson
             string[] new_data = Trim_Potential_File(data);
             Band_Data result = Band_Data.Parse_Band_Data(location, new_data, exp.Ny_Dens, exp.Nz_Dens);
 
-            // also parse the laplacian data from file
-            string[] lines = File.ReadAllLines(laplacian_file);
-            string[] lap_data = Trim_Potential_File(lines);
-            result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Ny_Dens, exp.Nz_Dens);
+            if (File.Exists(laplacian_file))
+            {
+                // also parse the laplacian data from file
+                string[] lines = File.ReadAllLines(laplacian_file);
+                string[] lap_data = Trim_Potential_File(lines);
+                result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Ny_Dens, exp.Nz_Dens);
+            }
+            else
+                // if the file doesn't exist, initiate an empty laplacian
+                result.Initiate_Laplacian();
 
             return result;
         }

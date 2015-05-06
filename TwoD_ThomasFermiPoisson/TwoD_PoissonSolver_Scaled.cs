@@ -25,7 +25,6 @@ namespace TwoD_ThomasFermiPoisson
         string gphi_filename = "gphi.dat";
 
         string pot_result_filename = "y.dat";
-
         string laplacian_file = "lap.dat";
 
         double top_bc, split_bc1, split_bc2, bottom_bc;
@@ -51,10 +50,16 @@ namespace TwoD_ThomasFermiPoisson
             string[] new_data = Trim_Potential_File(data);
             Band_Data result = Band_Data.Parse_Band_Data(location, new_data, exp.Ny_Dens, exp.Nz_Dens);
 
-            // also parse the laplacian data from file
-            string[] lines = File.ReadAllLines(laplacian_file);
-            string[] lap_data = Trim_Potential_File(lines);
-            result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Ny_Dens, exp.Nz_Dens);
+            if (File.Exists(laplacian_file))
+            {
+                // also parse the laplacian data from file
+                string[] lines = File.ReadAllLines(laplacian_file);
+                string[] lap_data = Trim_Potential_File(lines);
+                result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Ny_Dens, exp.Nz_Dens);
+            }
+            else
+                // if the file doesn't exist, initiate an empty laplacian
+                result.Initiate_Laplacian();
 
             return result;
         }
@@ -184,7 +189,6 @@ namespace TwoD_ThomasFermiPoisson
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + initcalc_result_filename + "\"");
-            sw.WriteLine("\tTABLE(dx(eps * dx(u)) + z_scaling * dy(eps * z_scaling * dy(u))) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(0.0 * u) FILE = \'" + new_pot_filename + "\' ! dummy file for smoother function");
             sw.WriteLine();
@@ -407,7 +411,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tTRANSFER(phi_old + t * x_old) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + new_pot_filename + "\'");
             sw.WriteLine("\tTABLE(phi_old + t * x_old) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + pot_result_filename + "\"");
-            sw.WriteLine("\tTABLE(-rho_prime * u + " + g_phi + ") ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
+            sw.WriteLine("\tTABLE(" + g_phi + " - rho_prime * u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + newton_result_filename + "\"");
             sw.WriteLine();
 

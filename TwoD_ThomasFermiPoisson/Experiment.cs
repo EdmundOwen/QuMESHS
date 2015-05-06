@@ -91,7 +91,7 @@ namespace TwoD_ThomasFermiPoisson
                 Console.WriteLine("Bare potential saved");
 
                 // if the initial carrier density was not zero, recalculate the chemical potential
-                if (carrier_density.Spin_Summed_Data.Max() != 0.0 && carrier_density.Spin_Summed_Data.Min() != 0.0)
+                if (carrier_density.Spin_Summed_Data.Max() != 0.0 || carrier_density.Spin_Summed_Data.Min() != 0.0)
                     chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_density.Spin_Summed_Data);
             }
 
@@ -144,9 +144,7 @@ namespace TwoD_ThomasFermiPoisson
             File.Delete("pot.dat");
             File.Delete("charge_density.dat");
             File.Delete("potential.dat");
-            File.Delete("dens");
-            File.Delete("dens_up");
-            File.Delete("dens_down");
+            File.Delete("lap.dat");
 
             Close(converged, no_runs);
         }

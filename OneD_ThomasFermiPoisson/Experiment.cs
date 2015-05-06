@@ -20,6 +20,8 @@ namespace OneD_ThomasFermiPoisson
         double t_damp = 1.0;
         OneD_PoissonSolver pois_solv;
 
+        bool illuminated = false;
+
         public new void Initialise(Dictionary<string, object> input_dict)
         {
             // simulation domain inputs
@@ -28,6 +30,7 @@ namespace OneD_ThomasFermiPoisson
 
             // physics parameters are done by the base method
             base.Initialise(input_dict);
+            Get_From_Dictionary<bool>(input_dict, "illuminated", ref illuminated, true);
 
             Initialise_DataClasses(input_dict);
 
@@ -79,7 +82,7 @@ namespace OneD_ThomasFermiPoisson
         {
             // get temperatures to run the experiment at
             double[] run_temps = Freeze_Out_Temperatures();
-            
+
             // run experiment using Thomas-Fermi solver
             for (int i = 0; i < run_temps.Length; i++)
             {
@@ -91,6 +94,14 @@ namespace OneD_ThomasFermiPoisson
 
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature) && !fix_bottom_V)
                     boundary_conditions["bottom_V"] = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
+
+                if (illuminated && i == run_temps.Length - 1)
+                    for (int j = 0; j < dopent_density.Spin_Summed_Data.Length - 1; j++)
+                    {
+                        double pos = Zmin_Pot + j * Dz_Pot;
+                        dopent_density.Spin_Up[j] = 0.5 * Physics_Base.q_e * (Geom_Tool.GetLayer(layers, pos).Donor_Conc - Geom_Tool.GetLayer(layers, pos).Acceptor_Conc);
+                        dopent_density.Spin_Down[j] = 0.5 * Physics_Base.q_e * (Geom_Tool.GetLayer(layers, pos).Donor_Conc - Geom_Tool.GetLayer(layers, pos).Acceptor_Conc);
+                    }
 
                 Run_Iteration_Routine(dens_solv, tol);
 
@@ -109,9 +120,6 @@ namespace OneD_ThomasFermiPoisson
                 Run_Iteration_Routine(dft_solv, tol);
 
                 pois_solv.Reset();
-
-                // initialise output solvers
-                OneD_ThomasFermiSolver final_dens_solv = new OneD_ThomasFermiSolver(this, Dz_Pot, Zmin_Pot, Nz_Pot);
 
                 (Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot).Save_Data("potential" + output_suffix);
             }

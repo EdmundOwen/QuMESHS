@@ -12,6 +12,7 @@ namespace ThreeD_SchrodingerPoissonSolver
     class ThreeD_dealII_Solver : dealII_Base
     {
         Experiment exp;
+        string laplacian_file = "lap.dat";
 
         public ThreeD_dealII_Solver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
             : base(using_external_code, input)
@@ -107,51 +108,20 @@ namespace ThreeD_SchrodingerPoissonSolver
         protected override Band_Data Parse_Potential(string location, string[] data)
         {
             string[] new_data = Trim_Potential_File(data);
-            return Band_Data.Parse_Band_Data(location, new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+            Band_Data result = Band_Data.Parse_Band_Data(location, new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+
+            if (File.Exists(laplacian_file))
+            {
+                // also parse the laplacian data from file
+                string[] lines = File.ReadAllLines(laplacian_file);
+                string[] lap_data = Trim_Potential_File(lines);
+                result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+            }
+            else
+                result.Initiate_Laplacian();
+
+            return result;
         }
 
-        protected override void Save_Data(Band_Data density, string input_file_name)
-        {
-            density.Save_Data(input_file_name);
-        }
-
-        /// <summary>
-        /// calculates the Laplacian in the plane of the 2DEG.  
-        /// assumes that the charge density solves the Poisson equation in the growth direction
-        /// NOTE! this is not scaled as this is not (or at least should not) be used inside ThreeD_PoissonSolver
-        /// </summary>
-        public override Band_Data Calculate_Laplacian(Band_Data input_data)
-        {
-            DoubleMatrix[] result = new DoubleMatrix[exp.Nz_Dens];
-            for (int k = 0; k < exp.Nz_Dens; k++)
-                result[k] = new DoubleMatrix(exp.Nx_Dens, exp.Ny_Dens);
-            DoubleMatrix[] data = input_data.vol;
-
-            for (int k = 1; k < exp.Nz_Dens - 1; k++)
-                for (int i = 1; i < exp.Nx_Dens - 1; i++)
-                    for (int j = 1; j < exp.Ny_Dens - 1; j++)
-                    {
-                        double pos_x = i * exp.Dx_Dens + exp.Xmin_Dens;
-                        double pos_y = j * exp.Dy_Dens + exp.Ymin_Dens;
-                        double pos_z = k * exp.Dz_Dens + exp.Zmin_Dens;
-
-                        // the factors multiplying the Laplacian in the longitudinal direction
-                        double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_x + 0.5 * exp.Dx_Dens, pos_y, pos_z).Permitivity / (exp.Dx_Dens * exp.Dx_Dens);
-                        double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_x - 0.5 * exp.Dx_Dens, pos_y, pos_z).Permitivity / (exp.Dx_Dens * exp.Dx_Dens);
-                        result[k][i, j] = (factor_minus * data[k][i - 1, j] + factor_plus * data[k][i + 1, j] - (factor_plus + factor_minus) * data[k][i, j]);
-
-                        // and in the transverse direction
-                        factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y + 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                        factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y - 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                        result[k][i, j] += (factor_minus * data[k][i, j - 1] + factor_plus * data[k][i, j + 1] - (factor_plus + factor_minus) * data[k][i, j]);
-
-                        // and in the growth direction
-                        factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y, pos_z + 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                        factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y, pos_z - 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                        result[k][i, j] += (factor_minus * data[k - 1][i, j] + factor_plus * data[k + 1][i, j] - (factor_plus + factor_minus) * data[k][i, j]);
-                    }
-
-            return new Band_Data(result);
-        }
     }
 }

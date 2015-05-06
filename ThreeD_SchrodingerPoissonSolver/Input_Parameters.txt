@@ -76,7 +76,7 @@
 % nz_dens = 20
 #
 #
-% initialise_with_1d_data = true
+% initialise_with_1D_data = true
 
 ############## Simulation domain details for dopents ##############################
 #
@@ -94,6 +94,9 @@
 #
 #
 ############## DFT density solver detials for dopents #############################
+#
+## Whether to calculate Schroedinger's equation at the interface
+% TF_only_1d = true
 #
 ## Whether to use dft at the final temperature or not
 % dft_1d = true
