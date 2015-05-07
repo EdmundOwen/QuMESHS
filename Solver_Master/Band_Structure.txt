@@ -1,0 +1,49 @@
+#       # test comment
+#       #surface schottky=0.9 v1
+#       #
+#       ## High density shallow HEMT (eg W0626)
+#       #
+#       mat=air t=940
+#       mat=air t=10 {mat=metal,geom=strip,dx=0.0,dy=0.0,width=400.0,theta=0.0} composite=true no_components=2
+#       #mat=PMMA t=150
+#       mat=PMMA t=140
+#       mat=PMMA t=10 {mat=metal,geom=half_strip,dx=0.0,dy=-400.0,width=400.0,theta=0.0} {mat=metal,geom=half_strip,dx=0.0,dy=400.0,width=400.0,theta=180.0} composite=true no_components=3
+#       surface=true
+#       #mat=GaAs t=10
+#       #mat=AlGaAs t=40 x=.33 Nd=0.3e18
+#       #mat=AlGaAs t=40 x=.33
+#       #mat=GaAs t=410
+#       #
+#       ## Low density deep HEMT (eg W0616)
+#       #
+#       mat=GaAs t=10
+#       mat=AlGaAs t=200 x=.33 Nd=4.3e16
+#       mat=AlGaAs t=75 x=.33
+#       mat=GaAs t=1615
+#       #
+#       ## Masato's wafer
+#       #
+#       #GaAs t=24 Na=1e14
+#       #AlGaAs t=36 x=.33 Nd=0.63e18
+#       #AlGaAs t=10 x=.33 
+#       #GaAs t=50 
+#       #
+#       mat=substrate 
+#       #Nd=1e14
+
+
+## Double well structure to show negative compressibility
+#
+surface=true
+mat=GaAs t=10
+mat=AlGaAs t=40 x=.33 Nd=0.65e18
+mat=AlGaAs t=20 x=.33
+mat=GaAs t=20
+mat=AlGaAs t=20 x=.33
+mat=GaAs t=20
+mat=AlGaAs t=20 x=.33
+mat=AlGaAs t=40 x=.33 Nd=0.07e18
+mat=AlGaAs t=1710 x=.33
+#
+#
+mat=substrate

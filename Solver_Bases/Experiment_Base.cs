@@ -42,6 +42,7 @@ namespace Solver_Bases
         protected double temperature;
 
         protected int no_runs = 1000;       // maximum number of runs before giving up and just outputting the data with a "not_converged" file flag
+        protected bool converged = false;
 
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
         protected bool TF_only = false;      // only run Thomas-Fermi semi-classical approximation... no quantum mechanics
@@ -52,7 +53,7 @@ namespace Solver_Bases
         // suffix for data output to identify between different runs... initially empty
         protected string output_suffix = "";
 
-        public void Initialise(Dictionary<string, object> input_dict)
+        public virtual void Initialise(Dictionary<string, object> input_dict)
         {
             // solver inputs
             Get_From_Dictionary<double>(input_dict, "tolerance", ref tol);
@@ -231,9 +232,9 @@ namespace Solver_Bases
             }
 
             // save final density out
-            carrier_density.Spin_Summed_Data.Save_Data("dens" + output_suffix);
-            carrier_density.Spin_Up.Save_Data("dens_up" + output_suffix);
-            carrier_density.Spin_Down.Save_Data("dens_down" + output_suffix);
+            (carrier_density.Spin_Summed_Data / (-1.0 * Physics_Base.q_e)).Save_Data("dens" + output_suffix);
+            (carrier_density.Spin_Up / (-1.0 * Physics_Base.q_e)).Save_Data("dens_up" + output_suffix);
+            (carrier_density.Spin_Down / (-1.0 * Physics_Base.q_e)).Save_Data("dens_down" + output_suffix);
             
             // delete the restart flag files and data
             File.Delete("restart.flag");
@@ -276,7 +277,8 @@ namespace Solver_Bases
                     t = div_fact * t;
                     if (t < minval)
                         if (Math.Sign(calc_vp(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv)) == Math.Sign(vpb))
-                            return 1.0 / div_fact;
+                            return t_orig;
+                            //return 1.0 / div_fact;
                         else
                             return Calculate_optimal_t(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv, minval);
                     

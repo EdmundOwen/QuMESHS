@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -20,7 +20,8 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
+    <WarningLevel>4</WarningLevel>
+    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -29,17 +30,19 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
+    <WarningLevel>4</WarningLevel>
+    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <PlatformTarget>x64</PlatformTarget>
-    <OutputPath>bin\x64\Debug\</OutputPath>    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <PlatformTarget>x64</PlatformTarget>
-    <OutputPath>bin\x64\Release\</OutputPath>    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <NMathLibraryPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</NMathLibraryPath>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_Linux|x64'">
     <OutputPath>bin\x64\Release_Linux\</OutputPath>
     <PlatformTarget>x64</PlatformTarget>
@@ -81,6 +84,23 @@
       <Project>{e8f5b43e-fec4-40b5-b1f2-c91a7249ec43}</Project>
       <Name>TwoD_ThomasFermiPoisson</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Band_Structure.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Input_Parameters_3D.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Input_Parameters_2D.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Input_Parameters_1D.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Solver_Config.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

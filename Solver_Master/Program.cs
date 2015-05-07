@@ -17,21 +17,31 @@ namespace Solver_Master
 
             Dictionary<string, object> inputs = new Dictionary<string, object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Solver_Config.txt");
-            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Input_Parameters.txt");
+            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Input_Parameters_1D.txt");
 
             int no_runs = 1;
+            bool batch_run = false;
             if (inputs.ContainsKey("batch_run"))
+                batch_run = (bool)inputs["batch_run"];
+            if (inputs.ContainsKey("no_runs"))
                 no_runs = (int)(double)inputs["no_runs"];
 
-            int dim = (int)(double)inputs["dim"];
-            if (dim != 1)
-                Calculate_1D_Band_Structure(inputs);
+            int first_run = 0;
+            if (args.Length != 0)
+                first_run = int.Parse(args[0]);
 
-            for (int i = 0; i < no_runs; i++)
+            if (!inputs.ContainsKey("dim"))
+                throw new KeyNotFoundException("Error - you must define the dimensionality of the system you want to solve!");
+
+            int dim = (int)(double)inputs["dim"];
+            Calculate_1D_Band_Structure(inputs);
+
+            for (int batch_no = first_run; batch_no < first_run + no_runs; batch_no++)
             {
+                inputs["batch_no"] = batch_no;
                 IExperiment exp;
-                if (no_runs != 1)
-                    Prepare_Batch_Inputs(inputs, i);
+                if (batch_run)
+                    Prepare_Batch_Inputs(inputs, batch_no);
 
                 switch (dim)
                 {
@@ -53,9 +63,59 @@ namespace Solver_Master
             }
         }
 
-        private static void Prepare_Batch_Inputs(Dictionary<string, object> inputs, int i)
+        static void Prepare_Batch_Inputs(Dictionary<string, object> inputs, int batch_no)
         {
-            throw new NotImplementedException();
+            // remove any input parameters from previous runs
+            inputs.Remove("output_suffix");
+
+            // get the boundary conditions which will be editted in the batch
+            string[] batch_params = ((string)inputs["batch_params"]).TrimStart('{').TrimEnd('}').Split(',');
+            string output_suffix = "";
+
+            int[] nos = new int[batch_params.Length];
+            double[] deltas = new double[batch_params.Length];
+            double[] inits = new double[batch_params.Length];
+            int[] batch_index = new int[batch_params.Length];
+
+            for (int i = 0; i < batch_params.Length; i++)
+            {
+                string tmp_bc = batch_params[i].Trim();
+
+                // check that the batch bc is correctly labelled
+                if (!inputs.ContainsKey(tmp_bc))
+                    throw new KeyNotFoundException("Error - there should be a dummy option for the requested batch variable \"" + tmp_bc + "\"");
+                if (!inputs.ContainsKey("no_" + tmp_bc))
+                    throw new KeyNotFoundException("Error - there is no \"no_" + tmp_bc + "\" option defined in the input file");
+                if (!inputs.ContainsKey("delta_" + tmp_bc))
+                    throw new KeyNotFoundException("Error - there is no \"delta_" + tmp_bc + "\" option defined in the input file");
+                if (!inputs.ContainsKey("init_" + tmp_bc))
+                    throw new KeyNotFoundException("Error - there is no \"init_" + tmp_bc + "\" option defined in the input file");
+
+                // get the batch information
+                nos[i] = (int)(double)inputs["no_" + tmp_bc];
+                deltas[i] = (double)inputs["delta_" + tmp_bc];
+                inits[i] = (double)inputs["init_" + tmp_bc];
+            }
+
+            // process the batch number
+            batch_index[0] = batch_no % nos[0];
+            for (int i = 1; i < batch_params.Length; i++)
+            {
+                int mod_val = nos[0];
+                for (int j = 1; j < i; j++)
+                    mod_val *= nos[j];
+
+                batch_index[i] = (batch_no - batch_no % mod_val) / mod_val;
+            }
+
+            // change the input library according to the requested batch input
+            for (int i = 0; i < batch_params.Length; i++)
+                inputs[batch_params[i].Trim()] = inits[i] + deltas[i] * (double)batch_index[i];
+
+            // and generate the relevant batch suffix
+            for (int i = 0; i < batch_params.Length; i++)
+                output_suffix += "_" + batch_params[i].Trim() + "_" + ((double)inputs[batch_params[i].Trim()]).ToString("F3");
+            inputs.Add("output_suffix", output_suffix + ".dat");
         }
 
         static void Calculate_1D_Band_Structure(Dictionary<string, object> inputs)
@@ -64,15 +124,21 @@ namespace Solver_Master
 
             Console.WriteLine("Performing density dopent calculation");
             Dictionary<string, object> inputs_init = new Dictionary<string, object>();
-            inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("_1d")).ToDictionary(dict => dict.Key.Remove(dict.Key.Length - 3), dict => dict.Value);
-            inputs_init.Add("BandStructure_File", inputs["BandStructure_File"]);
-            inputs_init.Add("T", inputs["T"]);
-            inputs_init.Add("output_suffix", "_1d.dat");
+            if ((int)(double)inputs["dim"] != 1)
+            {
+                inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("_1d")).ToDictionary(dict => dict.Key.Remove(dict.Key.Length - 3), dict => dict.Value);
+                inputs_init.Add("BandStructure_File", inputs["BandStructure_File"]);
+                inputs_init.Add("output_suffix", "_1d.dat");
+                inputs_init.Add("T", inputs["T"]);
+            }
+            else
+                inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("")).ToDictionary(dict => dict.Key, dict => dict.Value);
+
 
             //    Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs_init, "Input_Parameters_1D.txt");
             exp_init.Initialise(inputs_init);
             exp_init.Run();
-            inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
+            inputs.Add("Carrier_Density", exp_init.Carrier_Density);
             inputs.Add("Dopent_Density", exp_init.Dopent_Density);
             inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
             inputs.Add("nz_pot_1d", inputs_init["nz"]);

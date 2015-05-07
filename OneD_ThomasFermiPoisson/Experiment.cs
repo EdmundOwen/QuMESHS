@@ -21,8 +21,9 @@ namespace OneD_ThomasFermiPoisson
         OneD_PoissonSolver pois_solv;
 
         bool illuminated = false;
+        bool dopents_calculated = false;
 
-        public new void Initialise(Dictionary<string, object> input_dict)
+        public override void Initialise(Dictionary<string, object> input_dict)
         {
             // simulation domain inputs
             Get_From_Dictionary<double>(input_dict, "dz", ref dz_dens); dz_pot = dz_dens;
@@ -57,8 +58,16 @@ namespace OneD_ThomasFermiPoisson
             // initialise the dictionary which contains the surface charges at each temperature
             surface_charge = new Dictionary<double, double>();
 
+            // double check whether you want to use FlexPDE
+            if (input_dict.ContainsKey("use_FlexPDE_1d"))
+                using_flexPDE = (bool)input_dict["use_FlexPDE_1d"];
+
             // Initialise potential solver
             pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
+
+            // if the input dictionary already has the dopent distribution, we don't need to recalculate it
+            if (input_dict.ContainsKey("Dopent_Density"))
+                dopents_calculated = true;
             
             Console.WriteLine("Experimental parameters initialised");
         }
@@ -66,16 +75,16 @@ namespace OneD_ThomasFermiPoisson
         protected override void Initialise_DataClasses(Dictionary<string, object> input_dict)
         {
             // try to get and the carrier and dopent density from the dictionary... they probably won't be there and if not... make them
-            if (input_dict.ContainsKey("SpinResolved_Density")) this.carrier_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
+            if (input_dict.ContainsKey("Carrier_Density")) this.carrier_density = (SpinResolved_Data)input_dict["Carrier_Density"];
             else this.carrier_density = new SpinResolved_Data(nz_pot);
-            if (input_dict.ContainsKey("SpinResolved_Dopent_Density")) this.dopent_density = (SpinResolved_Data)input_dict["SpinResolved_Dopent_Density"];
+            if (input_dict.ContainsKey("Dopent_Density")) this.dopent_density = (SpinResolved_Data)input_dict["Dopent_Density"];
             else this.dopent_density = new SpinResolved_Data(nz_pot);
             // and instantiate their derivatives
             carrier_density_deriv = new SpinResolved_Data(nz_pot);
             dopent_density_deriv = new SpinResolved_Data(nz_pot);
 
             // and finally, try to get the chemical potential from the dictionary...
-            if (input_dict.ContainsKey("Chemical_Potential")) this.chem_pot = new Band_Data((DoubleVector)input_dict["Chemical_Potential"]); else chem_pot = new Band_Data(nz_pot, 0.0);
+            if (input_dict.ContainsKey("Chemical_Potential")) this.chem_pot = (Band_Data)input_dict["Chemical_Potential"]; else chem_pot = new Band_Data(nz_pot, 0.0);
         }
 
         public override void Run()
@@ -86,6 +95,14 @@ namespace OneD_ThomasFermiPoisson
             // run experiment using Thomas-Fermi solver
             for (int i = 0; i < run_temps.Length; i++)
             {
+                // reset the converged flag for every temperature
+                converged = false;
+                if (dopents_calculated)
+                {
+                    this.temperature = run_temps[run_temps.Length - 1];
+                    break;
+                }
+
                 double current_temperature = run_temps[i];
                 this.temperature = current_temperature;
 
@@ -103,7 +120,7 @@ namespace OneD_ThomasFermiPoisson
                         dopent_density.Spin_Down[j] = 0.5 * Physics_Base.q_e * (Geom_Tool.GetLayer(layers, pos).Donor_Conc - Geom_Tool.GetLayer(layers, pos).Acceptor_Conc);
                     }
 
-                Run_Iteration_Routine(dens_solv, tol);
+                converged = Run_Iteration_Routine(dens_solv, tol, no_runs);
 
                 // save the surface charge for this temperature
                 surface_charge.Add(current_temperature, pois_solv.Get_Surface_Charge(chem_pot, layers));
@@ -112,12 +129,15 @@ namespace OneD_ThomasFermiPoisson
 
             if (!TF_only)
             {
+                // reset the converged flag for the quantum calculation
+                converged = false;
+
                 // and then run the DFT solver at the base temperature
                 OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
                 dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
                 dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
                 Console.WriteLine("Starting DFT calculation");
-                Run_Iteration_Routine(dft_solv, tol);
+                converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
 
                 pois_solv.Reset();
 
@@ -130,7 +150,7 @@ namespace OneD_ThomasFermiPoisson
             Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens.ToString("e3") + " cm^-2");
 
             // there is no iteration timeout for the 1D solver so if it gets to this point the solution will definitely have converged
-            Close(true, int.MaxValue);
+            Close(converged, no_runs);
         }
 
         bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim)
@@ -198,7 +218,7 @@ namespace OneD_ThomasFermiPoisson
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_count)
                 {
-                    Console.WriteLine("Maximum potential change at end of iteration was " + (t * x.InfinityNorm()).ToString());
+                     Console.WriteLine("Maximum potential change at end of iteration was " + (t * x.InfinityNorm()).ToString());
                     break;
                 }
             }

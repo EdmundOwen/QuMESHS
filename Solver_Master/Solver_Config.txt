@@ -29,7 +29,7 @@
 ############## Generic density solver configuration #########################
 #
 ## Final solution tolerance
-% tolerance = 1e-1
+% tolerance = 1e-5
 #
 ## Fermi energy
 % E_f = 0.0
@@ -45,3 +45,5 @@
 ## Final solution tolerance
 % tolerance_1d = 1e-4
 #
+## Use FlexPDE for 1D calculations?
+% use_FlexPDE_1d = false

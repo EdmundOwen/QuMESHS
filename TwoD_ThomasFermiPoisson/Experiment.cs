@@ -18,7 +18,7 @@ namespace TwoD_ThomasFermiPoisson
 
         IPoisson_Solve pois_solv;
 
-        public void Initialise_Experiment(Dictionary<string, object> input_dict)
+        public override void Initialise(Dictionary<string, object> input_dict)
         {
             Console.WriteLine("Initialising Experiment");
 
@@ -103,7 +103,6 @@ namespace TwoD_ThomasFermiPoisson
            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
      //       TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
 
-            bool converged = false;
             // start without dft if carrier density is empty
             if (no_dft || carrier_density.Spin_Summed_Data.Min() == 0.0)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
@@ -155,12 +154,11 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
-        double pot_diff_lim = 0.1; // minimum value change (in meV) at which the iteration will stop
         double max_vxc_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
         double min_dens_diff = 0.005; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double pot_lim, int max_count)
+        bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double pot_tol, int max_count)
         {
             // calculate initial potential with the given charge distribution
         //    Console.WriteLine("Calculating initial potential grid");
@@ -259,7 +257,7 @@ namespace TwoD_ThomasFermiPoisson
 
                     // solution is converged if the density accuracy is better than half the minimum possible value for changing the dft potential
                     // also, check that the maximum change in the absolute value of the potential is less than a tolerance (default is 0.1meV)
-                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && x.InfinityNorm() < pot_diff_lim  && t != t_min)
+                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && x.InfinityNorm() < pot_tol  && t != t_min)
                         converged = true;
                 }
 
@@ -354,7 +352,7 @@ namespace TwoD_ThomasFermiPoisson
         void Initialise_from_1D(Dictionary<string, object> input_dict)
         {
             // get data from dictionary
-            SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
+            SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["Carrier_Density"];
             SpinResolved_Data tmp_1d_dopdens = (SpinResolved_Data)input_dict["Dopent_Density"];
             Band_Data tmp_pot_1d = (Band_Data)input_dict["Chemical_Potential"];
 

@@ -84,7 +84,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             Console.WriteLine("Saved 1D dopent density");
             
             Console.WriteLine("Starting experiment");
-            exp.Initialise_Experiment(inputs);
+            exp.Initialise(inputs);
             Console.WriteLine("Experiment initialised");
             exp.Run();
             Console.WriteLine("Experiment complete");

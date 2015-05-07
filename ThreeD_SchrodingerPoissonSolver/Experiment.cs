@@ -18,7 +18,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         IPoisson_Solve pois_solv;
 
-        public void Initialise_Experiment(Dictionary<string, object> input_dict)
+        public override void Initialise(Dictionary<string, object> input_dict)
         {
             Console.WriteLine("Initialising Experiment");
 
@@ -156,12 +156,11 @@ namespace ThreeD_SchrodingerPoissonSolver
         }
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
-        double pot_diff_lim = 0.1; // minimum value change (in meV) at which the iteration will stop
         double max_vxc_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
         double min_dens_diff = 0.02; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim, int max_count)
+        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_tol, int max_count)
         {
             dens_solv.Set_DFT_Potential(carrier_density);
             if (!no_dft)
@@ -238,7 +237,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                     max_vxc_diff = current_vxc_diff;
 
                     // solution is converged if the density accuracy is better than half the minimum possible value for changing the dft potential
-                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && x.InfinityNorm() < pot_diff_lim && t != t_min)
+                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && x.InfinityNorm() < pot_tol && t != t_min)
                         converged = true;
                 }
 
