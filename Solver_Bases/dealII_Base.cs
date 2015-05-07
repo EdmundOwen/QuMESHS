@@ -11,7 +11,7 @@ namespace Solver_Bases
         protected string densderiv_filename = "rho_prime.dat";
         protected string gphi_filename = "gphi.dat";
 
-        protected Band_Data chempot;
+        protected Band_Data pot;
 
         protected int nz_donor;
         protected double zmin_donor, zmax_donor;
@@ -56,12 +56,12 @@ namespace Solver_Bases
             density.Save_Data(input_file_name);
         }
 
-        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        protected override Band_Data Get_Pot_From_External(Band_Data density)
         {
             Save_Data(density, dens_filename);
 
-            chempot = Get_Data_From_External(initcalc_location, "-p " + initcalc_parameterfile, initcalc_result_filename);
-            return chempot;
+            pot = Get_Data_From_External(initcalc_location, "-p " + initcalc_parameterfile, initcalc_result_filename);
+            return pot;
         }
 
         public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi)
@@ -70,7 +70,6 @@ namespace Solver_Bases
             Save_Data(gphi, gphi_filename);
 
             Band_Data x = Get_Data_From_External(newton_location, "-p " + newton_parameterfile, newton_result_filename);
-            chempot += base.T * x;
             return x;
         }
 
@@ -85,10 +84,10 @@ namespace Solver_Bases
 
         public override Band_Data Chemical_Potential
         {
-            get { return chempot; }
+            get { return Physics_Base.q_e * pot; }
         }
 
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
+        protected override Band_Data Get_Pot_On_Regular_Grid(Band_Data density)
         {
             throw new NotImplementedException();
         }

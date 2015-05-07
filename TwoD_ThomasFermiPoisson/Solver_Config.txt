@@ -45,7 +45,7 @@
 % alpha = 0.001
 #
 ## Final solution tolerance
-% tolerance = 1e-2
+% tolerance = 1e-1
 #
 #
 ############## Data transfer details ##############################
@@ -60,5 +60,5 @@
 % alpha_1d = 0.01
 #
 ## Final solution tolerance
-% tolerance_1d = 1e-3
+% tolerance_1d = 1e-4
 #

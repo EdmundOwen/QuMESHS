@@ -39,14 +39,14 @@ namespace Solver_Bases
             external_code = using_external_code;
         }
 
-        public Band_Data Get_Chemical_Potential(Band_Data density)
+        public Band_Data Get_Potential(Band_Data density)
         {
             if (external_code)
                 // calculate chemical potential using a potential found by calling external code
-                return Get_ChemPot_From_External(density);
+                return Get_Pot_From_External(density);
             else
                 // calculate chemical potential using a potential calculated on a regular grid (not ideal, or scalable)
-                return Get_ChemPot_On_Regular_Grid(density);
+                return Get_Pot_On_Regular_Grid(density);
         }
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
@@ -68,7 +68,7 @@ namespace Solver_Bases
             string[] data = Trim_Potential_File(lines);
 
             // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * Parse_Potential(data);
+            return Parse_Potential(result_filename, data);
         }
 
         /// <summary>
@@ -217,12 +217,11 @@ namespace Solver_Bases
 
         public abstract void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions);
         protected abstract string[] Trim_Potential_File(string[] lines);
-        protected abstract Band_Data Parse_Potential(string[] data);
-        protected abstract Band_Data Get_ChemPot_From_External(Band_Data density);
-        protected abstract Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density);
+        protected abstract Band_Data Parse_Potential(string location, string[] data);
+        protected abstract Band_Data Get_Pot_From_External(Band_Data density);
+        protected abstract Band_Data Get_Pot_On_Regular_Grid(Band_Data density);
         public abstract Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi);
         protected abstract void Save_Data(Band_Data density, string input_file_name);
-        public abstract Band_Data Calculate_Laplacian(Band_Data input_data);
         public abstract Band_Data Chemical_Potential { get; }
     }
 }

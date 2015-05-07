@@ -23,7 +23,7 @@ namespace Solver_Bases
             this.newton_location = flexpde_location;
 
             this.flexpde_script = (string)input["FlexPDE_file"];
-            this.flexpde_output = flexpde_script.Remove(flexpde_script.Length - 4) + (string)input["output_suffix"] + ".pg6";
+            this.flexpde_output = (flexpde_script.Remove(flexpde_script.Length - 4) + (string)input["output_suffix"]).Remove(flexpde_script.Length - 4) + ".pg6";
 
             // for flexpde, we need the -S parameter included in the input
             flexpde_options = "-S " + flexpde_script;
@@ -50,7 +50,7 @@ namespace Solver_Bases
             return data;
         }
 
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data density)
+        protected override Band_Data Get_Pot_On_Regular_Grid(Band_Data density)
         {
             throw new NotImplementedException();
         }

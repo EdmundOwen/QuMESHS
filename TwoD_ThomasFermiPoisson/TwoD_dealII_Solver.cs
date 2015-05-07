@@ -12,6 +12,7 @@ namespace TwoD_ThomasFermiPoisson
     class TwoD_dealII_Solver : dealII_Base
     {
         Experiment exp;
+        string laplacian_file = "lap.dat";
 
         public TwoD_dealII_Solver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
             : base(using_external_code, input)
@@ -101,39 +102,23 @@ namespace TwoD_ThomasFermiPoisson
             sw_newton.Close();
         }
 
-        protected override Band_Data Parse_Potential(string[] data)
+        protected override Band_Data Parse_Potential(string location, string[] data)
         {
             string[] new_data = Trim_Potential_File(data);
-            return Band_Data.Parse_Band_Data(new_data, exp.Ny_Dens, exp.Nz_Dens);
-        }
+            Band_Data result = Band_Data.Parse_Band_Data(location, new_data, exp.Ny_Dens, exp.Nz_Dens);
 
-        /// <summary>
-        /// calculates the Laplacian
-        /// NOTE! this is not scaled as this is not (or at least should not) be used inside TwoD_PoissonSolver_Scaled
-        /// </summary>
-        public override Band_Data Calculate_Laplacian(Band_Data input_data)
-        {
-            DoubleMatrix result = new DoubleMatrix(exp.Ny_Dens, exp.Nz_Dens);
-            DoubleMatrix data = input_data.mat;
+            if (File.Exists(laplacian_file))
+            {
+                // also parse the laplacian data from file
+                string[] lines = File.ReadAllLines(laplacian_file);
+                string[] lap_data = Trim_Potential_File(lines);
+                result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Ny_Dens, exp.Nz_Dens);
+            }
+            else
+                // if the file doesn't exist, initiate an empty laplacian
+                result.Initiate_Laplacian();
 
-            for (int i = 1; i < exp.Ny_Dens - 1; i++)
-                for (int j = 1; j < exp.Nz_Dens - 1; j++)
-                {
-                    double pos_y = i * exp.Dy_Dens + exp.Ymin_Dens;
-                    double pos_z = j * exp.Dz_Dens + exp.Zmin_Dens;
-
-                    // the factors multiplying the Laplacian in the transverse direction
-                    double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y + 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                    double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y - 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                    result[i, j] = (factor_minus * data[i - 1, j] + factor_plus * data[i + 1, j] - (factor_plus + factor_minus) * data[i, j]);
-
-                    // and in the growth direction
-                    factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z + 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                    factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_y, pos_z - 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                    result[i, j] += (factor_minus * data[i, j - 1] + factor_plus * data[i, j + 1] - (factor_plus + factor_minus) * data[i, j]);
-                }
-
-            return new Band_Data(result);
+            return result;
         }
     }
 }

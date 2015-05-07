@@ -42,6 +42,7 @@ namespace Solver_Bases
         protected double temperature;
 
         protected int no_runs = 1000;       // maximum number of runs before giving up and just outputting the data with a "not_converged" file flag
+        protected bool converged = false;
 
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
         protected bool TF_only = false;      // only run Thomas-Fermi semi-classical approximation... no quantum mechanics
@@ -52,7 +53,7 @@ namespace Solver_Bases
         // suffix for data output to identify between different runs... initially empty
         protected string output_suffix = "";
 
-        public void Initialise(Dictionary<string, object> input_dict)
+        public virtual void Initialise(Dictionary<string, object> input_dict)
         {
             // solver inputs
             Get_From_Dictionary<double>(input_dict, "tolerance", ref tol);
@@ -231,9 +232,9 @@ namespace Solver_Bases
             }
 
             // save final density out
-            carrier_density.Spin_Summed_Data.Save_Data("dens" + output_suffix);
-            carrier_density.Spin_Up.Save_Data("dens_up" + output_suffix);
-            carrier_density.Spin_Down.Save_Data("dens_down" + output_suffix);
+            (carrier_density.Spin_Summed_Data / (-1.0 * Physics_Base.q_e)).Save_Data("dens" + output_suffix);
+            (carrier_density.Spin_Up / (-1.0 * Physics_Base.q_e)).Save_Data("dens_up" + output_suffix);
+            (carrier_density.Spin_Down / (-1.0 * Physics_Base.q_e)).Save_Data("dens_down" + output_suffix);
             
             // delete the restart flag files and data
             File.Delete("restart.flag");
@@ -248,21 +249,21 @@ namespace Solver_Bases
         /// calculates an optimal t based on bisection
         /// </summary>
         /// <param name="t"></param>
-        /// <param name="band_energy"></param>
+        /// <param name="phi"></param>
         /// <param name="x"></param>
         /// <param name="car_dens"></param>
         /// <param name="dop_dens"></param>
         /// <param name="pois_solv"></param>
         /// <param name="dens_solv"></param>
         /// <returns></returns>
-        protected double Calculate_optimal_t(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
+        protected double Calculate_optimal_t(double t, Band_Data phi, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
         {
             double maxval = 1.0;
             SpinResolved_Data car_dens_copy = car_dens.DeepenThisCopy();
             SpinResolved_Data dop_dens_copy = dop_dens.DeepenThisCopy();
 
-            double vpa = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
-            double vpb = calc_vp(div_fact * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+            double vpa = calc_vp(t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+            double vpb = calc_vp(div_fact * t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
             double t_orig = t;
 
             // work out whether this is going in the right direction (assuming vp is monotonic)
@@ -275,32 +276,19 @@ namespace Solver_Bases
                 {
                     t = div_fact * t;
                     if (t < minval)
-                    {
-                        // evaluate vp at zero
-                        double vpc = calc_vp(0.0, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
-                        // if there is a root between minval and zero, return minval
-                        if (Math.Sign(vpb) != Math.Sign(vpc))
-                            return minval;
-                        /*
-                    // otherwise, return a negative value which can be used as a flag or, if not, will still
-                    // generate weird behavious which should push the iterator into an active regime
-                    else
-                        return -1.0 * minval;
-                         */
-                        // new behaviour is to just set the blend parameter to the minimum value so that at least something happens
+                        if (Math.Sign(calc_vp(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv)) == Math.Sign(vpb))
+                            return t_orig;
+                            //return 1.0 / div_fact;
                         else
-                            return minval;
-                    }
-
+                            return Calculate_optimal_t(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv, minval);
+                    
+                    
                     vpa = vpb;
-                    vpb = calc_vp(t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+                    vpb = calc_vp(t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
-                // check that t is not less than the minimum possible value (just in case)
-                if (t < minval)
-                    return minval;
-
-                return 0.5 * ((1.0 + div_fact) / div_fact) * t;
+                //return 0.5 * (1.0 + (1.0 / div_fact)) * t;
+                return t - t * (1.0 - 1.0 / div_fact) * vpb / (vpa - vpb);
             }
             else
             {
@@ -312,19 +300,20 @@ namespace Solver_Bases
                         return maxval;
 
                     vpa = vpb;
-                    vpb = calc_vp((1.0 / div_fact) * t, band_energy, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
+                    vpb = calc_vp(t, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv);
                 }
 
-                return 0.5 * (1.0 + div_fact) * t;
+                //return 0.5 * (1.0 + div_fact) * t;
+                return t - t * (1.0 - div_fact) * vpb / (vpb - vpa);
             }
         }
 
-        protected virtual double calc_vp(double t, Band_Data band_energy, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
+        protected virtual double calc_vp(double t, Band_Data phi, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
         {
             double vp;
 
-            SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, band_energy + t * x);
-            Band_Data V_Prime = -1.0 * pois_solv.Calculate_Laplacian((band_energy + t * x) / Physics_Base.q_e) - tmp_dens.Spin_Summed_Data;
+            SpinResolved_Data tmp_dens = dens_solv.Get_ChargeDensity(layers, car_dens, dop_dens, Physics_Base.q_e * (phi + t * x));
+            Band_Data V_Prime = -1.0 * (phi.Laplacian + t * x.Laplacian) - tmp_dens.Spin_Summed_Data;
 
             vp = 0.0;
             for (int i = 0; i < x.Length; i++)

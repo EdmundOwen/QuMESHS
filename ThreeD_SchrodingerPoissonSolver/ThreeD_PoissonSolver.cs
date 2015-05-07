@@ -24,6 +24,9 @@ namespace ThreeD_SchrodingerPoissonSolver
 
         string gphi_filename = "gphi.dat";
 
+        string pot_result_filename = "y.dat";
+        string laplacian_file = "lap.dat";
+
         double top_bc, split_bc1, split_bc2, bottom_bc;
         List<double> gate_bcs;
         double surface;
@@ -33,7 +36,6 @@ namespace ThreeD_SchrodingerPoissonSolver
         double z_2DEG;
 
         double y_scaling, z_scaling;
-        double t = 0.0;
 
         public ThreeD_PoissonSolver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
             : base(using_external_code, input)
@@ -49,10 +51,22 @@ namespace ThreeD_SchrodingerPoissonSolver
             z_scaling = (exp.Nx_Pot * exp.Dx_Pot) / (exp.Nz_Pot * exp.Dz_Pot);
         }
 
-        protected override Band_Data Parse_Potential(string[] data)
+        protected override Band_Data Parse_Potential(string location, string[] data)
         {
             string[] new_data = Trim_Potential_File(data);
-            return Band_Data.Parse_Band_Data(new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+            Band_Data result = Band_Data.Parse_Band_Data(location, new_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+
+            if (File.Exists(laplacian_file))
+            {
+                // also parse the laplacian data from file
+                string[] lines = File.ReadAllLines(laplacian_file);
+                string[] lap_data = Trim_Potential_File(lines);
+                result.Laplacian = Band_Data.Parse_Band_Data(laplacian_file, lap_data, exp.Nx_Dens, exp.Ny_Dens, exp.Nz_Dens);
+            }
+            else
+                result.Initiate_Laplacian();
+
+            return result;
         }
 
         protected override void Save_Data(Band_Data density, string input_file_name)
@@ -62,45 +76,6 @@ namespace ThreeD_SchrodingerPoissonSolver
                 density.vol[density.vol.Length / 2][(int)(density.vol[density.vol.Length / 2].Rows / 2), (int)(density.vol[density.vol.Length / 2].Cols / 2)] = 1e-8;
 
             density.Save_3D_Data(input_file_name, exp.Dx_Dens, exp.Dy_Dens * y_scaling, exp.Dz_Dens * z_scaling, exp.Xmin_Dens, exp.Ymin_Dens * y_scaling, exp.Zmin_Dens * z_scaling);
-        }
-
-        /// <summary>
-        /// calculates the Laplacian in the plane of the 2DEG.  
-        /// assumes that the charge density solves the Poisson equation in the growth direction
-        /// NOTE! this is not scaled as this is not (or at least should not) be used inside ThreeD_PoissonSolver
-        /// </summary>
-        public override Band_Data Calculate_Laplacian(Band_Data input_data)
-        {
-            DoubleMatrix[] result = new DoubleMatrix[exp.Nz_Dens];
-            for (int k = 0; k < exp.Nz_Dens; k++)
-                result[k] = new DoubleMatrix(exp.Nx_Dens, exp.Ny_Dens);
-            DoubleMatrix[] data = input_data.vol;
-
-            for (int k = 1; k < exp.Nz_Dens - 1; k++)
-                for (int i = 1; i < exp.Nx_Dens - 1; i++)
-                    for (int j = 1; j < exp.Ny_Dens - 1; j++)
-                    {
-                        double pos_x = i * exp.Dx_Dens + exp.Xmin_Dens;
-                        double pos_y = j * exp.Dy_Dens + exp.Ymin_Dens;
-                        double pos_z = k * exp.Dz_Dens + exp.Zmin_Dens;
-
-                        // the factors multiplying the Laplacian in the longitudinal direction
-                        double factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_x + 0.5 * exp.Dx_Dens, pos_y, pos_z).Permitivity / (exp.Dx_Dens * exp.Dx_Dens);
-                        double factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_x - 0.5 * exp.Dx_Dens, pos_y, pos_z).Permitivity / (exp.Dx_Dens * exp.Dx_Dens);
-                        result[k][i, j] = (factor_minus * data[k][i - 1, j] + factor_plus * data[k][i + 1, j] - (factor_plus + factor_minus) * data[k][i, j]);
-
-                        // and in the transverse direction
-                        factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y + 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                        factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y - 0.5 * exp.Dy_Dens, pos_z).Permitivity / (exp.Dy_Dens * exp.Dy_Dens);
-                        result[k][i, j] += (factor_minus * data[k][i, j - 1] + factor_plus * data[k][i, j + 1] - (factor_plus + factor_minus) * data[k][i, j]);
-
-                        // and in the growth direction
-                        factor_plus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y, pos_z + 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                        factor_minus = Geom_Tool.GetLayer(exp.Layers, pos_x, pos_y, pos_z - 0.5 * exp.Dz_Dens).Permitivity / (exp.Dz_Dens * exp.Dz_Dens);
-                        result[k][i, j] += (factor_minus * data[k - 1][i, j] + factor_plus * data[k + 1][i, j] - (factor_plus + factor_minus) * data[k][i, j]);
-                    }
-
-            return new Band_Data(result);
         }
 
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimension, Dictionary<string, double> boundary_conditions)
@@ -137,7 +112,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Create_FlexPDE_File(top_bc, top_length, split_bc1, split_bc2, split_width, split_length, surface, bottom_bc, flexpde_script);
         }
 
-        protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+        protected override Band_Data Get_Pot_From_External(Band_Data density)
         {
             Save_Data(density, dens_filename);
 
@@ -343,7 +318,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             else
                 window_function_string = window_function_string + " - ustep(z - " + zmax.ToString() + "))";
 
-            string minus_g_phi = "-1.0 * gphi * " + window_function_string;
+            string g_phi = "gphi * " + window_function_string;
 
             // write out output file
             sw.WriteLine("TITLE \'Full Split Gate Geometry\'");
@@ -360,8 +335,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tband_gap");
             sw.WriteLine();
             // this is where the density variable
-            sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi)");
-            sw.WriteLine("\tTRANSFER(\'" + new_pot_filename + "\', new_phi)");
+            sw.WriteLine("\tTRANSFERMESH(\'" + pot_filename + "\', phi_old)");
+            sw.WriteLine("\tTRANSFER(\'" + new_pot_filename + "\', x_old)");
             sw.WriteLine();
             // and the tables for carrier and donor densities
             //sw.WriteLine("\tcar_dens = SMOOTH(" + exp.Dy_Dens.ToString() + ") TABLE(\'" + dens_filename + "\')");
@@ -406,35 +381,36 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine();
             sw.WriteLine("EQUATIONS");
             // Poisson's equation
-            sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * y_scaling * dy(eps * y_scaling * dy(u)) - 1.0 * z_scaling * dz(eps * z_scaling * dz(u)) - rho_prime * u = " + minus_g_phi + " \t! Poisson's equation");
+            sw.WriteLine("\tu: -1.0 * dx(eps * dx(u)) - 1.0 * y_scaling * dy(eps * y_scaling * dy(u)) - 1.0 * z_scaling * dz(eps * z_scaling * dz(u)) - rho_prime * u = -1.0 * " + g_phi + " \t! Poisson's equation");
             sw.WriteLine();
 
             // Draw the domain
             Draw_Domain(sw);
 
             sw.WriteLine();
-            sw.WriteLine("\tRESOLVE(" + minus_g_phi + ")");
+            sw.WriteLine("\tRESOLVE( -1.0 * " + g_phi + ")");
             sw.WriteLine();
             sw.WriteLine("!MONITORS");
-            sw.WriteLine("\t!CONTOUR(rho) ON z = well_depth * z_scaling");
+            sw.WriteLine("\t!CONTOUR(car_dens) ON z = well_depth * z_scaling");
             sw.WriteLine("\t!CONTOUR(u) ON z = well_depth * z_scaling");
             sw.WriteLine("\t!CONTOUR(u) ON x = 0");
             sw.WriteLine("\t!CONTOUR(u) ON y = 0");
             sw.WriteLine("PLOTS");
             sw.WriteLine("\tCONTOUR(car_dens) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
-            sw.WriteLine("\tCONTOUR(1424.0 * 0.5 - q_e * (phi + t * new_phi)) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
+            sw.WriteLine("\tCONTOUR(1424.0 * 0.5 - q_e * (phi_old + t * x_old)) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
             sw.WriteLine("\tCONTOUR(u * q_e) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
             sw.WriteLine("\tCONTOUR(car_dens) ON x = 0 ON GRID(y / y_scaling, z / z_scaling)");
             sw.WriteLine("\tCONTOUR(u * q_e) ON x = 0 ON GRID(y / y_scaling, z / z_scaling)");
             sw.WriteLine("\tCONTOUR(u * q_e) ON y = 0 ON GRID(x, z / z_scaling)");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON x = 0 ON GRID(y / y_scaling, z / z_scaling)");
-            sw.WriteLine("\tCONTOUR(" + minus_g_phi + ") ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
+            sw.WriteLine("\tCONTOUR( -1.0 * " + g_phi + ") ON x = 0 ON GRID(y / y_scaling, z / z_scaling)");
+            sw.WriteLine("\tCONTOUR( -1.0 * " + g_phi + ") ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
             sw.WriteLine("\tCONTOUR(rho_prime) ON z = well_depth * z_scaling ON GRID(x, y / y_scaling)");
             sw.WriteLine();
-            sw.WriteLine("\tTRANSFER(phi + t * new_phi) FILE = \'" + pot_filename + "\'");
+            sw.WriteLine("\tTRANSFER(phi_old + t * x_old) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + new_pot_filename + "\'");
             sw.WriteLine();
-            sw.WriteLine("\tTABLE(phi + t * new_phi) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"y.dat\"");
+            sw.WriteLine("\tTABLE(phi_old + t * x_old) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + pot_result_filename + "\"");
+            sw.WriteLine("\tTABLE(" + g_phi + " - rho_prime * u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"x.dat\"");
             sw.WriteLine();
             sw.WriteLine("END");
@@ -446,11 +422,11 @@ namespace ThreeD_SchrodingerPoissonSolver
         {
             get
             {
-                string[] lines = File.ReadAllLines("y.dat");
+                string[] lines = File.ReadAllLines(pot_result_filename);
                 string[] data = Trim_Potential_File(lines);
 
                 // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-                return Physics_Base.q_e * Parse_Potential(data);
+                return Physics_Base.q_e * Parse_Potential(pot_result_filename, data);
             }
         }
     }

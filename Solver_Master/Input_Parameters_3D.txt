@@ -9,6 +9,8 @@
 # Some inputs override others; typically, refer to the example input file to see
 # which inputs are default... one's with #% tend to be overriden
 #
+% dim = 3
+#
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the longitudinal direction for the density calculation

@@ -86,11 +86,12 @@ namespace TwoD_ThomasFermiPoisson
                 inputs_init = inputs.Where(s => s.Key.ToLower().EndsWith("_1d")).ToDictionary(dict => dict.Key.Remove(dict.Key.Length - 3), dict => dict.Value);
                 inputs_init.Add("BandStructure_File", inputs["BandStructure_File"]);
                 inputs_init.Add("T", inputs["T"]);
+                inputs_init.Add("output_suffix", "_1d.dat");
 
             //    Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs_init, "Input_Parameters_1D.txt");
                 exp_init.Initialise(inputs_init);
                 exp_init.Run();
-                inputs.Add("SpinResolved_Density", exp_init.Carrier_Density);
+                inputs.Add("Carrier_Density", exp_init.Carrier_Density);
                 inputs.Add("Dopent_Density", exp_init.Dopent_Density);
                 inputs.Add("Chemical_Potential", exp_init.Chemical_Potential);
                 inputs.Add("nz_pot_1d", inputs_init["nz"]);
@@ -117,7 +118,7 @@ namespace TwoD_ThomasFermiPoisson
             else
             {
                 Console.WriteLine("Starting experiment");
-                exp.Initialise_Experiment(inputs);
+                exp.Initialise(inputs);
                 // check that the dz_pot are the same for both simulations as this is needed for the interpolation of SpinResolved_Density
                 if (!(bool)inputs["hot_start"] && exp_init.Dz_Pot != exp.Dz_Pot)
                     throw new Exception("Error - the dz values for the potentials must be the same for \"Input_Parameters.txt\" and \"Input_Parameters_1D.txt\"");
@@ -152,7 +153,7 @@ namespace TwoD_ThomasFermiPoisson
             {
                 double tg = i * interval;
                 dict["top_V"] = tg;
-                exp.Initialise_Experiment(dict);
+                exp.Initialise(dict);
                 Console.WriteLine("Experiment initialised for tg = " + tg.ToString() + "V");
                 exp.Run();
                 File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg05_tg" + i.ToString("000") + ".dat");
@@ -175,7 +176,7 @@ namespace TwoD_ThomasFermiPoisson
 
                 double tg = i * interval;
                 dict["top_V"] = tg;
-                exp.Initialise_Experiment(dict);
+                exp.Initialise(dict);
                 Console.WriteLine("Experiment initialised for tg = " + tg.ToString() + "V");
                 exp.Run();
                 File.Copy("dens_2D_up_raw.dat", "dens_2D_up_sg05_tg" + i.ToString("000") + ".dat");
@@ -232,7 +233,7 @@ namespace TwoD_ThomasFermiPoisson
                     dict["spin_up_file"] = "dens_2D_up_sg" + split_V.ToString("F3") + "_tg" + ((double)(j - 1) * interval).ToString("F3") + ".dat";
                     dict["spin_down_file"] = "dens_2D_down_sg" + split_V.ToString("F3") + "_tg" + ((double)(j - 1) * interval).ToString("F3") + ".dat";
 
-                    exp.Initialise_Experiment(dict);
+                    exp.Initialise(dict);
                     Console.WriteLine("Experiment initialised for sg = " + ((double)dict["split_V"]).ToString() + "V, tg = " + ((double)dict["top_V"]).ToString() + "V");
                     exp.Run();
 

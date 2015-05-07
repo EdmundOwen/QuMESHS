@@ -17,6 +17,10 @@ namespace Solver_Bases
         public DoubleVector vec;
         public DoubleMatrix mat;
         public DoubleMatrix[] vol;
+        string value_location = "";
+
+        Band_Data laplacian_band_data;
+        
 
         public Band_Data(DoubleVector vec)
         {
@@ -113,62 +117,83 @@ namespace Solver_Bases
 
         public static Band_Data operator +(Band_Data vec1, Band_Data vec2)
         {
+            Band_Data result;
+
+            // return null if both of the inputs are null
+            if (vec1 == null || vec2 == null)
+                return null;
+
             if (vec1.Dimension != vec2.Dimension)
                 throw new RankException();
 
             if (vec1.Dimension == 1)
-                return new Band_Data(vec1.vec + vec2.vec);
+                result = new Band_Data(vec1.vec + vec2.vec);
             else if (vec1.Dimension == 2)
-                return new Band_Data(vec1.mat + vec2.mat);
+                result = new Band_Data(vec1.mat + vec2.mat);
             else if (vec1.Dimension == 3)
             {
-                Band_Data result = new Band_Data(new DoubleMatrix[vec1.vol.Length]);
+                result = new Band_Data(new DoubleMatrix[vec1.vol.Length]);
                 for (int i = 0; i < vec1.vol.Length; i++)
                     result.vol[i] = vec1.vol[i] + vec2.vol[i];
-
-                return result;
             }
             else
                 throw new NotImplementedException();
+
+            result.Laplacian = vec1.Laplacian + vec2.Laplacian;
+            return result;
         }
 
         public static Band_Data operator -(Band_Data vec1, Band_Data vec2)
         {
+            Band_Data result;
+
+            // return null if both of the inputs are null
+            if (vec1 == null || vec2 == null)
+                return null;
+
             if (vec1.Dimension != vec2.Dimension)
                 throw new RankException();
 
             if (vec1.Dimension == 1)
-                return new Band_Data(vec1.vec - vec2.vec);
+                result = new Band_Data(vec1.vec - vec2.vec);
             else if (vec1.Dimension == 2)
-                return new Band_Data(vec1.mat - vec2.mat);
+                result = new Band_Data(vec1.mat - vec2.mat);
             else if (vec1.Dimension == 3)
             {
-                Band_Data result = new Band_Data(new DoubleMatrix[vec1.vol.Length]);
+                result = new Band_Data(new DoubleMatrix[vec1.vol.Length]);
                 for (int i = 0; i < vec1.vol.Length; i++)
                     result.vol[i] = vec1.vol[i] - vec2.vol[i];
-
-                return result;
             }
             else
                 throw new NotImplementedException();
+
+            result.Laplacian = vec1.Laplacian - vec2.Laplacian;
+            return result;
         }
 
         public static Band_Data operator *(double scalar, Band_Data data)
         {
+            Band_Data result;
+
+            // return null if the inputs is null
+            if (data == null)
+                return null;
+
             if (data.Dimension == 1)
-                return new Band_Data(scalar * data.vec);
+                result = new Band_Data(scalar * data.vec);
             else if (data.Dimension == 2)
-                return new Band_Data(scalar * data.mat);
+                result = new Band_Data(scalar * data.mat);
             else if (data.Dimension == 3)
             {
-                Band_Data result = new Band_Data(new DoubleMatrix[data.vol.Length]);
+                result = new Band_Data(new DoubleMatrix[data.vol.Length]);
                 for (int i = 0; i < data.vol.Length; i++)
                     result.vol[i] = scalar * data.vol[i];
-
-                return result;
             }
             else
                 throw new NotImplementedException();
+
+            result.Laplacian = scalar * data.Laplacian;
+            return result;
         }
 
         public static Band_Data operator *(Band_Data data, double scalar)
@@ -181,8 +206,17 @@ namespace Solver_Bases
             return (1.0 / scalar) * data;
         }
 
+        /// <summary>
+        /// Initiates a laplacian for this Band_Data class of the correct size
+        /// </summary>
+        public void Initiate_Laplacian()
+        {
+            this.laplacian_band_data = 0.0 * this;
+        }
+
         public void Save_1D_Data(string filename, double dz, double zmin)
         {
+            this.value_location = filename;
             // check that the dimension of the density is correct
             if (this.Dimension != 1)
                 throw new RankException();
@@ -208,6 +242,7 @@ namespace Solver_Bases
             
         public void Save_2D_Data(string filename, double dy, double dz, double ymin, double zmin)
         {
+            this.value_location = filename;
             // check that the dimension of the density is correct
             if (this.Dimension != 2)
                 throw new RankException();
@@ -249,6 +284,7 @@ namespace Solver_Bases
 
         public void Save_3D_Data(string filename, double dx, double dy, double dz, double xmin, double ymin, double zmin)
         {
+            this.value_location = filename;
             // check that the dimension of the density is correct
             if (this.Dimension != 3)
                 throw new RankException();
@@ -301,6 +337,7 @@ namespace Solver_Bases
         /// <param name="filename"></param>
         public void Save_Data(string filename)
         {
+            this.value_location = filename;
             StreamWriter sw = new StreamWriter(filename);
             if (dim == 1)
                 for (int i = 0; i < Length; i++)
@@ -319,7 +356,7 @@ namespace Solver_Bases
             sw.Close();
         }
 
-        public static Band_Data Parse_Band_Data(string[] input_data, int nz)
+        public static Band_Data Parse_Band_Data(string location, string[] input_data, int nz)
         {
             // and check that there is the right number of data points back
             if (input_data.Length != nz)
@@ -330,10 +367,11 @@ namespace Solver_Bases
             for (int i = 0; i < nz; i++)
                 result.vec[i] = double.Parse(input_data[i]);
 
+            result.value_location = location;
             return result;
         }
 
-        public static Band_Data Parse_Band_Data(string[] input_data, int ny, int nz)
+        public static Band_Data Parse_Band_Data(string location, string[] input_data, int ny, int nz)
         {
             // and check that there is the right number of data points back
             if (input_data.Length != ny * nz)
@@ -347,10 +385,11 @@ namespace Solver_Bases
                     result.mat[i, j] = double.Parse(input_data[j * ny + i]);
             }
 
+            result.value_location = location;
             return result;
         }
 
-        public static Band_Data Parse_Band_Data(string[] input_data, int nx, int ny, int nz)
+        public static Band_Data Parse_Band_Data(string location, string[] input_data, int nx, int ny, int nz)
         {
             // and check that there is the right number of data points back
             if (input_data.Length != nx * ny * nz)
@@ -363,6 +402,7 @@ namespace Solver_Bases
                     for (int j = 0; j < ny; j++)
                         result.vol[k][i, j] = double.Parse(input_data[k * nx * ny + j * nx + i]);
 
+            result.value_location = location;
             return result;
         }
 
@@ -479,6 +519,22 @@ namespace Solver_Bases
                 else
                     throw new NotImplementedException();
             }
+        }
+
+        public string File_Location
+        {
+            get { return value_location; }
+        }
+
+        public Band_Data Laplacian
+        {
+            get 
+            {
+                //if (laplacian_band_data == null)
+                    //throw new TypeInitializationException("laplacian_band_data", new Exception("Error - Band data class for the laplacian has not been calculated"));
+                return laplacian_band_data; 
+            }
+            set { laplacian_band_data = value; }
         }
     }
 }
