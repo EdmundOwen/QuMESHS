@@ -501,7 +501,7 @@ namespace TwoD_ThomasFermiPoisson
                 }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            return Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
+            return Physics_Base.q_e * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
         }
 
         double Interpolate_Fermi_Function_Derivative(DoubleHermitianEigDecomp eig_decomp_old, DoubleHermitianEigDecomp eig_decomp_new, int wavefunction)

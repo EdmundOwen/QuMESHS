@@ -82,7 +82,7 @@ namespace TwoD_ThomasFermiPoisson
                 }
 
             // and multiply the density derivative by e to get the charge density (as increasing mu decreases the charge: dn/dmu*-e )
-            charge_density_deriv = Physics_Base.q_e * charge_density_deriv;
+            charge_density_deriv = Physics_Base.q_e * Physics_Base.q_e * charge_density_deriv;
         }
 
         /// <summary>

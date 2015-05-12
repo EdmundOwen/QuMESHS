@@ -29,13 +29,13 @@
 ############## Poisson solver details #################################
 #
 # Top gate voltage
-% top_V = -0.0
+% top_V = -1.3
 #
 ## Split gate voltage
-% split_V = -1.0
+% split_V = -0.8
 #
 ## Voltage array (for general voltage input)
-#% voltages = {-1.0, -1.0}
+% voltages = {-0.5, -0.5}
 #
 ## Surface charge (by default, this is set by the 1D solver)
 # % surface_charge = -2.677
@@ -47,7 +47,7 @@
 ############## Generic density solver details #########################
 #
 ## Use DFT or not
-% no_dft = true
+% no_dft = false
 #
 ## Maximum number of iterations before giving up
 % max_iterations = 1000
@@ -90,11 +90,13 @@
 ## File containing surface charge density
 % surface_charge_file = surface_charge.dat
 #
+##
+% output_suffix = .dat
 #
 ############## Run details #######################################
 #
 ## whether to make this a batch run or not
-% batch_run = true
+% batch_run = false
 #
 ##
 % batch_params = {top_V, split_V}

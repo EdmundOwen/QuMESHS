@@ -107,7 +107,7 @@ namespace TwoD_ThomasFermiPoisson
             if (no_dft || carrier_density.Spin_Summed_Data.Min() == 0.0)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
             else
-                dft_solv.DFT_Mixing_Parameter = 0.1;
+                dft_solv.DFT_Mixing_Parameter = 0.3;
 
             // run the iteration routine!
             converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, no_runs);
@@ -158,7 +158,7 @@ namespace TwoD_ThomasFermiPoisson
         double min_dens_diff = 0.005; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double pot_tol, int max_count)
+        bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_count)
         {
             // calculate initial potential with the given charge distribution
         //    Console.WriteLine("Calculating initial potential grid");
@@ -168,6 +168,7 @@ namespace TwoD_ThomasFermiPoisson
             dens_solv.Set_DFT_Potential(carrier_density);
             if (!no_dft)
             {
+                dens_solv.DFT_Mixing_Parameter = 0.3;
                 dens_solv.Get_ChargeDensity(layers, ref carrier_density, ref dopent_density, chem_pot);
                 dens_solv.Set_DFT_Potential(carrier_density);
             }
@@ -257,7 +258,7 @@ namespace TwoD_ThomasFermiPoisson
 
                     // solution is converged if the density accuracy is better than half the minimum possible value for changing the dft potential
                     // also, check that the maximum change in the absolute value of the potential is less than a tolerance (default is 0.1meV)
-                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && x.InfinityNorm() < pot_tol  && t != t_min)
+                    if (dens_solv.DFT_diff(carrier_density).InfinityNorm() < tol && Physics_Base.q_e * x.InfinityNorm() < tol)
                         converged = true;
                 }
 
@@ -319,22 +320,10 @@ namespace TwoD_ThomasFermiPoisson
                 //    dens_solv.Print_DFT_diff(carrier_density);
                 //dens_solv.Set_DFT_Potential(carrier_density);
 
-                // finally, write all important data to file
-                StreamWriter sw_cardens = new StreamWriter("carrier_density.tmp");
-                StreamWriter sw_dopdens = new StreamWriter("dopent_density.tmp");
-                StreamWriter sw_chempot = new StreamWriter("chem_pot.tmp");
-                for (int i = 0; i < ny_dens * nz_dens; i++)
-                {
-                    sw_cardens.WriteLine(carrier_density.Spin_Up[i].ToString() + " " + carrier_density.Spin_Down[i].ToString());
-                    sw_dopdens.WriteLine(dopent_density.Spin_Up[i].ToString() + " " + dopent_density.Spin_Down[i].ToString());
-                    sw_chempot.WriteLine(chem_pot[i].ToString());
-                }
-                sw_cardens.Close(); sw_dopdens.Close(); sw_chempot.Close();
-                // and the current value of t
-                StreamWriter sw_t = new StreamWriter("t_val.tmp"); sw_t.WriteLine(t.ToString()); sw_t.Close();
+                base.Checkpoint();
 
                 stpwch.Stop();
-                Console.WriteLine("Iter = " + count.ToString() + "\tDens conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
+                Console.WriteLine("Iter = " + count.ToString() + "\tDens = " + dens_diff.Max().ToString("F4") + "\tPot = " + (Physics_Base.q_e * x.InfinityNorm()).ToString("F6") + "\tt = " + t.ToString("F5") + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
 
                 // reset the potential if the added potential t * x is too small

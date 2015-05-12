@@ -158,7 +158,7 @@ namespace TwoD_ThomasFermiPoisson
                         dens_val_deriv += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS_Deriv(eig_decomp.EigenValue(k), no_kb_T);
                     }
 
-                    result = Physics_Base.q_e * dens_val_deriv;
+                    result = Physics_Base.q_e * Physics_Base.q_e * dens_val_deriv;
                    // if (this.alpha_dft != 0.0)
                    //     result += dens_val_deriv * dens_val_deriv * Physics_Base.Get_XC_Potential_Deriv(dens_val);
 

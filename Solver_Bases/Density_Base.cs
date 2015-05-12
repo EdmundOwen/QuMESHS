@@ -322,7 +322,7 @@ namespace Solver_Bases
         }
         public void Print_DFT_diff(SpinResolved_Data car_dens)
         {
-            Console.WriteLine("Difference in DFT potentials: Max = " + DFT_diff(car_dens).Max().ToString("F") + ", Min = " + DFT_diff(car_dens).Min().ToString("F"));
+            Console.WriteLine("Maximum absolute difference in DFT potentials = " + (Physics_Base.q_e * DFT_diff(car_dens).InfinityNorm()).ToString("F4"));
         }
         public Band_Data DFT_diff(SpinResolved_Data car_dens)
         {

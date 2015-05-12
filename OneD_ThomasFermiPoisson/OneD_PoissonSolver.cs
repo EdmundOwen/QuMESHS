@@ -70,7 +70,7 @@ namespace OneD_ThomasFermiPoisson
         /// ie. returns d(eps * d(input))
         /// NOTE: the input should be a potential so make sure you divide all band energies by q_e
         /// </summary>
-        Band_Data Calculate_Phi_Laplacian(Band_Data input)
+        public Band_Data Calculate_Phi_Laplacian(Band_Data input)
         {
             DoubleTriDiagMatrix lap_mat = Generate_Laplacian(exp.Layers);
             return new Band_Data(MatrixFunctions.Product(lap_mat, input.vec));

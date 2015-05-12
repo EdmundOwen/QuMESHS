@@ -11,9 +11,6 @@
 #
 ############## Poisson solver configuration #################################
 #
-## Potential mixing parameter
-% alpha = 0.3
-#
 ## File name with band structure in
 % BandStructure_File = band_structure.txt
 #
@@ -29,21 +26,12 @@
 ############## Generic density solver configuration #########################
 #
 ## Final solution tolerance
-% tolerance = 1e-5
-#
-## Fermi energy
-% E_f = 0.0
-#
-## Number of k_B T to calculate above the Fermi energy
-% No_kB_T_Above_E_f = 0.0
+% tolerance = 1e-6
 #
 ######## Poisson solver configuration for dopents #################################
 #
-## Potential mixing parameter
-% alpha_1d = 0.01
-#
 ## Final solution tolerance
-% tolerance_1d = 1e-4
+% tolerance_1d = 1e-6
 #
 ## Use FlexPDE for 1D calculations?
 % use_FlexPDE_1d = false

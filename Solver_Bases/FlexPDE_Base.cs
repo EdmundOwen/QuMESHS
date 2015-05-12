@@ -23,7 +23,10 @@ namespace Solver_Bases
             this.newton_location = flexpde_location;
 
             this.flexpde_script = (string)input["FlexPDE_file"];
-            this.flexpde_output = (flexpde_script.Remove(flexpde_script.Length - 4) + (string)input["output_suffix"]).Remove(flexpde_script.Length - 4) + ".pg6";
+            if (((string)input["output_suffix"]).Length == 4)
+                this.flexpde_output = flexpde_script.Remove(flexpde_script.Length - 4) + "_old.pg6";
+            else
+                this.flexpde_output = (flexpde_script.Remove(flexpde_script.Length - 4) + (string)input["output_suffix"]).Remove(flexpde_script.Length - 4) + ".pg6";
 
             // for flexpde, we need the -S parameter included in the input
             flexpde_options = "-S " + flexpde_script;

@@ -18,7 +18,7 @@ namespace Solver_Bases
             // find which layer is the surface (the first layer is the surface by default)
             int surface = -1; int no_layers = data.Count;
             for (int i = 0; i < data.Count; i++)
-                if ((string)data[i]["raw_data"] == "surface=true")
+                if (((string)data[i]["raw_data"]).Trim() == "surface=true")
                 {
                     surface = i;
                     data[i].Add("is_surface", true);

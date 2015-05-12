@@ -26,7 +26,7 @@ namespace OneD_ThomasFermiPoisson
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
         {
             // interpolate the input charge density and chemical potential onto a reduced domain to simplify DFT solve
-            SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+            SpinResolved_Data dft_dens = new SpinResolved_Data(nz);
             Band_Data dft_pot = new Band_Data(new DoubleVector(nz));
             Interpolate_DFT_Grid(ref dft_dens, ref dft_pot, charge_density, chem_pot);
             Get_Potential(ref dft_pot, layers);
@@ -67,8 +67,8 @@ namespace OneD_ThomasFermiPoisson
         public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleVector(carrier_density_deriv.Spin_Up.vec.Length));
-            Band_Data tmp_spindown = new Band_Data(new DoubleVector(carrier_density_deriv.Spin_Up.vec.Length));
+            Band_Data tmp_spinup = new Band_Data(carrier_density_deriv.Spin_Up.vec.Length, 0.0);
+            Band_Data tmp_spindown = new Band_Data(carrier_density_deriv.Spin_Up.vec.Length, 0.0);
 
             for (int i = 0; i < carrier_density_deriv.Spin_Up.vec.Length; i++)
 
@@ -97,7 +97,7 @@ namespace OneD_ThomasFermiPoisson
         public void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
         {
             // interpolate the input charge density and chemical potential onto a reduced domain to simplify DFT solve
-            SpinResolved_Data dft_dens = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+            SpinResolved_Data dft_dens = new SpinResolved_Data(nz);
             Get_ChargeDensity(layers, ref charge_density_deriv, chem_pot);
             Band_Data dft_pot = new Band_Data(new DoubleVector(nz));
             Interpolate_DFT_Grid(ref dft_dens, ref dft_pot, charge_density_deriv, chem_pot);
@@ -134,7 +134,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            dft_dens = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
+            dft_dens = -1.0 * Physics_Base.q_e * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
 
             Insert_DFT_Charge(ref charge_density_deriv, dft_dens);
         }

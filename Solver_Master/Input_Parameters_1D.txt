@@ -46,7 +46,7 @@
 % dim = 1
 #
 ## Temperature
-% T = 1.5
+% T = 1.4
 #
 ## Whether or not to illuminate the sample
 % illuminate = false
@@ -59,7 +59,7 @@
 % batch_params = {top_V}
 #
 ##
-% no_runs = 201
+% no_runs = 101
 #
 % init_top_V = 0.0
 #
@@ -67,5 +67,5 @@
 % delta_top_V = -0.01
 ##
 #
-% no_top_V = 201
+% no_top_V = 101
 #

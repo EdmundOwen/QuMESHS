@@ -150,9 +150,9 @@ namespace ThreeD_SchrodingerPoissonSolver
             Close(converged, no_runs);
         }
 
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_lim)
+        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double tol)
         {
-            return Run_Iteration_Routine(dens_solv, pot_lim, int.MaxValue);
+            return Run_Iteration_Routine(dens_solv, tol, int.MaxValue);
         }
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
@@ -160,7 +160,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         double min_dens_diff = 0.02; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double pot_tol, int max_count)
+        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double tol, int max_count)
         {
             dens_solv.Set_DFT_Potential(carrier_density);
             if (!no_dft)
@@ -237,7 +237,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                     max_vxc_diff = current_vxc_diff;
 
                     // solution is converged if the density accuracy is better than half the minimum possible value for changing the dft potential
-                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff && x.InfinityNorm() < pot_tol && t != t_min)
+                    if (dens_diff.Max() < min_dens_diff / 2.0 && current_vxc_diff < min_vxc_diff &&  Physics_Base.q_e * x.InfinityNorm() < tol && t != t_min)
                         converged = true;
                 }
 
@@ -245,8 +245,10 @@ namespace ThreeD_SchrodingerPoissonSolver
                 pois_solv.T = t;
                 chem_pot = chem_pot + t * Physics_Base.q_e * x;
 
+                base.Checkpoint();
+
                 stpwch.Stop();
-                Console.WriteLine("Iter = " + count.ToString() + "\tDens Conv = " + dens_diff.Max().ToString("F4") + "\tt = " + t.ToString() + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
+                Console.WriteLine("Iter = " + count.ToString() + "\tDens = " + dens_diff.Max().ToString("F4") + "\tPot = " + (Physics_Base.q_e * x.InfinityNorm()).ToString("F6") + "\tt = " + t.ToString("F5") + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
 
             //    File.Copy("split_gate.pg6", "split_gate_" + count.ToString("000") + ".pg6");

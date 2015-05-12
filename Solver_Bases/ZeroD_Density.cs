@@ -26,7 +26,7 @@ namespace Solver_Bases
         /// </summary>
         double chem_pot = double.MaxValue;
 
-        int no_kB_T = 50;
+        double no_kB_T = 50.0;
 
         public ZeroD_Density(double band_gap, double acceptor_conc, double acceptor_energy, double donor_conc, double donor_energy, double temperature)
         {
@@ -108,17 +108,32 @@ namespace Solver_Bases
 
         public double Get_DopentDensityDeriv(double mu)
         {
-            return -2.0 * Physics_Base.q_e * (donor_conc * Physics_Base.Get_Dopent_Fermi_Function_Derivative(donor_energy, mu, temperature)
+            return -2.0 * Physics_Base.q_e * Physics_Base.q_e * (donor_conc * Physics_Base.Get_Dopent_Fermi_Function_Derivative(donor_energy, mu, temperature)
                                                 + acceptor_conc * Physics_Base.Get_Dopent_Fermi_Function_Derivative(-acceptor_energy, -mu, temperature));
         }
 
         public double Get_CarrierDensity(double mu)
         {
             // calculate the densities due to the various components for a given chemical potential
-            double conductance_electrons = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, 0.5 * band_gap, Math.Max(0.5 * band_gap, mu) + no_kB_T * Physics_Base.kB * temperature);
-            double valence_holes = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Integrand), mu, Math.Min(-0.5 * band_gap, mu) - no_kB_T * Physics_Base.kB * temperature, -0.5 * band_gap);
+            double conductance_electrons =  Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, 0.5 * band_gap, mu + no_kB_T * Physics_Base.kB * temperature);
+    //        if (0.5 * band_gap < mu - no_kB_T * Physics_Base.kB * temperature)
+    //        {
+    //            double interval = mu - no_kB_T * Physics_Base.kB * temperature - 0.5 *  band_gap;
+    //            conductance_electrons += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, 0.5 * band_gap, 0.5 * band_gap + interval);
+    //            conductance_electrons += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, 0.5 * band_gap + interval, mu - no_kB_T * Physics_Base.kB * temperature);
+    //        }
+    //       conductance_electrons += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu - 0.5 * no_kB_T * Physics_Base.kB * temperature);
+    //       conductance_electrons += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, mu - 0.5 * no_kB_T * Physics_Base.kB * temperature, mu);
+    //       conductance_electrons += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, mu, mu + 0.5 * no_kB_T * Physics_Base.kB * temperature);
+    //       conductance_electrons += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Integrand), mu, mu + 0.5 * no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
 
-            double density = Physics_Base.q_e * (valence_holes - conductance_electrons);
+
+            double valence_holes = 0.0;
+            valence_holes += Perform_Integral(new Func<double, double>(Get_Valence_Electron_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu);
+            valence_holes += Perform_Integral(new Func<double, double>(Get_Valence_Electron_Integrand), mu, mu, mu + no_kB_T * Physics_Base.kB * temperature);
+            valence_holes += Perform_Integral(new Func<double, double>(Get_Valence_Electron_Integrand), mu, mu + no_kB_T * Physics_Base.kB * temperature, -0.5 * band_gap);
+
+            double density = Physics_Base.q_e *  (valence_holes - conductance_electrons);
 
             //if (density > max_density)
             //    return max_density;
@@ -130,23 +145,33 @@ namespace Solver_Bases
 
         public double Get_CarrierDensityDeriv(double mu)
         {
-            double conductance_electrons_deriv, valence_holes_deriv;
+            double conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, 0.5 * band_gap, mu + no_kB_T * Physics_Base.kB * temperature);// 0.0;
+            double valence_holes_deriv = 0.0;
             // calculate the densities due to the various components for a given chemical potential
             // only integrate from -nokb kb T to + nokb kb T with the if statement for ensuring no integration in the band gap
             // this is due to the derivative of the fermi function being strongly peaked at the chemical potential
-            if (mu - no_kB_T * Physics_Base.kB * temperature < 0.5 * band_gap)
-                conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, 0.5 * band_gap, Math.Max(0.5 * band_gap, mu) + no_kB_T * Physics_Base.kB * temperature);
-            else
-                conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
+        //    conductance_electrons_deriv += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu - 0.5 * no_kB_T * Physics_Base.kB * temperature);
+        //    conductance_electrons_deriv += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, mu - 0.5 * no_kB_T * Physics_Base.kB * temperature, mu);
+        //    conductance_electrons_deriv += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, mu, mu + 0.5 * no_kB_T * Physics_Base.kB * temperature);
+        //    conductance_electrons_deriv += Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, mu + 0.5 * no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
+
+        //    if (mu - no_kB_T * Physics_Base.kB * temperature < 0.5 * band_gap)
+        //        conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, 0.5 * band_gap, Math.Max(0.5 * band_gap, mu) + no_kB_T * Physics_Base.kB * temperature);
+        //    else
+        //        conductance_electrons_deriv = Perform_Integral(new Func<double, double>(Get_Conduction_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
+
+
+            valence_holes_deriv += Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu);
+            valence_holes_deriv += Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, mu, mu + no_kB_T * Physics_Base.kB * temperature);
 
             // and for holes
             // only integrate from -nokb kb T to + nokb kb T with the if statement for ensuring no integration in the band gap
-            if (mu + no_kB_T * Physics_Base.kB * temperature > -0.5 * band_gap)
-                valence_holes_deriv = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, Math.Min(-0.5 * band_gap, mu) - no_kB_T * Physics_Base.kB * temperature, -0.5 * band_gap);
-            else
-                valence_holes_deriv = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
+      //      if (mu + no_kB_T * Physics_Base.kB * temperature > -0.5 * band_gap)
+      //          valence_holes_deriv = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, Math.Min(-0.5 * band_gap, mu) - no_kB_T * Physics_Base.kB * temperature, -0.5 * band_gap);
+      //      else
+      //          valence_holes_deriv = Perform_Integral(new Func<double, double>(Get_Valence_Electron_Derivative_Integrand), mu, mu - no_kB_T * Physics_Base.kB * temperature, mu + no_kB_T * Physics_Base.kB * temperature);
 
-            return Physics_Base.q_e * (valence_holes_deriv - conductance_electrons_deriv);
+            return Physics_Base.q_e * Physics_Base.q_e * (valence_holes_deriv - conductance_electrons_deriv);
         }
 
         public double Get_Equilibrium_Chemical_Potential()
@@ -170,14 +195,42 @@ namespace Solver_Bases
             chem_pot = mu;
 
             // integrates the density for a given energy up to a given number of kB * T above the conduction band edge
-            OneVariableFunction cond_elec_integrand = new OneVariableFunction(function);
-            cond_elec_integrand.Integrator = new GaussKronrodIntegrator();
-            double result = cond_elec_integrand.Integrate(lower_limit, upper_limit);
+            OneVariableFunction integrand = new OneVariableFunction(function);
+            //cond_elec_integrand.Integrator = new RombergIntegrator();
+            GaussKronrodIntegrator tmp = new GaussKronrodIntegrator();
+            tmp.Tolerance = 1e-6;
+//            RombergIntegrator tmp = new RombergIntegrator();
+            double result = tmp.Integrate(integrand, lower_limit, upper_limit);
+            //double result = cond_elec_integrand.Integrate(lower_limit, upper_limit);
+
+            double tmp2 = 0.0;
+            if (!tmp.ToleranceMet && tmp.RelativeErrorEstimate > tmp.Tolerance && result > 1e-1)
+                tmp2 = 0.1;
 
             // reset chem_pot
             chem_pot = double.MaxValue;
 
             return result;
+        }
+
+        double test()
+        {
+            OneVariableFunction integrand = new OneVariableFunction(function);
+            GaussKronrodIntegrator gk = new GaussKronrodIntegrator();
+            double result = gk.Integrate(integrand, 500.0, 1000.0);
+
+            if (!gk.ToleranceMet)
+                throw new Exception();
+
+            return result;
+        }
+
+        double function(double x)
+        {
+            if (x < 712.0)
+                return 0.0;
+
+            return Math.Pow((x - 712.0), 0.5) / (Math.Exp((x - 700.0) / 6.0) + 1.0); 
         }
 
         double Get_Conduction_Electron_Integrand(double energy)
