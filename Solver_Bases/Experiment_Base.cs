@@ -25,15 +25,15 @@ namespace Solver_Bases
 
         // parameters for the density domain
         protected double dx_dens = 1.0, dy_dens = 1.0, dz_dens = 1.0;
-        protected double xmin_dens, ymin_dens, zmin_dens = -1.0;
-        protected int nx_dens, ny_dens, nz_dens = 1;
+        protected double xmin_dens = -1.0, ymin_dens = -1.0, zmin_dens = -1.0;
+        protected int nx_dens = 1, ny_dens = 1, nz_dens = 1;
 
         // parameters for the potential domain
         protected double dx_pot, dy_pot, dz_pot;
-        protected double xmin_pot, ymin_pot, zmin_pot = -1.0;
-        protected int nx_pot, ny_pot, nz_pot;
+        protected double xmin_pot = -1.0, ymin_pot = -1.0, zmin_pot = -1.0;
+        protected int nx_pot = 1, ny_pot = 1, nz_pot = 1;
 
-        protected double alpha, alpha_prime, tol;
+        protected double tol;
 
         protected bool using_flexPDE = false;
         protected bool using_dealii = false;
@@ -57,8 +57,6 @@ namespace Solver_Bases
         {
             // solver inputs
             Get_From_Dictionary<double>(input_dict, "tolerance", ref tol);
-            Get_From_Dictionary<double>(input_dict, "alpha", ref alpha);
-            Get_From_Dictionary<double>(input_dict, "alpha", ref alpha_prime);
             Get_From_Dictionary(input_dict, "max_iterations", ref no_runs, true);
 
             // will not use FlexPDE unless told to
@@ -222,6 +220,29 @@ namespace Solver_Bases
 
         public abstract void Run();
 
+        public void Checkpoint()
+        {
+            // finally, write all important data to file
+            StreamWriter sw_cardens = new StreamWriter("carrier_density.tmp");
+            StreamWriter sw_dopdens = new StreamWriter("dopent_density.tmp");
+            StreamWriter sw_chempot = new StreamWriter("chem_pot.tmp");
+            for (int i = 0; i < nx_dens * ny_dens * nz_dens; i++)
+            {
+                sw_cardens.WriteLine(carrier_density.Spin_Up[i].ToString() + " " + carrier_density.Spin_Down[i].ToString());
+                sw_dopdens.WriteLine(dopent_density.Spin_Up[i].ToString() + " " + dopent_density.Spin_Down[i].ToString());
+                sw_chempot.WriteLine(chem_pot[i].ToString());
+            }
+            sw_cardens.Close(); sw_dopdens.Close(); sw_chempot.Close();
+            // and the current value of t
+            StreamWriter sw_t = new StreamWriter("t_val.tmp"); sw_t.WriteLine(t.ToString()); sw_t.Close();
+        }
+
+        protected string Generate_Output_String(int count, Band_Data x, Band_Data dens_diff)
+        {
+            string output_string = "Iter = " + count.ToString() + "\tDens = " + dens_diff.Max().ToString("F4") + "\tPot = " + (Physics_Base.q_e * x.InfinityNorm()).ToString("F6") + "\tt = " + t.ToString("F6");
+            return output_string;
+        }
+
         public void Close(bool converged, int no_runs)
         {
             if (!converged)
@@ -306,6 +327,7 @@ namespace Solver_Bases
                 //return 0.5 * (1.0 + div_fact) * t;
                 return t - t * (1.0 - div_fact) * vpb / (vpb - vpa);
             }
+             
         }
 
         protected virtual double calc_vp(double t, Band_Data phi, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv)
@@ -348,7 +370,7 @@ namespace Solver_Bases
         {
             StreamWriter sw = new StreamWriter("vp");
             int count_max = 100;
-            double dt = 0.001;
+            double dt = 0.01;
 
             for (int i = 0; i < count_max; i++)
                 sw.WriteLine(calc_vp(i * dt, band_energy, x, car_dens, dop_dens, pois_solv, dens_solv).ToString());

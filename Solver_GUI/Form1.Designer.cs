@@ -28,6 +28,16 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuNew = new System.Windows.Forms.ToolStripMenuItem();
@@ -49,46 +59,52 @@
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.inputTab = new System.Windows.Forms.TabControl();
             this.bandstructure = new System.Windows.Forms.TabPage();
+            this.editLayer_Button = new System.Windows.Forms.Button();
+            this.deleteLayer_Button = new System.Windows.Forms.Button();
+            this.addlayer_Button = new System.Windows.Forms.Button();
+            this.bandstructureCombo_label = new System.Windows.Forms.Label();
+            this.bandstructureCombo = new System.Windows.Forms.ComboBox();
             this.potentialinputs = new System.Windows.Forms.TabPage();
             this.densityinputs = new System.Windows.Forms.TabPage();
+            this.count_label = new System.Windows.Forms.Label();
+            this.run_button = new System.Windows.Forms.Button();
             this.dopentinputs = new System.Windows.Forms.TabPage();
+            this.group1Dboundaries = new System.Windows.Forms.GroupBox();
+            this.boundary1Ddescriptor_label = new System.Windows.Forms.Label();
+            this.bottomV1Dval_label = new System.Windows.Forms.Label();
+            this.topV1Dval = new System.Windows.Forms.TextBox();
+            this.topV1Dval_label = new System.Windows.Forms.Label();
+            this.bottomV1Dval = new System.Windows.Forms.TextBox();
+            this.groupConversion = new System.Windows.Forms.GroupBox();
+            this.ny1Dval_label = new System.Windows.Forms.Label();
+            this.nx1Dval_label = new System.Windows.Forms.Label();
+            this.ny1Dval = new System.Windows.Forms.TextBox();
+            this.nx1Dval = new System.Windows.Forms.TextBox();
+            this.groupPhysical = new System.Windows.Forms.GroupBox();
+            this.temperature1Dval_label = new System.Windows.Forms.Label();
+            this.temperature1Dval = new System.Windows.Forms.TextBox();
+            this.groupDFT = new System.Windows.Forms.GroupBox();
+            this.dftzmin1Dval_label = new System.Windows.Forms.Label();
+            this.dftzmin1Dval = new System.Windows.Forms.TextBox();
+            this.dftnz1Dval_label = new System.Windows.Forms.Label();
+            this.dftCheck = new System.Windows.Forms.CheckBox();
+            this.dftnz1Dval = new System.Windows.Forms.TextBox();
+            this.groupPotential = new System.Windows.Forms.GroupBox();
+            this.nz1Dval_label = new System.Windows.Forms.Label();
+            this.nz1Dval = new System.Windows.Forms.TextBox();
+            this.dz1Dval_label = new System.Windows.Forms.Label();
+            this.dz1Dval = new System.Windows.Forms.TextBox();
+            this.dopentDescriptor = new System.Windows.Forms.Label();
             this.otherinputs = new System.Windows.Forms.TabPage();
             this.dimensionLabel = new System.Windows.Forms.Label();
             this.dimensionality = new System.Windows.Forms.ListBox();
             this.includebatchdata = new System.Windows.Forms.CheckBox();
             this.checkpointing = new System.Windows.Forms.CheckBox();
             this.subsplit = new System.Windows.Forms.SplitContainer();
-            this.dopentDescriptor = new System.Windows.Forms.Label();
-            this.groupPotential = new System.Windows.Forms.GroupBox();
-            this.groupDFT = new System.Windows.Forms.GroupBox();
-            this.dz1Dval = new System.Windows.Forms.TextBox();
-            this.dz1Dval_label = new System.Windows.Forms.Label();
-            this.nz1Dval_label = new System.Windows.Forms.Label();
-            this.nz1Dval = new System.Windows.Forms.TextBox();
-            this.dftCheck = new System.Windows.Forms.CheckBox();
-            this.dftnz1Dval_label = new System.Windows.Forms.Label();
-            this.dftnz1Dval = new System.Windows.Forms.TextBox();
-            this.dftzmin1Dval_label = new System.Windows.Forms.Label();
-            this.dftzmin1Dval = new System.Windows.Forms.TextBox();
-            this.groupPhysical = new System.Windows.Forms.GroupBox();
-            this.temperature1Dval_label = new System.Windows.Forms.Label();
-            this.temperature1Dval = new System.Windows.Forms.TextBox();
-            this.groupConversion = new System.Windows.Forms.GroupBox();
-            this.ny1Dval_label = new System.Windows.Forms.Label();
-            this.ny1Dval = new System.Windows.Forms.TextBox();
-            this.nx1Dval_label = new System.Windows.Forms.Label();
-            this.nx1Dval = new System.Windows.Forms.TextBox();
-            this.group1Dboundaries = new System.Windows.Forms.GroupBox();
-            this.bottomV1Dval_label = new System.Windows.Forms.Label();
-            this.topV1Dval_label = new System.Windows.Forms.Label();
-            this.bottomV1Dval = new System.Windows.Forms.TextBox();
-            this.topV1Dval = new System.Windows.Forms.TextBox();
-            this.boundary1Ddescriptor_label = new System.Windows.Forms.Label();
-            this.bandstructureCombo = new System.Windows.Forms.ComboBox();
-            this.bandstructureCombo_label = new System.Windows.Forms.Label();
-            this.addlayer_Button = new System.Windows.Forms.Button();
-            this.deleteLayer_Button = new System.Windows.Forms.Button();
-            this.editLayer_Button = new System.Windows.Forms.Button();
+            this.conduction_band = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.density = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.refresh_button = new System.Windows.Forms.Button();
+            this.output_label = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
@@ -96,15 +112,20 @@
             this.splitContainer.SuspendLayout();
             this.inputTab.SuspendLayout();
             this.bandstructure.SuspendLayout();
+            this.densityinputs.SuspendLayout();
             this.dopentinputs.SuspendLayout();
+            this.group1Dboundaries.SuspendLayout();
+            this.groupConversion.SuspendLayout();
+            this.groupPhysical.SuspendLayout();
+            this.groupDFT.SuspendLayout();
+            this.groupPotential.SuspendLayout();
             this.otherinputs.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.subsplit)).BeginInit();
+            this.subsplit.Panel1.SuspendLayout();
+            this.subsplit.Panel2.SuspendLayout();
             this.subsplit.SuspendLayout();
-            this.groupPotential.SuspendLayout();
-            this.groupDFT.SuspendLayout();
-            this.groupPhysical.SuspendLayout();
-            this.groupConversion.SuspendLayout();
-            this.group1Dboundaries.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.conduction_band)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.density)).BeginInit();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -286,6 +307,53 @@
             this.bandstructure.Text = "Band Structure";
             this.bandstructure.UseVisualStyleBackColor = true;
             // 
+            // editLayer_Button
+            // 
+            this.editLayer_Button.Location = new System.Drawing.Point(342, 37);
+            this.editLayer_Button.Name = "editLayer_Button";
+            this.editLayer_Button.Size = new System.Drawing.Size(91, 22);
+            this.editLayer_Button.TabIndex = 4;
+            this.editLayer_Button.Text = "Edit Layer";
+            this.editLayer_Button.UseVisualStyleBackColor = true;
+            // 
+            // deleteLayer_Button
+            // 
+            this.deleteLayer_Button.Location = new System.Drawing.Point(245, 37);
+            this.deleteLayer_Button.Name = "deleteLayer_Button";
+            this.deleteLayer_Button.Size = new System.Drawing.Size(91, 22);
+            this.deleteLayer_Button.TabIndex = 3;
+            this.deleteLayer_Button.Text = "Delete Layer";
+            this.deleteLayer_Button.UseVisualStyleBackColor = true;
+            // 
+            // addlayer_Button
+            // 
+            this.addlayer_Button.Location = new System.Drawing.Point(148, 37);
+            this.addlayer_Button.Name = "addlayer_Button";
+            this.addlayer_Button.Size = new System.Drawing.Size(91, 22);
+            this.addlayer_Button.TabIndex = 2;
+            this.addlayer_Button.Text = "Add Layer";
+            this.addlayer_Button.UseVisualStyleBackColor = true;
+            // 
+            // bandstructureCombo_label
+            // 
+            this.bandstructureCombo_label.AutoSize = true;
+            this.bandstructureCombo_label.Location = new System.Drawing.Point(18, 22);
+            this.bandstructureCombo_label.Name = "bandstructureCombo_label";
+            this.bandstructureCombo_label.Size = new System.Drawing.Size(115, 13);
+            this.bandstructureCombo_label.TabIndex = 1;
+            this.bandstructureCombo_label.Text = "Current Band Structure";
+            // 
+            // bandstructureCombo
+            // 
+            this.bandstructureCombo.FormattingEnabled = true;
+            this.bandstructureCombo.Items.AddRange(new object[] {
+            "Surface",
+            "Substrate"});
+            this.bandstructureCombo.Location = new System.Drawing.Point(21, 38);
+            this.bandstructureCombo.Name = "bandstructureCombo";
+            this.bandstructureCombo.Size = new System.Drawing.Size(121, 21);
+            this.bandstructureCombo.TabIndex = 0;
+            // 
             // potentialinputs
             // 
             this.potentialinputs.Location = new System.Drawing.Point(4, 22);
@@ -298,12 +366,35 @@
             // 
             // densityinputs
             // 
+            this.densityinputs.Controls.Add(this.output_label);
+            this.densityinputs.Controls.Add(this.refresh_button);
+            this.densityinputs.Controls.Add(this.count_label);
+            this.densityinputs.Controls.Add(this.run_button);
             this.densityinputs.Location = new System.Drawing.Point(4, 22);
             this.densityinputs.Name = "densityinputs";
             this.densityinputs.Size = new System.Drawing.Size(721, 620);
             this.densityinputs.TabIndex = 2;
             this.densityinputs.Text = "Density";
             this.densityinputs.UseVisualStyleBackColor = true;
+            // 
+            // count_label
+            // 
+            this.count_label.AutoSize = true;
+            this.count_label.Location = new System.Drawing.Point(206, 342);
+            this.count_label.Name = "count_label";
+            this.count_label.Size = new System.Drawing.Size(53, 13);
+            this.count_label.TabIndex = 1;
+            this.count_label.Text = "Count = 0";
+            // 
+            // run_button
+            // 
+            this.run_button.Location = new System.Drawing.Point(192, 218);
+            this.run_button.Name = "run_button";
+            this.run_button.Size = new System.Drawing.Size(248, 83);
+            this.run_button.TabIndex = 0;
+            this.run_button.Text = "Start";
+            this.run_button.UseVisualStyleBackColor = true;
+            this.run_button.Click += new System.EventHandler(this.run_button_Click);
             // 
             // dopentinputs
             // 
@@ -319,6 +410,249 @@
             this.dopentinputs.TabIndex = 3;
             this.dopentinputs.Text = "Dopents";
             this.dopentinputs.UseVisualStyleBackColor = true;
+            // 
+            // group1Dboundaries
+            // 
+            this.group1Dboundaries.Controls.Add(this.boundary1Ddescriptor_label);
+            this.group1Dboundaries.Controls.Add(this.bottomV1Dval_label);
+            this.group1Dboundaries.Controls.Add(this.topV1Dval);
+            this.group1Dboundaries.Controls.Add(this.topV1Dval_label);
+            this.group1Dboundaries.Controls.Add(this.bottomV1Dval);
+            this.group1Dboundaries.Location = new System.Drawing.Point(40, 429);
+            this.group1Dboundaries.Name = "group1Dboundaries";
+            this.group1Dboundaries.Size = new System.Drawing.Size(263, 110);
+            this.group1Dboundaries.TabIndex = 5;
+            this.group1Dboundaries.TabStop = false;
+            this.group1Dboundaries.Text = "Boundary Conditions";
+            // 
+            // boundary1Ddescriptor_label
+            // 
+            this.boundary1Ddescriptor_label.AutoSize = true;
+            this.boundary1Ddescriptor_label.Location = new System.Drawing.Point(9, 75);
+            this.boundary1Ddescriptor_label.Name = "boundary1Ddescriptor_label";
+            this.boundary1Ddescriptor_label.Size = new System.Drawing.Size(226, 26);
+            this.boundary1Ddescriptor_label.TabIndex = 16;
+            this.boundary1Ddescriptor_label.Text = "Boundary conditions will be set to zero if empty\r\nThis should be the default valu" +
+    "es";
+            // 
+            // bottomV1Dval_label
+            // 
+            this.bottomV1Dval_label.AutoSize = true;
+            this.bottomV1Dval_label.Location = new System.Drawing.Point(118, 47);
+            this.bottomV1Dval_label.Name = "bottomV1Dval_label";
+            this.bottomV1Dval_label.Size = new System.Drawing.Size(139, 13);
+            this.bottomV1Dval_label.TabIndex = 15;
+            this.bottomV1Dval_label.Text = "Voltage at bottom of domain";
+            // 
+            // topV1Dval
+            // 
+            this.topV1Dval.Location = new System.Drawing.Point(6, 19);
+            this.topV1Dval.Name = "topV1Dval";
+            this.topV1Dval.Size = new System.Drawing.Size(94, 20);
+            this.topV1Dval.TabIndex = 12;
+            // 
+            // topV1Dval_label
+            // 
+            this.topV1Dval_label.AutoSize = true;
+            this.topV1Dval_label.Location = new System.Drawing.Point(118, 21);
+            this.topV1Dval_label.Name = "topV1Dval_label";
+            this.topV1Dval_label.Size = new System.Drawing.Size(122, 13);
+            this.topV1Dval_label.TabIndex = 13;
+            this.topV1Dval_label.Text = "Voltage at top of domain";
+            // 
+            // bottomV1Dval
+            // 
+            this.bottomV1Dval.Location = new System.Drawing.Point(6, 45);
+            this.bottomV1Dval.Name = "bottomV1Dval";
+            this.bottomV1Dval.Size = new System.Drawing.Size(94, 20);
+            this.bottomV1Dval.TabIndex = 14;
+            // 
+            // groupConversion
+            // 
+            this.groupConversion.Controls.Add(this.ny1Dval_label);
+            this.groupConversion.Controls.Add(this.nx1Dval_label);
+            this.groupConversion.Controls.Add(this.ny1Dval);
+            this.groupConversion.Controls.Add(this.nx1Dval);
+            this.groupConversion.Location = new System.Drawing.Point(40, 339);
+            this.groupConversion.Name = "groupConversion";
+            this.groupConversion.Size = new System.Drawing.Size(263, 75);
+            this.groupConversion.TabIndex = 4;
+            this.groupConversion.TabStop = false;
+            this.groupConversion.Text = "Dopent Conversion Parameters";
+            // 
+            // ny1Dval_label
+            // 
+            this.ny1Dval_label.AutoSize = true;
+            this.ny1Dval_label.Location = new System.Drawing.Point(125, 47);
+            this.ny1Dval_label.Name = "ny1Dval_label";
+            this.ny1Dval_label.Size = new System.Drawing.Size(20, 13);
+            this.ny1Dval_label.TabIndex = 11;
+            this.ny1Dval_label.Text = "Ny";
+            // 
+            // nx1Dval_label
+            // 
+            this.nx1Dval_label.AutoSize = true;
+            this.nx1Dval_label.Location = new System.Drawing.Point(125, 21);
+            this.nx1Dval_label.Name = "nx1Dval_label";
+            this.nx1Dval_label.Size = new System.Drawing.Size(20, 13);
+            this.nx1Dval_label.TabIndex = 9;
+            this.nx1Dval_label.Text = "Nx";
+            // 
+            // ny1Dval
+            // 
+            this.ny1Dval.Location = new System.Drawing.Point(13, 45);
+            this.ny1Dval.Name = "ny1Dval";
+            this.ny1Dval.Size = new System.Drawing.Size(94, 20);
+            this.ny1Dval.TabIndex = 10;
+            // 
+            // nx1Dval
+            // 
+            this.nx1Dval.Location = new System.Drawing.Point(13, 19);
+            this.nx1Dval.Name = "nx1Dval";
+            this.nx1Dval.Size = new System.Drawing.Size(94, 20);
+            this.nx1Dval.TabIndex = 8;
+            // 
+            // groupPhysical
+            // 
+            this.groupPhysical.Controls.Add(this.temperature1Dval_label);
+            this.groupPhysical.Controls.Add(this.temperature1Dval);
+            this.groupPhysical.Location = new System.Drawing.Point(41, 275);
+            this.groupPhysical.Name = "groupPhysical";
+            this.groupPhysical.Size = new System.Drawing.Size(262, 48);
+            this.groupPhysical.TabIndex = 3;
+            this.groupPhysical.TabStop = false;
+            this.groupPhysical.Text = "Physical Parameters";
+            // 
+            // temperature1Dval_label
+            // 
+            this.temperature1Dval_label.AutoSize = true;
+            this.temperature1Dval_label.Location = new System.Drawing.Point(124, 21);
+            this.temperature1Dval_label.Name = "temperature1Dval_label";
+            this.temperature1Dval_label.Size = new System.Drawing.Size(112, 13);
+            this.temperature1Dval_label.TabIndex = 9;
+            this.temperature1Dval_label.Text = "Base Temperature / K";
+            // 
+            // temperature1Dval
+            // 
+            this.temperature1Dval.Location = new System.Drawing.Point(12, 19);
+            this.temperature1Dval.Name = "temperature1Dval";
+            this.temperature1Dval.Size = new System.Drawing.Size(94, 20);
+            this.temperature1Dval.TabIndex = 8;
+            this.temperature1Dval.Text = "1.0";
+            // 
+            // groupDFT
+            // 
+            this.groupDFT.Controls.Add(this.dftzmin1Dval_label);
+            this.groupDFT.Controls.Add(this.dftzmin1Dval);
+            this.groupDFT.Controls.Add(this.dftnz1Dval_label);
+            this.groupDFT.Controls.Add(this.dftCheck);
+            this.groupDFT.Controls.Add(this.dftnz1Dval);
+            this.groupDFT.Location = new System.Drawing.Point(41, 160);
+            this.groupDFT.Name = "groupDFT";
+            this.groupDFT.Size = new System.Drawing.Size(262, 102);
+            this.groupDFT.TabIndex = 2;
+            this.groupDFT.TabStop = false;
+            this.groupDFT.Text = "DFT Calculation Parameters";
+            // 
+            // dftzmin1Dval_label
+            // 
+            this.dftzmin1Dval_label.AutoSize = true;
+            this.dftzmin1Dval_label.Location = new System.Drawing.Point(124, 70);
+            this.dftzmin1Dval_label.Name = "dftzmin1Dval_label";
+            this.dftzmin1Dval_label.Size = new System.Drawing.Size(94, 13);
+            this.dftzmin1Dval_label.TabIndex = 7;
+            this.dftzmin1Dval_label.Text = "Zmin for DFT / nm";
+            // 
+            // dftzmin1Dval
+            // 
+            this.dftzmin1Dval.Location = new System.Drawing.Point(12, 68);
+            this.dftzmin1Dval.Name = "dftzmin1Dval";
+            this.dftzmin1Dval.Size = new System.Drawing.Size(94, 20);
+            this.dftzmin1Dval.TabIndex = 6;
+            // 
+            // dftnz1Dval_label
+            // 
+            this.dftnz1Dval_label.AutoSize = true;
+            this.dftnz1Dval_label.Location = new System.Drawing.Point(124, 44);
+            this.dftnz1Dval_label.Name = "dftnz1Dval_label";
+            this.dftnz1Dval_label.Size = new System.Drawing.Size(59, 13);
+            this.dftnz1Dval_label.TabIndex = 5;
+            this.dftnz1Dval_label.Text = "Nz for DFT";
+            // 
+            // dftCheck
+            // 
+            this.dftCheck.AutoSize = true;
+            this.dftCheck.Checked = true;
+            this.dftCheck.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.dftCheck.Location = new System.Drawing.Point(12, 19);
+            this.dftCheck.Name = "dftCheck";
+            this.dftCheck.Size = new System.Drawing.Size(78, 17);
+            this.dftCheck.TabIndex = 0;
+            this.dftCheck.Text = "With DFT?";
+            this.dftCheck.UseVisualStyleBackColor = true;
+            this.dftCheck.CheckedChanged += new System.EventHandler(this.dftCheck_CheckedChanged);
+            // 
+            // dftnz1Dval
+            // 
+            this.dftnz1Dval.Location = new System.Drawing.Point(12, 42);
+            this.dftnz1Dval.Name = "dftnz1Dval";
+            this.dftnz1Dval.Size = new System.Drawing.Size(94, 20);
+            this.dftnz1Dval.TabIndex = 4;
+            // 
+            // groupPotential
+            // 
+            this.groupPotential.Controls.Add(this.nz1Dval_label);
+            this.groupPotential.Controls.Add(this.nz1Dval);
+            this.groupPotential.Controls.Add(this.dz1Dval_label);
+            this.groupPotential.Controls.Add(this.dz1Dval);
+            this.groupPotential.Location = new System.Drawing.Point(40, 74);
+            this.groupPotential.Name = "groupPotential";
+            this.groupPotential.Size = new System.Drawing.Size(263, 80);
+            this.groupPotential.TabIndex = 1;
+            this.groupPotential.TabStop = false;
+            this.groupPotential.Text = "Potential Parameters";
+            // 
+            // nz1Dval_label
+            // 
+            this.nz1Dval_label.AutoSize = true;
+            this.nz1Dval_label.Location = new System.Drawing.Point(125, 52);
+            this.nz1Dval_label.Name = "nz1Dval_label";
+            this.nz1Dval_label.Size = new System.Drawing.Size(20, 13);
+            this.nz1Dval_label.TabIndex = 3;
+            this.nz1Dval_label.Text = "Nz";
+            // 
+            // nz1Dval
+            // 
+            this.nz1Dval.Location = new System.Drawing.Point(13, 50);
+            this.nz1Dval.Name = "nz1Dval";
+            this.nz1Dval.Size = new System.Drawing.Size(94, 20);
+            this.nz1Dval.TabIndex = 2;
+            // 
+            // dz1Dval_label
+            // 
+            this.dz1Dval_label.AutoSize = true;
+            this.dz1Dval_label.Location = new System.Drawing.Point(125, 26);
+            this.dz1Dval_label.Name = "dz1Dval_label";
+            this.dz1Dval_label.Size = new System.Drawing.Size(43, 13);
+            this.dz1Dval_label.TabIndex = 1;
+            this.dz1Dval_label.Text = "dz / nm";
+            // 
+            // dz1Dval
+            // 
+            this.dz1Dval.Location = new System.Drawing.Point(13, 24);
+            this.dz1Dval.Name = "dz1Dval";
+            this.dz1Dval.Size = new System.Drawing.Size(94, 20);
+            this.dz1Dval.TabIndex = 0;
+            // 
+            // dopentDescriptor
+            // 
+            this.dopentDescriptor.AutoSize = true;
+            this.dopentDescriptor.Location = new System.Drawing.Point(16, 15);
+            this.dopentDescriptor.Name = "dopentDescriptor";
+            this.dopentDescriptor.Size = new System.Drawing.Size(434, 26);
+            this.dopentDescriptor.TabIndex = 0;
+            this.dopentDescriptor.Text = "Parameters for running the initial 1D calculation in order to calculate the dopen" +
+    "t distribution.\r\nNOTE: This is redundant for 1D simulations";
             // 
             // otherinputs
             // 
@@ -387,305 +721,89 @@
             // 
             // subsplit.Panel1
             // 
+            this.subsplit.Panel1.Controls.Add(this.conduction_band);
             this.subsplit.Panel1.RightToLeft = System.Windows.Forms.RightToLeft.No;
             // 
             // subsplit.Panel2
             // 
+            this.subsplit.Panel2.Controls.Add(this.density);
             this.subsplit.Panel2.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.subsplit.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.subsplit.Size = new System.Drawing.Size(678, 649);
             this.subsplit.SplitterDistance = 332;
             this.subsplit.TabIndex = 0;
             // 
-            // dopentDescriptor
+            // conduction_band
             // 
-            this.dopentDescriptor.AutoSize = true;
-            this.dopentDescriptor.Location = new System.Drawing.Point(16, 15);
-            this.dopentDescriptor.Name = "dopentDescriptor";
-            this.dopentDescriptor.Size = new System.Drawing.Size(434, 26);
-            this.dopentDescriptor.TabIndex = 0;
-            this.dopentDescriptor.Text = "Parameters for running the initial 1D calculation in order to calculate the dopen" +
-    "t distribution.\r\nNOTE: This is redundant for 1D simulations";
+            chartArea1.Name = "ChartArea1";
+            this.conduction_band.ChartAreas.Add(chartArea1);
+            legend1.Name = "Legend1";
+            this.conduction_band.Legends.Add(legend1);
+            this.conduction_band.Location = new System.Drawing.Point(3, 3);
+            this.conduction_band.Name = "conduction_band";
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Legend = "Legend1";
+            series1.Name = "conduction_band_data";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series2.Legend = "Legend1";
+            series2.Name = "x_data";
+            this.conduction_band.Series.Add(series1);
+            this.conduction_band.Series.Add(series2);
+            this.conduction_band.Size = new System.Drawing.Size(668, 322);
+            this.conduction_band.TabIndex = 5;
+            this.conduction_band.Text = "chart1";
             // 
-            // groupPotential
+            // density
             // 
-            this.groupPotential.Controls.Add(this.nz1Dval_label);
-            this.groupPotential.Controls.Add(this.nz1Dval);
-            this.groupPotential.Controls.Add(this.dz1Dval_label);
-            this.groupPotential.Controls.Add(this.dz1Dval);
-            this.groupPotential.Location = new System.Drawing.Point(40, 74);
-            this.groupPotential.Name = "groupPotential";
-            this.groupPotential.Size = new System.Drawing.Size(263, 80);
-            this.groupPotential.TabIndex = 1;
-            this.groupPotential.TabStop = false;
-            this.groupPotential.Text = "Potential Parameters";
+            chartArea2.Name = "ChartArea1";
+            this.density.ChartAreas.Add(chartArea2);
+            legend2.Name = "Legend1";
+            this.density.Legends.Add(legend2);
+            this.density.Location = new System.Drawing.Point(3, 3);
+            this.density.Name = "density";
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series3.Legend = "Legend1";
+            series3.Name = "car_dens_data";
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series4.Legend = "Legend1";
+            series4.Name = "dop_dens_data";
+            series5.ChartArea = "ChartArea1";
+            series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series5.Legend = "Legend1";
+            series5.Name = "gphi_data";
+            series6.ChartArea = "ChartArea1";
+            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series6.Legend = "Legend1";
+            series6.Name = "rho_prime_data";
+            this.density.Series.Add(series3);
+            this.density.Series.Add(series4);
+            this.density.Series.Add(series5);
+            this.density.Series.Add(series6);
+            this.density.Size = new System.Drawing.Size(667, 303);
+            this.density.TabIndex = 0;
+            this.density.Text = "chart1";
             // 
-            // groupDFT
+            // refresh_button
             // 
-            this.groupDFT.Controls.Add(this.dftzmin1Dval_label);
-            this.groupDFT.Controls.Add(this.dftzmin1Dval);
-            this.groupDFT.Controls.Add(this.dftnz1Dval_label);
-            this.groupDFT.Controls.Add(this.dftCheck);
-            this.groupDFT.Controls.Add(this.dftnz1Dval);
-            this.groupDFT.Location = new System.Drawing.Point(41, 160);
-            this.groupDFT.Name = "groupDFT";
-            this.groupDFT.Size = new System.Drawing.Size(262, 102);
-            this.groupDFT.TabIndex = 2;
-            this.groupDFT.TabStop = false;
-            this.groupDFT.Text = "DFT Calculation Parameters";
+            this.refresh_button.Location = new System.Drawing.Point(411, 350);
+            this.refresh_button.Name = "refresh_button";
+            this.refresh_button.Size = new System.Drawing.Size(75, 23);
+            this.refresh_button.TabIndex = 2;
+            this.refresh_button.Text = "Refresh";
+            this.refresh_button.UseVisualStyleBackColor = true;
+            this.refresh_button.Click += new System.EventHandler(this.refresh_button_Click);
             // 
-            // dz1Dval
+            // output_label
             // 
-            this.dz1Dval.Location = new System.Drawing.Point(13, 24);
-            this.dz1Dval.Name = "dz1Dval";
-            this.dz1Dval.Size = new System.Drawing.Size(94, 20);
-            this.dz1Dval.TabIndex = 0;
-            // 
-            // dz1Dval_label
-            // 
-            this.dz1Dval_label.AutoSize = true;
-            this.dz1Dval_label.Location = new System.Drawing.Point(125, 26);
-            this.dz1Dval_label.Name = "dz1Dval_label";
-            this.dz1Dval_label.Size = new System.Drawing.Size(43, 13);
-            this.dz1Dval_label.TabIndex = 1;
-            this.dz1Dval_label.Text = "dz / nm";
-            // 
-            // nz1Dval_label
-            // 
-            this.nz1Dval_label.AutoSize = true;
-            this.nz1Dval_label.Location = new System.Drawing.Point(125, 52);
-            this.nz1Dval_label.Name = "nz1Dval_label";
-            this.nz1Dval_label.Size = new System.Drawing.Size(20, 13);
-            this.nz1Dval_label.TabIndex = 3;
-            this.nz1Dval_label.Text = "Nz";
-            // 
-            // nz1Dval
-            // 
-            this.nz1Dval.Location = new System.Drawing.Point(13, 50);
-            this.nz1Dval.Name = "nz1Dval";
-            this.nz1Dval.Size = new System.Drawing.Size(94, 20);
-            this.nz1Dval.TabIndex = 2;
-            // 
-            // dftCheck
-            // 
-            this.dftCheck.AutoSize = true;
-            this.dftCheck.Checked = true;
-            this.dftCheck.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.dftCheck.Location = new System.Drawing.Point(12, 19);
-            this.dftCheck.Name = "dftCheck";
-            this.dftCheck.Size = new System.Drawing.Size(78, 17);
-            this.dftCheck.TabIndex = 0;
-            this.dftCheck.Text = "With DFT?";
-            this.dftCheck.UseVisualStyleBackColor = true;
-            this.dftCheck.CheckedChanged += new System.EventHandler(this.dftCheck_CheckedChanged);
-            // 
-            // dftnz1Dval_label
-            // 
-            this.dftnz1Dval_label.AutoSize = true;
-            this.dftnz1Dval_label.Location = new System.Drawing.Point(124, 44);
-            this.dftnz1Dval_label.Name = "dftnz1Dval_label";
-            this.dftnz1Dval_label.Size = new System.Drawing.Size(59, 13);
-            this.dftnz1Dval_label.TabIndex = 5;
-            this.dftnz1Dval_label.Text = "Nz for DFT";
-            // 
-            // dftnz1Dval
-            // 
-            this.dftnz1Dval.Location = new System.Drawing.Point(12, 42);
-            this.dftnz1Dval.Name = "dftnz1Dval";
-            this.dftnz1Dval.Size = new System.Drawing.Size(94, 20);
-            this.dftnz1Dval.TabIndex = 4;
-            // 
-            // dftzmin1Dval_label
-            // 
-            this.dftzmin1Dval_label.AutoSize = true;
-            this.dftzmin1Dval_label.Location = new System.Drawing.Point(124, 70);
-            this.dftzmin1Dval_label.Name = "dftzmin1Dval_label";
-            this.dftzmin1Dval_label.Size = new System.Drawing.Size(94, 13);
-            this.dftzmin1Dval_label.TabIndex = 7;
-            this.dftzmin1Dval_label.Text = "Zmin for DFT / nm";
-            // 
-            // dftzmin1Dval
-            // 
-            this.dftzmin1Dval.Location = new System.Drawing.Point(12, 68);
-            this.dftzmin1Dval.Name = "dftzmin1Dval";
-            this.dftzmin1Dval.Size = new System.Drawing.Size(94, 20);
-            this.dftzmin1Dval.TabIndex = 6;
-            // 
-            // groupPhysical
-            // 
-            this.groupPhysical.Controls.Add(this.temperature1Dval_label);
-            this.groupPhysical.Controls.Add(this.temperature1Dval);
-            this.groupPhysical.Location = new System.Drawing.Point(41, 275);
-            this.groupPhysical.Name = "groupPhysical";
-            this.groupPhysical.Size = new System.Drawing.Size(262, 48);
-            this.groupPhysical.TabIndex = 3;
-            this.groupPhysical.TabStop = false;
-            this.groupPhysical.Text = "Physical Parameters";
-            // 
-            // temperature1Dval_label
-            // 
-            this.temperature1Dval_label.AutoSize = true;
-            this.temperature1Dval_label.Location = new System.Drawing.Point(124, 21);
-            this.temperature1Dval_label.Name = "temperature1Dval_label";
-            this.temperature1Dval_label.Size = new System.Drawing.Size(112, 13);
-            this.temperature1Dval_label.TabIndex = 9;
-            this.temperature1Dval_label.Text = "Base Temperature / K";
-            // 
-            // temperature1Dval
-            // 
-            this.temperature1Dval.Location = new System.Drawing.Point(12, 19);
-            this.temperature1Dval.Name = "temperature1Dval";
-            this.temperature1Dval.Size = new System.Drawing.Size(94, 20);
-            this.temperature1Dval.TabIndex = 8;
-            this.temperature1Dval.Text = "1.0";
-            // 
-            // groupConversion
-            // 
-            this.groupConversion.Controls.Add(this.ny1Dval_label);
-            this.groupConversion.Controls.Add(this.nx1Dval_label);
-            this.groupConversion.Controls.Add(this.ny1Dval);
-            this.groupConversion.Controls.Add(this.nx1Dval);
-            this.groupConversion.Location = new System.Drawing.Point(40, 339);
-            this.groupConversion.Name = "groupConversion";
-            this.groupConversion.Size = new System.Drawing.Size(263, 75);
-            this.groupConversion.TabIndex = 4;
-            this.groupConversion.TabStop = false;
-            this.groupConversion.Text = "Dopent Conversion Parameters";
-            // 
-            // ny1Dval_label
-            // 
-            this.ny1Dval_label.AutoSize = true;
-            this.ny1Dval_label.Location = new System.Drawing.Point(125, 47);
-            this.ny1Dval_label.Name = "ny1Dval_label";
-            this.ny1Dval_label.Size = new System.Drawing.Size(20, 13);
-            this.ny1Dval_label.TabIndex = 11;
-            this.ny1Dval_label.Text = "Ny";
-            // 
-            // ny1Dval
-            // 
-            this.ny1Dval.Location = new System.Drawing.Point(13, 45);
-            this.ny1Dval.Name = "ny1Dval";
-            this.ny1Dval.Size = new System.Drawing.Size(94, 20);
-            this.ny1Dval.TabIndex = 10;
-            // 
-            // nx1Dval_label
-            // 
-            this.nx1Dval_label.AutoSize = true;
-            this.nx1Dval_label.Location = new System.Drawing.Point(125, 21);
-            this.nx1Dval_label.Name = "nx1Dval_label";
-            this.nx1Dval_label.Size = new System.Drawing.Size(20, 13);
-            this.nx1Dval_label.TabIndex = 9;
-            this.nx1Dval_label.Text = "Nx";
-            // 
-            // nx1Dval
-            // 
-            this.nx1Dval.Location = new System.Drawing.Point(13, 19);
-            this.nx1Dval.Name = "nx1Dval";
-            this.nx1Dval.Size = new System.Drawing.Size(94, 20);
-            this.nx1Dval.TabIndex = 8;
-            // 
-            // group1Dboundaries
-            // 
-            this.group1Dboundaries.Controls.Add(this.boundary1Ddescriptor_label);
-            this.group1Dboundaries.Controls.Add(this.bottomV1Dval_label);
-            this.group1Dboundaries.Controls.Add(this.topV1Dval);
-            this.group1Dboundaries.Controls.Add(this.topV1Dval_label);
-            this.group1Dboundaries.Controls.Add(this.bottomV1Dval);
-            this.group1Dboundaries.Location = new System.Drawing.Point(40, 429);
-            this.group1Dboundaries.Name = "group1Dboundaries";
-            this.group1Dboundaries.Size = new System.Drawing.Size(263, 110);
-            this.group1Dboundaries.TabIndex = 5;
-            this.group1Dboundaries.TabStop = false;
-            this.group1Dboundaries.Text = "Boundary Conditions";
-            // 
-            // bottomV1Dval_label
-            // 
-            this.bottomV1Dval_label.AutoSize = true;
-            this.bottomV1Dval_label.Location = new System.Drawing.Point(118, 47);
-            this.bottomV1Dval_label.Name = "bottomV1Dval_label";
-            this.bottomV1Dval_label.Size = new System.Drawing.Size(139, 13);
-            this.bottomV1Dval_label.TabIndex = 15;
-            this.bottomV1Dval_label.Text = "Voltage at bottom of domain";
-            // 
-            // topV1Dval_label
-            // 
-            this.topV1Dval_label.AutoSize = true;
-            this.topV1Dval_label.Location = new System.Drawing.Point(118, 21);
-            this.topV1Dval_label.Name = "topV1Dval_label";
-            this.topV1Dval_label.Size = new System.Drawing.Size(122, 13);
-            this.topV1Dval_label.TabIndex = 13;
-            this.topV1Dval_label.Text = "Voltage at top of domain";
-            // 
-            // bottomV1Dval
-            // 
-            this.bottomV1Dval.Location = new System.Drawing.Point(6, 45);
-            this.bottomV1Dval.Name = "bottomV1Dval";
-            this.bottomV1Dval.Size = new System.Drawing.Size(94, 20);
-            this.bottomV1Dval.TabIndex = 14;
-            // 
-            // topV1Dval
-            // 
-            this.topV1Dval.Location = new System.Drawing.Point(6, 19);
-            this.topV1Dval.Name = "topV1Dval";
-            this.topV1Dval.Size = new System.Drawing.Size(94, 20);
-            this.topV1Dval.TabIndex = 12;
-            // 
-            // boundary1Ddescriptor_label
-            // 
-            this.boundary1Ddescriptor_label.AutoSize = true;
-            this.boundary1Ddescriptor_label.Location = new System.Drawing.Point(9, 75);
-            this.boundary1Ddescriptor_label.Name = "boundary1Ddescriptor_label";
-            this.boundary1Ddescriptor_label.Size = new System.Drawing.Size(226, 26);
-            this.boundary1Ddescriptor_label.TabIndex = 16;
-            this.boundary1Ddescriptor_label.Text = "Boundary conditions will be set to zero if empty\r\nThis should be the default valu" +
-    "es";
-            // 
-            // bandstructureCombo
-            // 
-            this.bandstructureCombo.FormattingEnabled = true;
-            this.bandstructureCombo.Items.AddRange(new object[] {
-            "Surface",
-            "Substrate"});
-            this.bandstructureCombo.Location = new System.Drawing.Point(21, 38);
-            this.bandstructureCombo.Name = "bandstructureCombo";
-            this.bandstructureCombo.Size = new System.Drawing.Size(121, 21);
-            this.bandstructureCombo.TabIndex = 0;
-            // 
-            // bandstructureCombo_label
-            // 
-            this.bandstructureCombo_label.AutoSize = true;
-            this.bandstructureCombo_label.Location = new System.Drawing.Point(18, 22);
-            this.bandstructureCombo_label.Name = "bandstructureCombo_label";
-            this.bandstructureCombo_label.Size = new System.Drawing.Size(115, 13);
-            this.bandstructureCombo_label.TabIndex = 1;
-            this.bandstructureCombo_label.Text = "Current Band Structure";
-            // 
-            // addlayer_Button
-            // 
-            this.addlayer_Button.Location = new System.Drawing.Point(148, 37);
-            this.addlayer_Button.Name = "addlayer_Button";
-            this.addlayer_Button.Size = new System.Drawing.Size(91, 22);
-            this.addlayer_Button.TabIndex = 2;
-            this.addlayer_Button.Text = "Add Layer";
-            this.addlayer_Button.UseVisualStyleBackColor = true;
-            // 
-            // deleteLayer_Button
-            // 
-            this.deleteLayer_Button.Location = new System.Drawing.Point(245, 37);
-            this.deleteLayer_Button.Name = "deleteLayer_Button";
-            this.deleteLayer_Button.Size = new System.Drawing.Size(91, 22);
-            this.deleteLayer_Button.TabIndex = 3;
-            this.deleteLayer_Button.Text = "Delete Layer";
-            this.deleteLayer_Button.UseVisualStyleBackColor = true;
-            // 
-            // editLayer_Button
-            // 
-            this.editLayer_Button.Location = new System.Drawing.Point(342, 37);
-            this.editLayer_Button.Name = "editLayer_Button";
-            this.editLayer_Button.Size = new System.Drawing.Size(91, 22);
-            this.editLayer_Button.TabIndex = 4;
-            this.editLayer_Button.Text = "Edit Layer";
-            this.editLayer_Button.UseVisualStyleBackColor = true;
+            this.output_label.AutoSize = true;
+            this.output_label.Location = new System.Drawing.Point(38, 410);
+            this.output_label.Name = "output_label";
+            this.output_label.Size = new System.Drawing.Size(0, 13);
+            this.output_label.TabIndex = 3;
             // 
             // Solver_GUI
             // 
@@ -706,22 +824,28 @@
             this.inputTab.ResumeLayout(false);
             this.bandstructure.ResumeLayout(false);
             this.bandstructure.PerformLayout();
+            this.densityinputs.ResumeLayout(false);
+            this.densityinputs.PerformLayout();
             this.dopentinputs.ResumeLayout(false);
             this.dopentinputs.PerformLayout();
-            this.otherinputs.ResumeLayout(false);
-            this.otherinputs.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.subsplit)).EndInit();
-            this.subsplit.ResumeLayout(false);
-            this.groupPotential.ResumeLayout(false);
-            this.groupPotential.PerformLayout();
-            this.groupDFT.ResumeLayout(false);
-            this.groupDFT.PerformLayout();
-            this.groupPhysical.ResumeLayout(false);
-            this.groupPhysical.PerformLayout();
-            this.groupConversion.ResumeLayout(false);
-            this.groupConversion.PerformLayout();
             this.group1Dboundaries.ResumeLayout(false);
             this.group1Dboundaries.PerformLayout();
+            this.groupConversion.ResumeLayout(false);
+            this.groupConversion.PerformLayout();
+            this.groupPhysical.ResumeLayout(false);
+            this.groupPhysical.PerformLayout();
+            this.groupDFT.ResumeLayout(false);
+            this.groupDFT.PerformLayout();
+            this.groupPotential.ResumeLayout(false);
+            this.groupPotential.PerformLayout();
+            this.otherinputs.ResumeLayout(false);
+            this.otherinputs.PerformLayout();
+            this.subsplit.Panel1.ResumeLayout(false);
+            this.subsplit.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.subsplit)).EndInit();
+            this.subsplit.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.conduction_band)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.density)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -790,6 +914,12 @@
         private System.Windows.Forms.Button addlayer_Button;
         private System.Windows.Forms.Label bandstructureCombo_label;
         private System.Windows.Forms.ComboBox bandstructureCombo;
+        private System.Windows.Forms.DataVisualization.Charting.Chart conduction_band;
+        private System.Windows.Forms.Button run_button;
+        private System.Windows.Forms.DataVisualization.Charting.Chart density;
+        private System.Windows.Forms.Label count_label;
+        private System.Windows.Forms.Button refresh_button;
+        private System.Windows.Forms.Label output_label;
     }
 }
 
