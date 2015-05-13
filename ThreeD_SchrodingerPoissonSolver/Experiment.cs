@@ -111,7 +111,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             else
                 dft_solv.DFT_Mixing_Parameter = 0.1;
 
-            converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
+            converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
 
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(boundary_conditions["surface"].ToString()); sw.Close();
@@ -147,12 +147,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             File.Delete("potential.dat");
             File.Delete("lap.dat");
 
-            Close(converged, no_runs);
-        }
-
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double tol)
-        {
-            return Run_Iteration_Routine(dens_solv, tol, int.MaxValue);
+            Close(converged, max_iterations);
         }
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
@@ -160,7 +155,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         double min_dens_diff = 0.02; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double tol, int max_count)
+        protected override bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_iterations)
         {
             dens_solv.Set_DFT_Potential(carrier_density);
             if (!no_dft)
@@ -254,7 +249,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             //    File.Copy("split_gate.pg6", "split_gate_" + count.ToString("000") + ".pg6");
 
                 // reset the potential if the added potential t * x is too small
-                if (converged || count > max_count)
+                if (converged || count > max_iterations)
                 {
                     Console.WriteLine("Maximum potential change at end of iteration was " + (t * x.InfinityNorm()).ToString());
                     break;

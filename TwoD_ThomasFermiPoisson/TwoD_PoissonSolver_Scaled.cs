@@ -189,6 +189,7 @@ namespace TwoD_ThomasFermiPoisson
             // and transfer the data to a file for reloading and replotting later
             sw.WriteLine();
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + initcalc_result_filename + "\"");
+            sw.WriteLine("\tTABLE(-1.0 * rho_carrier - rho_dopent) ZOOM (" + exp.Ymin_Dens.ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(0.0 * u) FILE = \'" + new_pot_filename + "\' ! dummy file for smoother function");
             sw.WriteLine();

@@ -109,8 +109,12 @@ namespace TwoD_ThomasFermiPoisson
             else
                 dft_solv.DFT_Mixing_Parameter = 0.3;
 
+            // do preliminary run to correct for initial discretised form of rho_prime
+            converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, 5);
+            pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
+            chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_density.Spin_Summed_Data);
             // run the iteration routine!
-            converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, no_runs);
+            converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
 
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge" + output_suffix); sw.WriteLine(boundary_conditions["surface"].ToString()); sw.Close();
@@ -145,20 +149,16 @@ namespace TwoD_ThomasFermiPoisson
             File.Delete("potential.dat");
             File.Delete("lap.dat");
 
-            Close(converged, no_runs);
+            Close(converged, max_iterations);
         }
 
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double pot_lim)
-        {
-            return Run_Iteration_Routine(dens_solv, pois_solv, pot_lim, int.MaxValue);
-        }
 
         double dens_diff_lim = 0.1; // the maximum percentage change in the density required for update of V_xc
         double max_vxc_diff = double.MaxValue; // maximum difference for dft potential... if this increases, the dft mixing parameter is reduced
         double min_dens_diff = 0.005; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_count)
+        protected override bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_iterations)
         {
             // calculate initial potential with the given charge distribution
         //    Console.WriteLine("Calculating initial potential grid");
@@ -239,7 +239,7 @@ namespace TwoD_ThomasFermiPoisson
               //          dens_diff_lim /= 3.0;
               //          Console.WriteLine("DFT mixing parameter reduced to " + dens_solv.DFT_Mixing_Parameter.ToString());
               //      }
-                    if ((current_vxc_diff > max_vxc_diff && dens_diff_lim / 2.0 > min_dens_diff) || no_dft)
+                    if (current_vxc_diff > max_vxc_diff && dens_diff_lim / 2.0 > min_dens_diff && !no_dft)
                     {
                         dens_diff_lim /= 2.0;
                         Console.WriteLine("Minimum percentage density difference reduced to " + dens_diff_lim.ToString());
@@ -327,7 +327,7 @@ namespace TwoD_ThomasFermiPoisson
                 count++;
 
                 // reset the potential if the added potential t * x is too small
-                if (converged || count > max_count)
+                if (converged || count > max_iterations)
                 {
                     Console.WriteLine("Maximum potential change at end of iteration was " + (t * x.InfinityNorm()).ToString());
                     break;

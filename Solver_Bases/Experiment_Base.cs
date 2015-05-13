@@ -41,7 +41,7 @@ namespace Solver_Bases
         protected double initial_temperature = 300.0;
         protected double temperature;
 
-        protected int no_runs = 1000;       // maximum number of runs before giving up and just outputting the data with a "not_converged" file flag
+        protected int max_iterations = 1000;       // maximum number of runs before giving up and just outputting the data with a "not_converged" file flag
         protected bool converged = false;
 
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
@@ -57,7 +57,7 @@ namespace Solver_Bases
         {
             // solver inputs
             Get_From_Dictionary<double>(input_dict, "tolerance", ref tol);
-            Get_From_Dictionary(input_dict, "max_iterations", ref no_runs, true);
+            Get_From_Dictionary(input_dict, "max_iterations", ref max_iterations, true);
 
             // will not use FlexPDE unless told to
             if (input_dict.ContainsKey("use_FlexPDE")) this.using_flexPDE = (bool)input_dict["use_FlexPDE"]; else using_flexPDE = false;
@@ -220,6 +220,12 @@ namespace Solver_Bases
 
         public abstract void Run();
 
+        protected bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol)
+        {
+            return Run_Iteration_Routine(dens_solv, pois_solv, tol, int.MaxValue);
+        }
+        protected abstract bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_iterations);
+
         public void Checkpoint()
         {
             // finally, write all important data to file
@@ -279,7 +285,7 @@ namespace Solver_Bases
         /// <returns></returns>
         protected double Calculate_optimal_t(double t, Band_Data phi, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
         {
-            double maxval = 1.0;
+            double maxval = 100.0;
             SpinResolved_Data car_dens_copy = car_dens.DeepenThisCopy();
             SpinResolved_Data dop_dens_copy = dop_dens.DeepenThisCopy();
 

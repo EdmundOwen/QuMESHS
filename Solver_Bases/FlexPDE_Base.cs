@@ -26,7 +26,10 @@ namespace Solver_Bases
             if (((string)input["output_suffix"]).Length == 4)
                 this.flexpde_output = flexpde_script.Remove(flexpde_script.Length - 4) + "_old.pg6";
             else
-                this.flexpde_output = (flexpde_script.Remove(flexpde_script.Length - 4) + (string)input["output_suffix"]).Remove(flexpde_script.Length - 4) + ".pg6";
+            {
+                string tmp_output =  (flexpde_script.Remove(flexpde_script.Length - 4) + (string)input["output_suffix"]);
+                this.flexpde_output = tmp_output.Remove(tmp_output.Length - 4) + ".pg6";
+            }
 
             // for flexpde, we need the -S parameter included in the input
             flexpde_options = "-S " + flexpde_script;

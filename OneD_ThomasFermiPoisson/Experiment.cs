@@ -135,7 +135,7 @@ namespace OneD_ThomasFermiPoisson
                         dopent_density.Spin_Down[j] = 0.5 * Physics_Base.q_e * (Geom_Tool.GetLayer(layers, pos).Donor_Conc - Geom_Tool.GetLayer(layers, pos).Acceptor_Conc);
                     }
 
-                converged = Run_Iteration_Routine(dens_solv, tol, no_runs);
+                converged = Run_Iteration_Routine(dens_solv, pois_solv, tol, max_iterations);
 
                 // save the surface charge for this temperature
                 surface_charge.Add(current_temperature, pois_solv.Get_Surface_Charge(chem_pot, layers));
@@ -152,7 +152,7 @@ namespace OneD_ThomasFermiPoisson
                 dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
                 dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
                 Console.WriteLine("Starting DFT calculation");
-                converged = Run_Iteration_Routine(dft_solv, tol, no_runs);
+                converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
 
                 pois_solv.Reset();
 
@@ -165,15 +165,10 @@ namespace OneD_ThomasFermiPoisson
             Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens.ToString("e3") + " cm^-2");
 
             // there is no iteration timeout for the 1D solver so if it gets to this point the solution will definitely have converged
-            Close(converged, no_runs);
+            Close(converged, max_iterations);
         }
 
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double tol)
-        {
-            return Run_Iteration_Routine(dens_solv, tol, int.MaxValue);
-        }
-
-        bool Run_Iteration_Routine(IDensity_Solve dens_solv, double tol, int max_count)
+        protected override bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_iterations)
         {
             // calculate initial potential with the given charge distribution
             Console.WriteLine("Calculating initial potential grid");
@@ -223,7 +218,7 @@ namespace OneD_ThomasFermiPoisson
                 for (int j = 0; j < nz_pot; j++)
                     diff[j] = Math.Abs(g_phi.vec[j]);
                 double convergence = diff.Sum();
-                if (x.InfinityNorm() < tol)
+                if (Physics_Base.q_e * x.InfinityNorm() < tol)
                     converged = true;
 
                 // update band energy phi_new = phi_old + t * x
@@ -233,7 +228,7 @@ namespace OneD_ThomasFermiPoisson
 
                 base.Checkpoint();
                 // reset the potential if the added potential t * x is too small
-                if (converged || count > max_count)
+                if (converged || count > max_iterations)
                 {
                      Console.WriteLine("Maximum potential change at end of iteration was " + (t * Physics_Base.q_e * x.InfinityNorm()).ToString() + "meV");
                     break;
