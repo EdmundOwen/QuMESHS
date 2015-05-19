@@ -29,13 +29,13 @@
 ############## Poisson solver details #################################
 #
 # Top gate voltage
-% top_V = -1.3
+% top_V = -1.1
 #
 ## Split gate voltage
-% split_V = -0.8
+% split_V = 0.0
 #
 ## Voltage array (for general voltage input)
-% voltages = {-0.5, -0.5}
+% voltages = {-0.55, -0.55}
 #
 ## Surface charge (by default, this is set by the 1D solver)
 # % surface_charge = -2.677
@@ -47,7 +47,7 @@
 ############## Generic density solver details #########################
 #
 ## Use DFT or not
-% no_dft = false
+% no_dft = true
 #
 ## Maximum number of iterations before giving up
 % max_iterations = 1000
@@ -99,25 +99,25 @@
 % batch_run = false
 #
 ##
-% batch_params = {top_V, split_V}
+% batch_params = {top_V, V0, V1=V0}
 #
 ## 
-% init_split_V = -0.465
+% init_V0 = -1.0
 #
 ##
-% delta_split_V = -0.001
+% delta_V0 = 0.05
 #
 ##
-% no_split_V = 36
+% no_V0 = 10
 #
 ##
-% init_top_V = -1.9
+% init_top_V = -1.8
 #
 ##
-% delta_top_V = 0.005
+% delta_top_V = 0.1
 ##
 #
-% no_top_V = 10
+% no_top_V = 9
 #
 ############## Simulation domain details for dopents ##############################
 #

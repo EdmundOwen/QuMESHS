@@ -16,7 +16,7 @@ namespace TwoD_ThomasFermiPoisson
         double no_kb_T = 50.0;          // number of kb_T to integrate to
 
         double tx, ty;
-        bool force_symmetry = true;
+        bool force_symmetry = false;
 
         public TwoD_EffectiveBandSolver(Experiment exp)
             : base(exp)
@@ -47,6 +47,13 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                 {
+                    // do not add anything to the density if on the edge of the domain
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
+                    {
+                        charge_density.Spin_Up.mat[i, j] *= 0.0;
+                        charge_density.Spin_Down.mat[i, j] *= 0.0;
+                    }
+
                     charge_density.Spin_Up.mat[i, j] *= dens_x[i];
                     charge_density.Spin_Down.mat[i, j] *= dens_x[i];
                 }
@@ -77,11 +84,18 @@ namespace TwoD_ThomasFermiPoisson
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                 {
+                    // do not add anything to the density if on the edge of the domain
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
+                    {
+                        charge_density_deriv.Spin_Up.mat[i, j] *= 0.0;
+                        charge_density_deriv.Spin_Down.mat[i, j] *= 0.0;
+                    }
+
                     charge_density_deriv.Spin_Up.mat[i, j] *= dens_x_deriv[i];
                     charge_density_deriv.Spin_Down.mat[i, j] *= dens_x_deriv[i];
                 }
 
-            // and multiply the density derivative by e to get the charge density (as increasing mu decreases the charge: dn/dmu*-e )
+            // and multiply the density derivative by e to get the charge density and by e to convert it to d/dphi (as increasing phi decreases the charge: dn/dphi*-e^2 )
             charge_density_deriv = Physics_Base.q_e * Physics_Base.q_e * charge_density_deriv;
         }
 

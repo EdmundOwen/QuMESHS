@@ -131,17 +131,7 @@ namespace Solver_Bases
             boundary_conditions.Add("split_V1", Get_From_Dictionary<double>(input_dict, "split_V1", Get_From_Dictionary<double>(input_dict, "split_V", 0.0)));
             boundary_conditions.Add("split_V2", Get_From_Dictionary<double>(input_dict, "split_V2", Get_From_Dictionary<double>(input_dict, "split_V", 0.0)));
             boundary_conditions.Add("bottom_V", Get_From_Dictionary<double>(input_dict, "bottom_V", 0.0));
-            // or just take the list of voltages (if they're available)
-            if (input_dict.ContainsKey("voltages"))
-            {
-                int count = 0;
-                string[] raw_voltages = ((string)input_dict["voltages"]).TrimStart('{').TrimEnd('}').Split(',');
-                for (int i = 0; i < raw_voltages.Length; i++)
-                {
-                    boundary_conditions.Add("V" + count.ToString(), double.Parse(raw_voltages[i]));
-                    count++;
-                }
-            }
+            Inputs_to_Dictionary.Parse_Voltages(input_dict, boundary_conditions);
 
             // work out whether we are doing dft or not
             Get_From_Dictionary<bool>(input_dict, "TF_only", ref TF_only, true);

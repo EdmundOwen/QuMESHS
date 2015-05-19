@@ -45,7 +45,7 @@
 ############## Generic density solver details #########################
 #
 ## Use DFT or not
-% no_dft = true
+% no_dft = false
 #
 ## Maximum number of iterations before giving up
 % max_iterations = 1000

@@ -17,7 +17,7 @@ namespace Solver_Master
 
             Dictionary<string, object> inputs = new Dictionary<string, object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Solver_Config.txt");
-            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Input_Parameters_1D.txt");
+            Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, args[1]);
 
             int no_runs = 1;
             bool batch_run = false;
@@ -79,6 +79,9 @@ namespace Solver_Master
 
             for (int i = 0; i < batch_params.Length; i++)
             {
+                if (batch_params[i].Contains('='))
+                    break;
+
                 string tmp_bc = batch_params[i].Trim();
 
                 // check that the batch bc is correctly labelled
@@ -110,11 +113,31 @@ namespace Solver_Master
 
             // change the input library according to the requested batch input
             for (int i = 0; i < batch_params.Length; i++)
-                inputs[batch_params[i].Trim()] = inits[i] + deltas[i] * (double)batch_index[i];
+                if (!batch_params[i].Contains('='))
+                {
+                    inputs[batch_params[i].Trim()] = inits[i] + deltas[i] * (double)batch_index[i];
+                    Console.WriteLine("Batch parameter \"" + batch_params[i].Trim() + "\" set to " + ((double)inputs[batch_params[i].Trim()]).ToString());
+                }
+                else
+                {
+                    string[] vals = batch_params[i].Split('=');
+                    inputs[vals[0].Trim()] = (double)inputs[vals[1].Trim()];
+                }
+
+            // reset the "voltages" value to reflect the new batch values
+            int count = 0;
+            string voltages = "{";
+            while (inputs.ContainsKey("V" + count.ToString()))
+            {
+                voltages += ((double)inputs["V" + count.ToString()]).ToString() + ", ";
+                count++;
+            }
+            inputs["voltages"] = voltages.Remove(voltages.Length - 2) + "}";
 
             // and generate the relevant batch suffix
             for (int i = 0; i < batch_params.Length; i++)
-                output_suffix += "_" + batch_params[i].Trim() + "_" + ((double)inputs[batch_params[i].Trim()]).ToString("F3");
+                if (!batch_params[i].Contains('='))
+                    output_suffix += "_" + batch_params[i].Trim() + "_" + ((double)inputs[batch_params[i].Trim()]).ToString("F3");
             inputs.Add("output_suffix", output_suffix + ".dat");
         }
 

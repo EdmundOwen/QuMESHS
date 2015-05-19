@@ -26,11 +26,11 @@ namespace TwoD_ThomasFermiPoisson
         public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions)
         {
             // get split gate specific device dimensions
-            device_dimensions.Add("zmin_pot", exp.Layers[1].Zmin);
-            device_dimensions.Add("pmma_depth", exp.Layers[exp.Layers.Length - 1].Zmax);
-            device_dimensions.Add("cap_depth", Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Zmin);
-            device_dimensions.Add("interface_depth", exp.Layers[1].Zmax);
-            device_dimensions.Add("buffer_depth", exp.Layers[2].Zmax);
+            device_dimensions["zmin_pot"] = exp.Layers[1].Zmin;
+            device_dimensions["pmma_depth"] = exp.Layers[exp.Layers.Length - 1].Zmax;
+            device_dimensions["cap_depth"] = Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Zmin;
+            device_dimensions["interface_depth"] = exp.Layers[1].Zmax;
+            device_dimensions["buffer_depth"] = exp.Layers[2].Zmax;
 
             // write the parameter details for the initial potential calculation
             StreamWriter sw_initcalc = new StreamWriter(initcalc_parameterfile);
@@ -55,7 +55,7 @@ namespace TwoD_ThomasFermiPoisson
             sw_initcalc.WriteLine("\tset split_bc1 = " + (boundary_conditions["V0"] * Physics_Base.energy_V_to_meVpzC).ToString());
             sw_initcalc.WriteLine("\tset split_bc2 = " + (boundary_conditions["V1"] * Physics_Base.energy_V_to_meVpzC).ToString());
             sw_initcalc.WriteLine("\tset surface_bc = " + (0.5 * boundary_conditions["surface"]).ToString());                                   // note that the surface "kink" is halved...
-                                                                                                                                                // not sure why, but this is deal.II specific
+            // not sure why, but this is deal.II specific
             sw_initcalc.WriteLine("end");
 
             sw_initcalc.WriteLine("subsection Carrier Density Parameters");

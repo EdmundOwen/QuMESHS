@@ -251,7 +251,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_iterations)
                 {
-                    Console.WriteLine("Maximum potential change at end of iteration was " + (t * x.InfinityNorm()).ToString());
+                    Console.WriteLine("Maximum potential change at end of iteration was " + (t * Physics_Base.q_e * x.InfinityNorm()).ToString());
                     break;
                 }
             }

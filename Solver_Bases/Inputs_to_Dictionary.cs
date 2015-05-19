@@ -45,6 +45,26 @@ namespace Solver_Bases
                 else
                     inputs.Add(key, val_string);
             }
+
+            Dictionary<string, double> output = new Dictionary<string, double>();
+            Parse_Voltages(inputs, output);
+            foreach (KeyValuePair<string, double> val in output)
+                inputs.Add(val.Key, val.Value);
+        }
+
+        public static void Parse_Voltages(Dictionary<string, object> input, Dictionary<string, double> output)
+        {
+            // create a list of voltages (if they're available)
+            if (input.ContainsKey("voltages"))
+            {
+                int count = 0;
+                string[] raw_voltages = ((string)input["voltages"]).TrimStart('{').TrimEnd('}').Split(',');
+                for (int i = 0; i < raw_voltages.Length; i++)
+                {
+                    output.Add("V" + count.ToString(), double.Parse(raw_voltages[i]));
+                    count++;
+                }
+            }
         }
     }
 }

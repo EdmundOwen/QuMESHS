@@ -485,14 +485,20 @@ namespace Solver_Bases
             if (dim == 1)
                 return vec.InfinityNorm();
             else if (dim == 2)
-                return mat.InfinityNorm();
-            else if (dim == 3)
             {
-                DoubleVector mat_absmax = new DoubleVector(vol.Length);
-                for (int i = 0; i < vol.Length; i++)
-                    mat_absmax[i] = vol[i].InfinityNorm();
+                DoubleVector mat_absmax = new DoubleVector(mat.Rows);
+                for (int i = 0; i < mat.Rows; i++)
+                    mat_absmax[i] = mat.Row(i).InfinityNorm();
 
                 return mat_absmax.InfinityNorm();
+            }
+            else if (dim == 3)
+            {
+                DoubleVector vol_absmax = new DoubleVector(vol.Length);
+                for (int i = 0; i < vol.Length; i++)
+                    vol_absmax[i] = vol[i].InfinityNorm();
+
+                return vol_absmax.InfinityNorm();
             }
             else
                 throw new NotImplementedException();
