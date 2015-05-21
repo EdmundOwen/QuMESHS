@@ -8,15 +8,18 @@ namespace Solver_Bases
 {
     public interface IExperiment
     {
-        void Run();
+        bool Run();
         void Initialise(Dictionary<string, object> input_dict);
 
         SpinResolved_Data Carrier_Density { get; }
         SpinResolved_Data Dopent_Density { get; }
         Band_Data Chemical_Potential { get; }
+        Band_Data GPhi { get; }
+        Band_Data X { get; }
         ILayer[] Layers { get; }
 
         double Temperature { get; }
+        double Current_Temperature { get; }
 
         int Nx_Dens { get; }
         double Dx_Dens { get; }

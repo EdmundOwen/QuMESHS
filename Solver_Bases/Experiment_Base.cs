@@ -13,11 +13,13 @@ namespace Solver_Bases
     {
         protected Dictionary<string, double> device_dimensions, boundary_conditions;
 
-        protected SpinResolved_Data carrier_density;
-        protected SpinResolved_Data dopent_density;
-        protected SpinResolved_Data carrier_density_deriv;
-        protected SpinResolved_Data dopent_density_deriv;
+        protected SpinResolved_Data carrier_charge_density;
+        protected SpinResolved_Data dopent_charge_density;
+        protected SpinResolved_Data carrier_charge_density_deriv;
+        protected SpinResolved_Data dopent_charge_density_deriv;
         protected Band_Data chem_pot;
+        protected Band_Data x;
+        protected Band_Data gphi;
         protected ILayer[] layers;
 
         // damping parameter for Bank-Rose convergence method
@@ -38,8 +40,9 @@ namespace Solver_Bases
         protected bool using_flexPDE = false;
         protected bool using_dealii = false;
 
-        protected double initial_temperature = 300.0;
-        protected double temperature;
+        protected double initial_temperature = 300.0;       // initial temperature
+        protected double current_temperature = 300.0;       // temperature currently being simulated
+        protected double temperature;                       // target temperature
 
         protected int max_iterations = 1000;       // maximum number of runs before giving up and just outputting the data with a "not_converged" file flag
         protected bool converged = false;
@@ -193,10 +196,10 @@ namespace Solver_Bases
             // and load it into the correct classes
             for (int i = 0; i < nx_dens * ny_dens * nz_dens; i++)
             {
-                carrier_density.Spin_Up[i] = double.Parse(cardens_tmp[i].Split(' ')[0]);
-                carrier_density.Spin_Down[i] = double.Parse(cardens_tmp[i].Split(' ')[1]);
-                dopent_density.Spin_Up[i] = double.Parse(dopdens_tmp[i].Split(' ')[0]);
-                dopent_density.Spin_Down[i] = double.Parse(dopdens_tmp[i].Split(' ')[1]);
+                carrier_charge_density.Spin_Up[i] = double.Parse(cardens_tmp[i].Split(' ')[0]);
+                carrier_charge_density.Spin_Down[i] = double.Parse(cardens_tmp[i].Split(' ')[1]);
+                dopent_charge_density.Spin_Up[i] = double.Parse(dopdens_tmp[i].Split(' ')[0]);
+                dopent_charge_density.Spin_Down[i] = double.Parse(dopdens_tmp[i].Split(' ')[1]);
                 chem_pot[i] = double.Parse(chempot_tmp[i]);
             }
             // the value of t
@@ -208,7 +211,7 @@ namespace Solver_Bases
             Console.WriteLine("Data recovered.  Restarting from checkpoint");
         }
 
-        public abstract void Run();
+        public abstract bool Run();
 
         protected bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol)
         {
@@ -224,8 +227,8 @@ namespace Solver_Bases
             StreamWriter sw_chempot = new StreamWriter("chem_pot.tmp");
             for (int i = 0; i < nx_dens * ny_dens * nz_dens; i++)
             {
-                sw_cardens.WriteLine(carrier_density.Spin_Up[i].ToString() + " " + carrier_density.Spin_Down[i].ToString());
-                sw_dopdens.WriteLine(dopent_density.Spin_Up[i].ToString() + " " + dopent_density.Spin_Down[i].ToString());
+                sw_cardens.WriteLine(carrier_charge_density.Spin_Up[i].ToString() + " " + carrier_charge_density.Spin_Down[i].ToString());
+                sw_dopdens.WriteLine(dopent_charge_density.Spin_Up[i].ToString() + " " + dopent_charge_density.Spin_Down[i].ToString());
                 sw_chempot.WriteLine(chem_pot[i].ToString());
             }
             sw_cardens.Close(); sw_dopdens.Close(); sw_chempot.Close();
@@ -249,9 +252,9 @@ namespace Solver_Bases
             }
 
             // save final density out
-            (carrier_density.Spin_Summed_Data / (-1.0 * Physics_Base.q_e)).Save_Data("dens" + output_suffix);
-            (carrier_density.Spin_Up / (-1.0 * Physics_Base.q_e)).Save_Data("dens_up" + output_suffix);
-            (carrier_density.Spin_Down / (-1.0 * Physics_Base.q_e)).Save_Data("dens_down" + output_suffix);
+            (carrier_charge_density.Spin_Summed_Data / (-1.0 * Physics_Base.q_e)).Save_Data("dens" + output_suffix);
+            (carrier_charge_density.Spin_Up / (-1.0 * Physics_Base.q_e)).Save_Data("dens_up" + output_suffix);
+            (carrier_charge_density.Spin_Down / (-1.0 * Physics_Base.q_e)).Save_Data("dens_down" + output_suffix);
             
             // delete the restart flag files and data
             File.Delete("restart.flag");
@@ -438,17 +441,25 @@ namespace Solver_Bases
 
         public SpinResolved_Data Carrier_Density
         {
-            get { return carrier_density; }
+            get { return carrier_charge_density; }
         }
 
         public SpinResolved_Data Dopent_Density
         {
-            get { return dopent_density; }
+            get { return dopent_charge_density; }
         }
 
         public Band_Data Chemical_Potential
         {
             get { return chem_pot; }
+        }
+        public Band_Data GPhi
+        {
+            get { return gphi; }
+        }
+        public Band_Data X
+        {
+            get { return x; }
         }
 
         public ILayer[] Layers
@@ -459,6 +470,11 @@ namespace Solver_Bases
         public double Temperature
         {
             get { return temperature; }
+        }
+
+        public double Current_Temperature
+        {
+            get { return current_temperature; }
         }
 
         public int Nx_Dens

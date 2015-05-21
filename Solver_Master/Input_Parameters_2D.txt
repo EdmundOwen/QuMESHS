@@ -29,7 +29,7 @@
 ############## Poisson solver details #################################
 #
 # Top gate voltage
-% top_V = -1.1
+% top_V = -1.0
 #
 ## Split gate voltage
 % split_V = 0.0

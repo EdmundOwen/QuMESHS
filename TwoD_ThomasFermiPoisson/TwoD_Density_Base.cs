@@ -52,17 +52,17 @@ namespace TwoD_ThomasFermiPoisson
             else throw new NotImplementedException();
         }
 
-        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
+        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_charge_density_deriv, SpinResolved_Data dopent_charge_density_deriv, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(carrier_density_deriv.Spin_Up.mat.Rows, carrier_density_deriv.Spin_Up.mat.Cols));
-            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(carrier_density_deriv.Spin_Down.mat.Rows, carrier_density_deriv.Spin_Down.mat.Cols));
+            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(carrier_charge_density_deriv.Spin_Up.mat.Rows, carrier_charge_density_deriv.Spin_Up.mat.Cols));
+            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(carrier_charge_density_deriv.Spin_Down.mat.Rows, carrier_charge_density_deriv.Spin_Down.mat.Cols));
 
-            for (int i = 0; i < carrier_density_deriv.Spin_Up.mat.Rows; i++)
-                for (int j = 0; j < carrier_density_deriv.Spin_Up.mat.Cols; j++)
+            for (int i = 0; i < carrier_charge_density_deriv.Spin_Up.mat.Rows; i++)
+                for (int j = 0; j < carrier_charge_density_deriv.Spin_Up.mat.Cols; j++)
                 {
-                    tmp_spinup.mat[i, j] = carrier_density_deriv.Spin_Up.mat[i, j];
-                    tmp_spindown.mat[i, j] = carrier_density_deriv.Spin_Down.mat[i, j];
+                    tmp_spinup.mat[i, j] = carrier_charge_density_deriv.Spin_Up.mat[i, j];
+                    tmp_spindown.mat[i, j] = carrier_charge_density_deriv.Spin_Down.mat[i, j];
                 }
 
             SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
@@ -73,17 +73,17 @@ namespace TwoD_ThomasFermiPoisson
             return new_density;
         }
 
-        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot)
+        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(carrier_density.Spin_Up.mat.Rows, carrier_density.Spin_Up.mat.Cols));
-            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(carrier_density.Spin_Down.mat.Rows, carrier_density.Spin_Down.mat.Cols));
+            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(carrier_charge_density.Spin_Up.mat.Rows, carrier_charge_density.Spin_Up.mat.Cols));
+            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(carrier_charge_density.Spin_Down.mat.Rows, carrier_charge_density.Spin_Down.mat.Cols));
 
-            for (int i = 0; i < carrier_density.Spin_Up.mat.Rows; i++)
-                for (int j = 0; j < carrier_density.Spin_Up.mat.Cols; j++)
+            for (int i = 0; i < carrier_charge_density.Spin_Up.mat.Rows; i++)
+                for (int j = 0; j < carrier_charge_density.Spin_Up.mat.Cols; j++)
                 {
-                    tmp_spinup.mat[i, j] = carrier_density.Spin_Up.mat[i, j];
-                    tmp_spindown.mat[i, j] = carrier_density.Spin_Down.mat[i, j];
+                    tmp_spinup.mat[i, j] = carrier_charge_density.Spin_Up.mat[i, j];
+                    tmp_spindown.mat[i, j] = carrier_charge_density.Spin_Down.mat[i, j];
                 }
 
             SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
@@ -134,6 +134,6 @@ namespace TwoD_ThomasFermiPoisson
         {
             set { dy_pot = value; }
         }
-        public abstract void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot);
+        public abstract void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot);
     }
 }

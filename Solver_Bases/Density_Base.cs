@@ -135,9 +135,9 @@ namespace Solver_Bases
         /// <summary>
         /// for this method, it is assumed that the dopent density is frozen out (and therefore not altered) unless overriden
         /// </summary>
-        public virtual void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_density, ref SpinResolved_Data dopent_density, Band_Data chem_pot)
+        public virtual void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_charge_density, ref SpinResolved_Data dopent_charge_density, Band_Data chem_pot)
         {
-            Get_ChargeDensity(layers, ref carrier_density, chem_pot);
+            Get_ChargeDensity(layers, ref carrier_charge_density, chem_pot);
         }
 
         public virtual double Get_Chemical_Potential(double z, ILayer[] layers)
@@ -298,9 +298,9 @@ namespace Solver_Bases
             get { return convergence_factor; }
         }
 
-        public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot);
-        public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
-        public abstract SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot);
+        public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot);
+        public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot);
+        public abstract SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot);
         public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
         public abstract DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot);
 

@@ -26,20 +26,20 @@ namespace ThreeD_SchrodingerPoissonSolver
             this.nx = exp.Nx_Dens; this.ny = exp.Ny_Dens; this.nz = exp.Nz_Dens;
         }
 
-        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_density, SpinResolved_Data dopent_density, Band_Data chem_pot)
+        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(carrier_density.Spin_Up.vol[0].Rows, carrier_density.Spin_Up.vol[0].Cols, carrier_density.Spin_Up.vol.Length, 0.0);
-            Band_Data tmp_spindown = new Band_Data(carrier_density.Spin_Down.vol[0].Rows, carrier_density.Spin_Down.vol[0].Cols, carrier_density.Spin_Down.vol.Length, 0.0);
+            Band_Data tmp_spinup = new Band_Data(carrier_charge_density.Spin_Up.vol[0].Rows, carrier_charge_density.Spin_Up.vol[0].Cols, carrier_charge_density.Spin_Up.vol.Length, 0.0);
+            Band_Data tmp_spindown = new Band_Data(carrier_charge_density.Spin_Down.vol[0].Rows, carrier_charge_density.Spin_Down.vol[0].Cols, carrier_charge_density.Spin_Down.vol.Length, 0.0);
 
-            for (int k = 0; k < carrier_density.Spin_Up.vol.Length; k++)
+            for (int k = 0; k < carrier_charge_density.Spin_Up.vol.Length; k++)
             {
                 // fill with data
-                for (int i = 0; i < carrier_density.Spin_Up.vol[0].Rows; i++)
-                    for (int j = 0; j < carrier_density.Spin_Up.vol[0].Cols; j++)
+                for (int i = 0; i < carrier_charge_density.Spin_Up.vol[0].Rows; i++)
+                    for (int j = 0; j < carrier_charge_density.Spin_Up.vol[0].Cols; j++)
                     {
-                        tmp_spinup.vol[k][i, j] = carrier_density.Spin_Up.vol[k][i, j];
-                        tmp_spindown.vol[k][i, j] = carrier_density.Spin_Down.vol[k][i, j];
+                        tmp_spinup.vol[k][i, j] = carrier_charge_density.Spin_Up.vol[k][i, j];
+                        tmp_spindown.vol[k][i, j] = carrier_charge_density.Spin_Down.vol[k][i, j];
                     }
             }
 

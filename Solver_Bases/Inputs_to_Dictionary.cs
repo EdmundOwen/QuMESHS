@@ -61,9 +61,20 @@ namespace Solver_Bases
                 string[] raw_voltages = ((string)input["voltages"]).TrimStart('{').TrimEnd('}').Split(',');
                 for (int i = 0; i < raw_voltages.Length; i++)
                 {
-                    output.Add("V" + count.ToString(), double.Parse(raw_voltages[i]));
+                    output["V" + count.ToString()] = double.Parse(raw_voltages[i]);
                     count++;
                 }
+            }
+        }
+
+        public static void Output_Dictionary_To_File(Dictionary<string, object> input, string filename)
+        {
+            StreamWriter sw = new StreamWriter(filename);
+
+            foreach (KeyValuePair<string, object> option in input)
+            {
+                if (option.Value is bool || option.Value is int || option.Value is double || option.Value is string)
+                    sw.WriteLine("% " + option.Key + " = " + option.Value.ToString());
             }
         }
     }
