@@ -114,7 +114,7 @@ namespace TwoD_ThomasFermiPoisson
             if (!converged && carrier_charge_density.Spin_Summed_Data.InfinityNorm() != 0.0)
             {
                 int count = 0;
-                while (pot_init > tol && count < 10)
+                while (pot_init > tol_anneal && count < 20)
                 {
                     pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
                     chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
@@ -124,6 +124,7 @@ namespace TwoD_ThomasFermiPoisson
                     count++;
                 }
             }
+
 
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge" + output_suffix); sw.WriteLine(boundary_conditions["surface"].ToString()); sw.Close();
@@ -171,13 +172,14 @@ namespace TwoD_ThomasFermiPoisson
        //     pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
         //    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             //    Console.WriteLine("Initial grid complete");
+            dens_solv.DFT_Mixing_Parameter = 0.3;
             dens_solv.Set_DFT_Potential(carrier_charge_density);
-            if (!no_dft)
-            {
-                dens_solv.DFT_Mixing_Parameter = 0.3;
-                dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
-                dens_solv.Set_DFT_Potential(carrier_charge_density);
-            }
+    //        if (!no_dft)
+    //        {
+    //            dens_solv.DFT_Mixing_Parameter = 0.3;
+    //            dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
+    //            dens_solv.Set_DFT_Potential(carrier_charge_density);
+    //        }
 
             int count = 0;
             bool converged = false;
@@ -247,7 +249,7 @@ namespace TwoD_ThomasFermiPoisson
                     if (current_vxc_diff > max_vxc_diff && !no_dft)
                     {
                         dens_diff_lim /= 2.0;
-                        dens_solv.Print_DFT_diff(carrier_charge_density);
+                        //dens_solv.Print_DFT_diff(carrier_charge_density);
                         Console.WriteLine("Minimum percentage density difference reduced to " + dens_diff_lim.ToString());
                     }
                     max_vxc_diff = current_vxc_diff;
@@ -336,7 +338,6 @@ namespace TwoD_ThomasFermiPoisson
                 if (dens_solv.DFT_Mixing_Parameter != 0.0 && dens_diff.Max() < dens_diff_lim && count > 3)
                     dens_solv.Print_DFT_diff(carrier_charge_density);
                 count++;
-                chem_pot.Save_Data("chem_pot_" + count.ToString("00") + "_pde.dat");
 
                 // reset the potential if the added potential t * x is too small
                 if (converged || count > max_iterations)

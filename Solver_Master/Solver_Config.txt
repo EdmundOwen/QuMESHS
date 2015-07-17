@@ -28,6 +28,9 @@
 ## Final solution tolerance
 % tolerance = 1e-4
 #
+##
+% anneal_tolerance = 4e-3
+#
 ######## Poisson solver configuration for dopents #################################
 #
 ## Final solution tolerance

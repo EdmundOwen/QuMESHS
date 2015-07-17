@@ -17,6 +17,7 @@ namespace Solver_GUI
     {
         int dimension = 2;
         Band_Data chem_pot;
+        Band_Data val_pot;
         SpinResolved_Data car_dens;
         SpinResolved_Data dop_dens;
         IExperiment exp1d;
@@ -77,6 +78,7 @@ namespace Solver_GUI
             dimension = 1;
 
             conduction_band.Series["conduction_band_data"].Points.Clear();
+            conduction_band.Series["valence_band_data"].Points.Clear();
             conduction_band.Series["x_data"].Points.Clear();
             density.Series["car_dens_data"].Points.Clear();
             density.Series["dop_dens_data"].Points.Clear();
@@ -120,11 +122,13 @@ namespace Solver_GUI
             Band_Data x = Physics_Base.q_e * exp1d.X;
             Band_Data gphi = exp1d.GPhi;
             chem_pot = (Input_Band_Structure.Get_BandStructure_Grid(layers, dz, nz, zmin) - exp1d.Chemical_Potential);// + x);
+            val_pot = (-1.0 * Input_Band_Structure.Get_BandStructure_Grid(layers, dz, nz, zmin) - exp1d.Chemical_Potential);// + x);
 
             for (int j = 0; j < chem_pot.Length; j++)
             {
                 double pos = zmin + dz * j;
                 conduction_band.Series["conduction_band_data"].Points.AddXY(pos, chem_pot[j]);
+                conduction_band.Series["valence_band_data"].Points.AddXY(pos, val_pot[j]);
                 conduction_band.Series["x_data"].Points.AddXY(pos, x[j]);
                 density.Series["car_dens_data"].Points.AddXY(pos, car_dens.Spin_Summed_Data[j]);
                 density.Series["dop_dens_data"].Points.AddXY(pos, dop_dens.Spin_Summed_Data[j]);
@@ -172,6 +176,7 @@ namespace Solver_GUI
             inputs = new Dictionary<string, object>();
 
             conduction_band.Series["conduction_band_data"].Points.Clear();
+            conduction_band.Series["valence_band_data"].Points.Clear();
             conduction_band.Series["x_data"].Points.Clear();
             density.Series["car_dens_data"].Points.Clear();
             density.Series["dop_dens_data"].Points.Clear();
@@ -238,10 +243,18 @@ namespace Solver_GUI
 
         private void Update_BandStructure()
         {
+            double thickness = 0.0;
             // update bandstructure combo list
             bandstructureCombo.Items.Clear();
             for (int i = 0; i < bandstructure_list.Items.Count; i++)
+            {
                 bandstructureCombo.Items.Add(i.ToString() + " " + bandstructure_list.Items[i].Text);
+                if (bandstructure_list.Items[i].SubItems[1].Text != "")
+                    thickness += double.Parse(bandstructure_list.Items[i].SubItems[1].Text);
+            }
+
+            total_thickness_val.Text = thickness.ToString();
+            dz1Dval.Text = (thickness / double.Parse(nz1Dval.Text)).ToString();
         }
     
         private void material_combo_SelectedIndexChanged(object sender, EventArgs e)
@@ -330,6 +343,82 @@ namespace Solver_GUI
             }
 
             sw.Close();
+        }
+
+        private void mnuOpenBandStructure_Click(object sender, EventArgs e)
+        {
+            // load the band data from a given file
+            openFileDialog1.InitialDirectory = Environment.CurrentDirectory;
+            openFileDialog1.FileName = bandstructurefilename.Text;
+            openFileDialog1.ShowDialog();
+            // read data from input file (discarding comment lines and white space)
+            string[] bandstructure = (from line in File.ReadAllLines(openFileDialog1.FileName)
+                                  where !line.StartsWith("#") && line.Trim().Length != 0
+                                  select line).ToArray();
+
+
+            bandstructure_list.Items.Clear();
+            for (int i = 0; i < bandstructure.Length; i++)
+            {
+                // get the layer data and put it into a dictionary
+                string[] layer_data = bandstructure[i].Split();
+                Dictionary<string, string> layer_dict = new Dictionary<string, string>();
+                for (int j = 0; j < layer_data.Length; j++)
+                    layer_dict.Add(layer_data[j].Split('=')[0], layer_data[j].Split('=')[1]);
+
+                string mat = "";
+                string t = "";
+                string x = "";
+                string nd = "";
+                string na = "";
+                ListViewItem layer;
+
+                // check if it is the surface
+                if (layer_dict.ContainsKey("surface"))
+                {
+                    layer = new ListViewItem(new System.Windows.Forms.ListViewItem.ListViewSubItem[] {
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "surface", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Window, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)))),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Control, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)))),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Control, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)))),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Control, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)))),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Control, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0))))}, -1);
+                    layer.UseItemStyleForSubItems = false;
+                }
+                else if (layer_dict["mat"] == "substrate")
+                {
+                    if (layer_dict.ContainsKey("Na"))
+                        na = layer_dict["Na"];
+                    if (layer_dict.ContainsKey("Nd"))
+                        nd = layer_dict["Nd"];
+
+                    layer = new ListViewItem(new System.Windows.Forms.ListViewItem.ListViewSubItem[] {
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "substrate"),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Control, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)))),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, "", System.Drawing.SystemColors.WindowText, System.Drawing.SystemColors.Control, new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)))),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, nd),
+            new System.Windows.Forms.ListViewItem.ListViewSubItem(null, na)}, -1);
+                    layer.UseItemStyleForSubItems = false;
+                }
+                else
+                {
+                    mat = layer_dict["mat"];
+                    t = layer_dict["t"];
+                    if (layer_dict.ContainsKey("x"))
+                        x = layer_dict["x"];
+                    if (layer_dict.ContainsKey("Na"))
+                        na = layer_dict["Na"];
+                    if (layer_dict.ContainsKey("Nd"))
+                        nd = layer_dict["Nd"];
+                 
+                    // or the substrate
+                    layer = new ListViewItem(new string[] { mat, t, x, nd, na });
+                }
+
+                bandstructure_list.Items.Add(layer);
+            }
+
+            bandstructure_list.Refresh();
+            Update_BandStructure();
         }
     }
 }

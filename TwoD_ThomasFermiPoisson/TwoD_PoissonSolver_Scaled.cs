@@ -119,7 +119,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("\tERRLIM=1e-6");
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -322,6 +322,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("VARIABLES");
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
+            sw.WriteLine("\tERRLIM=1e-5");
             // no regridding for the newton step.  Just use the original grid from the potential calculation
             //sw.WriteLine("REGRID = OFF");
             sw.WriteLine();

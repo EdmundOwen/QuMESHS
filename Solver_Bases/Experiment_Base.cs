@@ -35,7 +35,7 @@ namespace Solver_Bases
         protected double xmin_pot = -1.0, ymin_pot = -1.0, zmin_pot = -1.0;
         protected int nx_pot = 1, ny_pot = 1, nz_pot = 1;
 
-        protected double tol;
+        protected double tol, tol_anneal;
 
         protected bool using_flexPDE = false;
         protected bool using_dealii = false;
@@ -60,6 +60,8 @@ namespace Solver_Bases
         {
             // solver inputs
             Get_From_Dictionary<double>(input_dict, "tolerance", ref tol);
+            tol_anneal = tol;
+            Get_From_Dictionary<double>(input_dict, "anneal_tolerance", ref tol_anneal, true);
             Get_From_Dictionary(input_dict, "max_iterations", ref max_iterations, true);
 
             // will not use FlexPDE unless told to

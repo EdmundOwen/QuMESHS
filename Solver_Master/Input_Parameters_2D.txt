@@ -47,7 +47,7 @@
 ############## Generic density solver details #########################
 #
 ## Use DFT or not
-% no_dft = true
+% no_dft = false
 #
 ## Maximum number of iterations before giving up
 % max_iterations = 1000
@@ -96,28 +96,28 @@
 ############## Run details #######################################
 #
 ## whether to make this a batch run or not
-% batch_run = false
+% batch_run = true
 #
 ##
 % batch_params = {top_V, V0, V1=V0}
 #
 ## 
-% init_V0 = -1.0
+% init_V0 = -0.47
 #
 ##
-% delta_V0 = 0.05
+% delta_V0 = 0.001
 #
 ##
-% no_V0 = 10
+% no_V0 = 26
 #
 ##
-% init_top_V = -1.8
+% init_top_V = -1.56
 #
 ##
-% delta_top_V = 0.1
+% delta_top_V = 0.02
 ##
 #
-% no_top_V = 9
+% no_top_V = 13
 #
 ############## Simulation domain details for dopents ##############################
 #

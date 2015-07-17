@@ -46,11 +46,12 @@ namespace Solver_GUI
             System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuNew = new System.Windows.Forms.ToolStripMenuItem();
@@ -74,6 +75,9 @@ namespace Solver_GUI
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.inputTab = new System.Windows.Forms.TabControl();
             this.bandstructure = new System.Windows.Forms.TabPage();
+            this.bandstructurefilename = new System.Windows.Forms.TextBox();
+            this.bandstructurefile_label = new System.Windows.Forms.Label();
+            this.bandstructure_create_button = new System.Windows.Forms.Button();
             this.group_newlayer = new System.Windows.Forms.GroupBox();
             this.newlayer_naval = new System.Windows.Forms.TextBox();
             this.newlayer_na_label = new System.Windows.Forms.Label();
@@ -172,9 +176,9 @@ namespace Solver_GUI
             this.subsplit = new System.Windows.Forms.SplitContainer();
             this.conduction_band = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.density = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.bandstructure_create_button = new System.Windows.Forms.Button();
-            this.bandstructurefile_label = new System.Windows.Forms.Label();
-            this.bandstructurefilename = new System.Windows.Forms.TextBox();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.total_thickness_val = new System.Windows.Forms.TextBox();
+            this.total_thickness_label = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
@@ -235,7 +239,7 @@ namespace Solver_GUI
             this.mnuNewInputFile,
             this.solverConfigToolStripMenuItem});
             this.mnuNew.Name = "mnuNew";
-            this.mnuNew.Size = new System.Drawing.Size(138, 22);
+            this.mnuNew.Size = new System.Drawing.Size(152, 22);
             this.mnuNew.Text = "New";
             // 
             // mnuNewBandStructure
@@ -263,7 +267,7 @@ namespace Solver_GUI
             this.mnuOpenInputFile,
             this.solverConfigToolStripMenuItem1});
             this.mnuOpen.Name = "mnuOpen";
-            this.mnuOpen.Size = new System.Drawing.Size(138, 22);
+            this.mnuOpen.Size = new System.Drawing.Size(152, 22);
             this.mnuOpen.Text = "Open";
             // 
             // mnuOpenBandStructure
@@ -271,6 +275,7 @@ namespace Solver_GUI
             this.mnuOpenBandStructure.Name = "mnuOpenBandStructure";
             this.mnuOpenBandStructure.Size = new System.Drawing.Size(152, 22);
             this.mnuOpenBandStructure.Text = "Band Structure";
+            this.mnuOpenBandStructure.Click += new System.EventHandler(this.mnuOpenBandStructure_Click);
             // 
             // mnuOpenInputFile
             // 
@@ -287,31 +292,31 @@ namespace Solver_GUI
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(135, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuSave
             // 
             this.mnuSave.Name = "mnuSave";
             this.mnuSave.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.mnuSave.Size = new System.Drawing.Size(138, 22);
+            this.mnuSave.Size = new System.Drawing.Size(152, 22);
             this.mnuSave.Text = "Save";
             // 
             // mnuSaveAs
             // 
             this.mnuSaveAs.Name = "mnuSaveAs";
-            this.mnuSaveAs.Size = new System.Drawing.Size(138, 22);
+            this.mnuSaveAs.Size = new System.Drawing.Size(152, 22);
             this.mnuSaveAs.Text = "Save As";
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(135, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuExit
             // 
             this.mnuExit.Name = "mnuExit";
             this.mnuExit.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Q)));
-            this.mnuExit.Size = new System.Drawing.Size(138, 22);
+            this.mnuExit.Size = new System.Drawing.Size(152, 22);
             this.mnuExit.Text = "Exit";
             this.mnuExit.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -381,6 +386,8 @@ namespace Solver_GUI
             // 
             // bandstructure
             // 
+            this.bandstructure.Controls.Add(this.total_thickness_label);
+            this.bandstructure.Controls.Add(this.total_thickness_val);
             this.bandstructure.Controls.Add(this.bandstructurefilename);
             this.bandstructure.Controls.Add(this.bandstructurefile_label);
             this.bandstructure.Controls.Add(this.bandstructure_create_button);
@@ -399,6 +406,33 @@ namespace Solver_GUI
             this.bandstructure.TabIndex = 0;
             this.bandstructure.Text = "Band Structure";
             this.bandstructure.UseVisualStyleBackColor = true;
+            // 
+            // bandstructurefilename
+            // 
+            this.bandstructurefilename.Location = new System.Drawing.Point(32, 584);
+            this.bandstructurefilename.Name = "bandstructurefilename";
+            this.bandstructurefilename.Size = new System.Drawing.Size(294, 20);
+            this.bandstructurefilename.TabIndex = 10;
+            this.bandstructurefilename.Text = "BandStructure.txt";
+            // 
+            // bandstructurefile_label
+            // 
+            this.bandstructurefile_label.AutoSize = true;
+            this.bandstructurefile_label.Location = new System.Drawing.Point(29, 568);
+            this.bandstructurefile_label.Name = "bandstructurefile_label";
+            this.bandstructurefile_label.Size = new System.Drawing.Size(128, 13);
+            this.bandstructurefile_label.TabIndex = 9;
+            this.bandstructurefile_label.Text = "Band Structure File Name";
+            // 
+            // bandstructure_create_button
+            // 
+            this.bandstructure_create_button.Location = new System.Drawing.Point(342, 578);
+            this.bandstructure_create_button.Name = "bandstructure_create_button";
+            this.bandstructure_create_button.Size = new System.Drawing.Size(143, 31);
+            this.bandstructure_create_button.TabIndex = 8;
+            this.bandstructure_create_button.Text = "Create Band Structure File";
+            this.bandstructure_create_button.UseVisualStyleBackColor = true;
+            this.bandstructure_create_button.Click += new System.EventHandler(this.bandstructure_create_button_Click);
             // 
             // group_newlayer
             // 
@@ -552,21 +586,25 @@ namespace Solver_GUI
             // thickness_header
             // 
             this.thickness_header.Text = "Thickness / nm";
+            this.thickness_header.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.thickness_header.Width = 90;
             // 
             // alloy_header
             // 
             this.alloy_header.Text = "Alloy Composition (x)";
+            this.alloy_header.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.alloy_header.Width = 112;
             // 
             // donor_header
             // 
             this.donor_header.Text = "Nd / cm^-3";
+            this.donor_header.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.donor_header.Width = 74;
             // 
             // acceptor_header
             // 
             this.acceptor_header.Text = "Na / cm^-3";
+            this.acceptor_header.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.acceptor_header.Width = 103;
             // 
             // editLayer_Button
@@ -1358,9 +1396,14 @@ namespace Solver_GUI
             series2.ChartArea = "ChartArea1";
             series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series2.Legend = "Legend1";
-            series2.Name = "x_data";
+            series2.Name = "valence_band_data";
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series3.Legend = "Legend1";
+            series3.Name = "x_data";
             this.conduction_band.Series.Add(series1);
             this.conduction_band.Series.Add(series2);
+            this.conduction_band.Series.Add(series3);
             this.conduction_band.Size = new System.Drawing.Size(668, 322);
             this.conduction_band.TabIndex = 5;
             this.conduction_band.Text = "chart1";
@@ -1373,51 +1416,46 @@ namespace Solver_GUI
             this.density.Legends.Add(legend2);
             this.density.Location = new System.Drawing.Point(3, 3);
             this.density.Name = "density";
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series3.Legend = "Legend1";
-            series3.Name = "car_dens_data";
             series4.ChartArea = "ChartArea1";
             series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series4.Legend = "Legend1";
-            series4.Name = "dop_dens_data";
+            series4.Name = "car_dens_data";
             series5.ChartArea = "ChartArea1";
             series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series5.Legend = "Legend1";
-            series5.Name = "gphi_data";
-            this.density.Series.Add(series3);
+            series5.Name = "dop_dens_data";
+            series6.ChartArea = "ChartArea1";
+            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series6.Legend = "Legend1";
+            series6.Name = "gphi_data";
             this.density.Series.Add(series4);
             this.density.Series.Add(series5);
+            this.density.Series.Add(series6);
             this.density.Size = new System.Drawing.Size(667, 303);
             this.density.TabIndex = 0;
             this.density.Text = "chart1";
             // 
-            // bandstructure_create_button
+            // openFileDialog1
             // 
-            this.bandstructure_create_button.Location = new System.Drawing.Point(342, 552);
-            this.bandstructure_create_button.Name = "bandstructure_create_button";
-            this.bandstructure_create_button.Size = new System.Drawing.Size(143, 31);
-            this.bandstructure_create_button.TabIndex = 8;
-            this.bandstructure_create_button.Text = "Create Band Structure File";
-            this.bandstructure_create_button.UseVisualStyleBackColor = true;
-            this.bandstructure_create_button.Click += new System.EventHandler(this.bandstructure_create_button_Click);
+            this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // bandstructurefile_label
+            // total_thickness_val
             // 
-            this.bandstructurefile_label.AutoSize = true;
-            this.bandstructurefile_label.Location = new System.Drawing.Point(29, 542);
-            this.bandstructurefile_label.Name = "bandstructurefile_label";
-            this.bandstructurefile_label.Size = new System.Drawing.Size(128, 13);
-            this.bandstructurefile_label.TabIndex = 9;
-            this.bandstructurefile_label.Text = "Band Structure File Name";
+            this.total_thickness_val.Location = new System.Drawing.Point(100, 523);
+            this.total_thickness_val.Name = "total_thickness_val";
+            this.total_thickness_val.ReadOnly = true;
+            this.total_thickness_val.Size = new System.Drawing.Size(92, 20);
+            this.total_thickness_val.TabIndex = 11;
+            this.total_thickness_val.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
-            // bandstructurefilename
+            // total_thickness_label
             // 
-            this.bandstructurefilename.Location = new System.Drawing.Point(32, 558);
-            this.bandstructurefilename.Name = "bandstructurefilename";
-            this.bandstructurefilename.Size = new System.Drawing.Size(294, 20);
-            this.bandstructurefilename.TabIndex = 10;
-            this.bandstructurefilename.Text = "BandStructure.txt";
+            this.total_thickness_label.AutoSize = true;
+            this.total_thickness_label.Location = new System.Drawing.Point(15, 526);
+            this.total_thickness_label.Name = "total_thickness_label";
+            this.total_thickness_label.Size = new System.Drawing.Size(83, 13);
+            this.total_thickness_label.TabIndex = 12;
+            this.total_thickness_label.Text = "Total Thickness";
             // 
             // Solver_GUI
             // 
@@ -1597,6 +1635,9 @@ namespace Solver_GUI
         private System.Windows.Forms.TextBox bandstructurefilename;
         private System.Windows.Forms.Label bandstructurefile_label;
         private System.Windows.Forms.Button bandstructure_create_button;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.Label total_thickness_label;
+        private System.Windows.Forms.TextBox total_thickness_val;
     }
 }
 
