@@ -15,7 +15,7 @@ namespace Solver_Bases
         {
             // check that the input file exists
             if (!File.Exists(filename))
-                throw new FileNotFoundException();
+                throw new FileNotFoundException("Error - cannot find the file " + filename + " at this location...");
 
             // read all data from input file
             string[] raw_input = (from line in File.ReadAllLines(filename)

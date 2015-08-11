@@ -11,6 +11,9 @@ namespace Solver_Bases
         protected string flexpde_script;
         protected string flexpde_output;
 
+        protected double pot_tol = 1e-6;
+        protected double newton_tol = 1e-5;
+
         public FlexPDE_Base(bool external_code, Dictionary<string, object> input)
             : base(external_code) 
         {
@@ -21,6 +24,10 @@ namespace Solver_Bases
 
             this.initcalc_location = flexpde_location;
             this.newton_location = flexpde_location;
+
+            // if an output suffix was not defined before, allocate it as a null string
+            if (!input.ContainsKey("output_suffix"))
+                input.Add("output_suffix", "");
 
             this.flexpde_script = (string)input["FlexPDE_file"];
             if (((string)input["output_suffix"]).Length == 4)
@@ -33,6 +40,12 @@ namespace Solver_Bases
 
             // for flexpde, we need the -S parameter included in the input
             flexpde_options = "-S " + flexpde_script;
+
+            // set the tolerances for FlexPDE if specified in the input dictionary
+            if (input.ContainsKey("pot_tol"))
+                pot_tol = (double)input["pot_tol"];
+            if (input.ContainsKey("newton_tol"))
+                newton_tol = (double)input["newton_tol"];
         }
 
         protected override string[] Trim_Potential_File(string[] lines)

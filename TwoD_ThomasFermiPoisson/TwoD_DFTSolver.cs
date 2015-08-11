@@ -35,12 +35,12 @@ namespace TwoD_ThomasFermiPoisson
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
         {
             // convert the chemical potential into a quantum mechanical potential
-            Band_Data band_pot = chem_pot.DeepenThisCopy();
-            Get_Potential(ref band_pot, layers);
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, band_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot);
             DoubleHermitianEigDecompServer eig_server = new DoubleHermitianEigDecompServer();
-            eig_server.ComputeEigenValueRange(band_pot.mat.Min(), no_kb_T * Physics_Base.kB * temperature);
+            eig_server.ComputeEigenValueRange(dft_pot.mat.Min(), no_kb_T * Physics_Base.kB * temperature);
             eig_server.ComputeVectors = true;
             DoubleHermitianEigDecomp eig_decomp = eig_server.Factor(hamiltonian);
 
@@ -53,9 +53,6 @@ namespace TwoD_ThomasFermiPoisson
                                     select val).ToArray().Length;
             }
 
-            DoubleMatrix dens_up = new DoubleMatrix(nx, ny, 0.0);
-            DoubleMatrix dens_down = new DoubleMatrix(nx, ny, 0.0);
-
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                 {
@@ -63,7 +60,11 @@ namespace TwoD_ThomasFermiPoisson
 
                     // do not add anything to the density if on the edge of the domain
                     if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
+                    {
+                        charge_density.Spin_Up.mat[i, j] = 0.0;
+                        charge_density.Spin_Down.mat[i, j] = 0.0;
                         continue;
+                    }
 
                     for (int k = 0; k < max_wavefunction; k++)
                     {
@@ -73,12 +74,12 @@ namespace TwoD_ThomasFermiPoisson
                     }
 
                     // just share the densities (there is no spin polarisation)
-                    dens_up[i, j] = 0.5 * dens_val;
-                    dens_down[i, j] = 0.5 * dens_val;
+                    charge_density.Spin_Up.mat[i, j] = 0.5 * dens_val;
+                    charge_density.Spin_Down.mat[i, j] = 0.5 * dens_val;
                 }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            charge_density = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            charge_density = -1.0 * Physics_Base.q_e * charge_density;
         }
 
         /// <summary>
@@ -125,10 +126,10 @@ namespace TwoD_ThomasFermiPoisson
         public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
         {
             // convert the chemical potential into a quantum mechanical potential
-            Band_Data band_pot = chem_pot.DeepenThisCopy();
-            Get_Potential(ref band_pot, layers);
+            Band_Data dft_pot = chem_pot.DeepenThisCopy();
+            Get_Potential(ref dft_pot, layers);
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, band_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
@@ -136,39 +137,34 @@ namespace TwoD_ThomasFermiPoisson
                                     where val < no_kb_T * Physics_Base.kB * temperature
                                     select val).ToArray().Length;
 
-            DoubleMatrix dens_up_deriv = new DoubleMatrix(nx, ny, 0.0);
-            DoubleMatrix dens_down_deriv = new DoubleMatrix(nx, ny, 0.0);
-
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
                 {
-                    double dens_val = 0.0;
                     double dens_val_deriv = 0.0;
-                    double result = 0.0;
 
                     // do not add anything to the density if on the edge of the domain
                     if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
+                    {
+                        charge_density_deriv.Spin_Up.mat[i, j] = 0.0;
+                        charge_density_deriv.Spin_Down.mat[i, j] = 0.0;
                         continue;
+                    }
 
                     for (int k = 0; k < max_wavefunction; k++)
                     {
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 50 * k_b * T above mu = 0
-                        dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);
                         dens_val_deriv += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS_Deriv(eig_decomp.EigenValue(k), no_kb_T);
                     }
 
-                    result = Physics_Base.q_e * Physics_Base.q_e * dens_val_deriv;
-                   // if (this.alpha_dft != 0.0)
-                   //     result += dens_val_deriv * dens_val_deriv * Physics_Base.Get_XC_Potential_Deriv(dens_val);
-
                     // just share the densities (there is no spin polarisation)
-                    dens_up_deriv[i, j] = 0.5 * result;
-                    dens_down_deriv[i, j] = 0.5 * result;
+                    charge_density_deriv.Spin_Up.mat[i, j] = 0.5 * dens_val_deriv;
+                    charge_density_deriv.Spin_Down.mat[i, j] = 0.5 * dens_val_deriv;
                 }
 
-                charge_density_deriv = new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
-            }
+            // and multiply the density derivative by e to get the charge density and by e to convert it to d/dphi (as increasing phi decreases the charge: dn/dphi*-e^2 )
+            charge_density_deriv = Physics_Base.q_e * Physics_Base.q_e * charge_density_deriv;
+        }
 
         /// <summary>
         /// returns the eigen-energies for the given potential and charge density
@@ -208,10 +204,7 @@ namespace TwoD_ThomasFermiPoisson
             // set diagonal elements
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
-                {
-                    potential[i, j] = pot.mat[i, j] + dft_pot.mat[i, j];
-                    result[i * ny + j, i * ny + j] = -2.0 * tx + -2.0 * ty + potential[i, j];
-                }
+                    result[i * ny + j, i * ny + j] = -2.0 * tx + -2.0 * ty + pot.mat[i, j];
 
             return result;
         }

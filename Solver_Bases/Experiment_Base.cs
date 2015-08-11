@@ -47,6 +47,9 @@ namespace Solver_Bases
         protected int max_iterations = 1000;       // maximum number of runs before giving up and just outputting the data with a "not_converged" file flag
         protected bool converged = false;
 
+        protected bool initial_run = true;      // should we do an initial run which stops before convergence in order to get a better initial density distribution
+        protected int initial_run_steps = 5;    // and if yes, how many steps should it iterate for?
+
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
         protected bool TF_only = false;      // only run Thomas-Fermi semi-classical approximation... no quantum mechanics
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
@@ -63,6 +66,9 @@ namespace Solver_Bases
             tol_anneal = tol;
             Get_From_Dictionary<double>(input_dict, "anneal_tolerance", ref tol_anneal, true);
             Get_From_Dictionary(input_dict, "max_iterations", ref max_iterations, true);
+
+            Get_From_Dictionary<bool>(input_dict, "initial_run", ref initial_run, true);
+            Get_From_Dictionary(input_dict, "initial_run_steps", ref initial_run_steps, true);
 
             // will not use FlexPDE unless told to
             if (input_dict.ContainsKey("use_FlexPDE")) this.using_flexPDE = (bool)input_dict["use_FlexPDE"]; else using_flexPDE = false;

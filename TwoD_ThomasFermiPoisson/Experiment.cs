@@ -96,9 +96,9 @@ namespace TwoD_ThomasFermiPoisson
             }
 
             // and then run the DFT solver at the base temperature over a limited range
-      //      TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-            TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
-     //       TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
+            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+      //      TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+    //        TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
            dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
            dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
      //       TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
@@ -110,17 +110,27 @@ namespace TwoD_ThomasFermiPoisson
                 dft_solv.DFT_Mixing_Parameter = 0.3;
 
             // do preliminary run to correct for initial discretised form of rho_prime
-            converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, 5);
-            if (!converged && carrier_charge_density.Spin_Summed_Data.InfinityNorm() != 0.0)
+            if (initial_run)
+            {
+                converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, initial_run_steps);
+                // and calculate the potential given the density from this initial run
+                pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
+                chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
+            }
+            if ((!converged && carrier_charge_density.Spin_Summed_Data.InfinityNorm() != 0.0) || !initial_run)
             {
                 int count = 0;
                 while (pot_init > tol_anneal && count < 20)
                 {
-                    pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
-                    chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
+                    if (count != 0)
+                    {
+                        pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
+                        chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
+                    }
+
                     // run the iteration routine!
                     converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
-
+                    
                     count++;
                 }
             }
@@ -172,14 +182,14 @@ namespace TwoD_ThomasFermiPoisson
        //     pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
         //    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             //    Console.WriteLine("Initial grid complete");
-            dens_solv.DFT_Mixing_Parameter = 0.3;
+            dens_solv.DFT_Mixing_Parameter = 0.0;
             dens_solv.Set_DFT_Potential(carrier_charge_density);
-    //        if (!no_dft)
-    //        {
-    //            dens_solv.DFT_Mixing_Parameter = 0.3;
-    //            dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
-    //            dens_solv.Set_DFT_Potential(carrier_charge_density);
-    //        }
+            if (!no_dft)
+            {
+                dens_solv.DFT_Mixing_Parameter = 0.3;
+                dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
+                dens_solv.Set_DFT_Potential(carrier_charge_density);
+            }
 
             int count = 0;
             bool converged = false;

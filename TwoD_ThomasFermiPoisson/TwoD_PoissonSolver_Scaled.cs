@@ -31,7 +31,7 @@ namespace TwoD_ThomasFermiPoisson
         List<double> gate_bcs;
         double split_width;
         double surface;
-
+        
         double z_scaling;
 
         public TwoD_PoissonSolver_Scaled(Experiment exp, bool using_external_code, Dictionary<string, object> input)
@@ -119,7 +119,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=1e-6");
+            sw.WriteLine("\tERRLIM=" + pot_tol.ToString());
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             // this is where the density variable
@@ -292,26 +292,30 @@ namespace TwoD_ThomasFermiPoisson
         {
             StreamWriter sw = new StreamWriter(output_file);
 
+            // an edge to the domain which FlexPDE will see gphi outside of the grid on which the density, etc. is defined.
+            // the point is that the step functions will cut off the edge of lap.dat on one side so we make the window a little bigger
+            double gphi_tol = 1.0;
+
             // generate summary containing residual integrals for car dens (will be used later for x and phi)
             string window_function_string;
             if (exp.Ymin_Dens < 0.0)
-                window_function_string = "(ustep(x + " + (-1.0 * exp.Ymin_Dens).ToString() + ")";
+                window_function_string = "(ustep(x + " + (-1.0 * (exp.Ymin_Dens - gphi_tol)).ToString() + ")";
             else
-                window_function_string = "(ustep(x - " + exp.Ymin_Dens.ToString() + ")";
+                window_function_string = "(ustep(x - " + (exp.Ymin_Dens - gphi_tol).ToString() + ")";
             double xmax = exp.Ymin_Dens + (exp.Ny_Dens - 1) * exp.Dy_Dens;
             if (xmax < 0.0)
-                window_function_string = window_function_string + " - ustep(x + " + (-1.0 * xmax).ToString() + "))";
+                window_function_string = window_function_string + " - ustep(x + " + (-1.0 * (xmax + gphi_tol)).ToString() + "))";
             else
-                window_function_string = window_function_string + " - ustep(x - " + xmax.ToString() + "))";
+                window_function_string = window_function_string + " - ustep(x - " + (xmax + gphi_tol).ToString() + "))";
             if (exp.Zmin_Dens < 0.0)
-                window_function_string = window_function_string + " * (ustep(y + " + (-1.0 * z_scaling * exp.Zmin_Dens).ToString() + ")";
+                window_function_string = window_function_string + " * (ustep(y + " + (-1.0 * z_scaling * (exp.Zmin_Dens - gphi_tol)).ToString() + ")";
             else
-                window_function_string = window_function_string + " * (ustep(y - " + (z_scaling * exp.Zmin_Dens).ToString() + ")";
+                window_function_string = window_function_string + " * (ustep(y - " + (z_scaling * (exp.Zmin_Dens - gphi_tol)).ToString() + ")";
             double ymax = z_scaling * (exp.Zmin_Dens + (exp.Nz_Dens - 1) * exp.Dz_Dens);
             if (ymax < 0.0)
-                window_function_string = window_function_string + " - ustep(y + " + (-1.0 * ymax).ToString() + "))";
+                window_function_string = window_function_string + " - ustep(y + " + (-1.0 * (ymax + gphi_tol)).ToString() + "))";
             else
-                window_function_string = window_function_string + " - ustep(y - " + ymax.ToString() + "))";
+                window_function_string = window_function_string + " - ustep(y - " + (ymax + gphi_tol).ToString() + "))";
 
             //string minus_g_phi = "(dx(eps * dx(phi + t * new_phi)) + z_scaling * dy(eps * z_scaling * dy(phi + t * new_phi)) + " +  window_function_string + " * car_dens + dop_dens)";
             //minus_g_phi += " * upulse(y - well_depth + 200, y - well_depth - 100)";
@@ -322,7 +326,7 @@ namespace TwoD_ThomasFermiPoisson
             sw.WriteLine("VARIABLES");
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
-            sw.WriteLine("\tERRLIM=1e-5");
+            sw.WriteLine("\tERRLIM=" + newton_tol.ToString());
             // no regridding for the newton step.  Just use the original grid from the potential calculation
             //sw.WriteLine("REGRID = OFF");
             sw.WriteLine();

@@ -47,10 +47,7 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             device_dimensions.Add("interface_depth", Layers[1].Zmax);
             pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
-
-            // and load the output suffix for identification of output files
-            Get_From_Dictionary<string>(input_dict, "output_suffix", ref output_suffix, true);
-
+            
             Console.WriteLine("Experimental parameters initialised");
         }
 
@@ -111,7 +108,31 @@ namespace ThreeD_SchrodingerPoissonSolver
             else
                 dft_solv.DFT_Mixing_Parameter = 0.1;
 
-            converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
+            // do preliminary run to correct for initial discretised form of rho_prime
+            if (initial_run)
+            {
+                converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, initial_run_steps);
+                // and calculate the potential given the density from this initial run
+                pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
+                chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
+            }
+            if ((!converged && carrier_charge_density.Spin_Summed_Data.InfinityNorm() != 0.0) || !initial_run)
+            {
+                int count = 0;
+                while (pot_init > tol_anneal && count < 20)
+                {
+                    if (count != 0)
+                    {
+                        pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
+                        chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
+                    }
+
+                    // run the iteration routine!
+                    converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
+
+                    count++;
+                }
+            }
 
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(boundary_conditions["surface"].ToString()); sw.Close();
@@ -157,6 +178,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         double min_dens_diff = 0.02; // minimum bound for the required, percentage density difference for updating the dft potential
         double min_vxc_diff = 0.1; // minimum difference in the dft potential for convergence
         double min_alpha = 0.03; // minimum possible value of the dft mixing parameter
+        double pot_init = double.MaxValue;
         protected override bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_iterations)
         {
             dens_solv.Set_DFT_Potential(carrier_charge_density);
@@ -244,6 +266,9 @@ namespace ThreeD_SchrodingerPoissonSolver
 
                 base.Checkpoint();
 
+                if (count == 0)
+                    pot_init = Physics_Base.q_e * x.InfinityNorm();
+
                 stpwch.Stop();
                 Console.WriteLine("Iter = " + count.ToString() + "\tDens = " + dens_diff.Max().ToString("F4") + "\tPot = " + (Physics_Base.q_e * x.InfinityNorm()).ToString("F6") + "\tt = " + t.ToString("F5") + "\ttime = " + stpwch.Elapsed.TotalMinutes.ToString("F"));
                 count++;
@@ -301,7 +326,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         void Initialise_from_1D(Dictionary<string, object> input_dict)
         {
             // get data from dictionary
-            SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["SpinResolved_Density"];
+            SpinResolved_Data tmp_1d_density = (SpinResolved_Data)input_dict["Carrier_Density"];
             SpinResolved_Data tmp_1d_dopdens = (SpinResolved_Data)input_dict["Dopent_Density"];
             Band_Data tmp_pot_1d = (Band_Data)input_dict["Chemical_Potential"];
 

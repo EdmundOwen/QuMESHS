@@ -130,7 +130,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tu");
             sw.WriteLine("SELECT");
             // gives the flexPDE tolerance for the finite element solve
-            sw.WriteLine("\tERRLIM=5e-3");
+            sw.WriteLine("\tERRLIM=" + pot_tol.ToString());
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine("DEFINITIONS");
             sw.WriteLine("\tband_gap");
@@ -328,7 +328,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tu");
             sw.WriteLine();
             sw.WriteLine("SELECT");
-            sw.WriteLine("\tERRLIM=5e-3");
+            sw.WriteLine("\tERRLIM=" + newton_tol.ToString());
             sw.WriteLine("\tGRIDLIMIT=20");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
