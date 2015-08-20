@@ -70,7 +70,7 @@ namespace TwoD_ThomasFermiPoisson
             // finally, get the charge density and send it to this new array
             Get_ChargeDensity_Deriv(layers, ref new_density, chem_pot);
 
-            return new_density;
+            return new_density + dopent_charge_density_deriv;
         }
 
         public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot)
@@ -91,7 +91,7 @@ namespace TwoD_ThomasFermiPoisson
             // finally, get the charge density and send it to this new array
             Get_ChargeDensity(layers, ref new_density, chem_pot);
 
-            return new_density;
+            return new_density + dopent_charge_density;
         }
 
         public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)

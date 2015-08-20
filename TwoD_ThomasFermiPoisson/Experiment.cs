@@ -95,6 +95,10 @@ namespace TwoD_ThomasFermiPoisson
                     chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
             }
 
+            // get the dopent density from the Poisson equation
+            dopent_charge_density.Spin_Up = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
+            dopent_charge_density.Spin_Down = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
+
             // and then run the DFT solver at the base temperature over a limited range
             TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
       //      TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
@@ -104,7 +108,7 @@ namespace TwoD_ThomasFermiPoisson
      //       TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
 
             // start without dft if carrier density is empty
-            if (no_dft || carrier_charge_density.Spin_Summed_Data.Min() == 0.0)
+            if (no_dft)
                 dft_solv.DFT_Mixing_Parameter = 0.0;
             else
                 dft_solv.DFT_Mixing_Parameter = 0.3;
@@ -182,14 +186,14 @@ namespace TwoD_ThomasFermiPoisson
        //     pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
         //    chem_pot = pois_solv.Get_Chemical_Potential(carrier_density.Spin_Summed_Data);
             //    Console.WriteLine("Initial grid complete");
-            dens_solv.DFT_Mixing_Parameter = 0.0;
+            //dens_solv.Set_DFT_Potential(carrier_charge_density);
+            //if (!no_dft)
+            //{
+             //   dens_solv.DFT_Mixing_Parameter = 0.3;
+                //dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
+            //}
+            dens_solv.Reset_DFT_Potential();
             dens_solv.Set_DFT_Potential(carrier_charge_density);
-            if (!no_dft)
-            {
-                dens_solv.DFT_Mixing_Parameter = 0.3;
-                dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
-                dens_solv.Set_DFT_Potential(carrier_charge_density);
-            }
 
             int count = 0;
             bool converged = false;
@@ -210,7 +214,7 @@ namespace TwoD_ThomasFermiPoisson
                 SpinResolved_Data rho_prime = dens_solv.Get_ChargeDensity_Deriv(layers, carrier_charge_density_deriv, dopent_charge_density_deriv, chem_pot);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                gphi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_charge_density.Spin_Summed_Data;
+                gphi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_charge_density.Spin_Summed_Data - dopent_charge_density.Spin_Summed_Data;
                 x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_charge_density, dens_solv.DFT_diff(carrier_charge_density));
                 //chem_pot = pois_solv.Chemical_Potential;
                 

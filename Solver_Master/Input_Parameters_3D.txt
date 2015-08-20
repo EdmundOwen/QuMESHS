@@ -35,22 +35,22 @@
 ############## Poisson solver details #################################
 #
 # Top gate voltage
-% top_V = -0.0
+% top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -1.0
+% split_V = -0.7
 #
 ## Voltage array (for general voltage input)
-% voltages = {-1.0, -1.0, -1.0}
+% voltages = {-0.7, -0.7}
 #
 ## Width of the split gate (in the transverse direction)
 % split_width = 800
 #
 ## Length of the split gate (in the longitudinal direction)
-% split_length = 400
+% split_length = 800
 #
 ## Top gate length (in transport direction)
-% top_length = 400
+% top_length = 5000
 #
 #
 ############## Generic density solver details #########################
@@ -61,6 +61,7 @@
 ## Temperature
 % T = 4
 #
+% initial_run = false
 #
 ## Minimum of simulation domain in the longitudinal direction
 % xmin_dens = -2500.0

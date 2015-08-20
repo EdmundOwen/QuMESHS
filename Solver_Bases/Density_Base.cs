@@ -320,6 +320,10 @@ namespace Solver_Bases
             else
                 this.dft_pot = (1.0 - alpha_dft) * dft_pot + alpha_dft * Physics_Base.Get_XC_Potential(car_dens);
         }
+        public void Reset_DFT_Potential()
+        {
+            this.dft_pot = null;
+        }
         public void Print_DFT_diff(SpinResolved_Data car_dens)
         {
             Console.WriteLine("Maximum absolute difference in DFT potentials = " + DFT_diff(car_dens).InfinityNorm().ToString("F6"));

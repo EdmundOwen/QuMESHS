@@ -48,10 +48,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             // finally, get the charge density and send it to this new array
             Get_ChargeDensity(layers, ref new_density, chem_pot);
 
-            return new_density;
+            return new_density + dopent_charge_density;
         }
 
-        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density, Band_Data chem_pot)
+        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
         {
             // artificially deepen the copies of spin up and spin down
             Band_Data tmp_spinup = new Band_Data(carrier_density_deriv.Spin_Up.vol[0].Rows, carrier_density_deriv.Spin_Up.vol[0].Cols, carrier_density_deriv.Spin_Up.vol.Length, 0.0);
@@ -73,7 +73,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             // finally, get the charge density and send it to this new array
             Get_ChargeDensity_Deriv(layers, ref new_density, chem_pot);
 
-            return new_density;
+            return new_density + dopent_density_deriv;
         }
 
         public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)

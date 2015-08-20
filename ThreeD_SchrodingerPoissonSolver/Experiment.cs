@@ -97,6 +97,10 @@ namespace ThreeD_SchrodingerPoissonSolver
                     chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
             }
 
+            // get the dopent density from the Poisson equation
+            dopent_charge_density.Spin_Up = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
+            dopent_charge_density.Spin_Down = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
+
             ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
           //  ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
           //  TwoplusOneD_ThomasFermiSolver dft_solv = new TwoplusOneD_ThomasFermiSolver(this);
@@ -181,12 +185,8 @@ namespace ThreeD_SchrodingerPoissonSolver
         double pot_init = double.MaxValue;
         protected override bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_iterations)
         {
+            dens_solv.Reset_DFT_Potential();
             dens_solv.Set_DFT_Potential(carrier_charge_density);
-            if (!no_dft)
-            {
-                dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
-                dens_solv.Set_DFT_Potential(carrier_charge_density);
-            }
 
             int count = 0;
             bool converged = false;
@@ -210,7 +210,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Set_Edges(rho_prime);
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
-                gphi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_charge_density.Spin_Summed_Data;
+                gphi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_charge_density.Spin_Summed_Data - dopent_charge_density.Spin_Summed_Data;
                 Set_Edges(gphi);
                 x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_charge_density, dens_solv.DFT_diff(carrier_charge_density));
                // chem_pot = pois_solv.Chemical_Potential;

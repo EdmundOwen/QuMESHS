@@ -17,6 +17,7 @@ namespace Solver_Bases
         CenterSpace.NMath.Core.DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot);
 
         void Set_DFT_Potential(SpinResolved_Data car_dens);
+        void Reset_DFT_Potential();
         void Print_DFT_diff(SpinResolved_Data car_dens);
         Band_Data DFT_diff(SpinResolved_Data car_dens);
         double DFT_Mixing_Parameter { get; set;  }

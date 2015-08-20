@@ -148,6 +148,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tz_scaling = " + z_scaling.ToString());
             sw.WriteLine();
             sw.WriteLine("\tbottom_bc = " + bottom_bc.ToString());
+            sw.WriteLine("\ttop_bc = " + top_bc.ToString());
             sw.WriteLine("\tsurface_bc = " + surface.ToString() + " * z_scaling");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");
@@ -179,7 +180,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             Draw_Domain(sw);
 
             sw.WriteLine();
-            sw.WriteLine("\t\tFRONT(z - well_depth * z_scaling, 20 * z_scaling)");
+            sw.WriteLine("\t\tFRONT(z - well_depth * z_scaling, 50 * z_scaling)");
+            sw.WriteLine("\t\tFRONT(z - well_depth, 50 * z_scaling)");
             sw.WriteLine();
             sw.WriteLine("!MONITORS");
             sw.WriteLine("\t!CONTOUR(rho_carrier) ON z = well_depth * z_scaling");
@@ -198,6 +200,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("\tELEVATION(- q_e * u + 0.5 * band_gap) FROM (-lx/2, 0, well_depth * z_scaling) TO (lx / 2, 0, well_depth * z_scaling)");
             sw.WriteLine();
             sw.WriteLine("\tTABLE(u) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"pot.dat\"");
+            sw.WriteLine("\tTABLE(-1.0 * rho_carrier - rho_dopent) ZOOM (" + exp.Xmin_Dens.ToString() + ", " + (y_scaling * exp.Ymin_Dens).ToString() + ", " + (z_scaling * exp.Zmin_Dens).ToString() + ", " + ((exp.Nx_Dens - 1) * exp.Dx_Dens).ToString() + ", " + (y_scaling * (exp.Ny_Dens - 1) * exp.Dy_Dens).ToString() + ", " + (z_scaling * (exp.Nz_Dens - 1) * exp.Dz_Dens).ToString() + ") EXPORT FORMAT \"#1\" POINTS = (" + exp.Nx_Dens.ToString() + ", " + exp.Ny_Dens.ToString() + ", " + exp.Nz_Dens.ToString() + ") FILE = \"" + laplacian_file + "\"");
             sw.WriteLine("\tTRANSFER(u) FILE = \'" + pot_filename + "\'");
             sw.WriteLine("\tTRANSFER(0.0 * u) FILE = \'" + new_pot_filename + "\' ! dummy file for smoother function");
             sw.WriteLine();
@@ -219,7 +222,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine("BOUNDARIES");
             sw.WriteLine("\tSURFACE \"Substrate\"	VALUE(u) = bottom_bc");
             sw.WriteLine("\tSURFACE \"" + (Geom_Tool.Find_Layer_Below_Surface(exp.Layers).Layer_No - 1).ToString() + "\" NATURAL(u) = surface_bc");
-            sw.WriteLine("\tSURFACE \"" + (exp.Layers.Length - 1).ToString() + "\" NATURAL(u) = 0");
+            //sw.WriteLine("\tSURFACE \"" + (exp.Layers.Length - 1).ToString() + "\" NATURAL(u) = 0");
+            sw.WriteLine("\tSURFACE \"" + (exp.Layers.Length - 1).ToString() + "\" VALUE(u) = top_bc");
             sw.WriteLine();
             sw.WriteLine("\tREGION 1");
             for (int i = 1; i < exp.Layers.Length; i++)
@@ -247,8 +251,8 @@ namespace ThreeD_SchrodingerPoissonSolver
                         if (current_layer.Geometry == Geometry_Type.triangle_slab)
                             throw new NotImplementedException("Triangles are not currently implemented...  Sorry");
 
-                        string xmin = "-ly / 2";
-                        string xmax = "ly / 2";
+                        string xmin = "-1.0 * split_length / 2";
+                        string xmax = "split_length / 2";
                         string ymin = "-ly / 2";
                         string ymax = "ly / 2";
                         if (current_layer.Xmin != double.MinValue) xmin = current_layer.Xmin.ToString();
@@ -263,6 +267,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                         sw.WriteLine("\t\tSTART (" + xmin + ", " + ymax + " * y_scaling)");
                         sw.WriteLine("\t\tLAYER \"" + i.ToString() + "\"");
                         sw.WriteLine("\t\tVALUE(u) = V" + voltage_count.ToString());
+                        sw.WriteLine("\t\tmesh_spacing = 100");
                         sw.WriteLine("\t\tLINE TO (" + xmax + ", " + ymax + " * y_scaling)");
                         sw.WriteLine("\t\tLINE TO (" + xmax + ", " + ymin + " * y_scaling) TO (" + xmin + ", " + ymin + " * y_scaling) TO CLOSE");
                         sw.WriteLine();
@@ -329,7 +334,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine();
             sw.WriteLine("SELECT");
             sw.WriteLine("\tERRLIM=" + newton_tol.ToString());
-            sw.WriteLine("\tGRIDLIMIT=20");
+            sw.WriteLine("\tGRIDLIMIT=2");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             sw.WriteLine("\tband_gap");
@@ -355,6 +360,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine();
             // boundary conditions
             sw.WriteLine("\tbottom_bc = 0.0");
+            sw.WriteLine("\ttop_bc = 0.0");
             sw.WriteLine("\tsurface_bc = 0.0");
             sw.WriteLine();
             sw.WriteLine("\t! GATE VOLTAGE INPUTS (in meV zC^-1)");

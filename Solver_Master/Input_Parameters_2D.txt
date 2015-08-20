@@ -29,13 +29,13 @@
 ############## Poisson solver details #################################
 #
 # Top gate voltage
-% top_V = -1.0
+% top_V = 0.0
 #
 ## Split gate voltage
 % split_V = 0.0
 #
 ## Voltage array (for general voltage input)
-% voltages = {-0.55, -0.55}
+% voltages = {-0.9, -0.9}
 #
 ## Surface charge (by default, this is set by the 1D solver)
 # % surface_charge = -2.677
@@ -47,7 +47,7 @@
 ############## Generic density solver details #########################
 #
 ## Use DFT or not
-% no_dft = false
+% no_dft = true
 #
 ## Maximum number of iterations before giving up
 % max_iterations = 1000
@@ -57,23 +57,23 @@
 #
 ## Minimum of simulation domain in the transverse direction
 #% ymin_dens = -200.0
-% ymin_dens = -1000.0
+% ymin_dens = -300.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens =  5.0
+% dy_dens =  10.0
 #
 ## Number of lattice points in transverse direction 
 #% ny_dens = 81
-% ny_dens = 401
+% ny_dens = 61
 #
 ## Minimum of simulation domain in the growth direction
 % zmin_dens = -325.0
 #
 ## Lattice spacing in the growth direction
-% dz_dens = 1.0
+% dz_dens = 2.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 50
+% nz_dens = 25
 #
 #
 ############## Data transfer details ##############################
@@ -96,7 +96,7 @@
 ############## Run details #######################################
 #
 ## whether to make this a batch run or not
-% batch_run = true
+% batch_run = false
 #
 ##
 % batch_params = {top_V, V0, V1=V0}
