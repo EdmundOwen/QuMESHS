@@ -24,18 +24,18 @@
 % FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
 #
 ## Tolerance for the Poisson solution
-% pot_tol = 1e-3
+% pot_tol = 5e-3
 #
 ## Tolerance for the Newton step calculation
-% newton_tol = 1e-3
+% newton_tol = 5e-3
 #
 ############## Generic density solver configuration #########################
 #
 ## Final solution tolerance
-% tolerance = 1e-4
+% tolerance = 5e-3
 #
 ##
-% anneal_tolerance = 4e-3
+% anneal_tolerance = 5e-3
 #
 ######## Poisson solver configuration for dopents #################################
 #

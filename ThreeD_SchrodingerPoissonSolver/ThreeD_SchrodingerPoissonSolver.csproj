@@ -115,6 +115,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Iterative_Greens_Function_Test\Iterative_Greens_Function_Test.csproj">
+      <Project>{e751bb3b-b83a-4e05-9854-d0a463ca6c86}</Project>
+      <Name>Iterative_Greens_Function_Test</Name>
+    </ProjectReference>
     <ProjectReference Include="..\OneD_ThomasFermiPoisson\OneD_ThomasFermiPoisson.csproj">
       <Project>{B8D898B4-4AE2-4D60-9F7F-85BD75594640}</Project>
       <Name>OneD_ThomasFermiPoisson</Name>

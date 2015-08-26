@@ -7,7 +7,7 @@ using Solver_Bases;
 
 namespace Iterative_Greens_Function_Test
 {
-    class Experiment : Experiment_Base
+    public class Experiment : Experiment_Base
     {
         public Experiment()
             : base()
@@ -21,12 +21,22 @@ namespace Iterative_Greens_Function_Test
 
         public override bool Run()
         {
-            Iterative_Greens_Function iter = new Iterative_Greens_Function(this);
-            iter.Iterate();
+            //Iterative_Greens_Function iter = new Iterative_Greens_Function(this);
+            //iter.Iterate();
 
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            return true;
         }
+  
 
+  /* public double[,] CalcDoS(double energy, double[,] potential)
+        {
+            Iterative_Greens_Function iter = new Iterative_Greens_Function(this, potential);
+
+            double[,] DoS = iter.GetDoS(energy);
+
+            return DoS;
+        }*/
 
         protected override void Initialise_DataClasses(Dictionary<string, object> input_dict)
         {

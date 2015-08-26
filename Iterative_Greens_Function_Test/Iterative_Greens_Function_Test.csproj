@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Iterative_Greens_Function_Test</RootNamespace>
     <AssemblyName>Iterative_Greens_Function_Test</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -33,9 +34,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NMathPremium, Version=6.0.0.12, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
+    <Reference Include="NMath, Version=6.1.0.9, Culture=neutral, PublicKeyToken=873235918a322639, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\CenterSpace\NMath Premium 6.0\Assemblies\NMathPremium.dll</HintPath>
+      <HintPath>..\..\..\..\..\Program Files (x86)\CenterSpace\NMath 6.1\Assemblies\NMath.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

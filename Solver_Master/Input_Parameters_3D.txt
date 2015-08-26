@@ -14,16 +14,16 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the longitudinal direction for the density calculation
-% nx = 100
+% nx = 50
 #
 ## Spacing of lattice sites in the longitudinal direction for the density calculation
-% dx = 50
+% dx = 100
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 40
+% ny = 20
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 50
+% dy = 100
 #
 ## Number of lattice sites in the growth direction for the density calculation
 % nz = 1500
@@ -38,16 +38,16 @@
 % top_V = 0.0
 #
 ## Split gate voltage
-% split_V = -0.7
+% split_V = -0.6
 #
 ## Voltage array (for general voltage input)
-% voltages = {-0.7, -0.7}
+% voltages = {-0.6, -0.6}
 #
 ## Width of the split gate (in the transverse direction)
 % split_width = 800
 #
 ## Length of the split gate (in the longitudinal direction)
-% split_length = 800
+% split_length = 5000
 #
 ## Top gate length (in transport direction)
 % top_length = 5000
@@ -61,7 +61,8 @@
 ## Temperature
 % T = 4
 #
-% initial_run = false
+% initial_run = true
+% initial_run_steps = 5
 #
 ## Minimum of simulation domain in the longitudinal direction
 % xmin_dens = -2500.0

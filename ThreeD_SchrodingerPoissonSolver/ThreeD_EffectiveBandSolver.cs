@@ -6,6 +6,7 @@ using Solver_Bases;
 using Solver_Bases.Layers;
 using CenterSpace.NMath.Core;
 using CenterSpace.NMath.Matrix;
+using Iterative_Greens_Function_Test;
 
 namespace ThreeD_SchrodingerPoissonSolver
 {
@@ -30,11 +31,12 @@ namespace ThreeD_SchrodingerPoissonSolver
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
+            double[,] xy_energy = new double[nx, ny];
 
-            DoubleHermitianEigDecomp eig_decomp = Solve_Eigenvector_Problem(dft_pot, ref charge_density);
+            xy_energy = Solve_Eigenvector_Problem(dft_pot, ref charge_density);
 
-            int max_wavefunction = (from val in eig_decomp.EigenValues
-                                    where val < no_kb_T * Physics_Base.kB * temperature
+            /*int max_wavefunction = (from val in eig_decomp.EigenValues
+                                   where val < no_kb_T * Physics_Base.kB * temperature
                                     select val).ToArray().Length;
 
             double[,] dens_xy = new double[nx, ny];
@@ -43,6 +45,48 @@ namespace ThreeD_SchrodingerPoissonSolver
                 for (int j = 0; j < ny; j++)
                     for (int k = 0; k < max_wavefunction; k++)
                         dens_xy[i, j] += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_Fermi_Function(energies[k]);
+*/
+
+
+            IExperiment exp_green;
+            exp_green = new Iterative_Greens_Function_Test.Experiment();
+            Iterative_Greens_Function_Test.Iterative_Greens_Function iter = new Iterative_Greens_Function_Test.Iterative_Greens_Function(exp_green, xy_energy);
+            double[,] dens_xy = new double[nx, ny];
+            double max_energy = Physics_Base.kB * temperature * no_kb_T;
+            DoubleMatrix xy_energy_mat = new DoubleMatrix(xy_energy);
+            //double min_energy = xy_energy_mat.Min();
+            double min_energy = -1.0 * max_energy;
+            int n_slices = 100;
+            double dE = (max_energy - min_energy) / n_slices;
+
+            for (int n = 1; n < n_slices-1; n++)
+            {
+                double energy = min_energy + n * dE;
+                double[,] dens_per_E = iter.GetDoS(energy);
+                double fermi_func = Get_Fermi_Function(energy);
+
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
+                    {
+                        dens_xy[i, j] += dens_per_E[i,j] * fermi_func;
+                    }
+            }
+
+            //double fermi_fact_max = Math.Exp(max_energy / (Physics_Base.kB * temperature)) + 1;
+            //double fermi_fact_min = 2.0;
+            double[,] dens_per_E_max = iter.GetDoS(max_energy);
+            double[,] dens_per_E_min = iter.GetDoS(min_energy);
+            double fermi_func_max = Get_Fermi_Function(max_energy);
+            double fermi_func_min = Get_Fermi_Function(min_energy);
+
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                {
+                    dens_xy[i, j] += 0.5*(dens_per_E_max[i, j] * fermi_func_max + dens_per_E_min[i,j] * fermi_func_min);
+                }
+
+
+
 
             // multiply the z-densities by the xy-density
             for (int i = 0; i < nx; i++)
@@ -62,10 +106,11 @@ namespace ThreeD_SchrodingerPoissonSolver
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
+            double[,] xy_energy = new double[nx, ny];
 
-            DoubleHermitianEigDecomp eig_decomp = Solve_Eigenvector_Problem(dft_pot, ref charge_density_deriv);
+            xy_energy = Solve_Eigenvector_Problem(dft_pot, ref charge_density_deriv);
 
-            int max_wavefunction = (from val in eig_decomp.EigenValues
+            /*int max_wavefunction = (from val in eig_decomp.EigenValues
                                     where val < no_kb_T * Physics_Base.kB * temperature
                                     select val).ToArray().Length;
 
@@ -75,7 +120,44 @@ namespace ThreeD_SchrodingerPoissonSolver
                 for (int j = 0; j < ny; j++)
                 for (int k = 0; k < max_wavefunction; k++)
                         dens_xy_deriv[i, j] += DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_Fermi_Function_Derivative(energies[k]);
-            
+            */
+            IExperiment exp_green;
+            exp_green = new Iterative_Greens_Function_Test.Experiment();
+            Iterative_Greens_Function_Test.Iterative_Greens_Function iter = new Iterative_Greens_Function_Test.Iterative_Greens_Function(exp_green, xy_energy);
+            double[,] dens_xy_deriv = new double[nx, ny];
+            double max_energy = Physics_Base.kB * temperature * no_kb_T;
+            DoubleMatrix xy_energy_mat = new DoubleMatrix(xy_energy);
+            double min_energy = xy_energy_mat.Min();
+            int n_slices = 20;
+            double dE = (max_energy - min_energy) / n_slices;
+
+            for (int n = 1; n < n_slices - 1; n++)
+            {
+                double energy = min_energy + n * dE;
+                double[,] dens_per_E = iter.GetDoS(energy);
+                double fermi_func = Get_Fermi_Function_Derivative(energy);
+
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
+                    {
+                        dens_xy_deriv[i, j] += dens_per_E[i, j] * fermi_func;
+                    }
+            }
+
+            //double fermi_fact_max = Math.Exp(max_energy / (Physics_Base.kB * temperature)) + 1;
+            //double fermi_fact_min = 2.0;
+            double[,] dens_per_E_max = iter.GetDoS(max_energy);
+            double[,] dens_per_E_min = iter.GetDoS(min_energy);
+            double fermi_func_max = Get_Fermi_Function_Derivative(max_energy);
+            double fermi_func_min = Get_Fermi_Function_Derivative(min_energy);
+
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                {
+                    dens_xy_deriv[i, j] += 0.5 * (dens_per_E_max[i, j] * fermi_func_max + dens_per_E_min[i, j] * fermi_func_min);
+                }
+
+
             // multiply the z-densities by the xy-density
             for (int i = 0; i < nx; i++)
                 for (int j = 0; j < ny; j++)
@@ -96,7 +178,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         /// <param name="dft_pot"></param>
         /// <param name="charge_density"></param>
         /// <returns></returns>
-        private DoubleHermitianEigDecomp Solve_Eigenvector_Problem(Band_Data dft_pot, ref SpinResolved_Data charge_density)
+        private double[,] Solve_Eigenvector_Problem(Band_Data dft_pot, ref SpinResolved_Data charge_density)
         {
             DoubleHermitianEigDecomp eig_decomp;
             double[,] xy_energy = new double[nx, ny];
@@ -128,14 +210,14 @@ namespace ThreeD_SchrodingerPoissonSolver
                 }
 
             // calculate the eigenstates in the xy-plane
-            DoubleHermitianMatrix h_xy = Create_2DEG_Hamiltonian(xy_energy, tx, ty, nx, ny, true, false);
+            /*DoubleHermitianMatrix h_xy = Create_2DEG_Hamiltonian(xy_energy, tx, ty, nx, ny, true, false);
             eig_decomp = new DoubleHermitianEigDecomp(h_xy);
-            energies = eig_decomp.EigenValues;
+            energies = eig_decomp.EigenValues;*/
 
             // put the calculated densities into charge_density
             charge_density = new SpinResolved_Data(dens_up, dens_down);
 
-            return eig_decomp;
+            return xy_energy;
         }
 
         /// <summary>
@@ -146,8 +228,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             return energies;
         }
 
-        public Band_Data Get_KS_KE(ILayer[] layers, Band_Data chem_pot)
-        {
+       public Band_Data Get_KS_KE(ILayer[] layers, Band_Data chem_pot)
+        {/*
             // convert the chemical potential into a quantum mechanical potential
             Band_Data dft_pot = chem_pot.DeepenThisCopy();
             Get_Potential(ref dft_pot, layers);
@@ -180,11 +262,12 @@ namespace ThreeD_SchrodingerPoissonSolver
 
                             ke.mat[i, j] += ke_prefactor * psi_div2psi * Get_OneD_DoS(eig_decomp.EigenValue(n), no_kb_T);
                         }
-
+*/
             throw new NotImplementedException();
 
-            return ke;
+            //return ke;
         }
+        
 
         DoubleHermitianMatrix Create_Hamiltonian(double[] V, double t, int N)
         {

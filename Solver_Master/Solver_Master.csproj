@@ -68,6 +68,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Iterative_Greens_Function_Test\Iterative_Greens_Function_Test.csproj">
+      <Project>{e751bb3b-b83a-4e05-9854-d0a463ca6c86}</Project>
+      <Name>Iterative_Greens_Function_Test</Name>
+    </ProjectReference>
     <ProjectReference Include="..\OneD_ThomasFermiPoisson\OneD_ThomasFermiPoisson.csproj">
       <Project>{b8d898b4-4ae2-4d60-9f7f-85bd75594640}</Project>
       <Name>OneD_ThomasFermiPoisson</Name>

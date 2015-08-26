@@ -80,7 +80,7 @@ namespace Solver_Bases
                 {
                     int matsize = vol[0].Rows * vol[0].Cols;
                     int index1 = i % matsize;
-                    int x = i % vol[0].Cols;
+                    int x = index1 % vol[0].Cols;
                     int y = (int)((index1 - x) / vol[0].Cols);
                     int z = (int)((i - index1) / matsize);
 

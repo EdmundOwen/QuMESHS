@@ -92,17 +92,17 @@ namespace ThreeD_SchrodingerPoissonSolver
                 (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("bare_pot.dat");
                 Console.WriteLine("Bare potential saved");
 
-                // if the initial carrier density was not zero, recalculate the chemical potential
-                if (carrier_charge_density.Spin_Summed_Data.Max() != 0.0 || carrier_charge_density.Spin_Summed_Data.Min() != 0.0)
-                    chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
+                //if the initial carrier density was not zero, recalculate the chemical potential
+                //if (carrier_charge_density.Spin_Summed_Data.Max() != 0.0 || carrier_charge_density.Spin_Summed_Data.Min() != 0.0)
+                    //chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
             }
 
             // get the dopent density from the Poisson equation
             dopent_charge_density.Spin_Up = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
             dopent_charge_density.Spin_Down = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
 
-            ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
-          //  ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
+            //ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
+            ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
           //  TwoplusOneD_ThomasFermiSolver dft_solv = new TwoplusOneD_ThomasFermiSolver(this);
 
             bool converged = false;
@@ -120,7 +120,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
                 chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
             }
-            if ((!converged && carrier_charge_density.Spin_Summed_Data.InfinityNorm() != 0.0) || !initial_run)
+            if (!converged || !initial_run)
             {
                 int count = 0;
                 while (pot_init > tol_anneal && count < 20)
@@ -141,11 +141,11 @@ namespace ThreeD_SchrodingerPoissonSolver
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge.dat"); sw.WriteLine(boundary_conditions["surface"].ToString()); sw.Close();
             // save eigen-energies
-            DoubleVector energies = dft_solv.Get_EnergyLevels(layers, chem_pot);
+            /*DoubleVector energies = dft_solv.Get_EnergyLevels(layers, chem_pot);
             StreamWriter sw_e = new StreamWriter("energies.dat");
             for (int i = 0; i < energies.Length; i++)
                 sw_e.WriteLine(energies[i]);
-            sw_e.Close();
+            sw_e.Close();*/
 
             dft_solv.Output(carrier_charge_density, "carrier_density.dat");
             dft_solv.Output(carrier_charge_density - dft_solv.Get_ChargeDensity(layers, carrier_charge_density, dopent_charge_density, chem_pot), "density_error.dat");
@@ -193,6 +193,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             if (!no_dft)
                 dens_solv.DFT_Mixing_Parameter = 0.1;
             dens_diff_lim = 0.12;
+
+
             while (!converged)
             {
                 Stopwatch stpwch = new Stopwatch();
