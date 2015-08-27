@@ -93,15 +93,15 @@ namespace ThreeD_SchrodingerPoissonSolver
                 Console.WriteLine("Bare potential saved");
 
                 //if the initial carrier density was not zero, recalculate the chemical potential
-                //if (carrier_charge_density.Spin_Summed_Data.Max() != 0.0 || carrier_charge_density.Spin_Summed_Data.Min() != 0.0)
-                    //chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
+                if (carrier_charge_density.Spin_Summed_Data.Max() != 0.0 || carrier_charge_density.Spin_Summed_Data.Min() != 0.0)
+                    chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
             }
 
             // get the dopent density from the Poisson equation
             dopent_charge_density.Spin_Up = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
             dopent_charge_density.Spin_Down = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
 
-            //ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
+            ThreeD_ThomasFermiSolver dft_solv_initial = new ThreeD_ThomasFermiSolver(this);
             ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
           //  TwoplusOneD_ThomasFermiSolver dft_solv = new TwoplusOneD_ThomasFermiSolver(this);
 
@@ -115,7 +115,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             // do preliminary run to correct for initial discretised form of rho_prime
             if (initial_run)
             {
-                converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, initial_run_steps);
+                converged = Run_Iteration_Routine(dft_solv_initial, pois_solv, tol, initial_run_steps);
                 // and calculate the potential given the density from this initial run
                 pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
                 chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);

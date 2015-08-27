@@ -21,8 +21,8 @@ namespace Iterative_Greens_Function_Test
 
         public override bool Run()
         {
-            //Iterative_Greens_Function iter = new Iterative_Greens_Function(this);
-            //iter.Iterate();
+            Iterative_Greens_Function iter = new Iterative_Greens_Function(this);
+            iter.Iterate();
 
             //throw new NotImplementedException();
             return true;

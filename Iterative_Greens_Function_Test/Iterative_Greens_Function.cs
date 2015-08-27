@@ -30,6 +30,13 @@ namespace Iterative_Greens_Function_Test
 
         double[,] potential_xy;
 
+        double temperature;
+
+        DoubleMatrix DensityoS;
+        DoubleComplexMatrix LHSboundary;
+        DoubleComplexMatrix RHSboundary;
+
+
         /// <summary>
         /// Error for calculating the propagating modes for the boundary conditions.
         /// Their eigenvalue should be unity but this is the window of error
@@ -43,14 +50,14 @@ namespace Iterative_Greens_Function_Test
           //  this.dx = exp.Dx_Dens; this.dy = exp.Dy_Dens;
           //  this.nx = exp.Nx_Dens; this.ny = exp.Ny_Dens;
 
-            dx = 100; dy = 100;
-            nx = 50; ny = 20;
+            dx = 50; dy = 50;
+            nx = 100; ny = 40;
 
           alphax_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
           alphay_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
 
             potential_xy = potential;
-
+            DensityoS = new DoubleMatrix(nx, ny);
 
 
 
@@ -66,13 +73,73 @@ namespace Iterative_Greens_Function_Test
             alphay = alphay_prime / alphax_prime;
         }
 
+        public Iterative_Greens_Function(IExperiment exp)
+        {
+            this.exp = exp;
+
+            //  this.dx = exp.Dx_Dens; this.dy = exp.Dy_Dens;
+            //  this.nx = exp.Nx_Dens; this.ny = exp.Ny_Dens;
+
+            dx = 100; dy = 100;
+            nx = 50; ny = 20;
+
+            alphax_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
+            alphay_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+
+
+            temperature = 4;
+
+            DensityoS = new DoubleMatrix(nx, ny);
+
+
+
+            // nx = 100; ny = 1;
+
+            // alphax = -1.0;// -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
+            // alphay = 0.0;// -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+
+            alphax = alphax_prime / alphax_prime;
+            alphay = alphay_prime / alphax_prime;
+        }
+
         public void Iterate()
         {
             // cycle through the system at a given energy
-            double energy = -0.1;
-            //double epsilon = energy / alphax_prime;
-            Get_Greens_Functions(energy);
+            
+            int n_steps = 600;
+            double deltaE = 0.001;
+            //double emin = -1.0 * deltaE * n_steps / 2;
+            double emin = 1.2;
+            DoubleVector DoSVector;
+            DoubleVector EnergyVector;
+            //DoubleVector MaxVector;
+            DoSVector = new DoubleVector(n_steps);
+            EnergyVector = new DoubleVector(n_steps);
+           // MaxVector = new DoubleVector(n_steps);
+            
+            for (int i = 0; i < n_steps; i++)
+            {
+                double energy = emin + i * deltaE;
+                double epsilon = energy / alphax_prime;
+                Get_Greens_Functions(epsilon);
+                DoSVector[i] = GetTotalDoS();
+                EnergyVector[i] = energy;
+               // MaxVector[i] = GetMaxDoS();
+            }
 
+            Output_DoSVector(DoSVector, EnergyVector);
+            
+            
+            /*
+            double energy = 0.431;
+            double epsilon = energy / alphax_prime;
+            Get_Greens_Functions(epsilon);
+
+            //bool LHS = (LHSboundary == onsite_G[0]);
+            //bool RHS = (RHSboundary == onsite_G[nx - 1]);
+
+            Output_DoS();
+            */
         }
 
         void Get_Greens_Functions(double energy)
@@ -86,6 +153,30 @@ namespace Iterative_Greens_Function_Test
             Bind_Slice(nx - 1, rhs_inverted_G);
 
             //Output_DoS();
+            for (int i = 0; i < ny; i++)
+            {
+                for (int j = 0; j < nx; j++)
+                    DensityoS[j, i] = (-1.0 * onsite_G[j][i, i].Imag / (Math.PI * alphax_prime));
+            }
+        }
+
+        double GetTotalDoS()
+        {
+            double TotalDoS = DensityoS.Average() * nx * ny * dx * dy;
+
+            return TotalDoS;
+        }
+
+        double GetMaxDoS()
+        {
+            double MinDoS = DensityoS.Min();
+            double MaxDoS = DensityoS.Max();
+
+            if (MaxDoS > -1.0 * MinDoS)
+                return MaxDoS;
+            else
+                return MinDoS;
+
         }
 
         public double[,] GetDoS(double energy)
@@ -103,6 +194,29 @@ namespace Iterative_Greens_Function_Test
             return DoS;
         }
 
+        void Output_DoSVector(DoubleVector DoSVector, DoubleVector MaxVector, DoubleVector EnergyVector)
+        {
+            StreamWriter sw = new StreamWriter("DoSVector.dat");
+            for (int i = 0; i < DoSVector.Length; i++)
+            {
+                sw.Write(EnergyVector[i].ToString() + '\t' + DoSVector[i].ToString() + '\t' + (DoSVector[i]*Physics_Base.Get_Fermi_Function(EnergyVector[i], 0.0, temperature)).ToString() + '\t' + MaxVector[i].ToString());
+                sw.WriteLine();
+            }
+            sw.Close();
+
+        }
+
+        void Output_DoSVector(DoubleVector DoSVector, DoubleVector EnergyVector)
+        {
+            StreamWriter sw = new StreamWriter("DoSVector.dat");
+            for (int i = 0; i < DoSVector.Length; i++)
+            {
+                sw.Write(EnergyVector[i].ToString() + '\t' + DoSVector[i].ToString());
+                sw.WriteLine();
+            }
+            sw.Close();
+
+        }
         void Output_DoS()
         {
             StreamWriter sw = new StreamWriter("DoS.dat");
@@ -128,6 +242,8 @@ namespace Iterative_Greens_Function_Test
 
             onsite_G[0] = Calculate_Boundary_Conditions(Boundary.left, energy);
             onsite_G[nx - 1] = Calculate_Boundary_Conditions(Boundary.right, energy);
+            LHSboundary = onsite_G[0];
+            RHSboundary = onsite_G[nx - 1];
         }
 
         void Add_Slice(double energy, int slice_no)
@@ -154,7 +270,7 @@ namespace Iterative_Greens_Function_Test
             hopping_G[slice_no - 1] = onsite_G[slice_no - 1];
 
             // update the old onsite Green's functions (not including the boundary slice)
-            for (int i = 1; i < slice_no; i++)
+            for (int i = 0; i < slice_no; i++)
                 onsite_G[i] = onsite_G[i] + Product(Product(Product(Product(hopping_G[i], new_hopping), onsite_G[slice_no]), new_hopping_trans), hopping_G[i].Transpose());
 
             // calculate the new hopping Green's functions
@@ -355,17 +471,19 @@ namespace Iterative_Greens_Function_Test
             return result;
         }
 
-        double split_width = 50;
-        double split_length = 300;
-        double V_max = 10.0;
+        double split_width = 800;
+        double split_length = 800;
+        double V_max = 5.0;
+        double V_0 = 0.0;
         double Get_Potential(double x, double y)
         {
-            //return V_max * Convert.ToDouble((Math.Abs(x) < 0.5 * split_length-dx/2) && (Math.Abs(y) > 0.5 * split_width+dy/2));
+            //return V_0 / alphax_prime + V_max / alphax_prime * Convert.ToDouble((Math.Abs(x) < 0.5 * split_length-dx/2) && (Math.Abs(y) > 0.5 * split_width+dy/2));
             /* if (x > -150 && y > 0)
                  return 1000000000000;
              else return 0;*/
-            return potential_xy[(int)((x+2500) / dx), (int)((y+1000) / dy)] / alphax_prime;
+            //return potential_xy[(int)((x+2500) / dx), (int)((y+1000) / dy)] / alphax_prime;
             //return 0;
+            return V_max / alphax_prime * Math.Exp(-1.0 * (x * x) / (2*1500*1500) );
         }
 
         DoubleComplexMatrix Product(DoubleHermitianMatrix A, DoubleHermitianMatrix B)

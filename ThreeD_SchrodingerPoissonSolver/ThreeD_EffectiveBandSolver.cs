@@ -54,10 +54,10 @@ namespace ThreeD_SchrodingerPoissonSolver
             double[,] dens_xy = new double[nx, ny];
             double max_energy = Physics_Base.kB * temperature * no_kb_T;
             DoubleMatrix xy_energy_mat = new DoubleMatrix(xy_energy);
-            //double min_energy = xy_energy_mat.Min();
-            double min_energy = -1.0 * max_energy;
-            int n_slices = 100;
-            double dE = (max_energy - min_energy) / n_slices;
+            double min_energy = xy_energy_mat.Min();
+            double dE = 0.1;
+            //double min_energy = -1.0 * max_energy;
+            int n_slices = (int)((max_energy - min_energy) / dE);
 
             for (int n = 1; n < n_slices-1; n++)
             {
@@ -128,8 +128,8 @@ namespace ThreeD_SchrodingerPoissonSolver
             double max_energy = Physics_Base.kB * temperature * no_kb_T;
             DoubleMatrix xy_energy_mat = new DoubleMatrix(xy_energy);
             double min_energy = xy_energy_mat.Min();
-            int n_slices = 20;
-            double dE = (max_energy - min_energy) / n_slices;
+            double dE = 0.1;
+            int n_slices = (int)((max_energy - min_energy) / dE);
 
             for (int n = 1; n < n_slices - 1; n++)
             {
