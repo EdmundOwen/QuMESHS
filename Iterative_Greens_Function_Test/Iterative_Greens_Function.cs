@@ -50,8 +50,8 @@ namespace Iterative_Greens_Function_Test
           //  this.dx = exp.Dx_Dens; this.dy = exp.Dy_Dens;
           //  this.nx = exp.Nx_Dens; this.ny = exp.Ny_Dens;
 
-            dx = 50; dy = 50;
-            nx = 100; ny = 40;
+            dx = 100; dy = 100;
+            nx = 50; ny = 20;
 
           alphax_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
           alphay_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
@@ -481,9 +481,9 @@ namespace Iterative_Greens_Function_Test
             /* if (x > -150 && y > 0)
                  return 1000000000000;
              else return 0;*/
-            //return potential_xy[(int)((x+2500) / dx), (int)((y+1000) / dy)] / alphax_prime;
+            return potential_xy[(int)((x+2500) / dx), (int)((y+1000) / dy)] / alphax_prime;
             //return 0;
-            return V_max / alphax_prime * Math.Exp(-1.0 * (x * x) / (2*1500*1500) );
+            //return V_max / alphax_prime * Math.Exp(-1.0 * (x * x) / (2*1500*1500) );
         }
 
         DoubleComplexMatrix Product(DoubleHermitianMatrix A, DoubleHermitianMatrix B)

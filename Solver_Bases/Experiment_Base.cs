@@ -305,7 +305,7 @@ namespace Solver_Bases
                     t = div_fact * t;
                     if (t < minval)
                         if (Math.Sign(calc_vp(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv)) == Math.Sign(vpb))
-                            return t_orig;
+                            return 0.5;
                             //return 1.0 / div_fact;
                         else
                             return Calculate_optimal_t(1.0, phi, x, car_dens_copy, dop_dens_copy, pois_solv, dens_solv, minval);

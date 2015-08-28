@@ -61,8 +61,8 @@
 ## Temperature
 % T = 4
 #
-% initial_run = true
-% initial_run_steps = 5
+% initial_run = false
+% initial_run_steps = 10
 #
 ## Minimum of simulation domain in the longitudinal direction
 % xmin_dens = -2500.0
