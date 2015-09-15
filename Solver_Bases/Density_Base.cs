@@ -313,10 +313,10 @@ namespace Solver_Bases
         protected double alpha_dft = 0.1;
         public void Set_DFT_Potential(SpinResolved_Data car_dens)
         {
-            if (this.dft_pot == null)
+            if (this.dft_pot == null && alpha_dft != 0.0)
                 this.dft_pot = Physics_Base.Get_XC_Potential(car_dens);
             else if (alpha_dft == 0.0)
-                this.dft_pot = 0.0 * dft_pot;
+                this.dft_pot = 0.0 * car_dens.Spin_Summed_Data.DeepenThisCopy();
             else
                 this.dft_pot = (1.0 - alpha_dft) * dft_pot + alpha_dft * Physics_Base.Get_XC_Potential(car_dens);
         }

@@ -334,7 +334,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             sw.WriteLine();
             sw.WriteLine("SELECT");
             sw.WriteLine("\tERRLIM=" + newton_tol.ToString());
-            sw.WriteLine("\tGRIDLIMIT=20");
+            sw.WriteLine("\tGRIDLIMIT=2");
             sw.WriteLine();
             sw.WriteLine("DEFINITIONS");
             sw.WriteLine("\tband_gap");

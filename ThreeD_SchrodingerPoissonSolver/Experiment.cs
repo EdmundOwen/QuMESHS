@@ -17,6 +17,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         double t_damp = 1.0, t_min = 1e-3;
 
         IPoisson_Solve pois_solv;
+        IDensity_Solve dens_solv;
 
         public override void Initialise(Dictionary<string, object> input_dict)
         {
@@ -36,6 +37,9 @@ namespace ThreeD_SchrodingerPoissonSolver
 
             // and initialise the data classes for density, its derivatives and the chemical potential
             Initialise_DataClasses(input_dict);
+            
+            // initialise the density solver
+            dens_solv = Get_Density_Solver(input_dict);
 
             // initialise potential solver
             if (using_flexPDE)
@@ -50,7 +54,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             
             Console.WriteLine("Experimental parameters initialised");
         }
-
+        
         protected override void Initialise_DataClasses(Dictionary<string, object> input_dict)
         {
             // initialise data classes for the density and chemical potential
@@ -101,21 +105,21 @@ namespace ThreeD_SchrodingerPoissonSolver
             dopent_charge_density.Spin_Up = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
             dopent_charge_density.Spin_Down = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
 
-            ThreeD_ThomasFermiSolver dft_solv = new ThreeD_ThomasFermiSolver(this);
+      //      ThreeD_ThomasFermiSolver dens_solv = new ThreeD_ThomasFermiSolver(this);
             //ThreeD_EffectiveBandSolver dft_solv = new ThreeD_EffectiveBandSolver(this);
           //  TwoplusOneD_ThomasFermiSolver dft_solv = new TwoplusOneD_ThomasFermiSolver(this);
 
             bool converged = false;
             // start without dft if carrier density is empty
             if (no_dft || carrier_charge_density.Spin_Summed_Data.Min() == 0.0)
-                dft_solv.DFT_Mixing_Parameter = 0.0;
+                dens_solv.DFT_Mixing_Parameter = 0.0;
             else
-                dft_solv.DFT_Mixing_Parameter = 0.1;
+                dens_solv.DFT_Mixing_Parameter = 0.1;
 
             // do preliminary run to correct for initial discretised form of rho_prime
             if (initial_run)
             {
-                converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, initial_run_steps);
+                converged = Run_Iteration_Routine(dens_solv, pois_solv, tol, initial_run_steps);
                 // and calculate the potential given the density from this initial run
                 pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
                 chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
@@ -133,7 +137,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                     }
 
                     // run the iteration routine!
-                    converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
+                    converged = Run_Iteration_Routine(dens_solv, pois_solv, tol, max_iterations);
 
                     count++;
                 }
@@ -148,10 +152,10 @@ namespace ThreeD_SchrodingerPoissonSolver
                 sw_e.WriteLine(energies[i]);
             sw_e.Close();*/
 
-            dft_solv.Output(carrier_charge_density, "carrier_density.dat");
-            dft_solv.Output(carrier_charge_density - dft_solv.Get_ChargeDensity(layers, carrier_charge_density, dopent_charge_density, chem_pot), "density_error.dat");
+            dens_solv.Output(carrier_charge_density, "carrier_density.dat");
+            dens_solv.Output(carrier_charge_density - dens_solv.Get_ChargeDensity(layers, carrier_charge_density, dopent_charge_density, chem_pot), "density_error.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential.dat");
-            Band_Data pot_exc = dft_solv.DFT_diff(carrier_charge_density) + Physics_Base.Get_XC_Potential(carrier_charge_density);
+            Band_Data pot_exc = dens_solv.DFT_diff(carrier_charge_density) + Physics_Base.Get_XC_Potential(carrier_charge_density);
             pot_exc.Save_Data("xc_pot.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS.dat");
 //            Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
@@ -326,6 +330,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                     data.vol[nz_dens - 1][i, j] = 0.0;
                 }
         }
+
         void Initialise_from_1D(Dictionary<string, object> input_dict)
         {
             // get data from dictionary
@@ -382,5 +387,41 @@ namespace ThreeD_SchrodingerPoissonSolver
             catch (KeyNotFoundException key_e) { throw new Exception("Error - Are the file names for the hot start data included in the input file?\n" + key_e.Message); }
         }
 
+        IDensity_Solve Get_Density_Solver(Dictionary<string, object> input_dict)
+        {
+            ThreeD_Density density_solver_type;
+
+            // Try to get the density solver from the dictionary
+            try
+            {
+                density_solver_type = (ThreeD_Density)Enum.Parse(typeof(ThreeD_Density), (string)input_dict["density_solver_3d"]);
+            }
+            catch (ArgumentException)
+            { throw new ArgumentException("Error - there is not density solver of type \"" + input_dict["density_solver_3d"] + "\""); }
+            catch (KeyNotFoundException)
+            {
+                Console.WriteLine("Cannot find solver for 3D density in input dictionary\nUsing default solver \"EffectiveBand\"");
+                return new ThreeD_EffectiveBandSolver(this);
+            }
+
+            // if a density solver key has been found, initialise the density solver accordingly
+            switch (density_solver_type)
+            {
+                case ThreeD_Density.effectiveband:
+                    return new ThreeD_EffectiveBandSolver(this);
+
+                case ThreeD_Density.iterativegreensfunction:
+                    throw new NotImplementedException();
+
+                case ThreeD_Density.thomasfermi:
+                    return new ThreeD_ThomasFermiSolver(this);
+
+                case ThreeD_Density.twodthomasfermi_oneddft:
+                    return new TwoplusOneD_ThomasFermiSolver(this);
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
     }
 }

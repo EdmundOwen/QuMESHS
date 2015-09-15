@@ -408,13 +408,17 @@ namespace Solver_Bases
 
         public Band_Data DeepenThisCopy()
         {
+            Band_Data tmp_result = null;
+
             if (dim == 1)
             {
                 DoubleVector result = new DoubleVector(Length);
                 for (int i = 0; i < Length; i++)
                     result[i] = this[i];
 
-                return new Band_Data(result);
+                if (this.Laplacian != null)
+
+                tmp_result = new Band_Data(result);
             }
             else if (dim == 2)
             {
@@ -423,7 +427,7 @@ namespace Solver_Bases
                     for (int j = 0; j < mat.Cols; j++)
                         result[i, j] = mat[i, j];
 
-                return new Band_Data(result);
+                tmp_result = new Band_Data(result);
             }
             else if (dim == 3)
             {
@@ -438,10 +442,15 @@ namespace Solver_Bases
                         for (int j = 0; j < ny; j++)
                             result.vol[k][i, j] = this.vol[k][i, j];
 
-                return result;
+                tmp_result = result;
             }
             else
                 throw new NotImplementedException();
+
+            if (this.Laplacian != null)
+                tmp_result.Laplacian = this.Laplacian.DeepenThisCopy();
+
+            return tmp_result;
         }
 
         public double Max()

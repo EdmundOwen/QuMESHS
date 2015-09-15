@@ -17,6 +17,7 @@ namespace TwoD_ThomasFermiPoisson
         double t_damp = 1.0, t_min = 1e-3;
 
         IPoisson_Solve pois_solv;
+        IDensity_Solve dens_solv;
 
         public override void Initialise(Dictionary<string, object> input_dict)
         {
@@ -34,6 +35,9 @@ namespace TwoD_ThomasFermiPoisson
 
             // and initialise the data classes for density, its derivatives and the chemical potential
             Initialise_DataClasses(input_dict);
+
+            // initialise density solver
+            dens_solv = Get_Density_Solver(input_dict);
 
             // initialise potential solver
             if (using_flexPDE)
@@ -100,28 +104,28 @@ namespace TwoD_ThomasFermiPoisson
             dopent_charge_density.Spin_Down = -0.5 * (chem_pot.Laplacian / Physics_Base.q_e + carrier_charge_density.Spin_Summed_Data);
 
             // and then run the DFT solver at the base temperature over a limited range
-            TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
-      //      TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
+     //       TwoD_DFTSolver dft_solv = new TwoD_DFTSolver(this);
+     //       TwoD_EffectiveBandSolver dft_solv = new TwoD_EffectiveBandSolver(this);
     //        TwoD_SO_DFTSolver dft_solv = new TwoD_SO_DFTSolver(this);
-           dft_solv.Xmin_Pot = ymin_pot; dft_solv.Dx_Pot = dy_pot;
-           dft_solv.Ymin_Pot = zmin_pot; dft_solv.Dy_Pot = dz_pot;
+       //     dens_solv.Xmin_Pot = ymin_pot; dens_solv.Dx_Pot = dy_pot;
+       //     dens_solv.Ymin_Pot = zmin_pot; dens_solv.Dy_Pot = dz_pot;
      //       TwoD_ThomasFermiSolver dft_solv = new TwoD_ThomasFermiSolver(this);
 
             // start without dft if carrier density is empty
             if (no_dft)
-                dft_solv.DFT_Mixing_Parameter = 0.0;
+                dens_solv.DFT_Mixing_Parameter = 0.0;
             else
-                dft_solv.DFT_Mixing_Parameter = 0.3;
+                dens_solv.DFT_Mixing_Parameter = 0.3;
 
             // do preliminary run to correct for initial discretised form of rho_prime
             if (initial_run)
             {
-                converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, initial_run_steps);
+                converged = Run_Iteration_Routine(dens_solv, pois_solv, tol, initial_run_steps);
                 // and calculate the potential given the density from this initial run
                 pois_solv.Initiate_Poisson_Solver(device_dimensions, boundary_conditions);
                 chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data);
             }
-            if ((!converged && carrier_charge_density.Spin_Summed_Data.InfinityNorm() != 0.0) || !initial_run)
+            if (!converged || !initial_run)
             {
                 int count = 0;
                 while (pot_init > tol_anneal && count < 20)
@@ -133,7 +137,7 @@ namespace TwoD_ThomasFermiPoisson
                     }
 
                     // run the iteration routine!
-                    converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
+                    converged = Run_Iteration_Routine(dens_solv, pois_solv, tol, max_iterations);
                     
                     count++;
                 }
@@ -143,16 +147,16 @@ namespace TwoD_ThomasFermiPoisson
             // save surface charge
             StreamWriter sw = new StreamWriter("surface_charge" + output_suffix); sw.WriteLine(boundary_conditions["surface"].ToString()); sw.Close();
             // save eigen-energies
-            DoubleVector energies = dft_solv.Get_EnergyLevels(layers, chem_pot);
+            DoubleVector energies = dens_solv.Get_EnergyLevels(layers, chem_pot);
             StreamWriter sw_e = new StreamWriter("energies" + output_suffix);
             for (int i = 0; i < energies.Length; i++)
                 sw_e.WriteLine(energies[i]);
             sw_e.Close();
 
    //         dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot).Spin_Summed_Data.Save_Data("dens_2D_raw_calc.dat");
-            (carrier_charge_density - dft_solv.Get_ChargeDensity(layers, carrier_charge_density, dopent_charge_density, chem_pot)).Spin_Summed_Data.Save_Data("density_error" + output_suffix);
+            (carrier_charge_density - dens_solv.Get_ChargeDensity(layers, carrier_charge_density, dopent_charge_density, chem_pot)).Spin_Summed_Data.Save_Data("density_error" + output_suffix);
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential" + output_suffix);
-            Band_Data pot_exc = dft_solv.DFT_diff(carrier_charge_density) + Physics_Base.Get_XC_Potential(carrier_charge_density);
+            Band_Data pot_exc = dens_solv.DFT_diff(carrier_charge_density) + Physics_Base.Get_XC_Potential(carrier_charge_density);
             pot_exc.Save_Data("xc_pot" + output_suffix);
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS" + output_suffix);
    //         Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
@@ -426,5 +430,41 @@ namespace TwoD_ThomasFermiPoisson
             catch (KeyNotFoundException key_e) { throw new Exception("Error - Are the file names for the hot start data included in the input file?\n" + key_e.Message); }
         }
 
+        IDensity_Solve Get_Density_Solver(Dictionary<string, object> input_dict)
+        {
+            TwoD_Density density_solver_type;
+
+            // Try to get the density solver from the dictionary
+            try
+            {
+                density_solver_type = (TwoD_Density)Enum.Parse(typeof(TwoD_Density), (string)input_dict["density_solver_2d"]);
+            }
+            catch (ArgumentException)
+            { throw new ArgumentException("Error - there is not density solver of type \"" + input_dict["density_solver_2d"] + "\""); }
+            catch (KeyNotFoundException)
+            {
+                Console.WriteLine("Cannot find solver for 2D density in input dictionary\nUsing default solver \"EffectiveBand\"");
+                return new TwoD_EffectiveBandSolver(this);
+            }
+
+            // if a density solver key has been found, initialise the density solver accordingly
+            switch (density_solver_type)
+            {
+                case TwoD_Density.effectiveband:
+                    return new TwoD_EffectiveBandSolver(this);
+
+                case TwoD_Density.dft:
+                    return new TwoD_DFTSolver(this);
+
+                case TwoD_Density.thomasfermi:
+                    return new TwoD_ThomasFermiSolver(this);
+
+                case TwoD_Density.sodft:
+                    return new TwoD_SO_DFTSolver(this);
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
     }
 }

@@ -276,28 +276,14 @@ namespace Solver_Bases
 
         static Geometry_Type GetGeometryType(string geometry_type)
         {
-            switch (geometry_type)
+            try
             {
-                case "slab":
-                    return Geometry_Type.slab;
-
-                case "sheet":
-                    return Geometry_Type.sheet;
-
-                case "strip":
-                    return Geometry_Type.strip;
-
-                case "half_slab":
-                    return Geometry_Type.half_slab;
-
-                case "half_strip":
-                    return Geometry_Type.half_strip;
-
-                case "tria":
-                    return Geometry_Type.triangle_slab;
-
-                default:
-                    throw new NotImplementedException("Error - Geometry not known");
+                return (Geometry_Type)Enum.Parse(typeof(Geometry_Type), geometry_type);
+            }
+            catch (ArgumentException)
+            {
+                Console.WriteLine("'{0}' is not a valid geometry", geometry_type);
+                throw new NotImplementedException();
             }
         }
 

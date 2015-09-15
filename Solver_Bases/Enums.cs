@@ -57,4 +57,26 @@ namespace Solver_Bases
         sheet, 
         composite
     }
+
+    public enum OneD_Density
+    {
+        thomasfermi,
+        dft
+    }
+
+    public enum TwoD_Density
+    {
+        effectiveband,
+        thomasfermi,
+        sodft,
+        dft
+    }
+
+    public enum ThreeD_Density
+    {
+        effectiveband,
+        thomasfermi,
+        twodthomasfermi_oneddft,
+        iterativegreensfunction
+    }
 }
