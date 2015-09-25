@@ -11,6 +11,20 @@ namespace Solver_Bases
         Down = 1
     }
 
+    public enum Direction
+    {
+        x = 0,
+        y = 1,
+        z = 2
+    }
+
+    public enum Plane
+    {
+        xy = 0,
+        yz = 1,
+        zx = 2
+    }
+
     public enum Material
     {
         GaAs,
@@ -18,9 +32,12 @@ namespace Solver_Bases
         AlGaAs,
         AlAs,
         In075GaAs,
+        InAlAs,
+        InGaAs,
         InAs,
         PMMA,
         Air,
+        Metal,
         Substrate
     }
 
@@ -32,7 +49,34 @@ namespace Solver_Bases
 
     public enum Geometry_Type
     {
+        triangle_slab,
+        half_slab,
+        strip,
+        half_strip,
         slab,
-        sheet
+        sheet, 
+        composite
+    }
+
+    public enum OneD_Density
+    {
+        thomasfermi,
+        dft
+    }
+
+    public enum TwoD_Density
+    {
+        effectiveband,
+        thomasfermi,
+        sodft,
+        dft
+    }
+
+    public enum ThreeD_Density
+    {
+        effectiveband,
+        thomasfermi,
+        twodthomasfermi_oneddft,
+        iterativegreensfunction
     }
 }

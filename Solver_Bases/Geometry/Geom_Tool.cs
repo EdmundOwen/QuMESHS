@@ -29,6 +29,9 @@ namespace Solver_Bases.Geometry
             if (result == null)
                 throw new Exception("Error - layer not found at (x, y, z) = (" + x.ToString() + ", " + y.ToString() + ", " + z.ToString() + ")");
 
+            if (result.Geometry == Geometry_Type.composite)
+                return Extract_Layer_From_Composite(result, x, y, z);
+
             // else if the result is the substrate and this is not the surface, throw an exception
             if (result.Material == Material.Substrate && z != result.Zmax)
                 throw new Exception("Error - layer at (x, y, z) = (" + x.ToString() + ", " + y.ToString() + ", " + z.ToString() + ") is in the substrate");
@@ -36,20 +39,45 @@ namespace Solver_Bases.Geometry
             return result;
         }
 
-        public static int Find_Layer_Below_Surface(ILayer[] layers)
+        /// <summary>
+        /// return the first layer you come across at this location (starting at component n and looking down)
+        /// note that this does not check for overlap and will only return the default layer if there are no components at (x, y, z)
+        /// </summary>
+        private static ILayer Extract_Layer_From_Composite(ILayer composite, double x, double y, double z)
+        {
+            for (int i = composite.No_Components - 1; i >= 0; i--)
+                if (composite.Get_Component(i).InLayer(x, y, z))
+                    return composite.Get_Component(i);
+
+            throw new FormatException("Error - We should have found the correct layer by this point.\nTheoretically impossible to get to this exception...");
+        }
+
+        public static ILayer GetLayer(ILayer[] layers, Plane plane, double x, double y, double z)
+        {
+            if (plane == Plane.xy)
+                return GetLayer(layers, x, y, z);
+            else if (plane == Plane.yz)
+                return GetLayer(layers, z, x, y);
+            else if (plane == Plane.zx)
+                return GetLayer(layers, y, z, x);
+            else
+                throw new NotImplementedException();
+        }
+
+        public static ILayer Find_Layer_Below_Surface(ILayer[] layers)
         {
             for (int i = 0; i < layers.Length; i++)
                 if (layers[i].Zmax == 0.0)
-                    return i;
+                    return layers[i];
 
             throw new Exception("Error - cannot find the layer immediately below the surface");
         }
 
-        public static int Find_Layer_Above_Surface(ILayer[] layers)
+        public static ILayer Find_Layer_Above_Surface(ILayer[] layers)
         {
             for (int i = 0; i < layers.Length; i++)
                 if (layers[i].Zmin == 0.0)
-                    return i;
+                    return layers[i];
 
             throw new Exception("Error - cannot find the layer immediately below the surface");
         }

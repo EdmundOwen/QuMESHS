@@ -1,0 +1,149 @@
+﻿############################################################################
+#### Input parameter file for TwoD_ThomasFermiPoisson calculator...	####
+############################################################################
+#
+# Any line not starting with % is commented out.
+# The input names are case sensitive
+# The only spaces allowed are before and after the = sign and immediately after the % sign
+# If a line starts #%, this is an optional input.
+# Some inputs override others; typically, refer to the example input file to see
+# which inputs are default... one's with #% tend to be overriden
+#
+% dim = 2
+#
+############## Simulation domain details ##############################
+#
+## Number of lattice sites in the transverse direction for the density calculation
+% ny = 200
+#
+## Spacing of lattice sites in the transverse direction for the density calculation
+% dy = 20
+#
+## Number of lattice sites in the growth direction for the density calculation
+% nz = 2000
+#
+## Spacing of lattice sites in the growth direction for the density calculation
+% dz = 1
+#
+#
+############## Poisson solver details #################################
+#
+# Top gate voltage
+% top_V = 0.0
+#
+## Split gate voltage
+% split_V = -1.3
+#
+## Voltage array (for general voltage input)
+% voltages = {-1.3, -1.3}
+#
+## Surface charge (by default, this is set by the 1D solver)
+% surface_charge = -2.568
+#
+## Split gate width
+% split_width = 400
+#
+% newton_tol = 1e-3
+#
+############## Generic density solver details #########################
+#
+## Use DFT or not
+% no_dft = true
+#
+#
+% density_solver_2d = dft
+#
+## Maximum number of iterations before giving up
+% max_iterations = 1000
+#
+## Temperature
+% T = 4.2
+#
+## Minimum of simulation domain in the transverse direction
+% ymin_dens = -200.0
+#% ymin_dens = -1000.0
+#
+## Lattice spacing in the transverse direction
+% dy_dens =  5.0
+#
+## Number of lattice points in transverse direction 
+% ny_dens = 81
+#% ny_dens = 401
+#
+## Minimum of simulation domain in the growth direction
+% zmin_dens = -91.0
+#
+## Lattice spacing in the growth direction
+% dz_dens = 1.0
+#
+## Number of lattice points in growth direction
+% nz_dens = 27
+#
+#
+############## Data transfer details ##############################
+#
+## Whether to start a simulation "hot" with previous data
+% hot_start = false
+#
+## File location for spin-up data
+% spin_up_file = dens_2D_up_sg-066_tg-700.dat
+#
+## File location for spin-down data
+% spin_down_file = dens_2D_down_sg-066_tg-700.dat
+#
+## File containing surface charge density
+% surface_charge_file = surface_charge.dat
+#
+##
+% output_suffix = .dat
+#
+############## Run details #######################################
+#
+## whether to make this a batch run or not
+% batch_run = false
+#
+##
+% batch_params = {top_V, V0, V1=V0}
+#
+## 
+% init_V0 = -0.47
+#
+##
+% delta_V0 = 0.001
+#
+##
+% no_V0 = 26
+#
+##
+% init_top_V = -1.56
+#
+##
+% delta_top_V = 0.02
+##
+#
+% no_top_V = 13
+#
+############## Simulation domain details for dopents ##############################
+#
+## Number of lattice sites for the density calculation
+% nz_1d = 2000
+#
+## Spacing of lattice sites for the density calculation
+% dz_1d = 1
+#
+## Number of lattice sites in the transverse direction to save to
+% ny_1d = 21
+#
+#
+############## DFT density solver detials for dopents #############################
+#
+## Whether to use dft at the final temperature or not
+% dft_1d = true
+#
+## Number of data points over which to calculate the density using dft
+% nz_dens_1d = 35
+#
+## Minimum z value of the dft calculation domain
+% zmin_dens_1d = -100.0
+#
+#

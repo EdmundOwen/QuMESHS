@@ -8,74 +8,32 @@ using Solver_Bases.Layers;
 
 namespace TwoD_ThomasFermiPoisson
 {
-    public class TwoD_ThomasFermiSolver : Density_Base
+    public class TwoD_ThomasFermiSolver : TwoD_Density_Base
     {
-
-        /*
-        DoubleVector band_gap;
-        SpinResolved_DoubleMatrix dopent_concentration;
-        DoubleVector acceptor_concentration, donor_concentration;
-        DoubleVector acceptor_energy_above_Ev, donor_energy_below_Ec;
-        
-        public TwoD_ThomasFermiSolver(DoubleVector band_gap, DoubleVector acceptor_concentration, DoubleVector donor_concentration, DoubleVector acceptor_energy, DoubleVector donor_energy,
-                                        double temperature, double dy, double dz, int ny, int nz) 
-            : base(temperature, 1.0, dy, dz, 1, ny, nz)
-        {
-            // set band profile with spin-degeneracy
-            this.band_gap = band_gap;// Input_Band_Structure.Expand_BandStructure(band_gap, ny).mat;
-
-            this.acceptor_concentration = acceptor_concentration;
-            this.donor_concentration = donor_concentration;
-
-            this.dopent_concentration = (SpinResolved_DoubleMatrix)Input_Band_Structure.Expand_BandStructure(donor_concentration - acceptor_concentration, ny).mat;
-
-            // and set relative dopent energies to the conduction band
-            this.donor_energy_below_Ec = band_gap / 2.0 - donor_energy;
-            this.acceptor_energy_above_Ev = band_gap / 2.0 - acceptor_energy;
-        }
-        */
-
-        public TwoD_ThomasFermiSolver(double temperature, double dy, double dz, int ny, int nz, double ymin, double zmin)
-            : base(temperature, 1.0, dy, dz, 1, ny, nz, 0.0, ymin, zmin)
+        public TwoD_ThomasFermiSolver(IExperiment exp)
+            : base(exp)
         {
         }
 
-        /*
-        public SpinResolved_DoubleMatrix Get_TwoD_ChargeDensity(DoubleMatrix chem_pot)
+        public TwoD_ThomasFermiSolver(IExperiment exp, Plane plane, double plane_pos)
+            : base(exp, plane, plane_pos)
         {
-            // spin-resolved density
-            SpinResolved_DoubleMatrix charge_density = new SpinResolved_DoubleMatrix(ny, nz);
-
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                {
-                    // calculate the density at the given point
-                    ZeroD_Density charge_calc = new ZeroD_Density(band_gap[j], acceptor_concentration[j], acceptor_energy_above_Ev[j], donor_concentration[j], donor_energy_below_Ec[j], temperature);
-                    double local_charge_density = charge_calc.Get_ChargeDensity(chem_pot[i, j]);
-
-                    // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
-                    charge_density.Spin_Down[i, j] = 0.5 * local_charge_density;
-                    charge_density.Spin_Up[i, j] = 0.5 * local_charge_density;
-                }
-
-            return charge_density;
         }
-        */ 
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
         {
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
                     // do not add anything to the density if on the edge of the domain
-                    if (i == 0 || i == ny - 1 || j == 0 || j == nz - 1)
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
                         continue;
 
-                    double y = dy * i + ymin;
-                    double z = dz * j + zmin;
+                    double x = dx * i + xmin;
+                    double y = dy * j + ymin;
                     
                     // get the relevant layer
-                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z);
+                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, plane, x, y, pos_z);
                     
                     // calculate the density at the given point
                     ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
@@ -87,190 +45,71 @@ namespace TwoD_ThomasFermiPoisson
                 }
         }
 
-        public SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot, double well_depth)
+        public override SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_density_deriv, SpinResolved_Data dopent_density_deriv, Band_Data chem_pot)
         {
-            // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(density.Spin_Up.mat.Rows, density.Spin_Up.mat.Cols));
-            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(density.Spin_Down.mat.Rows, density.Spin_Down.mat.Cols));
-            SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
-
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
                 {
-                    double y = dy * i + ymin;
-                    double z = dz * j + zmin;
+                    // leave the edges zeroed
+                    if (i == 0 || i == nx - 1 || j == 0 || j == ny - 1)
+                        continue;
 
-                    // get the relevant layer
-                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, y, z, well_depth);
+                    double x = dx * i + xmin;
+                    double y = dy * j + ymin;
 
-                    // calculate the density at the given point
+                    // get the relevant layer and if it's frozen out, don't recalculate the dopent charge
+                    ILayer current_Layer = Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, plane, x, y, pos_z);
+
                     ZeroD_Density charge_calc = new ZeroD_Density(current_Layer, temperature);
-                    double local_charge_density = charge_calc.Get_CarrierDensity(chem_pot.mat[i, j]);
-
-                    // as there is no spin dependence in this problem yet, just divide the charge into spin-up and spin-down components equally
-                    new_density.Spin_Down.mat[i, j] = 0.5 * local_charge_density;
-                    new_density.Spin_Up.mat[i, j] = 0.5 * local_charge_density;
-                }
-
-            return new_density;
-        }
-
-        public override SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot)
-        {
-            // artificially deepen the copies of spin up and spin down
-            Band_Data tmp_spinup = new Band_Data(new DoubleMatrix(density.Spin_Up.mat.Rows, density.Spin_Up.mat.Cols));
-            Band_Data tmp_spindown = new Band_Data(new DoubleMatrix(density.Spin_Down.mat.Rows, density.Spin_Down.mat.Cols));
-
-            for (int i = 0; i < density.Spin_Up.mat.Rows; i++)
-                for (int j = 0; j < density.Spin_Up.mat.Cols; j++)
-                {
-                    tmp_spinup.mat[i, j] = density.Spin_Up.mat[i, j];
-                    tmp_spindown.mat[i, j] = density.Spin_Down.mat[i, j];
-                }
-
-            SpinResolved_Data new_density = new SpinResolved_Data(tmp_spinup, tmp_spindown);
-
-            // finally, get the charge density and send it to this new array
-            Get_ChargeDensity(layers, ref new_density, chem_pot);
-
-            return new_density;
-        }
-
-        /*
-        public double Get_Chemical_Potential(int location)
-        {
-            return Get_Chemical_Potential(location, temperature);
-        }
-
-        public double Get_Chemical_Potential(int location, double temperature_input)
-        {
-            ZeroD_Density chem_pot_cal = new ZeroD_Density(band_gap[location], acceptor_concentration[location], acceptor_energy_above_Ev[location], donor_concentration[location], donor_energy_below_Ec[location], temperature_input);
-
-            return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
-        }
-        */
-
-        public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
-        {
-            ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z), temperature_input);
-
-            return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
-        }
-
-        /*
-        public SpinResolved_DoubleMatrix Get_OneD_Density(DoubleMatrix conduction_band_energy)
-        {
-            // spin-resolved density
-            SpinResolved_DoubleMatrix density = new SpinResolved_DoubleMatrix(ny, nz);
-
-            // Find conduction band density
-            SpinResolved_DoubleMatrix conduction_density = Calculate_Conduction_Band_Density(conduction_band_energy);
-
-            // Find valence band density
-            SpinResolved_DoubleMatrix valence_density = Calculate_Valence_Band_Density(conduction_band_energy);
-
-            // Calculate donor occupation probability
-            SpinResolved_DoubleMatrix acceptor_density = Calculate_Dopent_Density(conduction_band_energy, acceptor_concentration, acceptor_energy_below_Ec);
-            SpinResolved_DoubleMatrix donor_density = Calculate_Dopent_Density(conduction_band_energy, donor_concentration, donor_energy_below_Ec);
-
-            // return total density (for 1D; hence the divide-by-lattice-spacing)
-            return -1.0 * Physics_Base.q_e * (dopent_concentration + valence_density + acceptor_density - conduction_density - donor_density);
-        }
-
-        /// <summary>
-        /// calculates the conduction band profile (spin-resolved) as a function of depth using a given conduction band potential
-        /// </summary>
-        SpinResolved_DoubleMatrix Calculate_Conduction_Band_Density(DoubleMatrix conduction_band_energy)
-        {
-            SpinResolved_DoubleMatrix result = new SpinResolved_DoubleMatrix(ny, nz);
-
-            // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
-            int no_energy_steps;
-            if (temperature != 0.0)
-                no_energy_steps = (int)((no_kB_T_above_Ef * Physics_Base.kB * temperature - conduction_band_energy.Min()) / dE);
-            else
-                no_energy_steps = 100;
-
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                    for (int E_step = 0; E_step < no_energy_steps; E_step++)
+                    if (!current_Layer.Dopents_Frozen_Out(temperature))
                     {
-                        double energy_above_eF = conduction_band_energy[i, j] + E_step * dE;
-
-                        result[i, j, Spin.Up] += Physics_Base.Get_Electron_3D_DensityofStates(energy_above_eF, conduction_band_energy[i, j]) * Get_Fermi_Function(energy_above_eF);
-                        result[i, j, Spin.Down] += Physics_Base.Get_Electron_3D_DensityofStates(energy_above_eF, conduction_band_energy[i, j]) * Get_Fermi_Function(energy_above_eF);
+                        double local_dopent_density_deriv = charge_calc.Get_DopentDensityDeriv(chem_pot.mat[i, j]);
+                        dopent_density_deriv.Spin_Up.mat[i, j] = 0.5 * local_dopent_density_deriv;
+                        dopent_density_deriv.Spin_Down.mat[i, j] = 0.5 * local_dopent_density_deriv;
+                    }
+                    else
+                    {
+                        dopent_density_deriv.Spin_Up.mat[i, j] = 0.0;
+                        dopent_density_deriv.Spin_Down.mat[i, j] = 0.0;
                     }
 
-            return result;
-        }
-
-        /// <summary>
-        /// calculates the valence band profile (spin-resolved) as a function of depth using a given conduction band potential
-        /// </summary>
-        SpinResolved_DoubleMatrix Calculate_Valence_Band_Density(DoubleMatrix conduction_band_energy)
-        {
-            SpinResolved_DoubleMatrix result = new SpinResolved_DoubleMatrix(ny, nz);
-            DoubleMatrix valence_band = conduction_band_energy - band_gap;
-
-            // Integrate from the minimum point on the conduction band to a given number of kB*T above the fermi surface
-            int no_energy_steps;
-            if (temperature != 0.0)
-                no_energy_steps = (int)((valence_band.Max() - no_kB_T_above_Ef * Physics_Base.kB * temperature) / dE);
-            else
-                no_energy_steps = 100;
-
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                    for (int E_step = 0; E_step < no_energy_steps; E_step++)
-                    {
-                        double energy_below_eF = valence_band[i, j] - E_step * dE;
-
-                        // energies are negative (for density of states) as we are considering holes
-                        // also, we subtract from "result" as holes are negatively charged
-                        result[i, j, Spin.Up] += Physics_Base.Get_Hole_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[i, j]) * (1.0 - Get_Fermi_Function(energy_below_eF));
-                        result[i, j, Spin.Down] += Physics_Base.Get_Hole_3D_DensityofStates(-1.0 * energy_below_eF, -1.0 * valence_band[i, j]) * (1.0 - Get_Fermi_Function(energy_below_eF));
-                    }
-
-            return result;
-        }
-
-        /// <summary>
-        /// calculates the dopent density profile (spin-resolved) as a function of depth using a given conduction band potential
-        /// </summary>
-        SpinResolved_DoubleMatrix Calculate_Dopent_Density(DoubleMatrix conduction_band_energy, DoubleVector dopent_concentration, DoubleVector dopent_energy_below_Ec)
-        {
-            SpinResolved_DoubleMatrix result = new SpinResolved_DoubleMatrix(ny, nz);
-
-            // calculates the occupation of the dopents 
-            // (note that the dopent concentrations are only a function of depth)
-            for (int i = 0; i < ny; i++)
-                for (int j = 0; j < nz; j++)
-                {
-                    result[i, j, Spin.Up] = dopent_concentration[j] * Get_Fermi_Function(conduction_band_energy[i, j] - dopent_energy_below_Ec[j]);
-                    result[i, j, Spin.Down] = dopent_concentration[j] * Get_Fermi_Function(conduction_band_energy[i, j] - dopent_energy_below_Ec[j]);
+                    carrier_density_deriv.Spin_Up.mat[i, j] = 0.5 * charge_calc.Get_CarrierDensityDeriv(chem_pot.mat[i, j]);
+                    carrier_density_deriv.Spin_Down.mat[i, j] = 0.5 * charge_calc.Get_CarrierDensityDeriv(chem_pot.mat[i, j]);
                 }
 
-            return result;
-        }
-        */
-
-        public override void Close()
-        {
-            Console.WriteLine("Closing density solver");
+            return carrier_density_deriv + dopent_density_deriv;
         }
 
         public void Write_Out_Density(SpinResolved_Data h, string outfile)
         {
+            Band_Data h_spin_summed = h.Spin_Summed_Data;
+
             System.IO.StreamWriter sw = new System.IO.StreamWriter(outfile);
-            for (int i = 0; i < h.Spin_Summed_Data.mat.Cols; i++)
-                for (int j = 0; j < h.Spin_Summed_Data.mat.Rows; j++)
+            for (int i = 0; i < h_spin_summed.mat.Cols; i++)
+                for (int j = 0; j < h_spin_summed.mat.Rows; j++)
                 {
-                    sw.Write(h.Spin_Summed_Data.mat[j, i].ToString() + '\t');
-                    if (j == h.Spin_Summed_Data.mat.Rows - 1)
+                    sw.Write(h_spin_summed.mat[j, i].ToString() + '\t');
+                    if (j == h_spin_summed.mat.Rows - 1)
                         sw.WriteLine();
                 }
 
             sw.Close();
+        }
+
+        public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
+        {
+            return new DoubleVector(1, double.NaN);
+        }
+
+        public Band_Data Get_KS_KE(ILayer[] layers, Band_Data chem_pot)
+        {
+            // return zeros (as Thomas-Fermi solution does not use wave functions)
+            return new Band_Data(nx, ny, 0.0); ;
         }
     }
 }

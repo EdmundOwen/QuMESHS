@@ -12,30 +12,15 @@ namespace Solver_Bases
     {
         protected double temperature;
 
-        protected double dx, dy, dz;
-        protected double xmin, ymin, zmin;
-        protected int nx, ny, nz;
-
         protected double fermi_Energy = 0.0;
         protected int dim;
 
         private bool converged = false;
         private double convergence_factor = double.MaxValue;
 
-        public Density_Base(double temperature, double dx, double dy, double dz, int nx, int ny, int nz, double xmin, double ymin, double zmin)
+        public Density_Base(double temperature)
         {
             this.temperature = temperature;
-            this.dx = dx; this.dy = dy; this.dz = dz;
-            this.nx = nx; this.ny = ny; this.nz = nz;
-            this.xmin = xmin; this.ymin = ymin; this.zmin = zmin;
-
-            // check how many actual dimensions are present
-            if (nx != 1)
-                dim = 3;
-            else if (ny != 1)
-                dim = 2;
-            else
-                dim = 1;
         }
 
         /// <summary>
@@ -65,7 +50,7 @@ namespace Solver_Bases
         /// </summary>
         protected double Get_OneD_DoS(double band_edge, double no_kb_T)
         {
-            if (band_edge > no_kb_T * Physics_Base.kB * temperature)
+            if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
                 return 0.0;
             else if (temperature == 0)
                 return 2.0 * Math.Sqrt(-2.0 * Physics_Base.mass * band_edge) / (Math.PI * Physics_Base.hbar);
@@ -76,47 +61,32 @@ namespace Solver_Bases
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
                 dos_integrand.Integrator = new GaussKronrodIntegrator();
-                return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+                if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
+                    return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
+                else
+                    return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
             }
         }
 
-        /*public void Output(SpinResolved_DoubleVector data, string filename)
+        protected double Get_OneD_DoS_Deriv(double band_edge, double no_kb_T)
         {
-            StreamWriter sw = new StreamWriter(filename);
-
-            // output the charge density
-            for (int i = 0; i < data.Nx; i++)
-                sw.WriteLine(data.Spin_Summed_Vector[i].ToString());
-
-            sw.Close();
+            if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
+                return 0.0;
+            else if (temperature == 0)
+                return -1.0 * Math.Sqrt(-2.0 * Physics_Base.mass / band_edge) / (Math.PI * Physics_Base.hbar);
+            else
+            {
+                // calculate the density of states integral directly
+                double alpha = 2.0 * Math.Sqrt(2.0 * Physics_Base.mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
+                double beta = 1.0 / (Physics_Base.kB * temperature);
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -3.0) * (beta * (Math.Exp(beta * E) + 1) - 2.0 * beta * Math.Exp(beta * E))));
+                dos_integrand.Integrator = new GaussKronrodIntegrator();
+                if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
+                    return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
+                else
+                    return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+            }
         }
-
-        public void Output(SpinResolved_DoubleMatrix data, string filename)
-        {
-            StreamWriter sw = new StreamWriter(filename);
-            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
-            
-            // output the charge density
-            for (int i = 0; i < data.Nx; i++)
-                for (int j = 0; j < data.Ny; j++)
-                    sw.WriteLine(data.Spin_Summed_Matrix[i, j].ToString());
-
-            sw.Close();
-        }
-
-        public void Output(SpinResolved_DoubleMatrix[] data, string filename)
-        {
-            StreamWriter sw = new StreamWriter(filename);
-            sw.WriteLine("Warning - Ordering compared to Band_Data objects is not guaranteed!");
-
-            // output the charge density
-            for (int i = 0; i < data[0].Nx; i++)
-                for (int j = 0; j < data[0].Ny; j++)
-                    for (int k = 0; k < data.Length; k++)
-                        sw.WriteLine(data[k].Spin_Summed_Matrix[i, j].ToString());
-
-            sw.Close();
-        }*/
 
         public void Output(SpinResolved_Data data, string filename, bool with_warnings)
         {
@@ -147,11 +117,27 @@ namespace Solver_Bases
         }
 
         /// <summary>
+        /// Gets the derivative of the fermi function at a given energy using the default temperature and fermi energy
+        /// </summary>
+        protected double Get_Fermi_Function_Derivative(double energy)
+        {
+            return Physics_Base.Get_Fermi_Function_Derivative(energy, fermi_Energy, temperature);
+        }
+
+        /// <summary>
         /// Gets the fermi function for the dopents at a given energy using the default temperature and fermi energy
         /// </summary>
         protected double Get_Dopent_Fermi_Function(double energy)
         {
             return Physics_Base.Get_Dopent_Fermi_Function(energy, fermi_Energy, temperature);
+        }
+
+        /// <summary>
+        /// for this method, it is assumed that the dopent density is frozen out (and therefore not altered) unless overriden
+        /// </summary>
+        public virtual void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data carrier_charge_density, ref SpinResolved_Data dopent_charge_density, Band_Data chem_pot)
+        {
+            Get_ChargeDensity(layers, ref carrier_charge_density, chem_pot);
         }
 
         public virtual double Get_Chemical_Potential(double z, ILayer[] layers)
@@ -191,8 +177,10 @@ namespace Solver_Bases
         double[] Get_Array_of_Absolute_Differences(SpinResolved_Data density1, SpinResolved_Data density2)
         {
             double[] result = new double[density1.Length];
-            for (int i = 0; i < density1.Spin_Summed_Data.Length; i++)
-                result[i] = Math.Abs(density1.Spin_Summed_Data[i] - density2.Spin_Summed_Data[i]);
+            Band_Data dens1_spin_summed = density1.Spin_Summed_Data;
+            Band_Data dens2_spin_summed = density2.Spin_Summed_Data;
+            for (int i = 0; i < dens1_spin_summed.Length; i++)
+                result[i] = Math.Abs(dens1_spin_summed[i] - dens2_spin_summed[i]);
 
             return result;
         }
@@ -203,9 +191,10 @@ namespace Solver_Bases
         /// </summary>
         public bool Check_Convergence(SpinResolved_Data blending_density, double tol)
         {
-            double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
-            for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
-                density_diff[i] = Math.Abs(blending_density.Spin_Summed_Data[i]);
+            Band_Data blend_dens_spin_summed = blending_density.Spin_Summed_Data;
+            double[] density_diff = new double[blend_dens_spin_summed.Length];
+            for (int i = 0; i < blend_dens_spin_summed.Length; i++)
+                density_diff[i] = Math.Abs(blend_dens_spin_summed[i]);
 
             int[] converged_test = new int[density_diff.Length];
             for (int i = 0; i < density_diff.Length; i++)
@@ -229,15 +218,18 @@ namespace Solver_Bases
         /// </summary>
         public bool Check_Convergence_Fraction(SpinResolved_Data blending_density, SpinResolved_Data density, double tol)
         {
+            Band_Data blend_dens_spin_summed = blending_density.Spin_Summed_Data;
+            Band_Data dens_spin_summed = density.Spin_Summed_Data;
+
             // minimum density where convergence is no longer checked is equal to maximum fluctuation
-            double dens_max = Math.Abs(density.Spin_Summed_Data.mat.Min());
-            double dens_min = Math.Abs(density.Spin_Summed_Data.mat.Max());
+            double dens_max = Math.Abs(dens_spin_summed.mat.Min());
+            double dens_min = Math.Abs(dens_spin_summed.mat.Max());
             double minval = Math.Abs(Math.Max(dens_min, dens_max) * tol);
 
-            double[] density_diff = new double[blending_density.Spin_Summed_Data.Length];
-            for (int i = 0; i < blending_density.Spin_Summed_Data.Length; i++)
-                if (Math.Abs(density.Spin_Summed_Data[i]) > minval)
-                    density_diff[i] = Math.Abs(blending_density.Spin_Summed_Data[i]) / Math.Abs(density.Spin_Summed_Data[i]);
+            double[] density_diff = new double[blend_dens_spin_summed.Length];
+            for (int i = 0; i < blend_dens_spin_summed.Length; i++)
+                if (Math.Abs(dens_spin_summed[i]) > minval)
+                    density_diff[i] = Math.Abs(blend_dens_spin_summed[i]) / Math.Abs(dens_spin_summed[i]);
                 else
                     density_diff[i] = 0;
 
@@ -251,7 +243,7 @@ namespace Solver_Bases
 
             // the convergence factor is the sum of the absolute values of the density error defined by the
             // difference between the current density and the ideal one for this potential
-            convergence_factor = blending_density.Spin_Summed_Data.mat.Select(x => Math.Abs(x)).ToList().Sum();
+            convergence_factor = blend_dens_spin_summed.mat.Select(x => Math.Abs(x)).ToList().Sum();
 
             if (converged_test.Sum() == density_diff.Length)
                 return true;
@@ -306,9 +298,47 @@ namespace Solver_Bases
             get { return convergence_factor; }
         }
 
-        public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data density, Band_Data chem_pot);
-        public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data density, Band_Data chem_pot);
+        public abstract void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot);
+        public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot);
+        public abstract SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot);
         public abstract double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
-        public abstract void Close();
+        public abstract DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot);
+
+        public void Close()
+        {
+            Console.WriteLine("Closing density solver");
+        }
+
+        protected Band_Data dft_pot;
+        protected double alpha_dft = 0.1;
+        public void Set_DFT_Potential(SpinResolved_Data car_dens)
+        {
+            if (this.dft_pot == null && alpha_dft != 0.0)
+                this.dft_pot = Physics_Base.Get_XC_Potential(car_dens);
+            else if (alpha_dft == 0.0)
+                this.dft_pot = 0.0 * car_dens.Spin_Summed_Data.DeepenThisCopy();
+            else
+                this.dft_pot = (1.0 - alpha_dft) * dft_pot + alpha_dft * Physics_Base.Get_XC_Potential(car_dens);
+        }
+        public void Reset_DFT_Potential()
+        {
+            this.dft_pot = null;
+        }
+        public void Print_DFT_diff(SpinResolved_Data car_dens)
+        {
+            Console.WriteLine("Maximum absolute difference in DFT potentials = " + DFT_diff(car_dens).InfinityNorm().ToString("F6"));
+        }
+        public Band_Data DFT_diff(SpinResolved_Data car_dens)
+        {
+            if (alpha_dft == 0.0)
+                return 0.0 * dft_pot;
+            else
+                return dft_pot - Physics_Base.Get_XC_Potential(car_dens);
+        }
+        public double DFT_Mixing_Parameter
+        {
+            get { return alpha_dft; }
+            set { alpha_dft = value; }
+        }
     }
 }

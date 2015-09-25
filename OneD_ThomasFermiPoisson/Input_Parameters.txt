@@ -12,59 +12,36 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites for the density calculation
-% nz = 120
+% nz = 800
 #
 ## Spacing of lattice sites for the density calculation
-% dz = 1
-#
-#
-############## Poisson solver details #################################
-#
-## Potential mixing parameter. (this is adaptive)
-% alpha = 0.01
-#
-## File name with band structure in
-% BandStructure_File = Band_Structure.txt
-#
-## Use FlexPDE?
-% use_FlexPDE = false
-#
-## FlexPDE input file
-% FlexPDE_file = band_structure.pde
-#
-## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
-#
-############## Generic density solver details #########################
-#
-#
-## Final solution tolerance
-% tolerance = 10e-5
-#
-## Fermi energy
-% E_f = 0.0
-#
-## Number of k_B T to calculate above the Fermi energy
-% No_kB_T_Above_E_f = 0.0
+% dz = 0.5
 #
 #
 ############## DFT density solver detials #############################
 #
 ## Whether to use dft at the final temperature or not
-% dft = false
+% dft = true
 #
 ## Number of data points over which to calculate the density using dft
-% nz_dens = 14
+% nz_dens = 200
 #
 ## Lattice spacing for dft calculations
-% dz_dens = 5.0
+% dz_dens = 0.5
 #
 ## Minimum z value of the dft calculation domain
-% zmin_dens = -130.0
+% zmin_dens = -140.0
 #
+## Ouput suffix for data
+% output_suffix = .dat
 #
 ############## Physical parameters ####################################
+#
+## Dimensionality of problem
+% dim = 1
 #
 ## Temperature
 % T = 4
 #
+## Whether or not to illuminate the sample
+% illuminate = false

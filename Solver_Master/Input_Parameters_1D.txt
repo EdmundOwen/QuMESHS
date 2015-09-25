@@ -1,0 +1,71 @@
+﻿############################################################################
+#### Input parameter file for OneD_ThomasFermiPoisson calculator...	########
+############################################################################
+#
+# Any line not starting with % is commented out.
+# The input names are case sensitive
+# The only spaces allowed are before and after the = sign and immediately after the % sign
+# If a line starts #%, this is an optional input.
+# Some inputs override others; typically, refer to the example input file to see
+# which inputs are default... one's with #% tend to be overriden
+#
+############## Simulation domain details ##############################
+#
+## Number of lattice sites for the density calculation
+% nz = 1900
+#
+## Spacing of lattice sites for the density calculation
+% dz = 1
+#
+#
+############## DFT density solver detials #############################
+#
+% top_V = 0.0
+#
+## Whether to use dft at the final temperature or not
+% dft = true
+#
+## Number of data points over which to calculate the density using dft
+% nz_dens = 100
+#
+## Lattice spacing for dft calculations
+% dz_dens = 1
+#
+## Minimum z value of the dft calculation domain
+% zmin_dens = -140.0
+#
+## Ouput suffix for data
+% output_suffix = .dat
+#
+##
+% max_iterations = 200
+#
+############## Physical parameters ####################################
+#
+## Dimensionality of problem
+% dim = 1
+#
+## Temperature
+% T = 1.4
+#
+## Whether or not to illuminate the sample
+% illuminate = false
+#
+####
+## whether to make this a batch run or not
+% batch_run = true
+#
+##
+% batch_params = {top_V}
+#
+##
+% no_runs = 101
+#
+% init_top_V = 0.0
+#
+##
+% delta_top_V = -0.01
+##
+#
+% no_top_V = 101
+#

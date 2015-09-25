@@ -1,30 +1,11 @@
-# test comment
-#surface schottky=0.9 v1
-#
-#
-mat=pmma t=150
+
+mat=PMMA t=140
+mat=PMMA t=10 {mat=metal,geom=half_slab,dx=0.0,dy=-400.0,theta=90.0} {mat=metal,geom=half_slab,dx=0.0,dy=400.0,theta=270.0} composite=true no_components=3
 surface=true
-#
-#
-## High density shallow HEMT (eg W0626)
-#
-#mat=GaAs t=10
-#mat=AlGaAs t=40 x=.3 Nd=0.3e18
-#mat=AlGaAs t=40 x=.3
-#mat=GaAs t=410
-#
-## Low density deep HEMT (eg W0616)
-#
+
 mat=GaAs t=10
-mat=AlGaAs t=200 x=.3 Nd=4.7e16
-mat=AlGaAs t=75 x=.3
-mat=GaAs t=1615 Na=1e14
-#
-## Masato's wafer
-#
-#mat=GaAs t=24
-#mat=AlGaAs t=36 x=.3 Nd=5.88e17
-#mat=AlGaAs t=10 x=.3 
-#mat=GaAs t=5930 Na=1e14
-#
+mat=AlGaAs t=200 x=.33 Nd=4.3e16
+mat=AlGaAs t=75 x=.33
+mat=GaAs t=1615
+
 mat=substrate

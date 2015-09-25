@@ -1,0 +1,23 @@
+
+mat=air t=1990
+mat=air t=10 {mat=metal,geom=half_slab,dx=0.0,dy=-200.0,theta=90.0} {mat=metal,geom=half_slab,dx=0.0,dy=200.0,theta=270.0} composite=true no_components=3
+surface=true
+
+mat=GaAs t=24
+mat=AlGaAs t=36 x=.26 Nd=6e17
+mat=AlGaAs t=10 x=.26
+mat=GaAs t=1930 Na=1e14
+
+mat=substrate 
+
+#mat=PMMA t=140
+#mat=PMMA t=10 {mat=metal,geom=half_slab,dx=0.0,dy=-400.0,theta=90.0} {mat=metal,geom=half_slab,dx=0.0,dy=400.0,theta=270.0} composite=true no_components=3
+#surface=true
+#
+#mat=GaAs t=10
+#mat=AlGaAs t=200 x=.33 Nd=4.3e16
+#mat=AlGaAs t=75 x=.33
+#mat=GaAs t=1615
+#
+#mat=substrate 
+#

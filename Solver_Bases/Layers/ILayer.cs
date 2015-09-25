@@ -15,6 +15,9 @@ namespace Solver_Bases.Layers
         bool InLayer(double z);
         bool InLayer(double y, double z);
         bool InLayer(double x, double y, double z);
+        Geometry_Type Geometry { get; }
+        ILayer Get_Component(int component_no);
+        int No_Components { get; }
 
         double Xmin { get; }
         double Xmax { get; }

@@ -15,8 +15,14 @@ namespace Solver_Bases.Layers
                     return "eps_r_GaAs * eps_0";
                 case Material.AlGaAs:
                     return "eps_r_AlGaAs * eps_0";
+                case Material.InGaAs:
+                    return "eps_r_InGaAs * eps_0";
+                case Material.InAlAs:
+                    return "eps_r_InAlAs * eps_0";
                 case Material.PMMA:
                     return "eps_pmma * eps_0";
+                case Material.Metal:
+                    return "0.0";
                 case Material.Air:
                     return "eps_0";
                 default:
@@ -31,11 +37,20 @@ namespace Solver_Bases.Layers
                 case "air":
                     return Material.Air;
 
+                case "metal":
+                    return Material.Metal;
+
                 case "gaas":
                     return Material.GaAs;
 
                 case "algaas":
                     return Material.AlGaAs;
+
+                case "ingaas":
+                    return Material.InGaAs;
+
+                case "inalas":
+                    return Material.InAlAs;
 
                 case "pmma":
                     return Material.PMMA;

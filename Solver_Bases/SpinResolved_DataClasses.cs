@@ -241,6 +241,24 @@ namespace Solver_Bases
             spin_data[0] = spin_up; spin_data[1] = spin_down;
         }
 
+        public SpinResolved_Data(int nx)
+        {
+            spin_data = new Band_Data[2];
+            spin_data[0] = new Band_Data(nx, 0.0); spin_data[1] = new Band_Data(nx, 0.0);
+        }
+
+        public SpinResolved_Data(int nx, int ny)
+        {
+            spin_data = new Band_Data[2];
+            spin_data[0] = new Band_Data(nx, ny, 0.0); spin_data[1] = new Band_Data(nx, ny, 0.0);
+        }
+
+        public SpinResolved_Data(int nx, int ny, int nz)
+        {
+            spin_data = new Band_Data[2];
+            spin_data[0] = new Band_Data(nx, ny, nz, 0.0); spin_data[1] = new Band_Data(nx, ny, nz, 0.0);
+        }
+
         /// <summary>
         /// Cast from Band_Data to SpinResolved_Data
         /// Assumes equal spin contributions for up and down
@@ -288,14 +306,51 @@ namespace Solver_Bases
         public SpinResolved_Data DeepenThisCopy()
         {
             int dim = this.Spin_Down.Dimension;
-            
+
             if (dim == 1)
-                return new SpinResolved_Data(new Band_Data(this.Spin_Up.vec.DeepenThisCopy()), new Band_Data(this.Spin_Down.vec.DeepenThisCopy()));
+            {
+                int nz = this.Spin_Down.vec.Length;
+                SpinResolved_Data result = new SpinResolved_Data(new Band_Data(new DoubleVector(nz)), new Band_Data(new DoubleVector(nz)));
+                for (int i = 0; i < nz; i++)
+                {
+                    result.Spin_Down.vec[i] = this.Spin_Down.vec[i];
+                    result.Spin_Up.vec[i] = this.Spin_Up.vec[i];
+                }
+
+                return result;
+            }
             else if (dim == 2)
-                return new SpinResolved_Data(new Band_Data(this.Spin_Up.mat.DeepenThisCopy()), new Band_Data(this.Spin_Down.mat.DeepenThisCopy()));
+            {
+                int ny = this.Spin_Down.mat.Rows;
+                int nz = this.Spin_Down.mat.Cols;
+                SpinResolved_Data result = new SpinResolved_Data(new Band_Data(new DoubleMatrix(ny, nz)), new Band_Data(new DoubleMatrix(ny, nz)));
+                for (int i = 0; i < ny; i++)
+                    for (int j = 0; j < nz; j++)
+                    {
+                        result.Spin_Down.mat[i, j] = this.Spin_Down.mat[i, j];
+                        result.Spin_Up.mat[i, j] = this.Spin_Up.mat[i, j];
+                    }
+
+                return result;
+            }
             else if (dim == 3)
-                throw new NotImplementedException();
-                //return new SpinResolved_Data(new Band_Data(this.Spin_Up.vol.DeepenThisCopy()), new Band_Data(this.Spin_Down.vol.DeepenThisCopy()));
+            {
+                int nx = this.Spin_Summed_Data.vol[0].Rows;
+                int ny = this.Spin_Summed_Data.vol[0].Cols;
+                int nz = this.Spin_Summed_Data.vol.Length;
+
+                SpinResolved_Data result = new SpinResolved_Data(new Band_Data(nx, ny, nz, 0.0), new Band_Data(nx, ny, nz, 0.0));
+
+                for (int k = 0; k < nz; k++)
+                    for (int i = 0; i < nx; i++)
+                        for (int j = 0; j < ny; j++)
+                        {
+                            result.Spin_Up.vol[k][i, j] = this.Spin_Up.vol[k][i, j];
+                            result.Spin_Down.vol[k][i, j] = this.Spin_Down.vol[k][i, j];
+                        }
+
+                return result;
+            }
             else
                 throw new NotImplementedException();
         }

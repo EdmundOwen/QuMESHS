@@ -1,0 +1,45 @@
+﻿############################################################################
+#### Input parameter file for ThreeD_SchrodingerPoisson calculator...	####
+############################################################################
+#
+# Any line not starting with % is commented out.
+# The input names are case sensitive
+# The only spaces allowed are before and after the = sign and immediately after the % sign
+# If a line starts #%, this is an optional input.
+# Some inputs override others; typically, refer to the example input file to see
+# which inputs are default... one's with #% tend to be overriden
+#
+############## Poisson solver configuration #################################
+#
+## File name with band structure in
+% BandStructure_File = band_structure.txt
+#
+## Use FlexPDE?
+% use_FlexPDE = true
+#
+## FlexPDE input file
+% FlexPDE_file = split_gate.pde
+#
+## FlexPDE file executable location
+% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
+#
+## Tolerance for the Poisson solution
+% pot_tol = 5e-5
+#
+## Tolerance for the Newton step calculation
+#
+############## Generic density solver configuration #########################
+#
+## Final solution tolerance
+% tolerance = 5e-3
+#
+##
+% anneal_tolerance = 5e-3
+#
+######## Poisson solver configuration for dopents #################################
+#
+## Final solution tolerance
+% tolerance_1d = 1e-6
+#
+## Use FlexPDE for 1D calculations?
+% use_FlexPDE_1d = false

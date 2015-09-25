@@ -9,25 +9,8 @@ using Solver_Bases.Geometry;
 
 namespace Solver_Bases
 {
-    static public class Input_Band_Structure
+    public static class Input_Band_Structure
     {
-        /*
-        double[] layer_boundaries;
-        int end_of_band_structure;
-
-        string[] raw_input;
-        Material[] band_structure;
-
-        string band_structure_filename;
-        
-        public Input_Band_Structure()
-        {
-            // get an array of the desired materials structure
-            raw_input = Get_BandStructure_Data(filename, out layer_boundaries, out end_of_band_structure);
-            band_structure = Get_Materials_Array(end_of_band_structure, raw_input);
-        }
-        */
-
         public static ILayer[] Get_Layers(string filename)
         {
             Dictionary<int, Dictionary<string, object>> data = Get_BandStructure_Data(filename);
@@ -35,7 +18,7 @@ namespace Solver_Bases
             // find which layer is the surface (the first layer is the surface by default)
             int surface = -1; int no_layers = data.Count;
             for (int i = 0; i < data.Count; i++)
-                if ((string)data[i]["raw_data"] == "surface=true")
+                if (((string)data[i]["raw_data"]).Trim() == "surface=true")
                 {
                     surface = i;
                     data[i].Add("is_surface", true);
@@ -78,12 +61,29 @@ namespace Solver_Bases
                     geom = new Sheet((double)data["zmin"]);
                     break;
 
+                case Geometry_Type.strip:
+                    geom = new Strip((double)data["zmin"], (double)data["zmax"], (double)data["dx"], (double)data["dy"], (double)data["width"], (double)data["theta"]);
+                    break;
+
+                case Geometry_Type.half_slab:
+                    geom = new Half_Slab((double)data["zmin"], (double)data["zmax"], (double)data["dx"], (double)data["dy"], (double)data["theta"]);
+                    break;
+
+                case Geometry_Type.half_strip:
+                    geom = new Half_Strip((double)data["zmin"], (double)data["zmax"], (double)data["dx"], (double)data["dy"], (double)data["width"], (double)data["theta"]);
+                    break;
+
+                case Geometry_Type.triangle_slab:
+                    geom = new Triangle_Slab((double)data["zmin"], (double)data["zmax"], (double)data["x0"], (double)data["y0"], (double)data["theta1"], (double)data["theta2"]);
+                    break;
+
                 default:
                     throw new NotImplementedException("Error - Unknown geometry");
             }
 
             // create layer
             ILayer result;
+
             switch (mat)
             {
                 case Material.GaAs:
@@ -91,11 +91,23 @@ namespace Solver_Bases
                     break;
 
                 case Material.AlGaAs:
-                    result = new AlGaAs_Layer(geom, (int)data["layer_no"]);
+                    result = new AlGaAs_Layer(geom, (int)data["layer_no"], (double)data["x"]);
+                    break;
+
+                case Material.InGaAs:
+                    result = new InGaAs_Layer(geom, (int)data["layer_no"], (double)data["x"]);
+                    break;
+
+                case Material.InAlAs:
+                    result = new InAlAs_Layer(geom, (int)data["layer_no"], (double)data["x"]);
                     break;
 
                 case Material.PMMA:
                     result = new PMMA_Layer(geom, (int)data["layer_no"]);
+                    break;
+
+                case Material.Metal:
+                    result = new Metal_Layer(geom, (int)data["layer_no"]);
                     break;
 
                 case Material.Air:
@@ -110,6 +122,11 @@ namespace Solver_Bases
                 default:
                     throw new NotImplementedException("Error - Unknown material");
             }
+
+            // if this is actually a composite layer, then rewrite result... (this is simpler than putting a "Composite" material for the switch above)
+            if (data.ContainsKey("composite"))
+                if ((bool)data["composite"])
+                    result = Create_Composite_Layer(result, data, geom);
 
             // and set dopent levels if necessary
             if (data.ContainsKey("nd") || data.ContainsKey("na"))
@@ -129,13 +146,78 @@ namespace Solver_Bases
             return result;
         }
 
+        private static ILayer Create_Composite_Layer(ILayer default_layer, Dictionary<string, object> data, IGeom default_geom)
+        {
+            int no_components = (int)(double)data["no_components"];
+            ILayer[] result = new ILayer[no_components];
+
+            // set the default layer
+            result[0] = default_layer;
+
+            // unpack the rest of the composite data
+            Dictionary<int, Dictionary<string, object>> composite_data = new Dictionary<int, Dictionary<string, object>>();
+            Unpack_CompositeData(composite_data, data, default_geom);
+
+            // and create the new layers from this
+            for (int i = 1; i < no_components; i++)
+                result[i] = Create_Layer(composite_data[i]);
+
+            return new Composite_Layer(result, (int)data["layer_no"]);
+        }
+
+        static void Unpack_CompositeData(Dictionary<int, Dictionary<string, object>> composite_data, Dictionary<string, object> data, IGeom default_geom)
+        {
+            // cycle over the composite data (minus the default layer)
+            for (int i = 1; i < (int)(double)data["no_components"]; i++)
+            {
+                string[] raw_component_data = ((string)data["component" + i.ToString()]).TrimStart('{').TrimEnd('}').Split(',');
+
+                Dictionary<string, object> component_data = new Dictionary<string, object>();
+
+                // get the component data
+                for (int j = 0; j < raw_component_data.Length; j++)
+                {
+                    string tmp_key = raw_component_data[j].Split('=')[0].ToLower();
+                    string tmp_value = raw_component_data[j].Split('=')[1].ToLower();
+
+                    // try and pass tmp_value by any means possible
+                    double d_val; bool b_val;
+                    if (double.TryParse(tmp_value, out d_val))
+                        component_data.Add(tmp_key, d_val);
+                    else if (bool.TryParse(tmp_value, out b_val))
+                        component_data.Add(tmp_key, b_val);
+                    else
+                        component_data.Add(tmp_key, tmp_value);
+                }
+
+                // and add some geometry data
+                component_data.Add("zmin", default_geom.Zmin);
+                component_data.Add("zmax", default_geom.Zmax);
+                component_data.Add("layer_no", i);
+
+                composite_data[i] = component_data;
+            }
+        }
+
         static void Unpack_RawData(Dictionary<int, Dictionary<string, object>> data)
         {
+            int layer_no = 1;
+
             for (int i = 0; i < data.Count; i++)
             {
                 string[] raw_layer_data = ((string)data[i]["raw_data"]).Trim().Split(' ');
+                int component_no = 1;
+
                 for (int j = 0; j < raw_layer_data.Length; j++)
                 {
+                    //check if this is a composite layer, if so... just input the data in its raw format (ie. don't break it up into key/value pairs)
+                    if (raw_layer_data[j].StartsWith("{"))
+                    {
+                        data[i].Add("component" + component_no.ToString(), raw_layer_data[j]);
+                        component_no++;
+                        continue;
+                    }
+
                     string tmp_key = raw_layer_data[j].Split('=')[0].ToLower();
                     string tmp_value = raw_layer_data[j].Split('=')[1].ToLower();
 
@@ -149,7 +231,15 @@ namespace Solver_Bases
                         data[i].Add(tmp_key, tmp_value);
                 }
 
-                data[i].Add("layer_no", i);
+                data[i].Add("layer_no", layer_no);
+
+                layer_no++;
+                if (data[i].ContainsKey("is_surface"))
+                    if ((bool)data[i]["is_surface"] == true)
+                    {
+                        data[i].Remove("layer_no");
+                        layer_no--;
+                    }
             }
         }
 
@@ -186,23 +276,21 @@ namespace Solver_Bases
 
         static Geometry_Type GetGeometryType(string geometry_type)
         {
-            switch (geometry_type)
+            try
             {
-                case "slab":
-                    return Geometry_Type.slab;
-
-                case "sheet":
-                    return Geometry_Type.sheet;
-
-                default:
-                    throw new NotImplementedException("Error - Geometry not known");
+                return (Geometry_Type)Enum.Parse(typeof(Geometry_Type), geometry_type);
+            }
+            catch (ArgumentException)
+            {
+                Console.WriteLine("'{0}' is not a valid geometry", geometry_type);
+                throw new NotImplementedException();
             }
         }
 
         static Dictionary<int, Dictionary<string, object>> Get_BandStructure_Data(string filename)
         {
             if (!File.Exists(filename))
-                throw new FileNotFoundException();
+                throw new FileNotFoundException("Error - Could not find file \"" + filename + "\"");
 
             // read data from input file (discarding comment lines and white space)
             string[] raw_input = (from line in File.ReadAllLines(filename)
@@ -232,172 +320,6 @@ namespace Solver_Bases
 
             return result;
         }
-
-        /*
-        /// <summary>
-        /// outputs a DoubleVector containing the given band structure
-        /// </summary>
-        /// <param name="nz">number of points in the growth direction for the output</param>
-        /// <param name="dz">point separation for the output</param>
-        /// <returns></returns>
-        public DoubleVector GetBandStructure(int nz, double dz)
-        {
-            DoubleVector result = new DoubleVector(nz);
-
-            // fill the result vector with band structures
-            int layer = 0;
-            for (int i = 0; i < nz; i++)
-            {
-                double z = i * dz;
-                if (z > layer_boundaries[layer + 1]  && layer != band_structure.Length - 1)
-                    layer++;
-
-                result[i] = Get_BandGap(band_structure[layer]);
-            }
-
-            return result;
-        }
-
-        public void GetDopentData(int nz, double dz, Dopent dopent, out DoubleVector concentration, out DoubleVector energy)
-        {
-            concentration = new DoubleVector(nz);
-            energy = new DoubleVector(nz);
-
-            string dopent_string;
-            if (dopent == Dopent.acceptor)
-                dopent_string = "na";
-            else if (dopent == Dopent.donor)
-                dopent_string = "nd";
-            else
-                throw new Exception("It is completely impossible to get here");
-
-            // get the dopent concentration
-            int layer = 1;
-            for (int i = 0; i < nz; i++)
-            {
-                double z = i * dz;
-                if (z > layer_boundaries[layer] && layer != end_of_band_structure - 1)
-                    layer++;
-
-                double conc = (from data in raw_input[layer].Split()
-                                       where data.ToLower().StartsWith(dopent_string)
-                                       select double.Parse(data.Split('=').Last())).FirstOrDefault();
-
-                // add concentration to result with a factor of 10^-21 to convert from cm^-3 to nm^-3
-                concentration[i] = conc * 1e-21;
-                // and get the dopent energy
-                if (concentration[i] != 0.0)
-                    energy[i] = Get_Dopent_Energy(band_structure[layer - 1], dopent);
-            }
-        }
-        
-        /// <summary>
-        /// converts a string array of inputs to an array of Materials enums
-        /// </summary>
-        Material[] Get_Materials_Array(int end_of_band_structure, string[] raw_input)
-        {
-            Material[] band_structure = new Material[end_of_band_structure - 1];
-            for (int i = 1; i < end_of_band_structure; i++)
-                band_structure[i - 1] = Get_Material(raw_input[i]);
-
-            return band_structure;
-        }
-
-        /// <summary>
-        /// gets a materials enum based a Snider-type string input
-        /// </summary>
-        Material Get_Material(string input_file_entry)
-        {
-            string[] material = input_file_entry.Split();
-
-            switch (material[0])
-            {
-                case "GaAs":
-                    return Material.GaAs;
-
-                case "AlAs":
-                    return Material.AlAs;
-
-                case "AlGaAs":
-                    for (int i = 0; i < material.Length; i++)
-                        if (material[i].StartsWith("x"))
-                            if (material[i].Split('=').Last() == ".3" || material[i].Split('=').Last() == "0.3")
-                                return Material.Al03GaAs;
-                    
-                    goto default;
-
-                case "InAs":
-                    return Material.InAs;
-                    
-                case "InGaAs":
-                    for (int i = 0; i < material.Length; i++)
-                        if (material[i].StartsWith("x"))
-                            if (material[i].Split('=').Last() == ".75" || material[i].Split('=').Last() == "0.75")
-                                return Material.In075GaAs;
-                    
-                    goto default;
-
-                case "PMMA":
-                    return Material.PMMA;
-
-                default:
-                    throw new NotImplementedException("Error - Material properties not known for " + input_file_entry[0]);
-            }
-        }
-
-        /// <summary>
-        /// returns the band gap for the given material in meV
-        /// </summary>
-        public double Get_BandGap(Material materials)
-        {
-            switch (materials)
-            {
-                case Material.GaAs:
-                    return 1420.0;
-                case Material.Al03GaAs:
-                    return 1800.0;
-                case Material.PMMA:
-                    return 4400.0;
-
-                default:
-                    throw new NotImplementedException("Error - no material details for " + materials.ToString());
-            }
-        }
-
-        /// <summary>
-        /// returns the dopent energy for the given material in meV above or below E_f
-        /// </summary>
-        public double Get_Dopent_Energy(Material materials, Dopent dopent)
-        {
-            if (dopent == Dopent.acceptor)
-            {
-                switch (materials)
-                {
-                    case Material.GaAs:
-                        return 680.0;
-                    case Material.Al03GaAs:
-                        return 859.0;
-
-                    default:
-                        throw new NotImplementedException("Error - no material details for " + materials.ToString());
-                }
-            }
-            else if (dopent == Dopent.donor)
-            {
-                switch (materials)
-                {
-                    case Material.GaAs:
-                        return 704.0;
-                    case Material.Al03GaAs:
-                        return 869.0;
-
-                    default:
-                        throw new NotImplementedException("Error - no material details for " + materials.ToString());
-                }
-            }
-            else throw new NotImplementedException();
-        }
-        */
 
         /// <summary>
         /// returns a DoubleMatrix with the given band structure planarised in the transverse direction
@@ -467,25 +389,17 @@ namespace Solver_Bases
 
         public static Band_Data Get_BandStructure_Grid(ILayer[] layers, double dx, double dy, double dz, int nx, int ny, int nz, double xmin, double ymin, double zmin)
         {
-            throw new NotImplementedException();
-        }
+            DoubleMatrix[] result = new DoubleMatrix[nz];
 
-        /*
-        /// <summary>
-        /// array of materials from shallowest to deepest
-        /// </summary>
-        public Material[] Materials_Array
-        {
-            get { return band_structure; }
-        }
+            for (int k = 0; k < nz; k++)
+            {
+                result[k] = new DoubleMatrix(nx, ny);
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
+                        result[k][i, j] = 0.5 * Geom_Tool.GetLayer(layers, xmin + i * dx, ymin + j * dy, zmin + k * dz).Band_Gap;
+            }
 
-        /// <summary>
-        /// array of layer boundary depths
-        /// </summary>
-        public double[] Layer_Depths
-        {
-            get { return layer_boundaries; }
+            return new Band_Data(result);
         }
-        */
     }
 }

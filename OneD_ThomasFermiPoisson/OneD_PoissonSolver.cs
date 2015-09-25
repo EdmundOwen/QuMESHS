@@ -21,102 +21,78 @@ namespace OneD_ThomasFermiPoisson
         double top_eps, bottom_eps;
 
         // parameters for regular grid solve
-        DoubleMatrix laplacian;
-        DoubleLUFact lu_fact;
+        DoubleTriDiagMatrix laplacian;
+        DoubleTriDiagFact lu_fact;
 
-        /*
-        public OneD_PoissonSolver(double dz, int nz, double top_bc, double bottom_bc, double[] layer_depths, bool using_flexPDE, string flexPDE_input, string flexPDE_location, bool freeze_out_dopents, double tol)
-            : base (1.0, 1.0, dz, 1, 1, nz, using_flexPDE, flexPDE_input, flexPDE_location, freeze_out_dopents, tol)
-        {
-            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // (as phi = E_c / (-1.0 * q_e)
-            this.top_bc = top_bc / (-1.0 * Physics_Base.q_e); this.bottom_bc = bottom_bc / (-1.0 * Physics_Base.q_e);
+        string dens_filename = "dens_1D.dat";
 
-            // generate Laplacian matrix (spin-resolved)
-            if (!flexPDE)
-            {
-                laplacian = Generate_Laplacian();
-                lu_fact = new DoubleLUFact(laplacian);
-            }
-
-            this.dens_filename = "dens_1D.dat";
-
-            Create_FlexPDE_Input_File(flexPDE_input, dens_filename, layer_depths);
-        }
-        */
-
-        public OneD_PoissonSolver(Experiment exp, bool using_flexPDE, string flexPDE_input, string flexPDE_location, double tol)
-            : base(using_flexPDE, flexPDE_input, flexPDE_location, tol)
+        public OneD_PoissonSolver(Experiment exp, bool using_external_code, Dictionary<string, object> input)
+            : base(using_external_code)
         {
             this.exp = exp;
-
+            
             // generate Laplacian matrix (spin-resolved)
-            if (!flexPDE)
+            if (!using_external_code)
             {
-                // first check whether the grids for the potential and the density are the same
-                //if (exp.Nz_Dens != exp.Nz_Pot || exp.Dz_Dens != exp.Dz_Pot || exp.Zmin_Dens != exp.Zmin_Pot)
-                //    throw new Exception("Error - when not using flexPDE, the density and potential grids must be the same!");
-
                 laplacian = Generate_Laplacian(exp.Layers);
-                lu_fact = new DoubleLUFact(laplacian);
+                lu_fact = new DoubleTriDiagFact(laplacian);
             }
-
-            this.dens_filename = "dens_1D.dat";
         }
 
-        /*
-        public DoubleVector Get_Band_Energy(DoubleVector density)
+        protected override Band_Data Parse_Potential(string location, string[] data)
         {
-            if (flexPDE)
-                // calculate band energy using a potential found by calling FlexPDE
-                return Get_BandEnergy_From_FlexPDE(new Band_Data(density), dens_filename).vec;
-            else
-                // calculate band energies using a potential calculated on a regular grid (not ideal, or scalable)
-                return Get_BandEnergy_On_Regular_Grid(density);
-        }
-        */
-
-        protected override Band_Data Parse_Potential(string[] data)
-        {
-            return Band_Data.Parse_Band_Data(data, exp.Nz_Dens);
+            return Band_Data.Parse_Band_Data(location, data, exp.Nz_Dens);
         }
 
-        protected override Band_Data Get_ChemPot_On_Regular_Grid(Band_Data charge_density)
+        protected override Band_Data Get_Pot_On_Regular_Grid(Band_Data charge_density)
         {
             // set the top and bottom boundary conditions where [0] is the bottom of the device
             charge_density.vec[0] = bottom_bc * -1.0 * bottom_eps / (exp.Dz_Pot * exp.Dz_Pot);
             charge_density.vec[charge_density.Length - 1] = top_bc * -1.0 * top_eps / (exp.Dz_Pot * exp.Dz_Pot);
 
             // solve Poisson's equation
-            Band_Data potential = new Band_Data(lu_fact.Solve(charge_density.vec));
+            Band_Data potential = new Band_Data(lu_fact.Solve(-1.0 * charge_density.vec));
+            // and save its laplacian
+            potential.Laplacian = Calculate_Phi_Laplacian(potential);
 
-            // return chemical potential using mu = - E_c = q_e * phi where E_c is the conduction band edge
-            return Physics_Base.q_e * potential;
+            return potential;
         }
 
+ //       protected override Band_Data Get_ChemPot_From_External(Band_Data density)
+ //       {
+ //           Save_Data(density, dens_filename);
+ //
+ //           return Get_Data_From_External(flexpde_script, initcalc_result_filename);
+ //       }
+
         /// <summary>
-        /// Generates a laplacian matrix in one-dimension on a regular grid with Dirichlet BCs and assuming constant permitivity
+        /// Calculates the Laplacian for the given band structure of the input potential
+        /// ie. returns d(eps * d(input))
+        /// NOTE: the input should be a potential so make sure you divide all band energies by q_e
         /// </summary>
-        DoubleMatrix Generate_Laplacian()
+        public Band_Data Calculate_Phi_Laplacian(Band_Data input)
         {
-            // the factor which multiplies the Laplace equation
-            double factor = -1.0 * Physics_Base.epsilon / (exp.Dz_Pot * exp.Dz_Pot);
+            DoubleTriDiagMatrix lap_mat = Generate_Laplacian(exp.Layers);
+            return new Band_Data(MatrixFunctions.Product(lap_mat, input.vec));
+        }
 
-            DoubleMatrix result = new DoubleMatrix(exp.Nz_Pot, exp.Nz_Pot);
-            for (int i = 0; i < exp.Nz_Pot - 1; i++)
-            {
-                // on-diagonal term
-                result[i, i] = -2.0 * factor;
-                // off-diagonal
-                result[i + 1, i] = 1.0 * factor;
-                result[i, i + 1] = 1.0 * factor;
-            }
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data g_phi)
+        {
+            DoubleTriDiagMatrix lap_mat = -1.0 * Generate_Laplacian(exp.Layers);
+            Band_Data rho_prime_spin_summed = rho_prime.Spin_Summed_Data;
 
-            // and fix boundary conditions
-            result[0, 0] = 1.0 * factor;
-            result[0, 1] = 0.0;
-            result[exp.Nz_Pot - 1, exp.Nz_Pot - 1] = 1.0 * factor;
-            result[exp.Nz_Pot - 1, exp.Nz_Pot - 2] = 0.0;
+            // check that lap_mat and rho_prime have the same dimension
+            if (rho_prime_spin_summed.Length != lap_mat.Rows)
+                throw new Exception("Error - the Laplacian generated by pois_solv has a different order to rho_prime!");
+
+            for (int i = 0; i < rho_prime_spin_summed.Length; i++)
+                lap_mat[i, i] -= rho_prime_spin_summed.vec[i];
+
+            DoubleTriDiagFact lu_newt_step = new DoubleTriDiagFact(lap_mat);
+
+            // calculate newton step and its laplacian
+            Band_Data result = new Band_Data(lu_newt_step.Solve(-1.0 * g_phi.vec));
+            result.Laplacian = Calculate_Phi_Laplacian(result);
 
             return result;
         }
@@ -124,9 +100,9 @@ namespace OneD_ThomasFermiPoisson
         /// <summary>
         /// Generates a laplacian matrix in one-dimension on a regular grid with Dirichlet BCs wot varying permitivity
         /// </summary>
-        DoubleMatrix Generate_Laplacian(ILayer[] layers)
+        DoubleTriDiagMatrix Generate_Laplacian(ILayer[] layers)
         {
-            DoubleMatrix result = new DoubleMatrix(exp.Nz_Pot, exp.Nz_Pot);
+            DoubleTriDiagMatrix result = new DoubleTriDiagMatrix(exp.Nz_Pot, exp.Nz_Pot);
             double factor_plus, factor_minus;
 
             // cycle through the structure and fill in the Laplacian with the correct permittivities
@@ -136,8 +112,8 @@ namespace OneD_ThomasFermiPoisson
                 double eps_minus = Geom_Tool.GetLayer(layers, i * exp.Dz_Pot - 0.5 * exp.Dz_Pot + exp.Zmin_Pot).Permitivity;
 
                 // the factor which multiplies the Laplace equation
-                factor_plus = -1.0 * eps_plus / (exp.Dz_Pot * exp.Dz_Pot);
-                factor_minus = -1.0 * eps_minus / (exp.Dz_Pot * exp.Dz_Pot);
+                factor_plus = eps_plus / (exp.Dz_Pot * exp.Dz_Pot);
+                factor_minus = eps_minus / (exp.Dz_Pot * exp.Dz_Pot);
 
                 // on-diagonal term
                 result[i, i] = -1.0 * factor_minus + -1.0 * factor_plus;
@@ -147,10 +123,10 @@ namespace OneD_ThomasFermiPoisson
             }
 
             // and fix boundary conditions
-            double factor = -1.0 * Geom_Tool.GetLayer(layers, exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
+            double factor = Geom_Tool.GetLayer(layers, exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
             result[0, 0] = 1.0 * factor;
             result[0, 1] = 0.0;
-            factor = -1.0 * Geom_Tool.GetLayer(layers, (exp.Nz_Pot - 1) * exp.Dz_Pot + exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
+            factor = Geom_Tool.GetLayer(layers, (exp.Nz_Pot - 1) * exp.Dz_Pot + exp.Zmin_Pot).Permitivity / (exp.Dz_Pot * exp.Dz_Pot);
             result[exp.Nz_Pot - 1, exp.Nz_Pot - 1] = 1.0 * factor;
             result[exp.Nz_Pot - 1, exp.Nz_Pot - 2] = 0.0;
 
@@ -161,13 +137,11 @@ namespace OneD_ThomasFermiPoisson
         {
             // calculate the electric field just below the surface
             int surface = (int)(-1.0 * Math.Floor(Geom_Tool.Get_Zmin(layers) / exp.Dz_Pot));
-            double eps = layers[Geom_Tool.Find_Layer_Below_Surface(layers)].Permitivity;
+            double eps = Geom_Tool.Find_Layer_Below_Surface(layers).Permitivity;
             // by Gauss' theorem, rho = - epsilon_0 * epsilon_r * dV/dz
             double surface_charge = -1.0 * eps * (chem_pot[surface-1] - chem_pot[surface - 2]) / exp.Dz_Pot;
             // divide by - q_e to convert the chemical potential into a potential
             surface_charge /= -1.0 * Physics_Base.q_e;
-            // and divide by dz to give a density
-            surface_charge /= exp.Dz_Pot;
 
             return surface_charge;
         }
@@ -273,14 +247,14 @@ namespace OneD_ThomasFermiPoisson
         }
         */
 
-        protected void Create_FlexPDE_Input_File(string flexPDE_input)
+        public void Create_FlexPDE_File(double top_bc, double split_bc1, double split_bc2, double split_width, double surface, double bottom_bc, string output_file)
         {
             // check if an input file already exists and delete it
-            if (File.Exists(flexPDE_input))
-                File.Delete(flexPDE_input);
+            if (File.Exists(output_file))
+                File.Delete(output_file);
 
             // open up a new streamwriter to create the input file
-            StreamWriter sw = new StreamWriter(flexPDE_input);
+            StreamWriter sw = new StreamWriter(output_file);
 
             // write the file
             sw.WriteLine("TITLE \'Band Structure\'");
@@ -303,12 +277,7 @@ namespace OneD_ThomasFermiPoisson
             sw.WriteLine("\ttop_V = " + top_bc.ToString());
             sw.WriteLine("\tbottom_V = " + bottom_bc.ToString());
             sw.WriteLine();
-            sw.WriteLine("\t! Electrical permitivities");
-            sw.WriteLine("\teps_0 = " + Physics_Base.epsilon_0.ToString());
-            // relative permitivity of materials
-            sw.WriteLine("\teps_r_GaAs = " + Physics_Base.epsilon_r_GaAs.ToString());
-            sw.WriteLine("\teps_r_AlGaAs = " + Physics_Base.epsilon_r_AlGaAs.ToString());
-            sw.WriteLine("\teps_pmma = " + Physics_Base.epsilon_pmma.ToString());
+            sw.WriteLine("\t! Electrical permitivity");
             sw.WriteLine("\teps");
             sw.WriteLine();
             // other physical parameters
@@ -326,7 +295,7 @@ namespace OneD_ThomasFermiPoisson
             {
                 sw.WriteLine("\tREGION " + exp.Layers[i].Layer_No.ToString());
                 sw.WriteLine("\t\trho = TABLE(\'" + dens_filename + "\', x)");
-                sw.WriteLine("\t\teps = " + Layer_Tool.Get_Permitivity(exp.Layers[i].Material));
+                sw.WriteLine("\t\teps = " + exp.Layers[i].Permitivity.ToString());
                 sw.WriteLine("\t\tband_gap = " + exp.Layers[i].Band_Gap.ToString());
                 sw.WriteLine("\t\tSTART(" + exp.Layers[i].Zmin.ToString() + ")");
                 if (i == 1)
@@ -347,24 +316,36 @@ namespace OneD_ThomasFermiPoisson
             sw.Close();
         }
 
-        public void Set_Boundary_Conditions(ILayer[] layers, double top_V, double bottom_V, double top_pos, double bottom_pos)
-        {
-            // change the boundary conditions to potential boundary conditions by dividing through by -q_e
-            // with a factor to convert from V to meV zC^-1
-            this.top_bc = top_V * Physics_Base.energy_V_to_meVpzC; 
-            this.bottom_bc = bottom_V * Physics_Base.energy_V_to_meVpzC;
-
-            // and get the corresponding permittivities
-            top_eps = Geom_Tool.GetLayer(layers, top_pos).Permitivity;
-            bottom_eps = Geom_Tool.GetLayer(layers, bottom_pos).Permitivity;
-
-            if (flexpde_inputfile != null)
-                Create_FlexPDE_Input_File(flexpde_inputfile);
-        }
-
-        protected override void Save_Density_Data(Band_Data density, string input_file_name)
+        protected override void Save_Data(Band_Data density, string input_file_name)
         {
             density.Save_1D_Data(input_file_name, exp.Dz_Pot, exp.Zmin_Pot);
+        }
+
+        public override void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions)
+        {
+            // get permittivities at top and bottom of the domain
+            top_eps = Geom_Tool.GetLayer(exp.Layers, device_dimensions["top_position"]).Permitivity;
+            bottom_eps = Geom_Tool.GetLayer(exp.Layers, device_dimensions["bottom_position"]).Permitivity;
+
+            this.top_bc = boundary_conditions["top_V"] * Physics_Base.energy_V_to_meVpzC;
+            this.bottom_bc = boundary_conditions["bottom_V"] * Physics_Base.energy_V_to_meVpzC;
+
+            Console.WriteLine("WARNING - If you are trying to use FlexPDE in the 1D solver, it will not work...");
+        }
+
+        public override Band_Data Chemical_Potential
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        protected override string[] Trim_Potential_File(string[] lines)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Band_Data Get_Pot_From_External(Band_Data density)
+        {
+            throw new NotImplementedException();
         }
     }
 }

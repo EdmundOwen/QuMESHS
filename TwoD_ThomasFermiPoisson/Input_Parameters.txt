@@ -12,13 +12,13 @@
 ############## Simulation domain details ##############################
 #
 ## Number of lattice sites in the transverse direction for the density calculation
-% ny = 100
+% ny = 200
 #
 ## Spacing of lattice sites in the transverse direction for the density calculation
-% dy = 50
+% dy = 20
 #
 ## Number of lattice sites in the growth direction for the density calculation
-% nz = 2050
+% nz = 1025
 #
 ## Spacing of lattice sites in the growth direction for the density calculation
 % dz = 1
@@ -26,80 +26,64 @@
 #
 ############## Poisson solver details #################################
 #
-## File name with band structure in
-% BandStructure_File = band_structure.txt
-#
-## Use FlexPDE?
-% use_FlexPDE = true
-#
-## FlexPDE input file
-% FlexPDE_file = split_gate.pde
-#
-## FlexPDE file executable location
-% FlexPDE_location = C:\\FlexPDE5\\FlexPDE5.exe
-#
 # Top gate voltage
-% top_V = 0.0
+% top_V = -0.0
 #
 ## Split gate voltage
-% split_V = -0.5
+% split_V = -1.0
+#
+## Voltage array (for general voltage input)
+#% voltages = {-1.0, -1.0}
+#
+## Surface charge (by default, this is set by the 1D solver)
+# % surface_charge = -2.677
 #
 ## Split gate width
-% split_width = 700
-#
-## Minimum of simulation domain in the transverse direction
-% ymin_pot = -500.0
+% split_width = 800
 #
 #
 ############## Generic density solver details #########################
 #
-## Scheduler data file
-% scheduler_file = Scheduler_Data.txt
+## Use DFT or not
+% no_dft = false
 #
-## Density mixing parameter
-% alpha = 0.001
-#
-## Final solution tolerance
-% tolerance = 1e-2
-#
-## Fermi energy
-% E_f = 0.0
-#
-## Number of k_B T to calculate above the Fermi energy
-% No_kB_T_Above_E_f = 0.0
+## Maximum number of iterations before giving up
+% max_iterations = 1000
 #
 ## Temperature
-% T = 1
+% T = 0.05
 #
 ## Minimum of simulation domain in the transverse direction
-% ymin_dens = -600.0
+#% ymin_dens = -200.0
+% ymin_dens = -1000.0
 #
 ## Lattice spacing in the transverse direction
-% dy_dens = 20.0
+% dy_dens =  5.0
 #
-## Number of lattice points in transverse direction
-% ny_dens = 60
+## Number of lattice points in transverse direction 
+#% ny_dens = 81
+% ny_dens = 401
 #
 ## Minimum of simulation domain in the growth direction
 % zmin_dens = -325.0
 #
 ## Lattice spacing in the growth direction
-% dz_dens = 2.0
+% dz_dens = 1.0
 #
 ## Number of lattice points in growth direction
-% nz_dens = 25
+% nz_dens = 50
 #
 #
 ############## Data transfer details ##############################
 #
 ## Whether to start a simulation "hot" with previous data
-% hot_start = true
+% hot_start = false
 #
 ## File location for spin-up data
-% spin_up_file = dens_2D_up_raw.dat
+% spin_up_file = dens_2D_up_sg-066_tg-700.dat
 #
 ## File location for spin-down data
-% spin_down_file = dens_2D_down_raw.dat
+% spin_down_file = dens_2D_down_sg-066_tg-700.dat
 #
 ## File containing surface charge density
 % surface_charge_file = surface_charge.dat
@@ -107,11 +91,47 @@
 #
 ############## Run details #######################################
 #
+## whether to make this a batch run or not
+% batch_run = false
+#
 ## 
-% init_val = 5001
+% sg_init = -0.465
 #
 ##
-% final_val = 10000
+% dVsg = -0.001
 #
 ##
-% interval = 0.0001
+% nVsg = 36
+#
+##
+% tg_init = -1.9
+#
+##
+% dVtg = 0.005
+#
+############## Simulation domain details for dopents ##############################
+#
+## Number of lattice sites for the density calculation
+% nz_1d = 1900
+#
+## Spacing of lattice sites for the density calculation
+% dz_1d = 1
+#
+## Number of lattice sites in the transverse direction to save to
+% ny_1d = 21
+#
+## Output suffix for dopent calculation
+% output_suffix_1d = .tmp
+#
+############## DFT density solver detials for dopents #############################
+#
+## Whether to use dft at the final temperature or not
+% dft_1d = true
+#
+## Number of data points over which to calculate the density using dft
+% nz_dens_1d = 65
+#
+## Minimum z value of the dft calculation domain
+% zmin_dens_1d = -340.0
+#
+#

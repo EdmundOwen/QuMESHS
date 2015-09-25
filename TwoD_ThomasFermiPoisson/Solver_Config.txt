@@ -1,0 +1,64 @@
+﻿############################################################################
+#### Input parameter file for TwoD_ThomasFermiPoisson calculator...	####
+############################################################################
+#
+# Any line not starting with % is commented out.
+# The input names are case sensitive
+# The only spaces allowed are before and after the = sign and immediately after the % sign
+# If a line starts #%, this is an optional input.
+# Some inputs override others; typically, refer to the example input file to see
+# which inputs are default... one's with #% tend to be overriden
+#
+#
+############## Poisson solver details #################################
+#
+## File name with band structure in
+% BandStructure_File = Band_Structure.txt
+#
+## Use FlexPDE?
+% use_FlexPDE = true
+#
+## FlexPDE input file
+% FlexPDE_file = split_gate.pde
+#
+## FlexPDE file executable location
+% FlexPDE_location = C:\\FlexPDE6\\FlexPDE6.exe
+#
+## Use deal.II?
+# % use_deal.II = false
+#
+## Location of initial potential calculator for deal.II
+# % initcalc_location = split_gate
+#
+## Location of newton step calculator for deal.II
+# % newton_location = newton
+#
+## Optional location to write initial potential calculator parameter file for deal.II (default is "split_gate.in")
+# % initcalc_parameterfile = split_gate.in
+#
+## Optional location to write newton step calculator parameter file for deal.II (default is "newton.in")
+# % newton_parameterfile = newton.in
+#
+############## Generic density solver details #########################
+#
+## Density mixing parameter
+% alpha = 0.001
+#
+## Final solution tolerance
+% tolerance = 1e-4
+#
+#
+############## Data transfer details ##############################
+#
+## Whether to try restarting if the program was terminated before completion
+% with_checkpointing = false
+#
+#
+## Poisson solver details for dopents #################################
+#
+## Potential mixing parameter
+% alpha_1d = 0.01
+#
+## Final solution tolerance
+% tolerance_1d = 1e-6
+#
