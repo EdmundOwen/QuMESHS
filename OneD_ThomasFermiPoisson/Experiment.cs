@@ -120,7 +120,7 @@ namespace OneD_ThomasFermiPoisson
                 this.temperature = current_temperature;
                 if (surface_charge.ContainsKey(current_temperature))
                 {
-                    TF_only = false;
+                    no_dft = false;
                     continue;
                 }
 
@@ -129,7 +129,7 @@ namespace OneD_ThomasFermiPoisson
                 
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature) && !fix_bottom_V)
                 {
-                    boundary_conditions["bottom_V"] = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
+                    boundary_conditions["bottom_V"] = dens_solv.Get_Chemical_Potential(zmin_pot, layers, current_temperature) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
                 }
 
                 // reset the converged flag for every temperature
@@ -149,7 +149,7 @@ namespace OneD_ThomasFermiPoisson
                 if (!converged)
                 {
                     temperature = target_temp;
-                    TF_only = true;
+                    no_dft = true;
                     return converged;
                 }
 
@@ -159,7 +159,7 @@ namespace OneD_ThomasFermiPoisson
                 pois_solv.Reset();
             }
 
-            if (!TF_only)
+            if (!no_dft)
             {
                 // reset the converged flag for the quantum calculation
                 converged = false;
@@ -176,10 +176,23 @@ namespace OneD_ThomasFermiPoisson
                 (Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot).Save_Data("potential" + output_suffix);
             }
 
-            double tot_dens = (from val in carrier_charge_density.Spin_Summed_Data.vec
+            double neg_dens = (from val in carrier_charge_density.Spin_Summed_Data.vec
                                where val < 0.0
                                select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
-            Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens.ToString("e3") + " cm^-2");
+            double pos_dens = (from val in carrier_charge_density.Spin_Summed_Data.vec
+                               where val > 0.0
+                               select 1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
+
+            if (pos_dens == 0.0)
+                Console.WriteLine("Carrier density at heterostructure interface: \t" + neg_dens.ToString("e3") + " cm^-2");
+            else if (neg_dens == 0.0)
+                Console.WriteLine("Carrier density at heterostructure interface: \t" + pos_dens.ToString("e3") + " cm^-2");
+            else
+            {
+                Console.WriteLine("WARNING!  Carriers of both charges found on the interface");
+                Console.WriteLine("Electron density at heterostructure interface: \t" + neg_dens.ToString("e3") + " cm^-2");
+                Console.WriteLine("Hole density at heterostructure interface: \t" + pos_dens.ToString("e3") + " cm^-2");
+            }
 
             // there is no iteration timeout for the 1D solver so if it gets to this point the solution will definitely have converged
             Close(converged, max_iterations);

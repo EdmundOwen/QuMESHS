@@ -33,14 +33,14 @@ namespace TwoD_ThomasFermiPoisson
         public TwoD_SO_DFTSolver(Experiment exp)
             : base(exp)
         {
-            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
-            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
+            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
             double r_so = 117.1 * (0.01 / Physics_Base.q_e);                                                    // r^{6c6c}_{41} for InAs as reported by Winkler (Table 6.6, p.87)
                                                                                                                 // NOTE: the result there is in e A^2... to convert to nm^2, we divide by shown factors
             alpha = r_so / Physics_Base.q_e;
             
-            theta_x = r_so * Physics_Base.mass * dx / (Physics_Base.q_e / Physics_Base.hbar);
-            theta_y = -1.0 * r_so * Physics_Base.mass * dy / (Physics_Base.q_e / Physics_Base.hbar);
+            theta_x = r_so * mass * dx / (Physics_Base.q_e / Physics_Base.hbar);
+            theta_y = -1.0 * r_so * mass * dy / (Physics_Base.q_e / Physics_Base.hbar);
 
             g_1D = 0.5 / Math.PI;
         }
@@ -141,8 +141,8 @@ namespace TwoD_ThomasFermiPoisson
                 for (int j = 0; j < ny; j++)
                 {
                     // add momentum and potential terms
-                    result[i * ny + j, i * ny + j] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * Physics_Base.mass) + dft_pot.mat[i, j];
-                    result[i * ny + j + nx * ny, i * ny + j + nx * ny] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * Physics_Base.mass) + dft_pot.mat[i, j];
+                    result[i * ny + j, i * ny + j] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * mass) + dft_pot.mat[i, j];
+                    result[i * ny + j + nx * ny, i * ny + j + nx * ny] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * mass) + dft_pot.mat[i, j];
 
                     // add spin-orbit terms
                     result[i * ny + j, i * ny + j + nx * ny] += (-1.0 * I * alpha * dV_x.mat[i, j] - alpha * dV_y.mat[i, j]) * k;
@@ -357,7 +357,7 @@ namespace TwoD_ThomasFermiPoisson
                 for (int j = 0; j < ny; j++)
                 {
                     potential[i, j] = dft_pot.mat[i, j];
-                    potential[i, j] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * Physics_Base.mass);
+                    potential[i, j] += Physics_Base.hbar * Physics_Base.hbar * k * k / (2.0 * mass);
                     result[i * ny + j, i * ny + j] = -2.0 * tx + -2.0 * ty + potential[i, j];
                 }
 
@@ -394,7 +394,7 @@ namespace TwoD_ThomasFermiPoisson
                     }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            return -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));;
+            return unit_charge * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));;
         }
 
         double Interpolate_Fermi_Function(DoubleHermitianEigDecomp eig_decomp_old, DoubleHermitianEigDecomp eig_decomp_new, int wavefunction)
@@ -501,7 +501,7 @@ namespace TwoD_ThomasFermiPoisson
                 }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            return Physics_Base.q_e * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
+            return unit_charge * unit_charge * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
         }
 
         double Interpolate_Fermi_Function_Derivative(DoubleHermitianEigDecomp eig_decomp_old, DoubleHermitianEigDecomp eig_decomp_new, int wavefunction)

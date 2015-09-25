@@ -200,5 +200,15 @@ namespace Solver_Bases.Layers
         {
             get { return default_layer.Dopent_FreezeOut_T; }
         }
+
+        public double Electron_Mass
+        {
+            get { return default_layer.Electron_Mass; }
+        }
+
+        public double Hole_Mass
+        {
+            get { return default_layer.Hole_Mass; }
+        }
     }
 }

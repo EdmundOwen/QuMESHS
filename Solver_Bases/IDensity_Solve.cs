@@ -22,13 +22,6 @@ namespace Solver_Bases
         Band_Data DFT_diff(SpinResolved_Data car_dens);
         double DFT_Mixing_Parameter { get; set;  }
 
-        double Get_Chemical_Potential(double z, ILayer[] layers);
-        double Get_Chemical_Potential(double z, ILayer[] layers, double temperature_input);
-        double Get_Chemical_Potential(double y, double z, ILayer[] layers);
-        double Get_Chemical_Potential(double y, double z, ILayer[] layers, double temperature_input);
-        double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers);
-        double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input);
-
         void Close();
     }
 }

@@ -51,7 +51,7 @@
 % no_dft = true
 #
 #
-% density_solver_2d = dft
+% density_solver_2d = effectiveband
 #
 ## Maximum number of iterations before giving up
 % max_iterations = 1000

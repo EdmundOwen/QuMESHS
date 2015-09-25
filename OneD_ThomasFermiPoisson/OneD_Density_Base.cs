@@ -54,7 +54,7 @@ namespace OneD_ThomasFermiPoisson
             return carrier_density_deriv + dopent_density_deriv;
         }
 
-        public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
+        public double Get_Chemical_Potential(double z, ILayer[] layers, double temperature_input)
         {
             ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z), temperature_input);
 

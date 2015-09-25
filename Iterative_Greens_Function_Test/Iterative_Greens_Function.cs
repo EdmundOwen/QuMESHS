@@ -16,7 +16,7 @@ namespace Iterative_Greens_Function_Test
         right
     }
 
-    public class Iterative_Greens_Function
+    public class Iterative_Greens_Function : Density_Base
     {
         IExperiment exp;
 
@@ -44,6 +44,7 @@ namespace Iterative_Greens_Function_Test
         double propagating_mode_error = 1e-3;
 
         public Iterative_Greens_Function(IExperiment exp, double[,] potential)
+            : base(exp.Temperature)
         {
             this.exp = exp;
 
@@ -53,8 +54,8 @@ namespace Iterative_Greens_Function_Test
             dx = 100; dy = 100;
             nx = 50; ny = 20;
 
-          alphax_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
-          alphay_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+          alphax_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
+          alphay_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
 
             potential_xy = potential;
             DensityoS = new DoubleMatrix(nx, ny);
@@ -74,6 +75,7 @@ namespace Iterative_Greens_Function_Test
         }
 
         public Iterative_Greens_Function(IExperiment exp)
+            :base (exp.Temperature)
         {
             this.exp = exp;
 
@@ -83,8 +85,8 @@ namespace Iterative_Greens_Function_Test
             dx = 100; dy = 100;
             nx = 50; ny = 20;
 
-            alphax_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
-            alphay_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+            alphax_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
+            alphay_prime = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
 
 
             temperature = 4;
@@ -199,7 +201,7 @@ namespace Iterative_Greens_Function_Test
             StreamWriter sw = new StreamWriter("DoSVector.dat");
             for (int i = 0; i < DoSVector.Length; i++)
             {
-                sw.Write(EnergyVector[i].ToString() + '\t' + DoSVector[i].ToString() + '\t' + (DoSVector[i]*Physics_Base.Get_Fermi_Function(EnergyVector[i], 0.0, temperature)).ToString() + '\t' + MaxVector[i].ToString());
+                sw.Write(EnergyVector[i].ToString() + '\t' + DoSVector[i].ToString() + '\t' + (DoSVector[i]*Get_Fermi_Function(EnergyVector[i], 0.0, temperature)).ToString() + '\t' + MaxVector[i].ToString());
                 sw.WriteLine();
             }
             sw.Close();
@@ -505,5 +507,28 @@ namespace Iterative_Greens_Function_Test
         {
             return NMathFunctions.Product(A, B);
         }
+
+
+        #region unused_methods
+        public override void Get_ChargeDensity(Solver_Bases.Layers.ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override SpinResolved_Data Get_ChargeDensity(Solver_Bases.Layers.ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override SpinResolved_Data Get_ChargeDensity_Deriv(Solver_Bases.Layers.ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override DoubleVector Get_EnergyLevels(Solver_Bases.Layers.ILayer[] layers, Band_Data chem_pot)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }

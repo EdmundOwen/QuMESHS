@@ -19,8 +19,8 @@ namespace TwoD_ThomasFermiPoisson
         public TwoD_DFTSolver(IExperiment exp)
             : base(exp)
         {
-            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
-            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
+            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
+            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace TwoD_ThomasFermiPoisson
                 }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            charge_density = -1.0 * Physics_Base.q_e * charge_density;
+            charge_density = unit_charge * charge_density;
         }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace TwoD_ThomasFermiPoisson
             // calculate the number of wave vectors which are below no_kb_T * kB * T above the chemical potential
             while (!max_j_found)
             {
-                double E = E_c + Physics_Base.hbar * Physics_Base.hbar * j * j * dk * dk / (2.0 * Physics_Base.mass);
+                double E = E_c + Physics_Base.hbar * Physics_Base.hbar * j * j * dk * dk / (2.0 * mass);
                 if (E < no_kb_T * Physics_Base.kB * temperature)
                     j++;
                 else
@@ -107,7 +107,7 @@ namespace TwoD_ThomasFermiPoisson
             double result = 0;
             for (int i = 0; i < j_max; i++)
             {
-                double E = Physics_Base.hbar * Physics_Base.hbar * i * i * dk * dk / (2.0 * Physics_Base.mass);
+                double E = Physics_Base.hbar * Physics_Base.hbar * i * i * dk * dk / (2.0 * mass);
                 result += (2.0 * dk / Math.PI) / (Math.Exp((E + E_c) / (Physics_Base.kB * temperature)) + 1.0);
             }
 
@@ -163,7 +163,7 @@ namespace TwoD_ThomasFermiPoisson
                 }
 
             // and multiply the density derivative by e to get the charge density and by e to convert it to d/dphi (as increasing phi decreases the charge: dn/dphi*-e^2 )
-            charge_density_deriv = Physics_Base.q_e * Physics_Base.q_e * charge_density_deriv;
+            charge_density_deriv = unit_charge * unit_charge * charge_density_deriv;
         }
 
         /// <summary>
@@ -274,7 +274,7 @@ namespace TwoD_ThomasFermiPoisson
 
                         // and integrate the density of states at this position for this eigenvector from the minimum energy to
                         // (by default) 50 * k_b * T above mu = 0
-                        tmp[i, j] = -1.0 * Physics_Base.q_e * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);    
+                        tmp[i, j] = unit_charge * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * DoubleComplex.Norm(eig_decomp.EigenVector(k)[i * ny + j]) * Get_OneD_DoS(eig_decomp.EigenValue(k), no_kb_T);    
                     }
 
                 for (int i = 0; i < nx; i++)
