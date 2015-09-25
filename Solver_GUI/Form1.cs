@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Solver_Bases;
 using Solver_Bases.Layers;
 using System.IO;
+using CenterSpace.NMath.Core;
 
 namespace Solver_GUI
 {
@@ -144,6 +145,10 @@ namespace Solver_GUI
             density.Refresh();
             this.count_no_label.Text = (i + 1).ToString();
             this.temperature_val_label.Text = exp1d.Current_Temperature.ToString() + " K";
+
+            this.carrier_dopent_density_Text.Text = (from val in car_dens.Spin_Summed_Data.vec
+                                                     where val < 0.0
+                                                     select -1.0e14 * val * dz / Physics_Base.q_e).ToArray().Sum().ToString("e3");
         }
 
         private void Set_Plot_Axes(string min, string max, System.Windows.Forms.DataVisualization.Charting.Axis axis)

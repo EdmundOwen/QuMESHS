@@ -75,6 +75,8 @@ namespace Solver_GUI
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.inputTab = new System.Windows.Forms.TabControl();
             this.bandstructure = new System.Windows.Forms.TabPage();
+            this.total_thickness_label = new System.Windows.Forms.Label();
+            this.total_thickness_val = new System.Windows.Forms.TextBox();
             this.bandstructurefilename = new System.Windows.Forms.TextBox();
             this.bandstructurefile_label = new System.Windows.Forms.Label();
             this.bandstructure_create_button = new System.Windows.Forms.Button();
@@ -177,8 +179,9 @@ namespace Solver_GUI
             this.conduction_band = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.density = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.total_thickness_val = new System.Windows.Forms.TextBox();
-            this.total_thickness_label = new System.Windows.Forms.Label();
+            this.carrier_dopent_density_Text = new System.Windows.Forms.TextBox();
+            this.carrier_density_dopent_label = new System.Windows.Forms.Label();
+            this.carrier_density_dopent_units = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
@@ -239,7 +242,7 @@ namespace Solver_GUI
             this.mnuNewInputFile,
             this.solverConfigToolStripMenuItem});
             this.mnuNew.Name = "mnuNew";
-            this.mnuNew.Size = new System.Drawing.Size(152, 22);
+            this.mnuNew.Size = new System.Drawing.Size(138, 22);
             this.mnuNew.Text = "New";
             // 
             // mnuNewBandStructure
@@ -267,7 +270,7 @@ namespace Solver_GUI
             this.mnuOpenInputFile,
             this.solverConfigToolStripMenuItem1});
             this.mnuOpen.Name = "mnuOpen";
-            this.mnuOpen.Size = new System.Drawing.Size(152, 22);
+            this.mnuOpen.Size = new System.Drawing.Size(138, 22);
             this.mnuOpen.Text = "Open";
             // 
             // mnuOpenBandStructure
@@ -292,31 +295,31 @@ namespace Solver_GUI
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(135, 6);
             // 
             // mnuSave
             // 
             this.mnuSave.Name = "mnuSave";
             this.mnuSave.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.mnuSave.Size = new System.Drawing.Size(152, 22);
+            this.mnuSave.Size = new System.Drawing.Size(138, 22);
             this.mnuSave.Text = "Save";
             // 
             // mnuSaveAs
             // 
             this.mnuSaveAs.Name = "mnuSaveAs";
-            this.mnuSaveAs.Size = new System.Drawing.Size(152, 22);
+            this.mnuSaveAs.Size = new System.Drawing.Size(138, 22);
             this.mnuSaveAs.Text = "Save As";
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(135, 6);
             // 
             // mnuExit
             // 
             this.mnuExit.Name = "mnuExit";
             this.mnuExit.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Q)));
-            this.mnuExit.Size = new System.Drawing.Size(152, 22);
+            this.mnuExit.Size = new System.Drawing.Size(138, 22);
             this.mnuExit.Text = "Exit";
             this.mnuExit.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -406,6 +409,24 @@ namespace Solver_GUI
             this.bandstructure.TabIndex = 0;
             this.bandstructure.Text = "Band Structure";
             this.bandstructure.UseVisualStyleBackColor = true;
+            // 
+            // total_thickness_label
+            // 
+            this.total_thickness_label.AutoSize = true;
+            this.total_thickness_label.Location = new System.Drawing.Point(15, 526);
+            this.total_thickness_label.Name = "total_thickness_label";
+            this.total_thickness_label.Size = new System.Drawing.Size(83, 13);
+            this.total_thickness_label.TabIndex = 12;
+            this.total_thickness_label.Text = "Total Thickness";
+            // 
+            // total_thickness_val
+            // 
+            this.total_thickness_val.Location = new System.Drawing.Point(100, 523);
+            this.total_thickness_val.Name = "total_thickness_val";
+            this.total_thickness_val.ReadOnly = true;
+            this.total_thickness_val.Size = new System.Drawing.Size(92, 20);
+            this.total_thickness_val.TabIndex = 11;
+            this.total_thickness_val.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // bandstructurefilename
             // 
@@ -687,6 +708,9 @@ namespace Solver_GUI
             // 
             // dopentinputs
             // 
+            this.dopentinputs.Controls.Add(this.carrier_density_dopent_units);
+            this.dopentinputs.Controls.Add(this.carrier_density_dopent_label);
+            this.dopentinputs.Controls.Add(this.carrier_dopent_density_Text);
             this.dopentinputs.Controls.Add(this.groupPlotting);
             this.dopentinputs.Controls.Add(this.run_button);
             this.dopentinputs.Controls.Add(this.temperature_val_label);
@@ -1439,23 +1463,33 @@ namespace Solver_GUI
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // total_thickness_val
+            // carrier_dopent_density_Text
             // 
-            this.total_thickness_val.Location = new System.Drawing.Point(100, 523);
-            this.total_thickness_val.Name = "total_thickness_val";
-            this.total_thickness_val.ReadOnly = true;
-            this.total_thickness_val.Size = new System.Drawing.Size(92, 20);
-            this.total_thickness_val.TabIndex = 11;
-            this.total_thickness_val.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.carrier_dopent_density_Text.Location = new System.Drawing.Point(519, 369);
+            this.carrier_dopent_density_Text.Name = "carrier_dopent_density_Text";
+            this.carrier_dopent_density_Text.ReadOnly = true;
+            this.carrier_dopent_density_Text.Size = new System.Drawing.Size(103, 20);
+            this.carrier_dopent_density_Text.TabIndex = 14;
+            this.carrier_dopent_density_Text.Text = "0.0";
+            this.carrier_dopent_density_Text.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
-            // total_thickness_label
+            // carrier_density_dopent_label
             // 
-            this.total_thickness_label.AutoSize = true;
-            this.total_thickness_label.Location = new System.Drawing.Point(15, 526);
-            this.total_thickness_label.Name = "total_thickness_label";
-            this.total_thickness_label.Size = new System.Drawing.Size(83, 13);
-            this.total_thickness_label.TabIndex = 12;
-            this.total_thickness_label.Text = "Total Thickness";
+            this.carrier_density_dopent_label.AutoSize = true;
+            this.carrier_density_dopent_label.Location = new System.Drawing.Point(304, 372);
+            this.carrier_density_dopent_label.Name = "carrier_density_dopent_label";
+            this.carrier_density_dopent_label.Size = new System.Drawing.Size(209, 13);
+            this.carrier_density_dopent_label.TabIndex = 15;
+            this.carrier_density_dopent_label.Text = "Carrier density at heterostructure interface: ";
+            // 
+            // carrier_density_dopent_units
+            // 
+            this.carrier_density_dopent_units.AutoSize = true;
+            this.carrier_density_dopent_units.Location = new System.Drawing.Point(634, 373);
+            this.carrier_density_dopent_units.Name = "carrier_density_dopent_units";
+            this.carrier_density_dopent_units.Size = new System.Drawing.Size(36, 13);
+            this.carrier_density_dopent_units.TabIndex = 16;
+            this.carrier_density_dopent_units.Text = "cm^-2";
             // 
             // Solver_GUI
             // 
@@ -1638,6 +1672,9 @@ namespace Solver_GUI
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.Label total_thickness_label;
         private System.Windows.Forms.TextBox total_thickness_val;
+        private System.Windows.Forms.Label carrier_density_dopent_label;
+        private System.Windows.Forms.TextBox carrier_dopent_density_Text;
+        private System.Windows.Forms.Label carrier_density_dopent_units;
     }
 }
 
