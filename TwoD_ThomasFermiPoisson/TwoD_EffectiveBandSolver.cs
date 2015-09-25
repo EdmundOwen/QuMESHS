@@ -18,11 +18,16 @@ namespace TwoD_ThomasFermiPoisson
         double tx, ty;
         bool force_symmetry = false;
 
-        public TwoD_EffectiveBandSolver(Experiment exp)
-            : base(exp)
+        public TwoD_EffectiveBandSolver(Experiment exp, Carrier carrier_type)
+            : base(exp, carrier_type)
         {
             tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
+        }
+
+        public TwoD_EffectiveBandSolver(Experiment exp)
+            : this(exp, Carrier.Electron)
+        {
         }
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)

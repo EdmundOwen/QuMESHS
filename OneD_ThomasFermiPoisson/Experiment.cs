@@ -165,7 +165,8 @@ namespace OneD_ThomasFermiPoisson
                 converged = false;
 
                 // and then run the DFT solver at the base temperature
-                OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
+         //       OneD_DFTSolver dft_solv = new OneD_DFTSolver(this, Carrier.Hole);
+                OneD_eh_DFTSolver dft_solv = new OneD_eh_DFTSolver(this);
                 dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
                 dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
                 Console.WriteLine("Starting DFT calculation");
@@ -176,6 +177,7 @@ namespace OneD_ThomasFermiPoisson
                 (Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot).Save_Data("potential" + output_suffix);
             }
 
+            // calculate the density of the negative and positive charges separately
             double neg_dens = (from val in carrier_charge_density.Spin_Summed_Data.vec
                                where val < 0.0
                                select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
@@ -184,9 +186,9 @@ namespace OneD_ThomasFermiPoisson
                                select 1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
 
             if (pos_dens == 0.0)
-                Console.WriteLine("Carrier density at heterostructure interface: \t" + neg_dens.ToString("e3") + " cm^-2");
+                Console.WriteLine("Electron carrier density at heterostructure interface: \t" + neg_dens.ToString("e3") + " cm^-2");
             else if (neg_dens == 0.0)
-                Console.WriteLine("Carrier density at heterostructure interface: \t" + pos_dens.ToString("e3") + " cm^-2");
+                Console.WriteLine("Hole carrier density at heterostructure interface: \t" + pos_dens.ToString("e3") + " cm^-2");
             else
             {
                 Console.WriteLine("WARNING!  Carriers of both charges found on the interface");
@@ -238,10 +240,10 @@ namespace OneD_ThomasFermiPoisson
                 // Check convergence
                 Band_Data dens_spin_summed = carrier_charge_density.Spin_Summed_Data + dopent_charge_density.Spin_Summed_Data;
                 Band_Data dens_diff = dens_spin_summed - dens_old;
-                double dens_min = Math.Max(Math.Abs(dens_spin_summed.Max()), Math.Abs(dens_spin_summed.Min()));
+                double dens_abs_max = Math.Max(Math.Abs(dens_spin_summed.Max()), Math.Abs(dens_spin_summed.Min()));
                 for (int i = 0; i < dens_diff.Length; i++)
                     // only calculate density difference for densities more than 1% of the maximum value
-                    if (Math.Abs(dens_spin_summed[i]) > 0.01 * dens_min)
+                    if (Math.Abs(dens_spin_summed[i]) > 0.01 * dens_abs_max)
                         dens_diff[i] = Math.Abs(dens_diff[i] / dens_spin_summed[i]);
                     else
                         dens_diff[i] = 0.0;

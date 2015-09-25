@@ -14,6 +14,7 @@ namespace Solver_Bases
         // default values are for electrons in GaAs
         protected double mass = 0.067 * Physics_Base.m_e;                 // (meV) (ps)^2 (nm)^-2 with GaAs effective mass
         protected double unit_charge = -1.0 * Physics_Base.q_e;
+        protected Carrier carrier_type = Carrier.Electron;
 
         protected double temperature;
 

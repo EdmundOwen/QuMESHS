@@ -236,11 +236,11 @@ namespace ThreeD_SchrodingerPoissonSolver
                 // and check convergence of density
                 Band_Data dens_diff = carrier_charge_density.Spin_Summed_Data - dens_old;
                 Band_Data car_dens_spin_summed = carrier_charge_density.Spin_Summed_Data;
-                double carrier_dens_min = Math.Abs(car_dens_spin_summed.Min());
+                double carrier_dens_abs_max = Math.Max(Math.Abs(car_dens_spin_summed.Min()), Math.Abs(car_dens_spin_summed.Max()));
                 // using the relative absolute density difference
                 for (int i = 0; i < dens_diff.Length; i++)
                     // only calculate density difference for densities more than 1% of the maximum value
-                    if (Math.Abs(car_dens_spin_summed[i]) > 0.01 * carrier_dens_min)
+                    if (Math.Abs(car_dens_spin_summed[i]) > 0.01 * carrier_dens_abs_max)
                         dens_diff[i] = Math.Abs(dens_diff[i] / car_dens_spin_summed[i]);
                     else
                         dens_diff[i] = 0.0;

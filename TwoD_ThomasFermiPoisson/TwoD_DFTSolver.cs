@@ -16,11 +16,16 @@ namespace TwoD_ThomasFermiPoisson
 
         double tx, ty;
 
-        public TwoD_DFTSolver(IExperiment exp)
-            : base(exp)
+        public TwoD_DFTSolver(IExperiment exp, Carrier carrier_type)
+            : base(exp, carrier_type)
         {
             tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
+        }
+
+        public TwoD_DFTSolver(Experiment exp)
+            : this(exp, Carrier.Electron)
+        {
         }
 
         /// <summary>

@@ -30,8 +30,8 @@ namespace TwoD_ThomasFermiPoisson
         Band_Data dV_x, dV_y, dV_xy;
         double kmax = 0.0;
 
-        public TwoD_SO_DFTSolver(Experiment exp)
-            : base(exp)
+        public TwoD_SO_DFTSolver(Experiment exp, Carrier carrier_type)
+            : base(exp, carrier_type)
         {
             tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
             ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
@@ -43,6 +43,14 @@ namespace TwoD_ThomasFermiPoisson
             theta_y = -1.0 * r_so * mass * dy / (Physics_Base.q_e / Physics_Base.hbar);
 
             g_1D = 0.5 / Math.PI;
+
+            if (carrier_type == Carrier.Hole)
+                throw new NotImplementedException();
+        }
+
+        public TwoD_SO_DFTSolver(Experiment exp)
+            : this(exp, Carrier.Electron)
+        {
         }
 
         public void Get_SOI_parameters(Band_Data chem_pot)
