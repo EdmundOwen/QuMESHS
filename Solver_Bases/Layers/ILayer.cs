@@ -38,5 +38,8 @@ namespace Solver_Bases.Layers
         double Acceptor_Conc { get; }
         double Dopent_FreezeOut_T { get; }
         #endregion
+
+        double Electron_Mass { get; }
+        double Hole_Mass { get; }
     }
 }

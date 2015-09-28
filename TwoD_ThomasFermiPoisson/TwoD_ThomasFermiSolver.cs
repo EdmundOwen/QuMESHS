@@ -10,8 +10,13 @@ namespace TwoD_ThomasFermiPoisson
 {
     public class TwoD_ThomasFermiSolver : TwoD_Density_Base
     {
-        public TwoD_ThomasFermiSolver(IExperiment exp)
-            : base(exp)
+        public TwoD_ThomasFermiSolver(Experiment exp)
+            : this(exp, Carrier.electron)
+        {
+        }
+
+        public TwoD_ThomasFermiSolver(IExperiment exp, Carrier carrier_type)
+            : base(exp, carrier_type)
         {
         }
 

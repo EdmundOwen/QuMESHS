@@ -11,6 +11,13 @@ namespace Solver_Bases
         Down = 1
     }
 
+    public enum Carrier
+    {
+        electron,
+        hole,
+        both
+    }
+
     public enum Direction
     {
         x = 0,

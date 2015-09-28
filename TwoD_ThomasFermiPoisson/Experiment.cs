@@ -236,11 +236,11 @@ namespace TwoD_ThomasFermiPoisson
                 // and check convergence of density
                 Band_Data car_dens_spin_summed = carrier_charge_density.Spin_Summed_Data;
                 Band_Data dens_diff = car_dens_spin_summed - dens_old;
-                double carrier_dens_min = Math.Abs(car_dens_spin_summed.Min());
+                double carrier_dens_abs_max = Math.Max(Math.Abs(car_dens_spin_summed.Min()), Math.Abs(car_dens_spin_summed.Max()));
                 // using the relative absolute density difference
                 for (int i = 0; i < dens_diff.Length; i++)
                     // only calculate density difference for densities more than 1% of the maximum value
-                    if (Math.Abs(car_dens_spin_summed[i]) > 0.01 * carrier_dens_min)
+                    if (Math.Abs(car_dens_spin_summed[i]) > 0.01 * carrier_dens_abs_max)
                         dens_diff[i] = Math.Abs(dens_diff[i] / car_dens_spin_summed[i]);
                     else
                         dens_diff[i] = 0.0;
@@ -433,6 +433,11 @@ namespace TwoD_ThomasFermiPoisson
         IDensity_Solve Get_Density_Solver(Dictionary<string, object> input_dict)
         {
             TwoD_Density density_solver_type;
+            Carrier carrier_type = Carrier.electron;
+
+            // Get carrier type (default is electron)
+            if (input_dict.ContainsKey("carrier_type"))
+                carrier_type = (Carrier)Enum.Parse(typeof(Carrier), (string)input_dict["carrier_type"]);
 
             // Try to get the density solver from the dictionary
             try
@@ -451,16 +456,16 @@ namespace TwoD_ThomasFermiPoisson
             switch (density_solver_type)
             {
                 case TwoD_Density.effectiveband:
-                    return new TwoD_EffectiveBandSolver(this);
+                    return new TwoD_EffectiveBandSolver(this, carrier_type);
 
                 case TwoD_Density.dft:
-                    return new TwoD_DFTSolver(this);
+                    return new TwoD_DFTSolver(this, carrier_type);
 
                 case TwoD_Density.thomasfermi:
-                    return new TwoD_ThomasFermiSolver(this);
+                    return new TwoD_ThomasFermiSolver(this, carrier_type);
 
                 case TwoD_Density.sodft:
-                    return new TwoD_SO_DFTSolver(this);
+                    return new TwoD_SO_DFTSolver(this, carrier_type);
 
                 default:
                     throw new NotImplementedException();

@@ -11,7 +11,7 @@ using CenterSpace.NMath.Analysis;
 
 namespace OneD_ThomasFermiPoisson
 {
-    class OneD_DFTSolver : OneD_Density_Base
+    public class OneD_DFTSolver : OneD_Density_Base, IOneD_Density_Solve
     {
         double no_kb_T = 50;    // number of kb_T to integrate to
         double t;
@@ -20,7 +20,18 @@ namespace OneD_ThomasFermiPoisson
         public OneD_DFTSolver(IExperiment exp)
             : base(exp)
         {
-            t = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
+            t = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dz * dz);
+        }
+
+        public OneD_DFTSolver(IExperiment exp, Carrier carrier_type) : this(exp)
+        {
+            this.carrier_type = carrier_type;
+            if (carrier_type == Carrier.hole)
+            {
+                Change_Charge(+1.0 * Physics_Base.q_e);
+                Change_Mass(0.51 * Physics_Base.m_e);
+                t = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dz * dz);
+            }
         }
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
@@ -50,7 +61,7 @@ namespace OneD_ThomasFermiPoisson
                     // and integrate the density of states at this position for this eigenvector from the minimum energy to
                     // (by default) 50 * k_b * T above mu = 0
                     //dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
-                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Get_TwoD_DoS(eig_decomp.EigenValue(i));
+                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Get_TwoD_DoS(eig_decomp.EigenValue(i), no_kb_T);
                 }
 
                 // just share the densities (there is no spin polarisation)
@@ -59,7 +70,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            dft_dens = -1.0 * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
+            dft_dens = unit_charge * new SpinResolved_Data(new Band_Data(dens_up), new Band_Data(dens_down));
 
             Insert_DFT_Charge(ref charge_density, dft_dens);
         }
@@ -97,16 +108,16 @@ namespace OneD_ThomasFermiPoisson
         public void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
         {
             // interpolate the input charge density and chemical potential onto a reduced domain to simplify DFT solve
-            SpinResolved_Data dft_dens = new SpinResolved_Data(nz);
+            SpinResolved_Data dft_dens_deriv = new SpinResolved_Data(nz);
             Get_ChargeDensity(layers, ref charge_density_deriv, chem_pot);
             Band_Data dft_pot = new Band_Data(new DoubleVector(nz));
-            Interpolate_DFT_Grid(ref dft_dens, ref dft_pot, charge_density_deriv, chem_pot);
+            Interpolate_DFT_Grid(ref dft_dens_deriv, ref dft_pot, charge_density_deriv, chem_pot);
             Get_Potential(ref dft_pot, layers);
 
-       //     // set dft_dens to zero so that the hamiltonian doesn't include the XC term
-       //     dft_dens = 0.0 * dft_dens;
+            //     // set dft_dens to zero so that the hamiltonian doesn't include the XC term
+            //     dft_dens = 0.0 * dft_dens;
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_dens, dft_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_dens_deriv, dft_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
@@ -117,15 +128,15 @@ namespace OneD_ThomasFermiPoisson
             DoubleVector dens_up_deriv = new DoubleVector(nz, 0.0);
             DoubleVector dens_down_deriv = new DoubleVector(nz, 0.0);
 
-                for (int j = 0; j < nz; j++)
-                {
+            for (int j = 0; j < nz; j++)
+            {
                 double dens_val = 0.0;
                 for (int i = 0; i < max_wavefunction; i++)
                 {
                     // and integrate the density of states at this position for this eigenvector from the minimum energy to
                     // (by default) 50 * k_b * T above mu = 0
                     //dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
-                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Physics_Base.mass / (2.0 * Math.PI * Physics_Base.hbar * Physics_Base.hbar);// *Physics_Base.Get_Fermi_Function_Derivative(eig_decomp.EigenValue(i), 0.0, no_kb_T) / (Math.PI * Physics_Base.hbar * Physics_Base.hbar);
+                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Get_TwoD_DoS_Deriv(eig_decomp.EigenValue(i), no_kb_T);// *mass / (2.0 * Math.PI * Physics_Base.hbar * Physics_Base.hbar);
                 }
 
                 // just share the densities (there is no spin polarisation)
@@ -133,10 +144,10 @@ namespace OneD_ThomasFermiPoisson
                 dens_down_deriv[j] = 0.5 * dens_val;
             }
 
-            // and multiply the density by -e to get the charge density (as these are electrons)
-            dft_dens = -1.0 * Physics_Base.q_e * Physics_Base.q_e * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
+            // and multiply the density derivative by e to get the charge density and by e to convert it to d/dphi (as increasing phi decreases the charge: dn/dphi*-e^2 )
+            dft_dens_deriv = -1.0 * unit_charge * unit_charge * new SpinResolved_Data(new Band_Data(dens_up_deriv), new Band_Data(dens_down_deriv));
 
-            Insert_DFT_Charge(ref charge_density_deriv, dft_dens);
+            Insert_DFT_Charge(ref charge_density_deriv, dft_dens_deriv);
         }
 
         public override DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot)
@@ -213,18 +224,13 @@ namespace OneD_ThomasFermiPoisson
             {
                 double pos = zmin + i * dz;
                 double band_gap = Geom_Tool.GetLayer(layers, pos).Band_Gap;
-                dft_band_offset[i] = 0.5 * band_gap - dft_band_offset[i];
+                if (carrier_type == Carrier.electron)
+                    dft_band_offset[i] = 0.5 * band_gap - dft_band_offset[i];
+                else if (carrier_type == Carrier.hole)
+                    dft_band_offset[i] = 0.5 * band_gap + dft_band_offset[i];
+                else
+                    throw new NotImplementedException();
             }
-        }
-
-        double Get_TwoD_DoS(double tmp_eigval)
-        {
-            // calculate the density of states integral directly
-            double alpha = Physics_Base.mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
-            double beta = 1.0 / (Physics_Base.kB * temperature);
-            OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => 1.0 / (Math.Exp(beta * E) + 1)));
-            dos_integrand.Integrator = new GaussKronrodIntegrator();
-            return alpha * dos_integrand.Integrate(tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
         }
 
         DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)

@@ -23,6 +23,8 @@ namespace OneD_ThomasFermiPoisson
         bool illuminated = false;
         bool dopents_calculated = false;
 
+        Carrier carrier_type = Carrier.electron;
+
         public override void Initialise(Dictionary<string, object> input_dict)
         {
             // simulation domain inputs
@@ -57,8 +59,8 @@ namespace OneD_ThomasFermiPoisson
             surface_charge = new Dictionary<double, double>();
 
             // double check whether you want to use FlexPDE
-            if (input_dict.ContainsKey("use_FlexPDE_1d"))
-                using_flexPDE = (bool)input_dict["use_FlexPDE_1d"];
+            if (input_dict.ContainsKey("use_FlexPDE"))
+                using_flexPDE = (bool)input_dict["use_FlexPDE"];
 
             // Initialise potential solver
             pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
@@ -68,6 +70,10 @@ namespace OneD_ThomasFermiPoisson
             // if the input dictionary already has the dopent distribution, we don't need to recalculate it
             if (input_dict.ContainsKey("Dopent_Density"))
                 dopents_calculated = true;
+
+            // Get carrier type for DFT calculations (default is electron)
+            if (input_dict.ContainsKey("carrier_type"))
+                carrier_type = (Carrier)Enum.Parse(typeof(Carrier), (string)input_dict["carrier_type"]);
             
             Console.WriteLine("Experimental parameters initialised");
         }
@@ -120,7 +126,7 @@ namespace OneD_ThomasFermiPoisson
                 this.temperature = current_temperature;
                 if (surface_charge.ContainsKey(current_temperature))
                 {
-                    TF_only = false;
+                    no_dft = false;
                     continue;
                 }
 
@@ -129,7 +135,7 @@ namespace OneD_ThomasFermiPoisson
                 
                 if (!Geom_Tool.GetLayer(layers, zmin_pot).Dopents_Frozen_Out(current_temperature) && !fix_bottom_V)
                 {
-                    boundary_conditions["bottom_V"] = dens_solv.Get_Chemical_Potential(zmin_pot, layers) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
+                    boundary_conditions["bottom_V"] = dens_solv.Get_Chemical_Potential(zmin_pot, layers, current_temperature) / (Physics_Base.q_e * Physics_Base.energy_V_to_meVpzC);
                 }
 
                 // reset the converged flag for every temperature
@@ -149,7 +155,7 @@ namespace OneD_ThomasFermiPoisson
                 if (!converged)
                 {
                     temperature = target_temp;
-                    TF_only = true;
+                    no_dft = true;
                     return converged;
                 }
 
@@ -159,15 +165,24 @@ namespace OneD_ThomasFermiPoisson
                 pois_solv.Reset();
             }
 
-            if (!TF_only)
+            if (!no_dft)
             {
                 // reset the converged flag for the quantum calculation
                 converged = false;
 
-                // and then run the DFT solver at the base temperature
-                OneD_DFTSolver dft_solv = new OneD_DFTSolver(this);
+                // get the correct density solver
+                IOneD_Density_Solve dft_solv;
+                if (carrier_type == Carrier.electron || carrier_type == Carrier.hole)
+                    dft_solv = new OneD_DFTSolver(this, carrier_type);
+                else if (carrier_type == Carrier.both)
+                    dft_solv = new OneD_eh_DFTSolver(this);
+                else
+                    throw new NotImplementedException();
+                
                 dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
                 dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
+
+                // and then run the DFT solver at the base temperature
                 Console.WriteLine("Starting DFT calculation");
                 converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
 
@@ -176,10 +191,24 @@ namespace OneD_ThomasFermiPoisson
                 (Input_Band_Structure.Get_BandStructure_Grid(layers, dz_pot, nz_pot, zmin_pot) - chem_pot).Save_Data("potential" + output_suffix);
             }
 
-            double tot_dens = (from val in carrier_charge_density.Spin_Summed_Data.vec
+            // calculate the density of the negative and positive charges separately
+            double neg_dens = (from val in carrier_charge_density.Spin_Summed_Data.vec
                                where val < 0.0
                                select -1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
-            Console.WriteLine("Carrier density at heterostructure interface: \t" + tot_dens.ToString("e3") + " cm^-2");
+            double pos_dens = (from val in carrier_charge_density.Spin_Summed_Data.vec
+                               where val > 0.0
+                               select 1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
+
+            if (pos_dens == 0.0)
+                Console.WriteLine("Electron carrier density at heterostructure interface: \t" + neg_dens.ToString("e3") + " cm^-2");
+            else if (neg_dens == 0.0)
+                Console.WriteLine("Hole carrier density at heterostructure interface: \t" + pos_dens.ToString("e3") + " cm^-2");
+            else
+            {
+                Console.WriteLine("WARNING!  Carriers of both charges found on the interface");
+                Console.WriteLine("Electron density at heterostructure interface: \t" + neg_dens.ToString("e3") + " cm^-2");
+                Console.WriteLine("Hole density at heterostructure interface: \t" + pos_dens.ToString("e3") + " cm^-2");
+            }
 
             // there is no iteration timeout for the 1D solver so if it gets to this point the solution will definitely have converged
             Close(converged, max_iterations);
@@ -225,10 +254,10 @@ namespace OneD_ThomasFermiPoisson
                 // Check convergence
                 Band_Data dens_spin_summed = carrier_charge_density.Spin_Summed_Data + dopent_charge_density.Spin_Summed_Data;
                 Band_Data dens_diff = dens_spin_summed - dens_old;
-                double dens_min = Math.Max(Math.Abs(dens_spin_summed.Max()), Math.Abs(dens_spin_summed.Min()));
+                double dens_abs_max = Math.Max(Math.Abs(dens_spin_summed.Max()), Math.Abs(dens_spin_summed.Min()));
                 for (int i = 0; i < dens_diff.Length; i++)
                     // only calculate density difference for densities more than 1% of the maximum value
-                    if (Math.Abs(dens_spin_summed[i]) > 0.01 * dens_min)
+                    if (Math.Abs(dens_spin_summed[i]) > 0.01 * dens_abs_max)
                         dens_diff[i] = Math.Abs(dens_diff[i] / dens_spin_summed[i]);
                     else
                         dens_diff[i] = 0.0;

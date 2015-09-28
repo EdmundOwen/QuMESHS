@@ -107,8 +107,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experiment.cs" />
+    <Compile Include="IOneD_Density_Solve.cs" />
     <Compile Include="OneD_Density_Base.cs" />
     <Compile Include="OneD_DFTSolver.cs" />
+    <Compile Include="OneD_eh_DFTSolver.cs" />
     <Compile Include="OneD_PoissonSolver.cs" />
     <Compile Include="OneD_ThomasFermiSolver.cs" />
     <Compile Include="Program.cs" />

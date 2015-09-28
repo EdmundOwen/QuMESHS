@@ -19,6 +19,16 @@ namespace TwoD_ThomasFermiPoisson
         protected Plane plane;
         protected double pos_z;
 
+        public TwoD_Density_Base(IExperiment exp, Carrier carrier_type) : this(exp)
+        {
+            this.carrier_type = carrier_type;
+            if (carrier_type == Carrier.hole)
+            {
+                Change_Charge(+1.0 * Physics_Base.q_e);
+                Change_Mass(0.51 * Physics_Base.m_e);
+            }
+        }
+
         public TwoD_Density_Base(IExperiment exp) : this(exp, Plane.yz, 0.0)
         {
         }
@@ -94,13 +104,6 @@ namespace TwoD_ThomasFermiPoisson
             return new_density + dopent_charge_density;
         }
 
-        public override double Get_Chemical_Potential(double x, double y, double z, ILayer[] layers, double temperature_input)
-        {
-            ZeroD_Density chem_pot_cal = new ZeroD_Density(Solver_Bases.Geometry.Geom_Tool.GetLayer(layers, z), temperature_input);
-
-            return chem_pot_cal.Get_Equilibrium_Chemical_Potential();
-        }
-
         protected void Get_Potential(ref Band_Data dft_band_offset, ILayer[] layers)
         {
             for (int i = 0; i < nx; i++)
@@ -110,7 +113,12 @@ namespace TwoD_ThomasFermiPoisson
                     double pos_y = ymin + j * dy;
                     double band_gap = Geom_Tool.GetLayer(layers, plane, pos_x, pos_y, pos_z).Band_Gap;
 
-                    dft_band_offset.mat[i, j] = 0.5 * band_gap - dft_band_offset.mat[i, j] + dft_pot.mat[i, j];
+                    if (carrier_type == Carrier.electron)
+                        dft_band_offset.mat[i, j] = 0.5 * band_gap - dft_band_offset.mat[i, j] + dft_pot.mat[i, j];
+                    else if (carrier_type == Carrier.hole)
+                        dft_band_offset.mat[i, j] = 0.5 * band_gap + dft_band_offset.mat[i, j] + dft_pot.mat[i, j];
+                    else
+                        throw new NotImplementedException();
                 }
         }
 

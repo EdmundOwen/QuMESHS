@@ -51,7 +51,6 @@ namespace Solver_Bases
         protected int initial_run_steps = 5;    // and if yes, how many steps should it iterate for?
 
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
-        protected bool TF_only = false;      // only run Thomas-Fermi semi-classical approximation... no quantum mechanics
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
         protected bool initialise_from_restart = false;     //is the program starting from a restart? (normally false)
         protected bool initialise_with_1D_data = false;     // should the program use the data used to calculate the dopents in order to find the initial density for the higher dimensional structure?
@@ -145,7 +144,6 @@ namespace Solver_Bases
             Inputs_to_Dictionary.Parse_Voltages(input_dict, boundary_conditions);
 
             // work out whether we are doing dft or not
-            Get_From_Dictionary<bool>(input_dict, "TF_only", ref TF_only, true);
             Get_From_Dictionary<bool>(input_dict, "no_dft", ref no_dft, true);
             if (input_dict.ContainsKey("dft"))
                 no_dft = !(bool)input_dict["dft"];
@@ -184,7 +182,7 @@ namespace Solver_Bases
 
             // check that these interfaces have lattice points on them
             for (int i = 0; i < count; i++)
-                if (Math.IEEERemainder(layers[init_layer_no + i].Zmax - zmin, dx) != 0.0)
+                if (Math.IEEERemainder(layers[init_layer_no + i].Zmax - zmin, dx) > 1e-9)
                 {
                     Console.WriteLine("WARNING - I don't think there's a lattice point on the interface at z = " + layers[init_layer_no + i].Zmax.ToString());
                     return false;

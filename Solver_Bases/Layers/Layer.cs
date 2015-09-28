@@ -22,6 +22,10 @@ namespace Solver_Bases.Layers
         protected double donor_concentration = 0.0;
         protected double acceptor_concentration = 0.0;
         protected double freeze_out_temp = 0.0;     // default for Layer is no freezing out of donors
+
+        // default electron and hole mass is for GaAs
+        protected double electron_mass = 0.067 * Physics_Base.m_e;
+        protected double hole_mass = 0.51 * Physics_Base.m_e;
                 
         public Layer(IGeom Geom, int layer_no)
         {
@@ -84,5 +88,8 @@ namespace Solver_Bases.Layers
         public double Acceptor_Conc { get { return acceptor_concentration; } }
         public double Dopent_FreezeOut_T { get { return freeze_out_temp; } }
         #endregion
+
+        public double Electron_Mass { get { return electron_mass; } }
+        public double Hole_Mass { get { return hole_mass; } }
     }
 }

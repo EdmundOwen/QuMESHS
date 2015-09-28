@@ -211,7 +211,7 @@ namespace Solver_GUI
             result.Add("nz_1d", double.Parse(nz1Dval.Text));
             result.Add("dz_1d", double.Parse(dz1Dval.Text));
 
-            result.Add("TF_only_1d", !dft1DCheck.Checked);
+            result.Add("no_dft_1d", !dft1DCheck.Checked);
             result.Add("nz_dens_1d", double.Parse(dftnz1Dval.Text));
             result.Add("dz_dens_1d", (double)result["dz_1d"]);
             result.Add("zmin_dens_1d", double.Parse(dftzmin1Dval.Text));

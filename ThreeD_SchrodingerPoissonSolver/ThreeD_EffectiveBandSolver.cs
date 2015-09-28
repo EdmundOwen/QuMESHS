@@ -21,9 +21,9 @@ namespace ThreeD_SchrodingerPoissonSolver
         public ThreeD_EffectiveBandSolver(IExperiment exp)
             : base(exp)
         {
-            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dx * dx);
-            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dy * dy);
-            tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (Physics_Base.mass * dz * dz);
+            tx = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dx * dx);
+            ty = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dy * dy);
+            tz = -0.5 * Physics_Base.hbar * Physics_Base.hbar / (mass * dz * dz);
         }
 
         public override void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)
@@ -98,7 +98,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                     }
 
             // and multiply the density by -e to get the charge density (as these are electrons)
-            charge_density = -1.0 * Physics_Base.q_e * charge_density;
+            charge_density = unit_charge * charge_density;
         }
 
         public override void Get_ChargeDensity_Deriv(ILayer[] layers, ref SpinResolved_Data charge_density_deriv, Band_Data chem_pot)
@@ -166,9 +166,9 @@ namespace ThreeD_SchrodingerPoissonSolver
                         charge_density_deriv.Spin_Up.vol[k][i, j] *= dens_xy_deriv[i, j];
                         charge_density_deriv.Spin_Down.vol[k][i, j] *= dens_xy_deriv[i, j];
                     }
-
-            // and multiply the density derivative by e to get the charge density (as increasing mu decreases the charge: dn/dmu*-e )
-            charge_density_deriv = Physics_Base.q_e * charge_density_deriv;
+            
+            // and multiply the density derivative by e to get the charge density and by e to convert it to d/dphi (as increasing phi decreases the charge: dn/dphi*-e^2 )
+            charge_density_deriv = unit_charge * unit_charge * charge_density_deriv;
         }
 
         /// <summary>
