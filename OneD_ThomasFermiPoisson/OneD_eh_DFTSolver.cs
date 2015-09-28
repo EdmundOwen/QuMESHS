@@ -8,15 +8,15 @@ using CenterSpace.NMath.Core;
 
 namespace OneD_ThomasFermiPoisson
 {
-    public class OneD_eh_DFTSolver : IDensity_Solve
+    public class OneD_eh_DFTSolver : IDensity_Solve, IOneD_Density_Solve
     {
         OneD_DFTSolver electron_dens_calc;
         OneD_DFTSolver hole_dens_calc;
 
         public OneD_eh_DFTSolver(IExperiment exp)
         {
-            electron_dens_calc = new OneD_DFTSolver(exp, Carrier.Electron);
-            hole_dens_calc = new OneD_DFTSolver(exp, Carrier.Hole);
+            electron_dens_calc = new OneD_DFTSolver(exp, Carrier.electron);
+            hole_dens_calc = new OneD_DFTSolver(exp, Carrier.hole);
         }
 
         public void Get_ChargeDensity(ILayer[] layers, ref SpinResolved_Data charge_density, Band_Data chem_pot)

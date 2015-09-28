@@ -87,7 +87,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                         double pos_z = zmin + k * dz;
                         double band_gap = Geom_Tool.GetLayer(layers, pos_x, pos_y, pos_z).Band_Gap;
 
-                        if (carrier_type == Carrier.Electron)
+                        if (carrier_type == Carrier.electron)
                             dft_band_offset.vol[k][i, j] = 0.5 * band_gap - dft_band_offset.vol[k][i, j] + dft_pot.vol[k][i, j];
                         else
                             dft_band_offset.vol[k][i, j] = 0.5 * band_gap + dft_band_offset.vol[k][i, j] + dft_pot.vol[k][i, j];

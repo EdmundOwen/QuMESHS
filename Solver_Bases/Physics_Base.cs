@@ -33,15 +33,15 @@ namespace Solver_Bases
         public static double Get_3D_DensityofStates(double energy, double band_edge, Carrier carrier_type, double mass)
         {
             // if the energy is below the potential (i.e. below the conduction band) return zero
-            if (carrier_type == Carrier.Electron && energy < band_edge)
+            if (carrier_type == Carrier.electron && energy < band_edge)
                 return 0.0;
-            else if (carrier_type == Carrier.Hole && energy > band_edge)
+            else if (carrier_type == Carrier.hole && energy > band_edge)
                 return 0.0;
 
             // generate density of states
-            if (carrier_type == Carrier.Electron)
+            if (carrier_type == Carrier.electron)
                 return Math.Pow(2.0 * mass * mass * mass * (energy - band_edge), 0.5) / (Math.PI * Math.PI * hbar * hbar * hbar);
-            else if (carrier_type == Carrier.Hole)
+            else if (carrier_type == Carrier.hole)
                 return Math.Pow(2.0 * mass * mass * mass * (band_edge - energy), 0.5) / (Math.PI * Math.PI * hbar * hbar * hbar);
             else
                 throw new NotImplementedException();
@@ -52,7 +52,7 @@ namespace Solver_Bases
             if (charge_density == 0.0)
                 return double.PositiveInfinity;
 
-            charge_density = Math.Abs(charge_density) / Physics_Base.q_e;    // DFT works on density, not charge 
+            charge_density = Math.Abs(charge_density / Physics_Base.q_e);    // DFT works on density, not charge 
             return Math.Pow(0.75 / (Math.PI * charge_density), 1.0 / 3.0) / Physics_Base.a_B;    // and convert to dimensionless constant
         }
 /*
@@ -213,7 +213,7 @@ namespace Solver_Bases
             double d_vc, d_vx;                                                 // correlation and exchange potentials
             double r_s = Get_Rs(charge_density);
 
-            double density = Math.Abs(charge_density) / Physics_Base.q_e;
+            double density = Math.Abs(charge_density / Physics_Base.q_e);
             double d_rs = -1.0 * r_s / (3.0 * density); // derivative of rs with respect to the density
 
             if (double.IsInfinity(r_s))

@@ -23,6 +23,8 @@ namespace OneD_ThomasFermiPoisson
         bool illuminated = false;
         bool dopents_calculated = false;
 
+        Carrier carrier_type = Carrier.electron;
+
         public override void Initialise(Dictionary<string, object> input_dict)
         {
             // simulation domain inputs
@@ -57,8 +59,8 @@ namespace OneD_ThomasFermiPoisson
             surface_charge = new Dictionary<double, double>();
 
             // double check whether you want to use FlexPDE
-            if (input_dict.ContainsKey("use_FlexPDE_1d"))
-                using_flexPDE = (bool)input_dict["use_FlexPDE_1d"];
+            if (input_dict.ContainsKey("use_FlexPDE"))
+                using_flexPDE = (bool)input_dict["use_FlexPDE"];
 
             // Initialise potential solver
             pois_solv = new OneD_PoissonSolver(this, using_flexPDE, input_dict);
@@ -68,6 +70,10 @@ namespace OneD_ThomasFermiPoisson
             // if the input dictionary already has the dopent distribution, we don't need to recalculate it
             if (input_dict.ContainsKey("Dopent_Density"))
                 dopents_calculated = true;
+
+            // Get carrier type for DFT calculations (default is electron)
+            if (input_dict.ContainsKey("carrier_type"))
+                carrier_type = (Carrier)Enum.Parse(typeof(Carrier), (string)input_dict["carrier_type"]);
             
             Console.WriteLine("Experimental parameters initialised");
         }
@@ -164,11 +170,19 @@ namespace OneD_ThomasFermiPoisson
                 // reset the converged flag for the quantum calculation
                 converged = false;
 
-                // and then run the DFT solver at the base temperature
-         //       OneD_DFTSolver dft_solv = new OneD_DFTSolver(this, Carrier.Hole);
-                OneD_eh_DFTSolver dft_solv = new OneD_eh_DFTSolver(this);
+                // get the correct density solver
+                IOneD_Density_Solve dft_solv;
+                if (carrier_type == Carrier.electron || carrier_type == Carrier.hole)
+                    dft_solv = new OneD_DFTSolver(this, carrier_type);
+                else if (carrier_type == Carrier.both)
+                    dft_solv = new OneD_eh_DFTSolver(this);
+                else
+                    throw new NotImplementedException();
+                
                 dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
                 dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
+
+                // and then run the DFT solver at the base temperature
                 Console.WriteLine("Starting DFT calculation");
                 converged = Run_Iteration_Routine(dft_solv, pois_solv, tol, max_iterations);
 

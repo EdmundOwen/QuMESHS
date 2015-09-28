@@ -225,24 +225,24 @@ namespace Solver_Bases
         */
         double Get_Conduction_Electron_Integrand(double energy)
         {
-            return Physics_Base.Get_3D_DensityofStates(energy, 0.5 * band_gap, Carrier.Electron, electron_mass) * Get_Fermi_Function(energy, chem_pot, temperature);
+            return Physics_Base.Get_3D_DensityofStates(energy, 0.5 * band_gap, Carrier.electron, electron_mass) * Get_Fermi_Function(energy, chem_pot, temperature);
         }
 
         double Get_Conduction_Electron_Derivative_Integrand(double energy)
         {
-            return Physics_Base.Get_3D_DensityofStates(energy, 0.5 * band_gap, Carrier.Electron, electron_mass) * Get_Fermi_Function_Derivative(energy, chem_pot, temperature);
+            return Physics_Base.Get_3D_DensityofStates(energy, 0.5 * band_gap, Carrier.electron, electron_mass) * Get_Fermi_Function_Derivative(energy, chem_pot, temperature);
         }
 
         double Get_Valence_Electron_Integrand(double energy)
         {
             // note that the 3D density of states integration is inverted as the density of states increases with decreasing energy
-            return Physics_Base.Get_3D_DensityofStates(energy, -0.5 * band_gap, Carrier.Hole, hole_mass) * (1.0 - Get_Fermi_Function(energy, chem_pot, temperature));
+            return Physics_Base.Get_3D_DensityofStates(energy, -0.5 * band_gap, Carrier.hole, hole_mass) * (1.0 - Get_Fermi_Function(energy, chem_pot, temperature));
         }
 
         double Get_Valence_Electron_Derivative_Integrand(double energy)
         {
             // note that the 3D density of states integration is inverted as the density of states increases with decreasing energy
-            return -1.0 * Physics_Base.Get_3D_DensityofStates(energy, -0.5 * band_gap, Carrier.Hole, hole_mass) * Get_Fermi_Function_Derivative(energy, chem_pot, temperature);
+            return -1.0 * Physics_Base.Get_3D_DensityofStates(energy, -0.5 * band_gap, Carrier.hole, hole_mass) * Get_Fermi_Function_Derivative(energy, chem_pot, temperature);
         }
 
         #region unused_methods

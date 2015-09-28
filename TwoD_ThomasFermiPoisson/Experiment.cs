@@ -433,6 +433,11 @@ namespace TwoD_ThomasFermiPoisson
         IDensity_Solve Get_Density_Solver(Dictionary<string, object> input_dict)
         {
             TwoD_Density density_solver_type;
+            Carrier carrier_type = Carrier.electron;
+
+            // Get carrier type (default is electron)
+            if (input_dict.ContainsKey("carrier_type"))
+                carrier_type = (Carrier)Enum.Parse(typeof(Carrier), (string)input_dict["carrier_type"]);
 
             // Try to get the density solver from the dictionary
             try
@@ -451,16 +456,16 @@ namespace TwoD_ThomasFermiPoisson
             switch (density_solver_type)
             {
                 case TwoD_Density.effectiveband:
-                    return new TwoD_EffectiveBandSolver(this);
+                    return new TwoD_EffectiveBandSolver(this, carrier_type);
 
                 case TwoD_Density.dft:
-                    return new TwoD_DFTSolver(this);
+                    return new TwoD_DFTSolver(this, carrier_type);
 
                 case TwoD_Density.thomasfermi:
-                    return new TwoD_ThomasFermiSolver(this);
+                    return new TwoD_ThomasFermiSolver(this, carrier_type);
 
                 case TwoD_Density.sodft:
-                    return new TwoD_SO_DFTSolver(this);
+                    return new TwoD_SO_DFTSolver(this, carrier_type);
 
                 default:
                     throw new NotImplementedException();

@@ -11,7 +11,7 @@ using CenterSpace.NMath.Analysis;
 
 namespace OneD_ThomasFermiPoisson
 {
-    public class OneD_DFTSolver : OneD_Density_Base
+    public class OneD_DFTSolver : OneD_Density_Base, IOneD_Density_Solve
     {
         double no_kb_T = 50;    // number of kb_T to integrate to
         double t;
@@ -26,7 +26,7 @@ namespace OneD_ThomasFermiPoisson
         public OneD_DFTSolver(IExperiment exp, Carrier carrier_type) : this(exp)
         {
             this.carrier_type = carrier_type;
-            if (carrier_type == Carrier.Hole)
+            if (carrier_type == Carrier.hole)
             {
                 Change_Charge(+1.0 * Physics_Base.q_e);
                 Change_Mass(0.51 * Physics_Base.m_e);
@@ -61,7 +61,7 @@ namespace OneD_ThomasFermiPoisson
                     // and integrate the density of states at this position for this eigenvector from the minimum energy to
                     // (by default) 50 * k_b * T above mu = 0
                     //dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
-                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Get_TwoD_DoS(eig_decomp.EigenValue(i));
+                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Get_TwoD_DoS(eig_decomp.EigenValue(i), no_kb_T);
                 }
 
                 // just share the densities (there is no spin polarisation)
@@ -136,7 +136,7 @@ namespace OneD_ThomasFermiPoisson
                     // and integrate the density of states at this position for this eigenvector from the minimum energy to
                     // (by default) 50 * k_b * T above mu = 0
                     //dens_val += dens_of_states.Integrate(min_eigval, no_kb_T * Physics_Base.kB * temperature);
-                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * mass / (2.0 * Math.PI * Physics_Base.hbar * Physics_Base.hbar);
+                    dens_val += DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * DoubleComplex.Norm(eig_decomp.EigenVector(i)[j]) * Get_TwoD_DoS_Deriv(eig_decomp.EigenValue(i), no_kb_T);// *mass / (2.0 * Math.PI * Physics_Base.hbar * Physics_Base.hbar);
                 }
 
                 // just share the densities (there is no spin polarisation)
@@ -224,21 +224,13 @@ namespace OneD_ThomasFermiPoisson
             {
                 double pos = zmin + i * dz;
                 double band_gap = Geom_Tool.GetLayer(layers, pos).Band_Gap;
-                if (carrier_type == Carrier.Electron)
+                if (carrier_type == Carrier.electron)
                     dft_band_offset[i] = 0.5 * band_gap - dft_band_offset[i];
-                else
+                else if (carrier_type == Carrier.hole)
                     dft_band_offset[i] = 0.5 * band_gap + dft_band_offset[i];
+                else
+                    throw new NotImplementedException();
             }
-        }
-
-        double Get_TwoD_DoS(double tmp_eigval)
-        {
-            // calculate the density of states integral directly
-            double alpha = mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
-            double beta = 1.0 / (Physics_Base.kB * temperature);
-            OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => 1.0 / (Math.Exp(beta * E) + 1)));
-            dos_integrand.Integrator = new GaussKronrodIntegrator();
-            return alpha * dos_integrand.Integrate(tmp_eigval, no_kb_T * Physics_Base.kB * temperature);
         }
 
         DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)

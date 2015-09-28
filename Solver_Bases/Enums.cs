@@ -13,8 +13,9 @@ namespace Solver_Bases
 
     public enum Carrier
     {
-        Electron,
-        Hole
+        electron,
+        hole,
+        both
     }
 
     public enum Direction

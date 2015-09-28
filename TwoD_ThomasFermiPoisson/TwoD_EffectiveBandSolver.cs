@@ -26,7 +26,7 @@ namespace TwoD_ThomasFermiPoisson
         }
 
         public TwoD_EffectiveBandSolver(Experiment exp)
-            : this(exp, Carrier.Electron)
+            : this(exp, Carrier.electron)
         {
         }
 

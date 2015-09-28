@@ -182,7 +182,7 @@ namespace Solver_Bases
 
             // check that these interfaces have lattice points on them
             for (int i = 0; i < count; i++)
-                if (Math.IEEERemainder(layers[init_layer_no + i].Zmax - zmin, dx) != 0.0)
+                if (Math.IEEERemainder(layers[init_layer_no + i].Zmax - zmin, dx) > 1e-9)
                 {
                     Console.WriteLine("WARNING - I don't think there's a lattice point on the interface at z = " + layers[init_layer_no + i].Zmax.ToString());
                     return false;

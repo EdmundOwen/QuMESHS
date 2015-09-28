@@ -44,12 +44,12 @@ namespace TwoD_ThomasFermiPoisson
 
             g_1D = 0.5 / Math.PI;
 
-            if (carrier_type == Carrier.Hole)
+            if (carrier_type == Carrier.hole)
                 throw new NotImplementedException();
         }
 
         public TwoD_SO_DFTSolver(Experiment exp)
-            : this(exp, Carrier.Electron)
+            : this(exp, Carrier.electron)
         {
         }
 

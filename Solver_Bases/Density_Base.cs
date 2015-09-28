@@ -14,7 +14,7 @@ namespace Solver_Bases
         // default values are for electrons in GaAs
         protected double mass = 0.067 * Physics_Base.m_e;                 // (meV) (ps)^2 (nm)^-2 with GaAs effective mass
         protected double unit_charge = -1.0 * Physics_Base.q_e;
-        protected Carrier carrier_type = Carrier.Electron;
+        protected Carrier carrier_type = Carrier.electron;
 
         protected double temperature;
 
@@ -65,7 +65,7 @@ namespace Solver_Bases
         {
             if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
                 return 0.0;
-            else if (temperature == 0)
+            else if (temperature == 0.0)
                 return 2.0 * Math.Sqrt(-2.0 * mass * band_edge) / (Math.PI * Physics_Base.hbar);
             else
             {
@@ -73,11 +73,7 @@ namespace Solver_Bases
                 double alpha = 2.0 * Math.Sqrt(2.0 * mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
-                dos_integrand.Integrator = new GaussKronrodIntegrator();
-                if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
-                    return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
-                else
-                    return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+                return Perform_DoS_Integral(band_edge, no_kb_T, alpha, dos_integrand);
             }
         }
 
@@ -85,7 +81,7 @@ namespace Solver_Bases
         {
             if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
                 return 0.0;
-            else if (temperature == 0)
+            else if (temperature == 0.0)
                 return -1.0 * Math.Sqrt(-2.0 * mass / band_edge) / (Math.PI * Physics_Base.hbar);
             else
             {
@@ -93,12 +89,51 @@ namespace Solver_Bases
                 double alpha = 2.0 * Math.Sqrt(2.0 * mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -3.0) * (beta * (Math.Exp(beta * E) + 1) - 2.0 * beta * Math.Exp(beta * E))));
-                dos_integrand.Integrator = new GaussKronrodIntegrator();
-                if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
-                    return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
-                else
-                    return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+                return Perform_DoS_Integral(band_edge, no_kb_T, alpha, dos_integrand);
             }
+        }
+
+        protected double Get_TwoD_DoS(double band_edge, double no_kb_T)
+        {
+            if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
+                return 0.0;
+            else if (temperature == 0.0)
+                return -1.0 * band_edge * mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
+            else
+            {
+                // calculate the density of states integral directly
+                double alpha = mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
+                double beta = 1.0 / (Physics_Base.kB * temperature);
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => 1.0 / (Math.Exp(beta * E) + 1)));
+                return Perform_DoS_Integral(band_edge, no_kb_T, alpha, dos_integrand);
+            }
+        }
+
+        protected double Get_TwoD_DoS_Deriv(double band_edge, double no_kb_T)
+        {
+            if (band_edge >= no_kb_T * Physics_Base.kB * temperature)
+                return 0.0;
+            else if (temperature == 0.0)
+                return mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
+            else
+            {
+                // calculate the derivative of the density of states integral directly
+                // NOTE: The 2D DoS is constant so this is just the integral of the derivative of the Fermi function
+                double alpha = mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
+                double beta = 1.0 / (Physics_Base.kB * temperature);
+                OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => beta * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
+                return Perform_DoS_Integral(band_edge, no_kb_T, alpha, dos_integrand);
+            }
+        }
+
+        private double Perform_DoS_Integral(double band_edge, double no_kb_T, double alpha, OneVariableFunction dos_integrand)
+        {
+            dos_integrand.Integrator = new GaussKronrodIntegrator(); 
+
+            if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
+                return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
+            else
+                return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
         }
 
         public void Output(SpinResolved_Data data, string filename, bool with_warnings)

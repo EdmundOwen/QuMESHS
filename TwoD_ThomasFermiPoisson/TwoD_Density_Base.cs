@@ -22,7 +22,7 @@ namespace TwoD_ThomasFermiPoisson
         public TwoD_Density_Base(IExperiment exp, Carrier carrier_type) : this(exp)
         {
             this.carrier_type = carrier_type;
-            if (carrier_type == Carrier.Hole)
+            if (carrier_type == Carrier.hole)
             {
                 Change_Charge(+1.0 * Physics_Base.q_e);
                 Change_Mass(0.51 * Physics_Base.m_e);
@@ -113,10 +113,12 @@ namespace TwoD_ThomasFermiPoisson
                     double pos_y = ymin + j * dy;
                     double band_gap = Geom_Tool.GetLayer(layers, plane, pos_x, pos_y, pos_z).Band_Gap;
 
-                    if (carrier_type == Carrier.Electron)
+                    if (carrier_type == Carrier.electron)
                         dft_band_offset.mat[i, j] = 0.5 * band_gap - dft_band_offset.mat[i, j] + dft_pot.mat[i, j];
-                    else
+                    else if (carrier_type == Carrier.hole)
                         dft_band_offset.mat[i, j] = 0.5 * band_gap + dft_band_offset.mat[i, j] + dft_pot.mat[i, j];
+                    else
+                        throw new NotImplementedException();
                 }
         }
 
