@@ -416,8 +416,6 @@ namespace Solver_Bases
                 for (int i = 0; i < Length; i++)
                     result[i] = this[i];
 
-                if (this.Laplacian != null)
-
                 tmp_result = new Band_Data(result);
             }
             else if (dim == 2)

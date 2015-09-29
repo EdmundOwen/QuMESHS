@@ -347,5 +347,10 @@ namespace OneD_ThomasFermiPoisson
         {
             throw new NotImplementedException();
         }
+
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data carrier_density, Band_Data dft_pot, Band_Data dft_calc)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

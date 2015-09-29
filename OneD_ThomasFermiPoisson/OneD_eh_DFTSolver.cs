@@ -120,13 +120,13 @@ namespace OneD_ThomasFermiPoisson
             throw new NotImplementedException();
         }
 
-        public void Set_DFT_Potential(SpinResolved_Data car_dens)
+        public void Update_DFT_Potential(SpinResolved_Data car_dens)
         {
             // set the dft potential for the electrons and holes separately
             // NOTE!!!!!  V_xc is set using the total carrier density so its value includes the density due to electrons
             // this is a bug, but shouldn't be a problem as there should be no chance of getting holes where there are electrons and vice versa
-            electron_dens_calc.Set_DFT_Potential(car_dens);
-            hole_dens_calc.Set_DFT_Potential(car_dens);
+            electron_dens_calc.Update_DFT_Potential(car_dens);
+            hole_dens_calc.Update_DFT_Potential(car_dens);
         }
 
         public void Reset_DFT_Potential()
@@ -161,6 +161,27 @@ namespace OneD_ThomasFermiPoisson
         {
             electron_dens_calc.Close();
             hole_dens_calc.Close();
+        }
+
+
+        public Band_Data DFT_Potential
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public double Get_XC_Potential(double charge_density)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Band_Data Get_XC_Potential(SpinResolved_Data charge_density)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Band_Data Get_XC_Potential_Deriv(SpinResolved_Data charge_density)
+        {
+            throw new NotImplementedException();
         }
     }
 }

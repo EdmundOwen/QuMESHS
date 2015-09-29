@@ -155,7 +155,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             dens_solv.Output(carrier_charge_density, "carrier_density.dat");
             dens_solv.Output(carrier_charge_density - dens_solv.Get_ChargeDensity(layers, carrier_charge_density, dopent_charge_density, chem_pot), "density_error.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential.dat");
-            Band_Data pot_exc = dens_solv.DFT_diff(carrier_charge_density) + Physics_Base.Get_XC_Potential(carrier_charge_density);
+            Band_Data pot_exc = dens_solv.DFT_diff(carrier_charge_density) + dens_solv.Get_XC_Potential(carrier_charge_density);
             pot_exc.Save_Data("xc_pot.dat");
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dx_dens, dy_dens, dz_dens, nx_dens, ny_dens, nz_dens, xmin_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS.dat");
 //            Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
@@ -191,7 +191,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         protected override bool Run_Iteration_Routine(IDensity_Solve dens_solv, IPoisson_Solve pois_solv, double tol, int max_iterations)
         {
             dens_solv.Reset_DFT_Potential();
-            dens_solv.Set_DFT_Potential(carrier_charge_density);
+            dens_solv.Update_DFT_Potential(carrier_charge_density);
 
             int count = 0;
             bool converged = false;
@@ -219,7 +219,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 gphi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_charge_density.Spin_Summed_Data - dopent_charge_density.Spin_Summed_Data;
                 Set_Edges(gphi);
-                x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_charge_density, dens_solv.DFT_diff(carrier_charge_density));
+                x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_charge_density, dens_solv.DFT_Potential, dens_solv.Get_XC_Potential(carrier_charge_density));
                // chem_pot = pois_solv.Chemical_Potential;
 
                 // Calculate optimal damping parameter, t, (but damped damping....)
@@ -251,7 +251,7 @@ namespace ThreeD_SchrodingerPoissonSolver
                     // and set the DFT potential
                     if (dens_solv.DFT_Mixing_Parameter != 0.0)
                         dens_solv.Print_DFT_diff(carrier_charge_density);
-                    dens_solv.Set_DFT_Potential(carrier_charge_density);
+                    dens_solv.Update_DFT_Potential(carrier_charge_density);
 
                     // also... if the difference in the old and new dft potentials is greater than for the previous V_xc update, reduce the dft mixing parameter
                     double current_vxc_diff = Math.Max(dens_solv.DFT_diff(carrier_charge_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_charge_density).Min()));

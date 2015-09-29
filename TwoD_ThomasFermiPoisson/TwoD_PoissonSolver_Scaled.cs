@@ -273,19 +273,13 @@ namespace TwoD_ThomasFermiPoisson
             return Get_Data_From_External(newton_location, flexpde_options, newton_result_filename);
         }
         
-        public Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens)
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens, Band_Data dft_pot, Band_Data dft_calc)
         {
             Save_Data(car_dens.Spin_Summed_Data, dens_filename);
-            Save_Data(Physics_Base.Get_XC_Potential(car_dens), xc_pot_filename);
+            Save_Data(dft_pot, xc_pot_filename);
+            Save_Data(dft_calc, xc_pot_calc_filename);
 
             return Calculate_Newton_Step(rho_prime, gphi);
-        }
-
-        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens, Band_Data dft_diff)
-        {
-            Save_Data(dft_diff + Physics_Base.Get_XC_Potential(car_dens), xc_pot_calc_filename);
-
-            return Calculate_Newton_Step(rho_prime, gphi, car_dens);
         }
 
         public void Create_NewtonStep_File(double split_width, string output_file, double t)

@@ -73,11 +73,11 @@ namespace Solver_Bases
             return x;
         }
 
-        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens, Band_Data dft_diff)
+        public override Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data car_dens, Band_Data dft_pot, Band_Data dft_calc)
         {
-            Save_Data(dft_diff + Physics_Base.Get_XC_Potential(car_dens), "xc_pot_calc.dat");
             Save_Data(car_dens.Spin_Summed_Data, dens_filename);
-            Save_Data(Physics_Base.Get_XC_Potential(car_dens), xc_pot_filename);
+            Save_Data(dft_pot, xc_pot_filename);
+            Save_Data(dft_calc, "xc_pot_calc.dat");
 
             return Calculate_Newton_Step(rho_prime, gphi);
         }

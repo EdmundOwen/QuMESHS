@@ -230,7 +230,7 @@ namespace OneD_ThomasFermiPoisson
         //    dens_solv.Set_DFT_Potential(carrier_charge_density);
 
             dens_solv.Reset_DFT_Potential();
-            dens_solv.Set_DFT_Potential(carrier_charge_density);
+            dens_solv.Update_DFT_Potential(carrier_charge_density);
 
             int count = 0;
             t = 1.0;
@@ -266,7 +266,7 @@ namespace OneD_ThomasFermiPoisson
                         dens_diff[i] = 0.0;
 
                 // Update the DFT potential
-                dens_solv.Set_DFT_Potential(carrier_charge_density);
+                dens_solv.Update_DFT_Potential(carrier_charge_density);
 
                 double[] diff = new double[Nz_Pot];
                 for (int j = 0; j < nz_pot; j++)

@@ -156,7 +156,7 @@ namespace TwoD_ThomasFermiPoisson
    //         dft_solv.Get_ChargeDensity(layers, carrier_density, dopent_density, chem_pot).Spin_Summed_Data.Save_Data("dens_2D_raw_calc.dat");
             (carrier_charge_density - dens_solv.Get_ChargeDensity(layers, carrier_charge_density, dopent_charge_density, chem_pot)).Spin_Summed_Data.Save_Data("density_error" + output_suffix);
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot).Save_Data("potential" + output_suffix);
-            Band_Data pot_exc = dens_solv.DFT_diff(carrier_charge_density) + Physics_Base.Get_XC_Potential(carrier_charge_density);
+            Band_Data pot_exc = dens_solv.DFT_diff(carrier_charge_density) + dens_solv.Get_XC_Potential(carrier_charge_density);
             pot_exc.Save_Data("xc_pot" + output_suffix);
             (Input_Band_Structure.Get_BandStructure_Grid(layers, dy_dens, dz_dens, ny_dens, nz_dens, ymin_dens, zmin_dens) - chem_pot + pot_exc).Save_Data("pot_KS" + output_suffix);
    //         Band_Data ks_ke = dft_solv.Get_KS_KE(layers, chem_pot);
@@ -197,7 +197,7 @@ namespace TwoD_ThomasFermiPoisson
                 //dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
             //}
             dens_solv.Reset_DFT_Potential();
-            dens_solv.Set_DFT_Potential(carrier_charge_density);
+            dens_solv.Update_DFT_Potential(carrier_charge_density);
 
             int count = 0;
             bool converged = false;
@@ -219,7 +219,7 @@ namespace TwoD_ThomasFermiPoisson
 
                 // Solve stepping equation to find raw Newton iteration step, g'(phi) x = - g(phi)
                 gphi = -1.0 * chem_pot.Laplacian / Physics_Base.q_e - carrier_charge_density.Spin_Summed_Data - dopent_charge_density.Spin_Summed_Data;
-                x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_charge_density, dens_solv.DFT_diff(carrier_charge_density));
+                x = pois_solv.Calculate_Newton_Step(rho_prime, gphi, carrier_charge_density, dens_solv.DFT_Potential, dens_solv.Get_XC_Potential(carrier_charge_density));
                 //chem_pot = pois_solv.Chemical_Potential;
                 
                 // Calculate optimal damping parameter, t, (but damped damping....)
@@ -254,7 +254,7 @@ namespace TwoD_ThomasFermiPoisson
 //                    max_count = 1000;
 
                     // and set the DFT potential
-                    dens_solv.Set_DFT_Potential(carrier_charge_density);
+                    dens_solv.Update_DFT_Potential(carrier_charge_density);
 
                     // also... if the difference in the old and new dft potentials is greater than for the previous V_xc update, reduce the dft mixing parameter
                     double current_vxc_diff = Math.Max(dens_solv.DFT_diff(carrier_charge_density).Max(), (-1.0 * dens_solv.DFT_diff(carrier_charge_density).Min()));

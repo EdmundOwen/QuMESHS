@@ -11,7 +11,7 @@ namespace Solver_Bases
         void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions);
         Band_Data Get_Potential(Band_Data density);
         Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi);
-        Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data carrier_density, Band_Data dft_difference);
+        Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data carrier_density, Band_Data dft_pot, Band_Data dft_calc);
 
         Band_Data Chemical_Potential { get; }
         double T { get; set; }

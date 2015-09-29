@@ -225,9 +225,9 @@ namespace OneD_ThomasFermiPoisson
                 double pos = zmin + i * dz;
                 double band_gap = Geom_Tool.GetLayer(layers, pos).Band_Gap;
                 if (carrier_type == Carrier.electron)
-                    dft_band_offset[i] = 0.5 * band_gap - dft_band_offset[i];
+                    dft_band_offset[i] = 0.5 * band_gap - dft_band_offset[i] + dft_pot.vec[i];
                 else if (carrier_type == Carrier.hole)
-                    dft_band_offset[i] = 0.5 * band_gap + dft_band_offset[i];
+                    dft_band_offset[i] = 0.5 * band_gap + dft_band_offset[i] + dft_pot.vec[i];
                 else
                     throw new NotImplementedException();
             }
@@ -243,12 +243,10 @@ namespace OneD_ThomasFermiPoisson
                 result[i + 1, i] = t; result[i, i + 1] = t;
             }
 
-            double[] potential = new double[nz];
             // set diagonal elements
             for (int i = 0; i < nz; i++)
             {
-                potential[i] = pot.vec[i] + dft_pot.vec[i];
-                result[i, i] = -2.0 * t + potential[i];
+                result[i, i] = -2.0 * t + pot[i];
             }
 
             return result;

@@ -16,11 +16,16 @@ namespace Solver_Bases
 
         CenterSpace.NMath.Core.DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot);
 
-        void Set_DFT_Potential(SpinResolved_Data car_dens);
+        void Update_DFT_Potential(SpinResolved_Data car_dens);
         void Reset_DFT_Potential();
         void Print_DFT_diff(SpinResolved_Data car_dens);
         Band_Data DFT_diff(SpinResolved_Data car_dens);
         double DFT_Mixing_Parameter { get; set;  }
+        Band_Data DFT_Potential { get; }
+
+        double Get_XC_Potential(double charge_density);
+        Band_Data Get_XC_Potential(SpinResolved_Data charge_density);
+        Band_Data Get_XC_Potential_Deriv(SpinResolved_Data charge_density);
 
         void Close();
     }

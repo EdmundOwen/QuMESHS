@@ -210,11 +210,7 @@ namespace Solver_Bases
 
         public double T { get { return t; } set { t = value; } }
 
-        public virtual Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data carrier_density, Band_Data dft_difference)
-        {
-            throw new NotImplementedException();
-        }
-
+        public abstract Band_Data Calculate_Newton_Step(SpinResolved_Data rho_prime, Band_Data gphi, SpinResolved_Data carrier_density, Band_Data dft_pot, Band_Data dft_calc);
         public abstract void Initiate_Poisson_Solver(Dictionary<string, double> device_dimensions, Dictionary<string, double> boundary_conditions);
         protected abstract string[] Trim_Potential_File(string[] lines);
         protected abstract Band_Data Parse_Potential(string location, string[] data);
