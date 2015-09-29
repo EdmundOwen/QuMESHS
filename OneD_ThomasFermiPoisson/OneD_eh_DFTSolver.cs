@@ -122,10 +122,17 @@ namespace OneD_ThomasFermiPoisson
 
         public void Set_DFT_Potential(SpinResolved_Data car_dens)
         {
+            // set the dft potential for the electrons and holes separately
+            // NOTE!!!!!  V_xc is set using the total carrier density so its value includes the density due to electrons
+            // this is a bug, but shouldn't be a problem as there should be no chance of getting holes where there are electrons and vice versa
+            electron_dens_calc.Set_DFT_Potential(car_dens);
+            hole_dens_calc.Set_DFT_Potential(car_dens);
         }
 
         public void Reset_DFT_Potential()
         {
+            electron_dens_calc.Reset_DFT_Potential();
+            hole_dens_calc.Reset_DFT_Potential();
         }
 
         public void Print_DFT_diff(SpinResolved_Data car_dens)
@@ -141,10 +148,12 @@ namespace OneD_ThomasFermiPoisson
         {
             get
             {
-                return double.NaN;
+                return electron_dens_calc.DFT_Mixing_Parameter;
             }
             set
             {
+                electron_dens_calc.DFT_Mixing_Parameter = value;
+                hole_dens_calc.DFT_Mixing_Parameter = value;
             }
         }
 

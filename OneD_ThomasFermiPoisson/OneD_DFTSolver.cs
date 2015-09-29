@@ -42,7 +42,7 @@ namespace OneD_ThomasFermiPoisson
             Interpolate_DFT_Grid(ref dft_dens, ref dft_pot, charge_density, chem_pot);
             Get_Potential(ref dft_pot, layers);
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_dens, dft_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
@@ -117,7 +117,7 @@ namespace OneD_ThomasFermiPoisson
             //     // set dft_dens to zero so that the hamiltonian doesn't include the XC term
             //     dft_dens = 0.0 * dft_dens;
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_dens_deriv, dft_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             double min_eigval = eig_decomp.EigenValues.Min();
@@ -163,7 +163,7 @@ namespace OneD_ThomasFermiPoisson
             Interpolate_DFT_Grid(ref dft_dens, ref dft_pot, charge_density, chem_pot);
             Get_Potential(ref dft_pot, layers);
 
-            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_dens, dft_pot);
+            DoubleHermitianMatrix hamiltonian = Create_Hamiltonian(layers, dft_pot);
             DoubleHermitianEigDecomp eig_decomp = new DoubleHermitianEigDecomp(hamiltonian);
 
             System.IO.StreamWriter sw_pot = new System.IO.StreamWriter("tmp_pot.dat");
@@ -197,7 +197,7 @@ namespace OneD_ThomasFermiPoisson
         {
             for (int i = 0; i < nz; i++)
             {
-                int init_index = (int)Math.Floor((i * dz - zmin_pot + zmin) / dz_pot); // index for the initial domain (ie. for charge_density and band_offset)
+                int init_index = (int)Math.Round((i * dz - zmin_pot + zmin) / dz_pot); // index for the initial domain (ie. for charge_density and band_offset)
 
                 // no interpolation (it doesn't work...)
                 charge_density.Spin_Up[init_index] = dft_dens.Spin_Up[i];
@@ -209,7 +209,7 @@ namespace OneD_ThomasFermiPoisson
         {
             for (int i = 0; i < nz; i++)
             {
-                int init_index = (int)Math.Floor((i * dz - zmin_pot + zmin) / dz_pot); // index for the initial domain (ie. for charge_density and band_offset)
+                int init_index = (int)Math.Round((i * dz - zmin_pot + zmin) / dz_pot); // index for the initial domain (ie. for charge_density and band_offset)
 
                 // no interpolation (it doesn't work...)
                 dft_dens.Spin_Up[i] = charge_density.Spin_Up[init_index];
@@ -233,7 +233,7 @@ namespace OneD_ThomasFermiPoisson
             }
         }
 
-        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, SpinResolved_Data charge_density, Band_Data pot)
+        DoubleHermitianMatrix Create_Hamiltonian(ILayer[] layers, Band_Data pot)
         {
             DoubleHermitianMatrix result = new DoubleHermitianMatrix(nz);
 
@@ -244,11 +244,10 @@ namespace OneD_ThomasFermiPoisson
             }
 
             double[] potential = new double[nz];
-            Band_Data charge_dens_spin_summed = charge_density.Spin_Summed_Data;
             // set diagonal elements
             for (int i = 0; i < nz; i++)
             {
-                potential[i] = pot.vec[i] + Physics_Base.Get_XC_Potential(charge_dens_spin_summed.vec[i]);
+                potential[i] = pot.vec[i] + dft_pot.vec[i];
                 result[i, i] = -2.0 * t + potential[i];
             }
 

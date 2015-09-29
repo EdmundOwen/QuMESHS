@@ -23,7 +23,7 @@ namespace OneD_ThomasFermiPoisson
         bool illuminated = false;
         bool dopents_calculated = false;
 
-        Carrier carrier_type = Carrier.electron;
+        Carrier carrier_type = Carrier.both;
 
         public override void Initialise(Dictionary<string, object> input_dict)
         {
@@ -179,7 +179,7 @@ namespace OneD_ThomasFermiPoisson
                 else
                     throw new NotImplementedException();
                 
-                dft_solv.DFT_Mixing_Parameter = 0.0;                 //NOTE: This method doesn't mix in the DFT potential in this way (DFT is still implemented)
+                dft_solv.DFT_Mixing_Parameter = 1.0;                 //NOTE: This method doesn't mix in the DFT potential, it is stable enough when V_xc is calculated every iteration
                 dft_solv.Zmin_Pot = zmin_pot; dft_solv.Dz_Pot = dz_pot;
 
                 // and then run the DFT solver at the base temperature
@@ -225,8 +225,11 @@ namespace OneD_ThomasFermiPoisson
             if (chem_pot == null)
                 chem_pot = Physics_Base.q_e * pois_solv.Get_Potential(carrier_charge_density.Spin_Summed_Data + dopent_charge_density.Spin_Summed_Data);
             Console.WriteLine("Initial grid complete");
-            dens_solv.Set_DFT_Potential(carrier_charge_density);
-            dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
+        //    dens_solv.Set_DFT_Potential(carrier_charge_density);
+        //    dens_solv.Get_ChargeDensity(layers, ref carrier_charge_density, ref dopent_charge_density, chem_pot);
+        //    dens_solv.Set_DFT_Potential(carrier_charge_density);
+
+            dens_solv.Reset_DFT_Potential();
             dens_solv.Set_DFT_Potential(carrier_charge_density);
 
             int count = 0;
@@ -261,6 +264,9 @@ namespace OneD_ThomasFermiPoisson
                         dens_diff[i] = Math.Abs(dens_diff[i] / dens_spin_summed[i]);
                     else
                         dens_diff[i] = 0.0;
+
+                // Update the DFT potential
+                dens_solv.Set_DFT_Potential(carrier_charge_density);
 
                 double[] diff = new double[Nz_Pot];
                 for (int j = 0; j < nz_pot; j++)
