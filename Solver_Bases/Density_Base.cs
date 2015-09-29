@@ -89,7 +89,7 @@ namespace Solver_Bases
                 double alpha = 2.0 * Math.Sqrt(2.0 * mass) / (Math.PI * Physics_Base.hbar * Physics_Base.kB * temperature);
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => Math.Sqrt(E - band_edge) * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -3.0) * (beta * (Math.Exp(beta * E) + 1) - 2.0 * beta * Math.Exp(beta * E))));
-                return Perform_DoS_Integral(band_edge, no_kb_T, alpha, dos_integrand);
+                return Perform_DoS_Deriv_Integral(band_edge, no_kb_T, alpha, dos_integrand);
             }
         }
 
@@ -122,13 +122,20 @@ namespace Solver_Bases
                 double alpha = mass / (Physics_Base.hbar * Physics_Base.hbar * 2.0 * Math.PI);
                 double beta = 1.0 / (Physics_Base.kB * temperature);
                 OneVariableFunction dos_integrand = new OneVariableFunction((Func<double, double>)((double E) => beta * Math.Exp(beta * E) * Math.Pow(Math.Exp(beta * E) + 1, -2.0)));
-                return Perform_DoS_Integral(band_edge, no_kb_T, alpha, dos_integrand);
+                return Perform_DoS_Deriv_Integral(band_edge, no_kb_T, alpha, dos_integrand);
             }
         }
 
-        private double Perform_DoS_Integral(double band_edge, double no_kb_T, double alpha, OneVariableFunction dos_integrand)
+        double Perform_DoS_Integral(double band_edge, double no_kb_T, double alpha, OneVariableFunction dos_integrand)
         {
-            dos_integrand.Integrator = new GaussKronrodIntegrator(); 
+            dos_integrand.Integrator = new GaussKronrodIntegrator();
+
+            return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+        }
+
+        double Perform_DoS_Deriv_Integral(double band_edge, double no_kb_T, double alpha, OneVariableFunction dos_integrand)
+        {
+            dos_integrand.Integrator = new GaussKronrodIntegrator();
 
             if (band_edge < -1.0 * no_kb_T * Physics_Base.kB * temperature)
                 return alpha * dos_integrand.Integrate(-1.0 * no_kb_T * Physics_Base.kB * temperature, no_kb_T * Physics_Base.kB * temperature);
