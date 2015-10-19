@@ -21,6 +21,8 @@ namespace Solver_Bases.Layers
                     return "eps_r_InAlAs * eps_0";
                 case Material.PMMA:
                     return "eps_pmma * eps_0";
+                case Material.Al2O3:
+                    return "eps_al2o3 * eps_0";
                 case Material.Metal:
                     return "0.0";
                 case Material.Air:
@@ -54,6 +56,9 @@ namespace Solver_Bases.Layers
 
                 case "pmma":
                     return Material.PMMA;
+
+                case "al2o3":
+                    return Material.Al2O3;
 
                 case "substrate":
                     return Material.Substrate;

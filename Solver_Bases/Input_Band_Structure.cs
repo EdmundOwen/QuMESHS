@@ -106,6 +106,10 @@ namespace Solver_Bases
                     result = new PMMA_Layer(geom, (int)data["layer_no"]);
                     break;
 
+                case Material.Al2O3:
+                    result = new Al2O3_Layer(geom, (int)data["layer_no"]);
+                    break;
+
                 case Material.Metal:
                     result = new Metal_Layer(geom, (int)data["layer_no"]);
                     break;

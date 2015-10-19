@@ -157,6 +157,15 @@ namespace OneD_ThomasFermiPoisson
             }
         }
 
+        public double Unit_Charge
+        {
+            get { throw new FormatException(); }
+        }
+        public double Mass
+        {
+            get { throw new FormatException(); }
+        }
+
         public void Close()
         {
             electron_dens_calc.Close();

@@ -132,7 +132,16 @@ namespace Solver_Bases
         {
             dos_integrand.Integrator = new GaussKronrodIntegrator();
 
-            return alpha * dos_integrand.Integrate(band_edge, no_kb_T * Physics_Base.kB * temperature);
+            // check to see if the band edge is less than a large tolerance... it should be
+            // physically, it is difficult for a band edge to dip far below the fermi surface as the charge flowing into the system should pin it
+            // here, we use a value of 0.1eV... integral_tol should never be greater than 1.0eV as this is roughly the band gap and holes/electrons
+            // should be induced
+            double integral_lower = -100.0;
+            if (band_edge > integral_lower)
+                integral_lower = band_edge;
+
+            double result = alpha * dos_integrand.Integrate(integral_lower, no_kb_T * Physics_Base.kB * temperature);
+            return result;
         }
 
         double Perform_DoS_Deriv_Integral(double band_edge, double no_kb_T, double alpha, OneVariableFunction dos_integrand)
@@ -293,6 +302,11 @@ namespace Solver_Bases
         public abstract SpinResolved_Data Get_ChargeDensity(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot);
         public abstract SpinResolved_Data Get_ChargeDensity_Deriv(ILayer[] layers, SpinResolved_Data carrier_charge_density, SpinResolved_Data dopent_charge_density, Band_Data chem_pot);
         public abstract DoubleVector Get_EnergyLevels(ILayer[] layers, Band_Data chem_pot);
+
+        public double Unit_Charge
+        { get { return unit_charge; } }
+        public double Mass
+        { get { return mass; } }
 
         public void Close()
         {

@@ -177,7 +177,7 @@ namespace TwoD_ThomasFermiPoisson
  //           File.Delete("potential.dat");
  //           File.Delete("lap.dat");
 
-            Close(converged, max_iterations);
+            Close(dens_solv.Unit_Charge, converged, max_iterations);
 
             return converged;
         }
@@ -358,6 +358,7 @@ namespace TwoD_ThomasFermiPoisson
                 count++;
 
                 // reset the potential if the added potential t * x is too small
+                
                 if (converged || count > max_iterations)
                 {
                     Console.WriteLine("Maximum potential change at end of iteration was " + (t * Physics_Base.q_e * x.InfinityNorm()).ToString());

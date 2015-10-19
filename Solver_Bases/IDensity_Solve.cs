@@ -27,6 +27,9 @@ namespace Solver_Bases
         Band_Data Get_XC_Potential(SpinResolved_Data charge_density);
         Band_Data Get_XC_Potential_Deriv(SpinResolved_Data charge_density);
 
+        double Unit_Charge { get; }
+        double Mass { get; }
+
         void Close();
     }
 }

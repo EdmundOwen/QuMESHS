@@ -248,7 +248,7 @@ namespace Solver_Bases
             return output_string;
         }
 
-        public void Close(bool converged, int no_runs)
+        public void Close(double unit_charge, bool converged, int no_runs)
         {
             if (!converged)
             {
@@ -258,9 +258,9 @@ namespace Solver_Bases
             }
 
             // save final density out
-            (carrier_charge_density.Spin_Summed_Data / (-1.0 * Physics_Base.q_e)).Save_Data("dens" + output_suffix);
-            (carrier_charge_density.Spin_Up / (-1.0 * Physics_Base.q_e)).Save_Data("dens_up" + output_suffix);
-            (carrier_charge_density.Spin_Down / (-1.0 * Physics_Base.q_e)).Save_Data("dens_down" + output_suffix);
+            (carrier_charge_density.Spin_Summed_Data / (unit_charge)).Save_Data("dens" + output_suffix);
+            (carrier_charge_density.Spin_Up / (unit_charge)).Save_Data("dens_up" + output_suffix);
+            (carrier_charge_density.Spin_Down / (unit_charge)).Save_Data("dens_down" + output_suffix);
             
             // delete the restart flag files and data
             File.Delete("restart.flag");
@@ -284,7 +284,7 @@ namespace Solver_Bases
         /// <returns></returns>
         protected double Calculate_optimal_t(double t, Band_Data phi, Band_Data x, SpinResolved_Data car_dens, SpinResolved_Data dop_dens, IPoisson_Solve pois_solv, IDensity_Solve dens_solv, double minval)
         {
-            double maxval = 100.0;
+            double maxval = 3.0;
             SpinResolved_Data car_dens_copy = car_dens.DeepenThisCopy();
             SpinResolved_Data dop_dens_copy = dop_dens.DeepenThisCopy();
 

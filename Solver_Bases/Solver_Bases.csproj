@@ -114,6 +114,7 @@
     <Compile Include="Inputs_to_Dictionary.cs" />
     <Compile Include="Input_Band_Structure.cs" />
     <Compile Include="IPoisson_Solve.cs" />
+    <Compile Include="Layers\Al2O3_Layer.cs" />
     <Compile Include="Layers\AlGaAs_Layer.cs" />
     <Compile Include="Layers\Air_Layer.cs" />
     <Compile Include="Layers\Composite_Layer.cs" />

@@ -177,7 +177,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             File.Delete("potential.dat");
             File.Delete("lap.dat");
 
-            Close(converged, max_iterations);
+            Close(dens_solv.Unit_Charge, converged, max_iterations);
 
             return converged;
         }

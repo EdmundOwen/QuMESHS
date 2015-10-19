@@ -43,6 +43,7 @@ namespace Solver_Bases
         InGaAs,
         InAs,
         PMMA,
+        Al2O3,
         Air,
         Metal,
         Substrate

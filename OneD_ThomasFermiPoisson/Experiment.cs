@@ -199,10 +199,14 @@ namespace OneD_ThomasFermiPoisson
                                where val > 0.0
                                select 1.0e14 * val * dz_dens / Physics_Base.q_e).ToArray().Sum();
 
+            double unit_charge = -1.0 * Physics_Base.q_e;
             if (pos_dens == 0.0)
                 Console.WriteLine("Electron carrier density at heterostructure interface: \t" + neg_dens.ToString("e3") + " cm^-2");
             else if (neg_dens == 0.0)
+            {
                 Console.WriteLine("Hole carrier density at heterostructure interface: \t" + pos_dens.ToString("e3") + " cm^-2");
+                unit_charge = Physics_Base.q_e;
+            }
             else
             {
                 Console.WriteLine("WARNING!  Carriers of both charges found on the interface");
@@ -211,7 +215,7 @@ namespace OneD_ThomasFermiPoisson
             }
 
             // there is no iteration timeout for the 1D solver so if it gets to this point the solution will definitely have converged
-            Close(converged, max_iterations);
+            Close(unit_charge, converged, max_iterations);
 
             return converged;
         }
