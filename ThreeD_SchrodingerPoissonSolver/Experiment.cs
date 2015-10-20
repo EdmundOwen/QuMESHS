@@ -141,7 +141,7 @@ namespace ThreeD_SchrodingerPoissonSolver
             if (no_dft || carrier_charge_density.Spin_Summed_Data.Min() == 0.0)
                 dens_solv.DFT_Mixing_Parameter = 0.0;
             else
-                dens_solv.DFT_Mixing_Parameter = 0.1;
+                dens_solv.DFT_Mixing_Parameter = dft_mixing_parameter;
 
             // do preliminary run to correct for initial discretised form of rho_prime
             if (initial_run)

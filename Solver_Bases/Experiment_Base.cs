@@ -78,6 +78,7 @@ namespace Solver_Bases
         protected int initial_run_steps = 5;    // and if yes, how many steps should it iterate for?
 
         protected bool no_dft = false;       // do not run with dft potential (ie. Hartree approximation)
+        protected double dft_mixing_parameter = 0.3;    // Default mixing parameter for DFT
         protected bool hot_start = false;     // am the program starting from a precalculated density or do i start from scratch
         protected bool initialise_from_restart = false;     //is the program starting from a restart? (normally false)
         protected bool initialise_with_1D_data = false;     // should the program use the data used to calculate the dopents in order to find the initial density for the higher dimensional structure?
@@ -174,6 +175,8 @@ namespace Solver_Bases
             Get_From_Dictionary<bool>(input_dict, "no_dft", ref no_dft, true);
             if (input_dict.ContainsKey("dft"))
                 no_dft = !(bool)input_dict["dft"];
+            // and whether to set the mixing parameter to something other than the default
+            Get_From_Dictionary<double>(input_dict, "dft_mixing_parameter", ref dft_mixing_parameter, true);
 
             // get keys for any interesting start-up protocols
             if (input_dict.ContainsKey("hot_start")) hot_start = (bool)input_dict["hot_start"];

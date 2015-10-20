@@ -142,7 +142,7 @@ namespace TwoD_ThomasFermiPoisson
             if (no_dft)
                 dens_solv.DFT_Mixing_Parameter = 0.0;
             else
-                dens_solv.DFT_Mixing_Parameter = 0.3;
+                dens_solv.DFT_Mixing_Parameter = dft_mixing_parameter;
 
             // do preliminary run to correct for initial discretised form of rho_prime
             if (initial_run)
