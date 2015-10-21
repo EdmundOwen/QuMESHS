@@ -10,11 +10,11 @@
                 <a class="tar_download_link" href="{{ site.project_url }}/tarball/master">Download this project as a tar.gz file</a>
             </section>
             <ul id="menubar">
-{% assign pagestree = site.pages | group_by:'dir' %}{% for branchname in site.menubar_items %}{% assign branchpath = branchname | prepend:'/' %}{% assign branchindex = branchname | append:'/index.md' %}{% assign branch = pagestree | where:'name',branchpath %}{% assign index = branch[0].items | where:'path',branchindex %}                <li><a href="{{ index[0].url }}">{{ index[0].title }}</a>{% if branch[0].items.size > 1 %}
+{% assign sorted_pages = site.pages | sort:'title' | sort:'rank','last' %}{% for url in site.menubar_items %}{% assign index = site.pages | where:'url':url %}                <li><a href="{{ index[0].url }}">{{ index[0].title }}</a>{% capture subpages %}{% for page in sorted_pages %}{% unless page.url == url %}{% if page.url contains url %}                        <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+{% endif %}{% endunless %}{% endfor %}{% endcapture %}{% unless subpages == '' %}
                     <ul>
-{% assign subpages = branch[0].items | sort:'name' | sort:'rank' %}{% for subpage in subpages %}{% if subpage.path != branchindex %}                        <li><a href="{{ subpage.url }}">{{ subpage.title }}</a></li>
-{% endif %}{% endfor %}                    </ul>
-                {% endif %}</li>
+{{ subpages }}                    </ul>
+                {% endunless %}</li>
 {% endfor %}            </ul>
         </header>
     </div>
