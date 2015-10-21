@@ -127,6 +127,7 @@
     <Compile Include="Layers\Metal_Layer.cs" />
     <Compile Include="Layers\PMMA_Layer.cs" />
     <Compile Include="Layers\Substrate_Layer.cs" />
+    <Compile Include="License.cs" />
     <Compile Include="Mixing_Schedulers\Constant_Scheduler.cs" />
     <Compile Include="Mixing_Schedulers\File_Defined_Scheduler.cs" />
     <Compile Include="Mixing_Schedulers\IScheduler.cs" />

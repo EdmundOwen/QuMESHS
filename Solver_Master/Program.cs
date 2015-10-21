@@ -49,6 +49,7 @@ namespace Solver_Master
         static void Main(string[] args)
         {
             // set nmath license key
+            CenterSpace.NMath.Core.NMathConfiguration.LicenseKey = License.NMath_License_Key;
 
             Dictionary<string, object> inputs = new Dictionary<string, object>();
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Solver_Config.txt");

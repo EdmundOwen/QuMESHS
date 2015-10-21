@@ -50,6 +50,7 @@ namespace TwoD_ThomasFermiPoisson
             Console.WriteLine("Setting Centerspace key");
 
             // set nmath license key
+            CenterSpace.NMath.Core.NMathConfiguration.LicenseKey = License.NMath_License_Key;
 
             Console.WriteLine("Program starting");
 

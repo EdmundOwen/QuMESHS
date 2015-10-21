@@ -47,6 +47,7 @@ namespace ThreeD_SchrodingerPoissonSolver
         static void Main(string[] args)
         {
             // set nmath license key
+            CenterSpace.NMath.Core.NMathConfiguration.LicenseKey = License.NMath_License_Key;
 
             Console.WriteLine("Program starting");
 
