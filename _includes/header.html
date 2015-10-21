@@ -9,5 +9,12 @@
                 <a class="zip_download_link" href="{{ site.project_url }}/zipball/master">Download this project as a .zip file</a>
                 <a class="tar_download_link" href="{{ site.project_url }}/tarball/master">Download this project as a tar.gz file</a>
             </section>
+            <ul id="menubar">
+{% assign pagestree = site.pages | group_by:'dir' | sort:'name' %}{% for branch in pagestree %}{% if branch.name != '/' %}{% assign index = branch.items | where:'name','index.md' %}                <li><a href="{{ index[0].url }}">{{ index[0].title }}</a>{% if branch.items.size > 1 %}
+                    <ul>
+{% assign subpages = branch.items | sort:'name' | sort:'rank' %}{% for subpage in subpages %}{% if subpage.name != 'index.md' %}                        <li><a href="{{ subpage.url }}">{{ subpage.title }}</a></li>
+{% endif %}{% endfor %}                    </ul>
+                {% endif %}</li>
+{% endif %}{% endfor %}            </ul>
         </header>
     </div>
