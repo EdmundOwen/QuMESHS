@@ -4,6 +4,11 @@ authors:
     - <a href="https://github.com/EdmundOwen">Dr Edmund Owen</a>
     - Prof. Crispin Barnes
 project_url: https://github.com/EdmundOwen/QuMESHS
+menubar_items:
+    - features
+    - download
+    - documentation
+    - examples
 
 defaults:
     -
