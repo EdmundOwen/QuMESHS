@@ -1,6 +1,6 @@
     <div id="footer_wrap" class="outer">
         <footer class="inner">
-            <p class="copyright">{{ site.title }} by {% for author in site.authors %}{{ author }}{% case forloop.rindex0 %}{% when 0 %}{% when 1 %} and {% else %}, {% endcase %}{% endfor %}</p>
+            <p class="copyright">{{ site.title }} by {{ site.authors | array_to_sentence_string }}</p>
             <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
         </footer>
     </div>
