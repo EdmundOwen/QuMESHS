@@ -1,0 +1,13 @@
+title: QuMESHS
+description: Quantum Mesoscopic Electronic Semiconductor Heterostructure Solver
+authors:
+    - <a href="https://github.com/EdmundOwen">Dr Edmund Owen</a>
+    - Prof. Crispin Barnes
+project_url: https://github.com/EdmundOwen/QuMESHS
+
+defaults:
+    -
+        scope:
+            path: ''
+        values:
+            layout: default
