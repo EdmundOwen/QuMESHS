@@ -389,10 +389,12 @@ nav ul li a {
 }
 
 nav > ul > li.active {
+  background: #555;
   @include gradient(top, #333 0%, #555 50%);
 }
 
 nav > ul > li:hover {
+  background: $github_bg;
   @include gradient(top, mix($github_bg, #fff, 50%) 0%, $github_bg 10%);
 }
 
