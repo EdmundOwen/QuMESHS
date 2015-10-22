@@ -12,6 +12,8 @@
 @mixin gradient($arg...) {
     background: -webkit-linear-gradient($arg);
     background: -moz-linear-gradient($arg);
+    background: -ms-linear-gradient($arg);
+    background: -o-linear-gradient($arg);
     background: linear-gradient($arg);
 }
 
