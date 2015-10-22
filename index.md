@@ -4,6 +4,8 @@ title: Home
 
 # This is the home page.
 
+Test link to [features page](/features/).
+
 Donec feugiat diam erat, id iaculis sem efficitur id. Phasellus eleifend
 aliquam vulputate. Sed placerat enim non mauris vestibulum, eu varius magna
 bibendum. Vestibulum sit amet blandit odio. Nulla faucibus non sapien sit amet
