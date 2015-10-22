@@ -4,17 +4,16 @@
 
             <h1 id="project_title">{% if page.path != 'index.md' %}<a id="project_home" href="/">{{ site.title }}</a>{% else %}{{ site.title }}{% endif %}</h1>
             <h2 id="project_tagline">{{ site.description }}</h2>
-
-            <section id="downloads">
-                <a class="zip_download_link" href="{{ site.project_url }}/zipball/master">Download this project as a .zip file</a>
-                <a class="tar_download_link" href="{{ site.project_url }}/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-            <ul id="menubar">
-{% assign sorted_pages = site.pages | sort:'title' | sort:'rank','last' %}{% for url in site.menubar_items %}{% assign index = site.pages | where:'url':url %}                <li><a href="{{ index[0].url }}">{{ index[0].title }}</a>{% capture subpages %}{% for page in sorted_pages %}{% unless page.url == url %}{% if page.url contains url %}                        <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+        </header>
+    </div>
+    <div id="nav_wrap" class="outer">
+        <nav class="inner">
+            <ul>
+{% assign sorted_pages = site.pages | sort:'title' | sort:'rank','last' %}{% for url in site.menubar_items %}{% assign index = site.pages | where:'url':url %}                <li{% if page.url contains url %} class="active"{% endif %}><a href="{{ index[0].url }}">{{ index[0].title }}</a>{% capture subpages %}{% for page in sorted_pages %}{% unless page.url == url %}{% if page.url contains url %}                    <li><a href="{{ page.url }}">{{ page.title }}</a></li>
 {% endif %}{% endunless %}{% endfor %}{% endcapture %}{% unless subpages == '' %}
-                    <ul>
-{{ subpages }}                    </ul>
+                <ul>
+{{ subpages }}                </ul>
                 {% endunless %}</li>
 {% endfor %}            </ul>
-        </header>
+        </nav>
     </div>
