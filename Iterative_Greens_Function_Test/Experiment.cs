@@ -5,7 +5,7 @@
  * potentials using self-consistent Poisson-Schroedinger solutions in 
  * layered semiconductors
  * 
- * Copyright(C) 2015 E. T. Owen and C. H. W. Barnes
+ * Copyright(C) 2015 E. T. Owen, T. Gemunden and C. H. W. Barnes
  * 
  * The MIT License (MIT)
  * 
