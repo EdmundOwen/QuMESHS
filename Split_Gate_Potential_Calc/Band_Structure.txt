@@ -1,9 +1,0 @@
-﻿## High density shallow HEMT (eg W0626)
-#
-mat=PMMA t=200
-surface=true
-mat=GaAs t=10
-mat=AlGaAs t=40 x=.3 Nd=0.63e18
-mat=AlGaAs t=40 x=.3
-mat=GaAs t=410
-mat=substrate
