@@ -5,10 +5,12 @@ authors:
     - Prof. Crispin Barnes
 project_url: https://github.com/EdmundOwen/QuMESHS
 menubar_items:
-    - /features/
+    - /theory/
+    - /publications/
+    - /development/
     - /download/
-    - /documentation/
-    - /examples/
+    - /useful_links/
+    - /about_us/
 
 permalink: pretty
 defaults:
