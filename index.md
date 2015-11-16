@@ -8,7 +8,7 @@ title: Home
 
 QuMESHS is a numerical code for solving finding the electron densities in 
 quantum mesoscopic systems.  Specifically, it is designed to model layered 
-semiconductor heterostructure devices with arbitrary surface gate geometries.  
+semiconductor heterostructure devices with arbitrary surface gate geometries. 
 The electron density and electrostatic potential are calculated using 
 self-consistent iterative procedure.  The potential is calculated using 
 finite-element analysis and the density is (typically) calculated using 
