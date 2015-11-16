@@ -13,9 +13,7 @@ notified when the software is release, please email
 
 QuMESHS is available to everyone to download.  The 
 citation required in any publication using results 
-obtained using QuMESHS is
-
-Some citation
+obtained using QuMESHS will be available shortly.
 
 Additionally, if you are using the deal.II 
 finite-element libraries, please cite the relevant 
@@ -37,8 +35,9 @@ available.
 
 To use the deal.II executables, QuMESHS must be run 
 under Linux.  We recommend compiling the deal.II
-libraries on your own computer.  The executables in
-the link above must be bundled using mono.
+libraries on your own computer.  In order to run the 
+executables in Linux, the executables must be bundled 
+using mono (details to come shortly).
 
 ## Source
 
