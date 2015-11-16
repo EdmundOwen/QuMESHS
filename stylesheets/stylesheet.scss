@@ -352,9 +352,16 @@ a#project_home {
   background: #212121;
 }
 
+#nav_wrap {
+  text-align: center;
+}
+
 nav.inner {
   padding-bottom: 0;
   padding-top: 10px;
+  max-width: none;
+  display: inline-block;
+  vertical-align: top;
 }
 
 nav > ul {
