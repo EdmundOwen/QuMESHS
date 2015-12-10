@@ -1,0 +1,1236 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{bbold}              % for unitary matrix symbol
+\usepackage{braket}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{fixltx2e}
+
+
+\newcommand{\red}[1]{{\color{red} \it #1}}
+\newcommand{\dd}{\text{d}}
+\newcommand{\identity}{\mathbb{I}}
+\newcommand{\overlap}[2]{\left\langle #1 | #2 \right\rangle}
+\newcommand{\overlapint}[3]{\left\langle #1 \right| #2 \left| #3 \right\rangle}
+\newcommand{\expectation}[1]{\left\langle #1 \right\rangle}
+\newcommand{\modulus}[1]{\left| #1 \right|}
+\newcommand{\intinfty}{\int_{- \infty}^{\infty}}
+\newcommand{\dealii}{\texttt{deal.II}}
+
+
+\begin{document}
+
+\title{QuMESHS User Guide}%
+\author{Edmund T. Owen}%
+\date{\today}%
+% ----------------------------------------------------------------
+\begin{abstract}
+  QuMESHS is designed to self-consistently solve the charge-potential equations
+  for layered semiconductor devices.  The electrostatic potential is calculated using
+  finite-element methods and the density can be calculated using a variety of
+  approximations in 1-, 2- and 3-D.  Convergence is achieved using a modified
+  Newton-type iteration developed by Bank and Rose which allows for accelerated
+  convergence.
+\end{abstract}
+\maketitle
+% ----------------------------------------------------------------
+
+\tableofcontents
+\newpage
+
+\section{Overview}
+
+\section{Setting up QuMESHS}
+
+\subsection{Windows}
+\label{subsec:SetupWindows}
+
+\subsection{Linux}
+\label{subsec:SetupLinux}
+
+\section{Editing the inputs}
+
+There are three input files: The config file, which contains the QuMESHS configuration;
+the input file, which contains the simulation input parameters; and the band structure
+file, which contains the layered device band structure and geometry.  The comment key
+for all of these files is \texttt{\#}.  All lines beginning with \texttt{\#} will be
+discarded.  The format for config and input files is that declarations begin with
+\texttt{\%} and consist of a key, an equals sign and the value.  Spacing is not important.
+The band structure file has a slightly more restrictive syntax which is described in
+sec~\ref{subsec:BandStructureFile}.
+
+{\color{red} NOTE:} \emph{Key names and string values in the input files are case
+sensitive!  Boolean values are not case sensitive but must be fully spelt.}
+
+\subsection{The Config file}
+\label{subsec:ConfigFile}
+
+The configuration file contains all the information which QuMESHS needs in order
+to run.  Device parameters and simulation domain geometry should not be stored here
+(although it can be as long as it isn't duplicated in the \texttt{Input\_Parameters.txt}
+file).  This is mostly for defining where the software to generate the potentials is
+located.  This file should be edited when installing QuMESHS on a computer and
+(hopefully) never altered again.  {\color{red} NOTE:} \emph{Presently, the
+configuration file must be called} \texttt{Solver\_Config.txt} \emph{and located in
+the folder where QuMESHS runs!}
+
+\paragraph{\texttt{tolerance} \emph{(compulsory)}}
+Tolerance of the solution.  This is the maximum change in the chemical potential
+across the entire solution from the Newton step $x$ which QuMESHS wanted to add
+for which the solution is considered converged.  {\color{red} NOTE:} This is not
+the chemical potential added at the final iteration step as it does not include
+the mixing parameter $t$.  This the chosen definition for convergence as it is
+related to the residual $g(\phi) = - \nabla \cdot ( \epsilon \nabla \phi ) -
+\rho (\phi)$ through the Newton step $g' (\phi) x = - g (\phi)$ rather than the
+optimised potential $t x$ which is what is actually added to the solution each
+iteration step.  It is in units of meV.  Recommended settings are \red{not given
+yet\ldots}
+
+\paragraph{\texttt{tolerance\_1d} \emph{(compulsory)}}
+Same as \texttt{tolerance} but for the 1D band structure calculation.  If
+\texttt{dim = 1}, this is the tolerance used to calculate the initial dopent
+density.
+
+\paragraph{\texttt{use\_FlexPDE\_1d} \emph{(compulsory for 1D)}}
+An override for the \texttt{Solver\_Config.txt} file in order to stop having
+to change the \texttt{use\_FlexPDE} option when changing dimensions.  FlexPDE
+is currently not available for 1D so whilst you probably need to use it for
+2- and 3-D calculations, \texttt{use\_FlexPDE} should probably be set to
+\texttt{true}.  However, this would prevent the 1D calculations from working
+so setting with this override \texttt{Solver\_Config.txt} does not need to be
+edited.  Default is \texttt{false} (and should always be).
+
+\paragraph{\texttt{BandStructure\_File} \emph{(compulsory)}}
+Location of the file containing the band structure information (see
+sec.~\ref{subsec:BandStructureFile}).
+
+\paragraph{\texttt{use\_FlexPDE} \emph{(compulsory)}}
+Boolean to determine whether to use FlexPDE to calculate electrostatic potentials.
+For 2- or 3-D, either this option or \texttt{use\_deal.II} must be true.  See
+http://www.pdesolutions.com for details.
+
+\paragraph{\texttt{FlexPDE\_file} \emph{(compulsory for FlexPDE)}}
+Name of the FlexPDE script file (which should end in .pde although this might
+not be necessary).  At the moment, QuMESHS will generate a custom FlexPDE
+script and this is where this file will be written. \red{In future, we could try
+and allow custom FlexPDE scripts which QuMESHS can edit}.  The intermediate
+output from a FlexPDE solution will be written to a file with the same name but
+with the .pg6 extension.
+
+\paragraph{\texttt{FlexPDE\_location} \emph{(compulsory for FlexPDE)}}
+Location of the FlexPDE executable in the file system.  This should be an absolute
+path.  QuMESHS has been extensively tested with FlexPDE6 and any backwards
+compatibility with earlier versions of FlexPDE may be unstable.
+
+\paragraph{\texttt{use\_deal.II} \emph{(compulsory)}}
+Boolean to determine whether to use the \texttt{deal.II} library to calculate
+electrostatic potentials.  For 2- or 3-D, either this option or
+\texttt{use\_FlexPDE} must be true.  For a fuller explanation of how to
+run QuMESHS with deal.II, see sec~\ref{subsubsec:UsingdealII}.  Also,
+see https://dealii.org/ and associated sites for details.
+
+\paragraph{\texttt{initcalc\_location} \emph{(compulsory with deal.II)}}
+Location of the pre-compiled \texttt{deal.II} executable for calculating the initial
+potential distribution $\phi$.  Whilst the dimensions of the device are flexible
+(as given by \texttt{initcalc\_parameterfile}), the geometry for deal.II
+must be defined and compiled separately.  See sec~\ref{subsubsec:UsingdealII}
+for details.
+
+\paragraph{\texttt{newton\_location} \emph{(compulsory with deal.II)}}
+Location of the pre-compiled \texttt{deal.II} executable for calculating the Newton
+step solution $x$.  Whilst the dimensions of the device are flexible
+(as given by \texttt{initcalc\_parameterfile}), the geometry for deal.II
+must be defined and compiled separately.  See sec~\ref{subsubsec:UsingdealII}
+for details.
+
+\paragraph{\texttt{initcalc\_parameterfile}}
+Location of the parameter file with the inputs for the initial potential
+calculation.  Note that, at the moment, this is defunct and QuMESHS will
+overwrite this file with the parameters defined by ``\texttt{Input\_Parameters}''.
+
+\paragraph{\texttt{newton\_parameterfile}}
+Location of the parameter file with the inputs for the Newton step
+calculation.  Note that, at the moment, this is defunct and QuMESHS will
+overwrite this file with the parameters defined by ``\texttt{Input\_Parameters}''.
+
+\paragraph{\texttt{with\_checkpointing}}
+For some runs (especially batch runs on clusters), QuMESHS might be terminated
+before a converged solution has been found.  This option allows for checkpoint
+recovery.  All necessary data is always output (see sec~\ref{subsec:CheckpointOutput})
+but for QuMESHS to restart from the last iteration step, this option must be
+\texttt{true}.
+
+\paragraph{\texttt{dft\_mixing\_parameter}}
+QuMESHS uses function mixing for calculating a self-consistent DFT potential
+in 2D and 3D (rather than the Bank-Rose/Newton-Raphson method), that is
+$V_{n+1} = (1 - \alpha) V_{n} + \alpha V_{\mathrm{calc}}$.  This parameter is
+the mixing factor $\alpha$.  Default is $\alpha = 0.3$.
+
+
+\subsection{The Input File}
+\label{subsec:InputFile}
+
+The input file contains all of the simulation parameters QuMESHS needs.  These will
+be different depending on the dimensionality of the system to be simulated but there
+are some universal parameters which must always be specified for QuMESHS to run.
+{\color{red} NOTE:} \emph{Presently, the input file must be called} \texttt{Input\_Parameters.txt}
+\emph{and located in the folder where QuMESHS runs!}
+
+\paragraph{\texttt{dim} \emph{(compulsory but not yet implemented\ldots)}}
+Dimensionality of the problem you want QuMESHS to solve.
+
+\paragraph{\texttt{T} \emph{(compulsory)}}
+The temperature in K for which the density will be calculated.  For the 1-D solutions,
+this is the base temperature (see sec~\ref{sec:Overview} and sec~\ref{sec:DopentTheory}
+for details).
+
+\paragraph{\texttt{nz} \emph{(compulsory)}}
+Number of lattice points for the growth direction.  Note that for 2- and 3-D solutions,
+this is mostly used along with \texttt{dz} to define the domain size (see sec~\ref{?}).
+
+\paragraph{\texttt{dz} \emph{(compulsory)}}
+Lattice point spacing in nm for the growth direction.  Note that for 2- and 3-D
+solutions, this is mostly used along with \texttt{nz} to define the domain size
+(see sec~\ref{?}).
+
+\paragraph{\texttt{nz\_dens}}
+Number of lattice points for the growth direction on which to calculate the density.
+
+\paragraph{\texttt{dz\_dens}}
+Lattice point spacing in nm for the growth direction on which to calculate the density.
+
+\paragraph{\texttt{zmin\_dens}}
+Location in nm for the growth direction of the lattice on which to calculate the density.
+
+\paragraph{\texttt{dft}}
+Boolean to determine whether to use density functional theory or not.  The default is
+\texttt{true}.
+
+\paragraph{\texttt{no\_dft}}
+Inverse of \texttt{dft}.
+
+\paragraph{\texttt{TF\_only}}
+Boolean to determine whether to only calculate a semi-classical, Thomas-Fermi density
+distribution (see~\ref{sec:DensityTheory}).  The default is \texttt{false}.
+
+\paragraph{\texttt{surface\_check}}
+By default, QuMESHS will throw an exception if the top of the 1D band structure is not at
+the surface.  If this parameter is set to \texttt{true}, then this check is ignored.
+{\color{red} NOTE:} This means that typical 1D simulations never include the PMMA or air
+above a sample (see sec~\ref{?} for explanation).
+
+\paragraph{\texttt{bottom\_V}}
+Voltage at the base of the band structure in V.  By default, for 1D simulations, this is
+the equilibrium chemical potential of the material at the base of the structure for the
+given band gap, temperature and dopent densities given there.
+
+\paragraph{\texttt{top\_V}}
+Voltage at the top of the band structure in V.  By default, this is set to zero (see
+sec~\ref{?} for explanation).
+
+\paragraph{\texttt{illuminated}}
+Whether the dopents are illuminated or not.  QuMESHS treats illumination by ionizing all
+of the dopents.  When calculating the 1D band structure, the dopents ``freeze out'' at
+a predefined temperature (70K in the case of AlGaAs).  This fixes the proportion of the
+dopents ionized at lower temperatures as not all of the dopents will be ionized at
+freeze-out.  Illumination ionizes all of the dopents and changes the dopent distribution
+to that defined in the band structure input file.  This typically increases the carrier
+density but is generally an underestimate as QuMESHS does not include ``deep'' donors.
+
+\paragraph{\texttt{output\_suffix}}
+Suffix for output data files.  In sec~\ref{subsec:DataOutput}, this is the string which
+replaces \texttt{\_<suffix>}. {\color{red} NOTE:} This will be overridden if running
+a batch job (see sec~\ref{subsubsec:BatchRuns}).
+
+\paragraph{\texttt{max\_iterations}}
+Number of iterations to try before giving up and outputting the data how it is.  The
+default value is 1000.  If the solution has not converged, a file beginning with
+\texttt{not\_converged\_<suffix>} will be included in the output (see sec~\ref{sec:Output}).
+
+\paragraph{\texttt{initial\_run}}
+This is a boolean which sets whether QuMESHS will do an initial run in order to get a
+better initial density distribution.  Typically, the density for the first potential
+calculation is not a very good approximation to the actual density so there are lots of
+instabilities in the initial few steps.  It can take a long time for QuMESHS to get rid
+of these so one work-around is to let QuMESHS make a few steps and then use this distribution
+as an initial input.  Hopefully, this density is better and so the solution will converge quicker.
+Default is set to \texttt{true}.
+
+\paragraph{\texttt{initial\_run\_steps}}
+This is the number of steps which QuMESHS will iterate before starting again based on
+the protocol explained above.  Only used if \texttt{initial\_run = true}.  Default is
+5.
+
+\paragraph{\texttt{carrier\_type}}
+The type of carriers which the solution will calculate for.  In 2D and 3D, this is either
+``electron'' or ``hole''.  Combining them has now been implemented.  In 1D, it is also possible
+to specify that you want to allow ``both'' although it is recommended that you use either
+``electron'' or ``hole'' if you know what you expect.
+
+
+\subsubsection{1D}
+
+\red{I cannot think of any 1D specific input parameters\ldots}
+
+
+\subsubsection{2D}
+
+In order to calculate the dopent density distribution for the 2D calculations, a 1D
+solution in the growth direction must be calculated first.  The parameters are still
+defined in the ``\texttt{Input\_Parameters.txt}'' file but with the suffix ``\texttt{\_1d}''.
+ie. \texttt{nz\_1d} and \texttt{dz\_1d} whilst the optional inputs are \texttt{nz\_dens\_1d},
+\texttt{dft\_1d}, etc\ldots  The only extra parameter for the 1D calculation is
+\texttt{ny\_1d} which gives the number of lattice sites to replicate the dopent distribution
+for FlexPDE calculations (see sec~\ref{subsec:UsingFlexPDE}).
+
+\paragraph{\texttt{ny} \emph{(compulsory)}}
+Number of lattice points for the direction transverse to the transport direction.  Note
+that this is mostly used along with \texttt{dz} to define the domain size (see sec~\ref{?}).
+
+\paragraph{\texttt{dy} \emph{(compulsory)}}
+Lattice point spacing in nm for the direction transverse to the transport direction.
+Note that this is mostly used along with \texttt{nz} to define the domain size (see
+sec~\ref{?}).
+
+\paragraph{\texttt{ny\_dens}}
+Number of lattice points for the direction transverse to the transport direction on which
+to calculate the density.
+
+\paragraph{\texttt{dy\_dens}}
+Lattice point spacing in nm for the direction transverse to the transport direction on
+which to calculate the density.
+
+\paragraph{\texttt{ymin\_dens}}
+Location in nm for the direction transverse to the transport direction of the lattice on
+which to calculate the density.
+
+\paragraph{\texttt{voltages} \emph{(compulsory)}}
+An array of the voltages applied to all of the gates defined in the band structure file.
+the array is enclosed by braces and comma delimited eg. \texttt{\{ -1.0, -1.5 \}}.  The
+ordering of the gates is defined by the band structure file and is bottom up in terms of
+layers and then first to last for the composite layers which contain the gates.
+
+\paragraph{\texttt{surface\_charge}}
+By default, the charge on the surface of the device is calculated from the 1D dopent
+calculation in order to pin the surface mid-gap for cool-down when all gates are grounded
+(see sec~\ref{subsec:PotentialSolvers} for explanation).  However, it is possible to
+override this value here.
+
+\paragraph{\texttt{split\_width} \emph{(compulsory?)}}
+QuMESHS was originally written to study split gates in 2D.  This parameter defines the
+width of the split.  \red{Whilst the split width should be defined entirely by the band
+structure file, QuMESHS is not currently equipped to get at this information\ldots}
+
+\paragraph{\texttt{pot\_tol}}
+Tolerance for FlexPDE for the calculation of the initial potential distribution.
+This is the ``\texttt{ERRLIM}'' setting value.  Default is 1E-06.
+
+\paragraph{\texttt{newton\_tol}}
+Tolerance for FlexPDE for the calculation of the Newton step potential.
+This is the ``\texttt{ERRLIM}'' setting value.  Default is 1E-05.
+
+\paragraph{\texttt{density\_solver\_2d}}
+Gives the level of approximation for calculating the 2D density.  The options are:
+\begin{enumerate}
+    \item effectiveband
+    \item thomasfermi
+    \item dft
+    \item sodft (untested)
+\end{enumerate}
+Further details of the theory of these approximations is given in Sec.~\ref{sec:theory}.
+
+
+\subsubsection{3D}
+
+In order to calculate the dopent density distribution for the 3D calculations, a 1D
+solution in the growth direction must be calculated first.  The parameters are still
+defined in the ``\texttt{Input\_Parameters.txt}'' file but with the suffix ``\texttt{\_1d}''.
+ie. \texttt{nz\_1d} and \texttt{dz\_1d} whilst the optional inputs are \texttt{nz\_dens\_1d},
+\texttt{dft\_1d}, etc\ldots  The only extra parameters for the 1D calculation are
+\texttt{nx\_1d} and \texttt{ny\_1d} which gives the number of lattice sites to replicate
+the dopent distribution for FlexPDE calculations (see sec~\ref{subsec:UsingFlexPDE}).
+
+\paragraph{\texttt{nx} \emph{(compulsory)}}
+Number of lattice points for the direction along the transport direction.  Note
+that this is mostly used along with \texttt{dz} to define the domain size (see sec~\ref{?}).
+
+\paragraph{\texttt{dx} \emph{(compulsory)}}
+Lattice point spacing in nm for the direction along the transport direction.
+Note that this is mostly used along with \texttt{nz} to define the domain size (see
+sec~\ref{?}).
+
+\paragraph{\texttt{nx\_dens}}
+Number of lattice points for the direction along the transport direction on which
+to calculate the density.
+
+\paragraph{\texttt{dx\_dens}}
+Lattice point spacing in nm for the direction along the transport direction on
+which to calculate the density.
+
+\paragraph{\texttt{xmin\_dens}}
+Location in nm for the direction along the transport direction of the lattice on
+which to calculate the density.
+
+\paragraph{\texttt{ny} \emph{(compulsory)}}
+Number of lattice points for the direction transverse to the transport direction.  Note
+that this is mostly used along with \texttt{dz} to define the domain size (see sec~\ref{?}).
+
+\paragraph{\texttt{dy} \emph{(compulsory)}}
+Lattice point spacing in nm for the direction transverse to the transport direction.
+Note that this is mostly used along with \texttt{nz} to define the domain size (see
+sec~\ref{?}).
+
+\paragraph{\texttt{ny\_dens}}
+Number of lattice points for the direction transverse to the transport direction on which
+to calculate the density.
+
+\paragraph{\texttt{dy\_dens}}
+Lattice point spacing in nm for the direction transverse to the transport direction on
+which to calculate the density.
+
+\paragraph{\texttt{ymin\_dens}}
+Location in nm for the direction transverse to the transport direction of the lattice on
+which to calculate the density.
+
+\paragraph{\texttt{split\_length} \emph{(compulsory?)}}
+QuMESHS was originally written to study split gates with a bar gate on top in 3D.  This
+parameter defines the length of the split gates (ie. in the transport direction).
+\red{Whilst the split gate length should be defined entirely by the band structure file,
+QuMESHS is not currently equipped to get at this information\ldots}
+
+\paragraph{\texttt{top\_length} \emph{(compulsory?)}}
+QuMESHS was originally written to study split gates with a bar gate on top in 3D.  This
+parameter defines the length of the bar gate on top (ie. in the transport direction).
+\red{Whilst the top gate length should be defined entirely by the band structure file,
+QuMESHS is not currently equipped to get at this information\ldots}
+
+\paragraph{\texttt{initialise\_with\_1d\_data}}
+For most of the 3D density calculations, the charge distribution in the growth direction
+is factored out (see sec~\ref{subsec:DensityTheory} for details).  Therefore, a good
+initial guess at the charge distribution is that it is the original 2DEG solution (ie.
+with the surface voltage set to zero).  This should accelerate convergence to the solution.
+This parameter determines whether this should be done.  By default, it is set to
+\texttt{false} and the initial solution is calculated with no charge in the well.
+
+
+\subsubsection{Batch Runs}
+\label{subsubsec:BatchRuns}
+
+QuMESHS allows the user to run a batch of simulations with different boundary
+conditions which is useful for parameter sweeps.  When running a batch job, each
+simulation will be assigned a simulation number.  This is counted from zero and can be
+offset by an integer value with the first console argument of QuMESHS.  Therefore,
+if the batch run is managed externally (using Condor, say), then the number of simulations
+should be set to one and the console argument is provided by the batch run manager.
+\texttt{batch\_run} must still be set to true, otherwise the boundary conditions will
+not be incremented according to your batch run definitions.
+
+Batch run definitions are given below.  In essence, the parameters which you want
+to increment must be described with the \texttt{batch\_params} argument.  The given
+parameters will then be incremented in order on a hypercuboid lattice of size
+$\prod_i$ \texttt{no\_<param>}$_i$.  For the concrete example given for
+\texttt{batch\_params}, the \texttt{top\_V} parameter will be incremented from
+zero to \texttt{no\_top\_V - 1} and then \texttt{split\_V} will be incremented by
+one and \texttt{top\_V} will again be incremented from zero to \texttt{no\_top\_V
+- 1}, etc., etc..  {\color{red} NOTE:} It is possible to increment the \texttt{voltages}
+option in the input file but the \texttt{batch\_params} argument must be the
+specific voltage values (eg. \texttt{V0}, \texttt{V1}, etc.)
+
+\paragraph{\texttt{batch\_run}}
+Boolean for checking whether or not to run a batch of runs.  \texttt{false} by default.
+
+\paragraph{\texttt{no\_sims}}
+Number of simulations to put in the batch.  Default is one.
+
+\paragraph{\texttt{batch\_params}}
+This is a comma-delimited array of the parameters which will be incremented in the
+order in which they will be incremented (see beginning of section).  QuMESHS will
+check to make sure that the relevant initial values, the increment value and the
+number of times to increment that value are specified in the input file.  An example
+format is \texttt{\{top\_V, split\_V\}}, taken from the example in
+sec~\ref{subsec:TopAndSplitGate}, where the braces (which aren't strictly necessary)
+will be trimmed.  For the following input option definitions, \texttt{<param>} is the
+string defined in \texttt{batch\_params}.  There is also the option of setting the
+\texttt{voltages} labels to be equal.  For example, to set \texttt{V1=V0} whilst
+incrementing both, the appropriate format is \texttt{\{V0, V1=V0\}}.  {\color{red} NOTE:}
+Which voltages are not determined by the batch number must be the final entries.
+
+\paragraph{\texttt{delta\_<param>}}
+Step size for the increments of \texttt{<param>} for batch runs.
+
+\paragraph{\texttt{no\_<param>}}
+Number of times to increment \texttt{<param>} by \texttt{delta\_<param>}.
+
+\paragraph{\texttt{init\_<param>}}
+Initial value of \texttt{<param>} to step from.
+
+
+\subsection{The Band Structure File}
+\label{subsec:BandStructureFile}
+
+The band structure is defined in a file as a set of layers (in the growth direction), each
+defined on a single line.  The default geometry of a layer is a slab of a given thickness.
+However, composite layers can be constructed with different materials in more complex
+geometries (as described below).  Each layer has a set of options -- some compulsory --
+and there are also special layer commands to define the surface and substrate.  The
+ordering of the layer options is unimportant.
+
+\subsubsection{Layer Options}
+\label{subsubsec:LayerOptions}
+
+{\color{red}IMPORTANT:} \emph{Each layer option consists of the option, an equals sign and the value.
+There MUST be no spaces between these, otherwise the options will not be input correctly}.
+ie. \texttt{mat=GaAs} will work but \texttt{mat = GaAs} or \texttt{mat= GaAs} will not.
+
+\paragraph{\texttt{mat} \emph{(compulsory)}}
+Material from which the layer is made.  The band gap and permittivities for each of the
+materials are given in Appendix~\ref{app:MaterialProperties}.  Layer-specific spin-orbit
+parameters are under development.   Options are:
+
+\begin{itemize}
+    \item{GaAs}
+    \item{Al\textsubscript{x}Ga\textsubscript{1-x}As}
+    \item{PMMA}
+    \item{Air}
+    \item{Metal}
+    \item{In\textsubscript{x}Ga\textsubscript{1-x}As}
+    \item{In\textsubscript{x}Al\textsubscript{1-x}As}
+\end{itemize}
+
+\paragraph{\texttt{t} \emph{(compulsory)}}
+Thickness of the layer in nm.  Note that the absolute position of the layers is calculated
+by QuMESHS based on the \texttt{surface=true} definition described
+in~\ref{subsubsec:SpecialLayers}.
+
+\paragraph{\texttt{x} \emph{(compulsory for alloys)}}
+Alloy composition variable as a decimal fraction (eg. 33\% AlGaAs is defined by \texttt{x=.33}).
+This is used to calculate the band gap and permittivity of the alloy.  See
+Appendix~\ref{app:MaterialProperties} for details.
+
+\paragraph{\texttt{Na}}
+Number density of acceptors in cm\textsuperscript{-3}.  Default is zero.
+
+\paragraph{\texttt{Nd}}
+Number density of donors in cm\textsuperscript{-3}.  Default is zero.
+
+\subsubsection{Composite Layers}
+
+When describing geometries more complex than layered slabs, the ``composite layer'' format
+must be used.  At the moment, most implementations are used to define surface gates.  An
+example layer is given by
+\begin{center}
+\texttt{mat=PMMA t=10 composite=true no\_components=3 \{mat=metal,geom=half\_slab,dx=0.0,dy=-400.0,theta=90.0\} \{mat=metal,geom=half\_slab,dx=0.0,dy=400.0,theta=270.0\}}
+\end{center}
+{\color{red} NOTE:} In the band structure file, all of these options \emph{must} be on the
+same line.  The first two entries describe the parameters of the default layer.  Any part
+of the layer which is not specifically defined will have the property of this material
+(PMMA in this example).  The thickness of the layer is also described here and applies to
+all components of the layer.
+
+\paragraph{\texttt{composite} \emph{(compulsory for composite layers)}}
+Boolean flag to indicate that this line defines a composite layer.  If this is set to
+\texttt{false} then the band structure will generate the default layer.
+
+\paragraph{\texttt{no\_components} \emph{(compulsory for composite layers)}}
+Indicates how many components make up this layer.  Note that this includes the default
+layer.  If this is less than the defined number of components, then the behaviour is
+undefined but QuMESHS will probably just discard the trailing component definitions.
+
+\vspace{0.5cm}
+
+The layer descriptions in the braces define the components of the layer.  {\color{red} NOTE:}
+There are no spaces and the options are comma delimited. \emph{This is compulsory formatting
+and incorrect band structures will be generated if there are spaces within the braces!}  The
+end brace \} is not strictly necessary.  Each component must have a \texttt{mat} option.  The
+rest of the options describe the geometry of the component layer.  How these parameters
+relate to the components is described in Appendix~\ref{app:GeometryDefinitions}.  The
+application of arbitrary layers is very incomplete and mostly only functional for strips
+or half-slaps parallel to either the $x$ or $y$ axes.
+
+\subsubsection{Special Layers}
+\label{subsubsec:SpecialLayers}
+
+\paragraph{\texttt{surface=true} \emph{(compulsory)}}
+This indicates the location of the surface.  The surface is always positioned at $z = 0$ and
+all interface positions are calculated with respect to this.  All layers defined before the
+\texttt{surface=true} have $z > 0$ and all layers defined after \texttt{surface=true} have
+$z < 0$.
+
+\paragraph{\texttt{mat=substrate} \emph{(compulsory)}}
+This is a special material which must be defined at the end of the band structure file.  Any
+layers below this line will be discarded.  This layer extends from whereever the bottom layer
+ends to $-\infty$.  It is possible to set the boundary conditions on this interface manually
+so if there is no substrate (for example, with a thinned, back-gated device) this layer is
+still necessary but has no effect.
+
+
+\section{Outputs}
+
+\subsection{Console output}
+\label{subsec:ConsoleOutput}
+
+The setup output from the console should be relatively self-explanatory.  During the simulation,
+the console will output data for each iteration:  The iteration number, labelled \texttt{Iter},
+a measure of how much the density has changed from the previous step, labelled \texttt{Dens conv},
+the calculated optimal value for the Newton mixing, labelled \texttt{t} and the time taken to
+perform the current iteration in minutes, labelled \texttt{time}.  For the 1D simulations, the
+time is not output.
+
+For DFT calculations, the exchange-correlation potential is mixed in when the electrostatic
+potential has converged to a ``good enough'' self-consistent solution (see
+sec~\ref{subsec:DensityTheory}).  When this occurs, the console will say what the maximum
+and minimum density difference between the current and calculated exchange-correlation potential
+is.
+
+At the end of the iteration, the console will say what the maximum change in the potential for
+the final iteration was -- just to be sure or to check how ``not converged'' the solution is
+if the maximum number of iterations has been reached.
+
+
+\subsection{Converged data output}
+\label{subsec:DataOutput}
+
+QuMESHS outputs a variety of data from the simulation and the way it must be processed can
+depend on the dimensionality of the simulation.  Unless otherwise specified, the data
+files contain various functions defined on the density lattice given by the input file.
+The format of the output suffix \texttt{<suffix>} is given in sec~\ref{subsec:InputFile}.
+\red{must describe how the data is arranged, ie. what is the $x, y, z$ ordering\ldots}
+
+\paragraph{\texttt{bare\_pot\_<suffix>}}
+This is the bare potential in meV for the system assuming that there is no carriers in
+the density simulation domain.  Note that this is the quantum potential of the conduction
+band and, therefore, includes the relevant band gaps.  This is the result of the initial
+potential calculation with the input dopent density and gate voltages.
+
+\paragraph{\texttt{dens\_<suffix>}}
+This is the spin-summed carrier density in nm\textsuperscript{-3}.
+
+\paragraph{\texttt{dens\_up\_<suffix>}}
+This is the spin-up carrier density in nm\textsuperscript{-3}.
+
+\paragraph{\texttt{dens\_down\_<suffix>}}
+This is the spin-down carrier density in nm\textsuperscript{-3}.
+
+\paragraph{\texttt{density\_error\_<suffix>}}
+This is the difference between the final spin-summed density and the spin-summed density
+if the simulation had continued for another iteration step.  If the simulation has
+converged, then the values in this file should all be very small.
+
+\paragraph{\texttt{energies\_<suffix>}}
+These are the energies in meV of the eigenstates calculated from the final iteration step.
+This may be one of the most important outputs of QuMESHS.  The eigenstates for solutions
+in 1- and 2-D are the zero-momentum states (ie. the bottom of the bands).  The energy is
+given with respect to the chemical potential $\mu$.
+
+\paragraph{\texttt{pot\_KS\_<suffix>}}
+This is the converged, self-consistent Kohn-Sham potential in meV felt by the electrons in
+the system.  Note that this is the quantum potential of the conduction band and, therefore,
+includes the relevant band gaps.  This is the Kohn-Sham potential and, therefore, includes
+the exchange-correlation potential if the calculation includes DFT.
+
+\paragraph{\texttt{potential\_<suffix>}}
+This is the converged, self-consistent \emph{\color{red} electrostatic} potential in meV
+for the system.  Note that this is the quantum potential of the conduction band and,
+therefore, includes the relevant band gaps.  Also, this is the electrostatic potential
+and, therefore, does not include the exchange-correlation potential if the calculation
+includes DFT.
+
+\paragraph{\texttt{<FlexPDE\_File>\_<suffix>.pg6} \emph{(if using FlexPDE)}}
+FlexPDE outputs graphs when a potential or Newton step calculation is complete.  This
+file will contain the final FlexPDE solution data (whatever that may be\ldots).
+
+\paragraph{\texttt{surface\_charge\_<suffix>}}
+This is the surface charge \red{what units?} calculated from the 1D dopent distribution
+calculation at the beginning of the simulation.
+
+\paragraph{\texttt{xc\_pot\_<suffix>}}
+This is the exchange-correlation potential in meV for the converged density distribution.
+
+\paragraph{\texttt{dens\_<dim>D\_dopents.dat}}
+This is the dopent distribution used by FlexPDE to calculate the initial potential.  It
+might be useful, but in general, this data is better acquired elsewhere.
+
+\paragraph{\texttt{dopent\_1D.dat}}
+The 1D dopent density distribution for deal.II.  It might be useful, but in general, this
+data is better acquired elsewhere.
+
+\paragraph{\texttt{not\_converged\_<suffix>}}
+Hopefully not present, but if QuMESHS could not find a converged solution then this
+file will be output with the maximum number of iterations that QuMESHS ran for.
+{\color{red} NOTE:} All other output data files will still be saved even though the
+solution did not achieve convergence.
+
+
+\subsection{Observing output during calculations}
+\label{subsec:IntermediateOutput}
+
+Sometimes it is useful to see what QuMESHS is doing without interrupting a calculation.
+Unfortunately, this ability is very poorly supported.  The best to offer is the intermediate
+solutions of FlexPDE.  These are provided in .pg6 files with the prefix given by the
+\texttt{FlexPDE\_file} parameter in the config file.  These are updated regularly (ie.
+at every iteration step) but if the size of the file is 0KB then the simulation is in
+progress and you need to wait until it has finished.
+
+\texttt{deal.II} simulations are for batch runs and there are currently no convenient ways
+of getting at the data.  However, \texttt{deal.II} can output files to \texttt{vtk} format
+easily so it is possible to output data by editing the source code and recompiling the
+\texttt{deal.II} software.
+
+
+\subsection{Outputs for Checkpointing}
+\label{subsec:CheckpointOutput}
+
+QuMESHS has the capability of restarting a simulation from a given iteration step if asked
+to do so.  This enables a run to continue even if the simulation ended before the solution
+converged.  This is useful for running on clusters where QuMESHS might only have a limited
+time to execute without losing all its progress.  In order to enable this, the configuration
+file must include the parameter \texttt{with\_checkpointing = true}.
+
+The data required to restart a simulation is output every time step (just in case).  The
+relevant files are \texttt{carrier\_density.tmp}, \texttt{chem\_pot.tmp}, \texttt{dopent\_density.tmp},
+\texttt{t\_val.tmp} and \texttt{restart.flag}.  If the simulation converges or the maximum
+number of iterations is reached, these checkpointing files are automatically deleted.  Also,
+if \texttt{restart.flag} is deleted, then checkpointing will not restart.  This allows the
+user to prevent QuMESHS from restarting from a checkpoint without changing the config file.
+
+
+\section{Theory}
+
+QuMESHS solves the self-consistent Poisson-Schr\"{o}inger equation in layered semiconductor
+heterostructures using a variety of approximate methods to calculate the electron \red{and
+possibly hole} densities.
+
+\subsection{Poisson's Equation}
+
+The first of the two coupled equations which we want to solve is the Poisson equation
+%
+\begin{equation}
+    \label{eq:Poisson}
+    g \left[ \phi(r), \rho(r) \right] \equiv - \nabla \cdot \left(\epsilon_0 \epsilon(r) \nabla \phi(r)\right) - \rho(r) = 0
+\end{equation}
+%
+where $\epsilon_0$ is the permittivity of free space and $\epsilon(r)$ is the relative
+dielectric constant, which is different for the various materials in the heterostructure.
+$\phi(r)$ is the electrostatic potential and $\rho(r)$ is the electric charge.   The
+function $g$ is positive-definite \red{in some sense which is important for the Bank-Rose
+method}.
+
+QuMESHS solves Eq.~\ref{eq:Poisson} using the finite-differences method for 1D and
+the finite-element method for 2D and 3D.  The finite-element method is better explained
+elsewhere in the respective documentation for FlexPDE and \dealii but we will explain
+the finite-differences method here.  In order to solve Eq.~\ref{eq:Poisson}, the
+Laplacian $\nabla \cdot \left(\epsilon_0 \epsilon(r) \nabla \phi(r)\right)$ needs to
+be discretised onto a lattice.  \red{At the moment,} QuMESHS only implements finite
+differences on a regular grid in 1D.  However, here we show how to discretise the
+Laplacian on an irregular grid.
+
+In 1D, we want to discretise
+%
+\begin{eqnarray}
+    \frac{\partial}{\partial z} \left( \epsilon_0 \epsilon(z) \frac{\partial \phi(z)}{\partial z} \right)
+    & = & \frac{\epsilon_0}{(\Delta_- + \Delta_+) / 2} \left( \epsilon(z + \Delta_+ / 2) \left. \frac{\partial \phi(z)}{\partial z} \right|_{z + \Delta_+ / 2}
+    - \epsilon(z - \Delta_- / 2) \left. \frac{\partial \phi(z)}{\partial z} \right|_{z - \Delta_- / 2} \right) \\
+    & \approx & \frac{\epsilon_0}{(\Delta_- + \Delta_+) / 2} \left(\epsilon(z + \Delta_+ / 2) \frac{\phi(z + \Delta_+) - \phi(z)}{\Delta_+}
+    - \epsilon(z - \Delta_- / 2) \frac{\phi(z) - \phi(z - \Delta_-)}{\Delta_-} \right) \\
+    & = & \frac{\epsilon_0}{\Delta^2} \left(\epsilon(z + \Delta_+ / 2) \left(\phi(z + \Delta_+) - \phi(z)\right) -  \epsilon(z - \Delta_- / 2) \left(\phi(z) - \phi(z - \Delta_-)\right) \right)
+\end{eqnarray}
+%
+where the final equality is for $\Delta_- = \Delta_+$, ie. a regular grid (as used in
+QuMESHS).  This discretisation can be put in matrix form:
+%
+\red{some matrix}
+%
+\red{some details on how to do boundary conditions}
+This allows us to reduce Eq.~\ref{eq:Poisson} to a matrix equation where
+%
+\begin{equation}
+    A \phi = - \rho
+\end{equation}
+%
+which is solved for a known $\rho$ by $LU$ factorisation.
+
+
+\subsection{Density}
+
+Calculating the density for the many-body problem is hard~\cite{:-P}.  The equation
+to solve is the $N$-body Schr\"{o}dinger equation:
+%
+\begin{equation}
+    \left( \sum_i \left[ \frac{-\hbar^2}{2 m_*} \nabla^2_i + V_{\mathrm{ext}} (r)\right] + \frac{e^2}{8 \pi \epsilon_0 \epsilon (r)} \sum_{i \neq j} \frac{1}{|r_i - r_j|} \right) \Psi = E \Psi
+\end{equation}
+%
+where $\Psi = \Psi (r_1, \ldots, r_N)$ is appropriately anti-symmetrised.  $m_*$
+is the effective mass of the electrons and $V_{\mathrm{ext}}$ is any externally
+generated electrostatic potential (ie. from metallic gates).  The density is then
+defined as
+%
+\begin{equation}
+    \rho (r) = -e N \int \dd^3 r_2 \ldots \int \dd^3 r_N \Psi^* (r, r_2, \ldots, r_N) \Psi(r, r_2, \ldots, r_N)
+\end{equation}
+%
+In reality, we will never be able to solve this set of equations so we must find
+approximations for the charge density $\rho (r)$.
+
+\subsubsection{Thomas-Fermi semi-classical approximation}
+
+The first approximation is the simplest.  We assume that the electrons have a density
+at $r$ which is equivalent to what the bulk density would be for the chemical potential
+at this point $\mu (r)$.
+
+
+
+\section{Code Layout}
+
+QuMESHS uses the NMath library for a significant amount of its data manipulation and
+eigenvector decomposition routines.  In order to recompile the code, the user will need
+a copy of the NMath license (see http://www.centerspace.net/).
+
+
+\subsection{Processing Inputs and Solver Setup}
+
+QuMESHS has been adapted for numerous batch and configuration set-ups in its history and,
+at the moment, the input routines can look a bit muddled in the code.  Essentially, anything
+in the individual project \texttt{Program.cs} files should be checked if edits are being made
+as none of this is very modular at the moment.  The general structure involves getting the
+input parameters and band structure from the relevant text files and calculating the dopent
+density distribution by running a 1D simulation.  Note that for 2- and 3-D calculations using
+FlexPDE, the scaling of the dopent density is performed here (see sec~\ref{subsubsec:UsingFlexPDE}).
+
+Once one of the \texttt{Experiment} class is created and a suitable input dictionary has been
+generated, the behaviour of QuMESHS is more predictable.  Each \texttt{Experiment} class
+runs a \texttt{Initialise\_Experiment} routine which uses \texttt{Experiment\_Base} to initiate
+the dimension-ambiguous parameters and then sets the remaining parameters.  Also, note that
+the potential calculator is setup here.
+
+There are a number of checks which \texttt{Experiment} can make at this point:
+%
+\begin{itemize}
+    \item Check that you haven't asked for both FlexPDE and \texttt{deal.II} to be used
+    \item Check that there is a band structure input file.
+    \item Check that, for the window where the density is to be calculated, there is a lattice
+    point on every boundary.  This is important as the Laplacian of the potential will not be
+    calculated accurately if this is not true.
+\end{itemize}
+
+By this point, the \texttt{Experiment} has been set up and the \texttt{Run} method generates
+a bare potential (if we have not started from a checkpoint).  One of the density solvers is
+initiated here: \red{At the moment, changing the density solvers involves changing the source
+code and recompiling\ldots this will be changed in future updates of QuMESHS}.  If the
+initial carrier density is not zero, the potential is recalculated here to get the initial
+potential.
+
+An initial DFT mixing parameter is set (see sec~\ref{subsec:IterationRoutine}) and the DFT
+potential for the initial charge distribution (which is normally zero) is calculated.  If DFT
+is included, experience shows that it is better to include some DFT potential at the start so
+the charge distribution is recalculated and the DFT potential for this charge is the initial
+DFT potential $V_{\mathrm{xc}}$.
+
+
+\subsection{Running the Iteration Routine}
+\label{subsec:IterationRoutine}
+
+The iteration routine can be broken down into seven steps
+
+\begin{enumerate}
+    \item Save previous density $\rho_{n-1}$.
+    \item Calculate the new density distribution $\rho_n (\phi_n)$.
+    \item Calculate $\rho'_n (\phi_n)$ for the Jacobian $g'(\phi_n)$.
+    \item Calculate the Newton step function $x_n$ using the \texttt{IPois\_Solv} to solve
+    $g'(\phi_n) x_n = - g(\phi_n)$.
+    \item Calculate the optimal proportion $t_n$ of $x_n$ to add using the Bank-Rose technique.
+    \item Check whether convergence has been achieved by evaluating $\delta\rho = \rho_n - \rho_{n-1}$.
+    \item Update the potential $\phi_{n+1} = \phi_n + t_n x_n$.
+\end{enumerate}
+
+Calculating the density, its derivative and the Newton step function will be left to the following
+sections.  Here, we will focus on the implementation of the Bank-Rose technique and also how the
+convergence of the density is determined.
+
+The Bank-Rose technique is a way of calculating the optimal proportion of $x_n$ -- the solution
+to the Newton step equation~\ref{eq:NewtonStep} -- by finding the minimum of the function
+%
+\begin{equation}
+    V'(t) = g^T (\phi + t x) \cdot x
+\end{equation}
+%
+that is, you need to minimize the inner product between what the Newton step wants to add and the
+residual of the non-linear equation.  This makes sense as the technique not only tries to reduce
+$g(\phi + tx)$ but it also tries to do so in the regions where $x$ is largest (ie. where the
+solution is going to be changed the most).  It is guaranteed that $V'(t)$ is a monotonic function
+of $t$ with a single zero for $t > 0$~\cite{Bank:????}.
+
+$V'(t)$ is minimised using a binary chop search.  The search starts from the value calculated for
+the previous time step $t_0$.  We start by looking ``downhill'' by evaluating $V'(t_0)$ and
+$V'(\alpha t_0)$ where $\alpha$ is some ``chopping'' parameter.  If the absolute value of $V'(t)$
+is decreasing in this direction, then we keep chopping $t$ so that $V'(t)$ keeps getting smaller.
+When $V'(t)$ goes through zero, we return the interpolated value of $t$ between $t_n$ and
+$\alpha t_n$.  If the absolute value of $V'(t)$ was increasing after our
+initial ``chop'' of $t_0$, we start increasing $t$ by the chopping parameter, ie. evaluate at
+$t_0 / \alpha$.  At the moment, $\alpha = 0.8$ is hardcoded into the code in the
+\texttt{Experiment\_Base} class\ldots \red{It is perfectly possible that this is a very poor
+algorithm for finding this zero.}
+
+An important comment here is that for most of the density calculations performed by QuMESHS,
+the Jacobian for the density $\partial \rho_x (\phi) / \partial \phi_{x'}$ is approximated
+locally for $x = x'$ only.  This means that the Newton step $x$ is only approximate and it is
+possible that the function $V'(t)$ is not monotonic.  For this reason, the search is bounded
+above by 1.0 and below by $t_{\mathrm{min}}$ which is currently hard-coded as $t_{\mathrm{min}}
+= 10^{-3}$ in the \texttt{Experiment} classes\ldots
+
+\red{should include an explanation of how convergence is assessed and how the exchange-correlation
+potential is mixed in.}
+
+
+\subsection{Potential Solvers}
+\label{subsec:PotentialSolvers}
+
+At the moment, QuMESHS supports three methods for calculating the initial potential and each
+Newton iteration step.
+%
+\begin{itemize}
+    \item Finite differences on a regularly spaced grid (1-D only)
+    \item Finite element solution using FlexPDE (2- and 3-D)
+    \item Finite element solution using \texttt{deal.II} (2- and 3-D)
+\end{itemize}
+%
+The device geometries QuMESHS is designed to solve can be large with significant regions empty
+of charge (and therefore described simply by the Laplace equation) with concentrated areas of
+large charge densities.  This means that using finite differences on a regular grid is essentially
+impossible for dimensions greater than 1D.  One of QuMESHS's advantages over other software
+\red{(potentially NextNANO and SCRAPS)} is that it supports finite element libraries to solve
+the relevant partial differential equations on irregular, adaptive meshes.
+
+\red{It is perfectly possible to use finite element solutions for the 1D case.  This might even
+speed up the convergence for calculating the dopent density distributions.  However, these are
+probably fast enough so this has not been implemented.}
+
+Calculating the initial potential and the Newton iteration step uses very similar geometries
+and equations so these two steps are incorporated into \texttt{IPois\_Solv} classes.  The
+boundary conditions for the initial potential calculations are exactly what you would expect
+for solving Poisson's equation.  However, for the Newton iteration step, all boundary
+conditions are set to zero.  This is because the initial potential $\phi_0$ already satisfies
+all these boundary conditions so for $\phi_n = \phi_0 + \sum_n t_n x_n$ to satisfy these
+boundary conditions too, the boundary conditions of $x_n$ must all be zero.  This includes
+the surface and dopent charges as these are assumed to be frozen out so, by the linearity
+of Poisson's equation, their potentials are also included in the initial potential $\phi_0$.
+
+The boundary conditions for the potential solvers can be a tricky thing.  Commonly, when growing
+semiconductor heterostructures, the material is lightly doped with acceptors.  Therefore, the
+chemical potential at the base of the device might not be mid-gap.  By default, the boundary
+condition at the base of the device will be set to the equilibrium chemical potential for the
+doping at this point. This can be overriden by explicitly setting the \texttt{bottom\_V} option.
+
+For the 1D calculations, it is assumed that the surface is pinned mid-gap.  This is an
+experimental result.  Therefore, the boundary condition at the top of the domain (assuming the
+\texttt{surface\_check} option has not been set to \texttt{false}) will be set to zero.  Once
+the boundary value at the surface is set, this determines the surface charge.  Assuming that
+the gates are grounded when the surface charge is frozen out and seeing as the device is
+electrically neutral, the surface charge must be what is needed to bend the conduction band
+so that it is flat outside the device.  The charge needed for this is calculated in the
+\texttt{Get\_Surface\_Charge} method in \texttt{OneD\_PoissonSolver.cs}.  This surface
+charge is then saved to the input dictionary which is used for 2- and 3-D calculations
+of the initial potential.  {\color{red} NOTE:} At the moment, there is a depletion length
+of the surface charge from the gates of 20nm~\cite{Laux:19??} for the 2D calculations in
+both FlexPDE and \texttt{deal.II}.
+
+The details of the finite differences solution \red{should have been} were addressed in
+sec~\ref{subsec:PotentialTheory}.
+
+
+\subsubsection{Using FlexPDE}
+\label{subsubsec:UsingFlexPDE}
+
+FlexPDE is a proprietary program for solving partial differential equations using
+an adaptive, finite element method.  The software can be purchased on its website,
+www.pdesolutions.com, and must be available for QuMESHS to calculate the potential
+and Newton steps using FlexPDE.  This makes this method impractical for large scale
+batch simulations (eg. parameter sweeps) but FlexPDE is useful for initial prototyping
+due to its simple scripting language and easy-to-use interface.
+
+The device description is written in a script file with a syntax described on the
+website.  \red{At present, the only device geometry available in QuMESHS is for
+a split gate on an arbitrary layered semiconductor heterostructure.  Future versions
+of QuMESHS should allow the input of prototyped scripts where the relevant values
+are input by QuMESHS.}
+
+The input files for FlexPDE are input using the TABLE format.  {\color{red} NOTE:}
+FlexPDE assumes that the values of the inputs at the edges of the TABLE extend
+to the edge of the domain.  Therefore, it is essential that the edges are set to zero.
+The dopent distribution is also input in the TABLE format so the initial 1D
+calculation must be expanded into 2D.  This is done using the \texttt{Expand\_BandStructure}
+method of the \texttt{Input\_Band\_Structure} class.  The dopent distribution is assumed
+to be translationally invariant in the directions parallel to the surface.  The number
+of sites in the $x$ and $y$ directions are defined in \texttt{Input\_Parameters.txt} as
+the options \texttt{nx\_1D} and \texttt{ny\_1D}.
+
+
+\subsubsection{Using deal.II}
+\label{subsubsec:UsingdealII}
+
+\texttt{deal.II} is a powerful open-source library designed for solving partial differential
+equations using an adaptive, finite element method.  Full documentation can be found at
+https://dealii.org/ and its associated website.  \emph{I cannot emphasise {\bf how good the
+documentation is} -- for this project and for the finite element method in general.}  There are
+extensive examples and online lectures as well as an active user group; all of which can
+be accessed through the project's homepage.
+
+\texttt{deal.II} is released under a \red{GNUGPL license???} so it is perfect for using in
+batch simulations.  Compiling the \texttt{deal.II} libraries was described in
+sec~\ref{subsec:SetupLinux} and on \texttt{deal.II}'s website.  Preliminary testing
+suggests that the solutions from \texttt{deal.II} are better than for FlexPDE but this
+is probably due to the convergence criteria of the solution for \texttt{deal.II} being
+more suitable for QuMESHS.
+
+As the website describes, \texttt{deal.II} is designed for running in Linux and QuMESHS's
+compatibility with \texttt{deal.II} has only been tested in Linux.  The main disadvantage is
+that \texttt{deal.II} is a C++ library and, in order to edit the device geometry, it is
+recommended that you know what you are doing.  The geometries \red{which should be} described
+in sec~\ref{sec:Examples} provide some default geometries with custom grids which can be
+adapted but in order to implement different geometries, a good understanding of
+\texttt{deal.II} is required.  \red{I would also be open to collaborations with any groups
+in implementing specific geometries.}  The rest of this section will assume that the
+reader knows the basics of using \texttt{deal.II}.
+
+Probably the most difficult element of \texttt{deal.II}'s implementation in QuMESHS is
+grid generation.  Firstly, \texttt{deal.II} uses hexahedra (lines, rectangles or cuboids)
+to define its grid and I have not found a good meshing application for this.  Secondly,
+in order to retrieve the potential values on the lattice for which the density is calculated
+-- and to interpolate the density on the refined grids -- it is important not to
+interpolate the values from the initial grid on to the refined grids as this is
+\emph{\color{red} very} computationally expensive.  Therefore, the examples use an
+``inter-grid mapping'' between the initial grid on which the density data is defined
+and the adaptively refined grids.
+
+This means that the initial grids consist of the regular lattice on which the density
+is defined and the edges of the simulation domain.  \red{In general this can be
+challenging as lattice points between regions (for example, of different materials)
+must be moved to the same point.  See \texttt{CustomGridGenerator.cpp} for details.
+This could be especially complicated for 3D structures.}
+
+By defining the grid in this way, many cells are elongated.  It is suggested that
+the refinement step should tag cells with a large aspect ratio for anisotropic
+refinement.
+
+Another issue that must be considered when calculating the initial potential is the
+dopent distribution.  Unlike FlexPDE, the implementations of \texttt{deal.II} in
+sec~\ref{sec:Examples} can interpolate the dopent density from 1D to 2- or 3-D.
+This is done using linear interpolation between the data points.  As \texttt{deal.II}
+refines the lattice adaptively, it is \emph{\color{red} very} important that the edges
+of the dopent layers have a good resolution at the start of the calculation.  Otherwise,
+after a given number of iterations, the grid refinement method will put lots of grid
+points on one edge of the dopent layer.  This leads to a reduction of the total charge
+in the dopent layer (see fig~\ref{fig:dealIIdopents}) which shifts the entire
+potential.  The solution is to initially heavily refine the dopent layer so that the
+interpolated density values are already well defined.  This leads to a better solution
+being calculated in fewer iterations.  This is not relevant for calculating the
+Newton step as the dopent density distribution is not included in $g(\phi)$.
+
+The examples in sec~\ref{sec:Examples} define convergence of the \texttt{deal.II}
+solution as the point where the potential on the lattice which defines the density
+does not vary between refinements within a given tolerance (for example, $10^{-4}$V
+in the initial potential calculations).  This seems to provide satisfactory
+solutions.
+
+
+\red{I will also apologise for the terrible layout and lack of commenting for the
+\texttt{deal.II} implementation\ldots}
+
+
+\subsection{Density Solvers}
+
+The carrier density in a semiconductor heterostructure is calculated by solving
+the many-body problem.  This is an impossible problem so a level of approximation
+is needed to make the solution computationally tractable.  This section describes
+the approximations available in QuMESHS and how they are implemented.  The theory
+is described in sec~\ref{subsec:DensityTheory}.
+
+\subsubsection{Thomas-Fermi Semiclassical Approximation --- 1D}
+
+
+
+\subsubsection{Density Functional Theory --- 1D}
+
+\subsubsection{Thomas-Fermi Semiclassical Approximation --- 2D}
+
+\subsubsection{Effective-Band Approximation --- 2D}
+
+\subsubsection{Density Functional Theory --- 2D}
+
+\subsubsection{Spin-Orbit Interaction with Density Functional Theory --- 2D}
+
+This is implemented but not tested\ldots
+
+\subsubsection{Thomas-Fermi Semiclassical Approximation --- 3D}
+
+This is implemented but not tested\ldots
+
+\subsubsection{Transverse Thomas-Fermi Semiclassical Approximation --- 3D}
+
+This is implemented but not tested\ldots
+
+\subsubsection{Effective-Band Approximation --- 3D}
+
+This is implemented but not tested\ldots
+
+\subsubsection{Iterative Greens Function with Density Functional Theory --- 3D}
+
+This is not implemented yet\ldots
+
+
+\section{Data Structures and Designing Custom Density and Potential Solving Routines}
+
+\section{Examples}
+\label{sec:Examples}
+
+\subsection{GaAs-AlGaAs Heterostructure}
+\label{subsec:SimpleBandStructure}
+
+The simplest practical problem which QuMESHS can solve is calculating the
+band structure at a 285nm GaAs-AlGaAs interface for a modulation-doped wafer.
+\red{This specific band structure is for W616 grown in the Semiconductor Physics
+group at the University of Cambridge (can I say this and can I include the
+growth sheet\ldots or a redacted version thereof)?}.  The growth specification
+for a given wafer may provide a given doping density per layer.  However,
+the actual density of available dopents is reduced due to \red{not sure why\ldots
+check with Ian!}
+
+QuMESHS will calculate the band structure and density both ``in the dark'',
+fig~\ref{fig:BandStructureDark}, and ``after flashing'',
+fig~\ref{fig:BandStructureFlash}.  The console output include the carrier
+density calculated in the well after the quantum-mechanical density
+functional calculation.  As noted above, flashing only increases the carrier
+density by 30\% whilst experiment shows that it is increase by 50\%.  This
+is because QuMESHS cannot calculate the contribution due to deep donors.
+If you need to correct for this, increase the dopent density until the
+correct carrier density is achieved.
+
+
+\subsection{Double Quantum Well and Negative Capacitance}
+\label{subsec:NegativeCapacitance}
+
+This example aims to demonstrate QuMESHS's ability to run batch jobs, as well
+as demonstrating possible issues with convergence and how this can be dealt with.
+
+The example is based on the work of Eisenstein~\emph{et~al.}~\cite{Eisenstein:????}
+and Milliard~\emph{et~al.}~\cite{Millard:1997} on negative capacitance of a
+double well system under the application of a negative top-gate voltage.
+\red{a bit more of a description of the problem and its physics\ldots}
+
+The details for the batch run can be seen in \texttt{Input\_Parameters.txt}.
+The top gate will be incremented by -10mV up to a maximum of -1V.  A batch job
+can be run on a single computer by executing the code ``as is'' or it can be
+run across a cluster by changing the \texttt{no\_runs} option to 1 and inputting
+the batch number as the first console argument of QuMESHS \red{or possibly
+\texttt{Solver\_Master.exe}\ldots}  If a batch job is run locally, the chemical
+potential, dopent density and carrier density from the previous solution will
+be used as the starting conditions for the next calculation.  This is only
+true for 1D calculations or when the input option \texttt{hot\_start = true}.
+
+The relevant output files is the carrier charge density for each voltage.  By
+plotting the integrated carrier density across the two wells (note that you will
+need to multiply the in-file values by \texttt{dz} in order to get the integrated
+density and multiply the values by $10^{18}$ to convert from nm$^{-2}$ to
+m$^{-2}$ as in the papers), with the density in the upper well on the $x$-axis
+and the density in the lower well on the $y$-axis, the negative capacitance of
+the lower well when the carrier density in the upper well is low can be seen,
+fig~\ref{fig:NegativeCapacitance}.  A Matlab file for processing the data is
+provided.
+
+These results are at 1.5K and looking through the files generated by QuMESHS
+it can be seen that the solutions at -0.32V and -0.80V have not converged.
+These are the voltages where each of the wells depopulates.  At 1.5K, thermal
+excitation into the wells when the chemical potential is level with the band
+edge is very low so convergence requires very fine tuning of the solution at
+such low densities.  Convergence at low temperatures and densities is a known
+problem with density functional theory (see sec~\ref{subsec:DensityTheory}).
+Possible solutions include increasing the temperature (to 4K, say) or reducing
+the voltage step size (as this makes the previous solution a better ``first
+guess'').  However, it is possible that the low density solution might not
+provide much insight and an approximate, non-converged solution might be
+adequate, as in this example.
+
+
+\subsection{Split-Gate Heterostructure}
+
+\subsection{Top-Gated Split Gates with Spontaneous Row Formation}
+\label{subsec:TopAndSplitGate}
+
+\appendix
+
+\section{Material Properties}
+\label{app:MaterialProperties}
+
+\paragraph{GaAs}
+\begin{itemize}
+    \item{$E_g = 1424.0$ meV}
+    \item{$\epsilon_r = 12.9$}
+\end{itemize}
+
+\paragraph{Al\textsubscript{x}Ga\textsubscript{1-x}As}
+\begin{itemize}
+    \item{$E_g = 1424.0 + 1247.0 x$ \ meV for $x < 0.45$}
+    \item{$E_g = 1900.0 + 125.0 x + 143 x^2$ \ meV for $x \geq 0.45$}
+    \item{$\epsilon_r = 10.1 x + 12.9 (1-x)$}
+\end{itemize}
+
+\paragraph{Air}
+\begin{itemize}
+    \item{$E_g = 0.5\times10^9$ meV}
+    \item{$\epsilon_r = 1.0$}
+\end{itemize}
+
+\paragraph{PMMA}
+\begin{itemize}
+    \item{$E_g = 4400.0$ meV}
+    \item{$\epsilon_r = 2.6$}
+\end{itemize}
+
+\paragraph{Metal}
+\begin{itemize}
+    \item{$E_g = 0.0$ meV}
+    \item{$\epsilon_r = 1.0$}
+\end{itemize}
+
+\paragraph{In\textsubscript{x}Ga\textsubscript{1-x}As}
+\begin{itemize}
+    \item{$E_g = 1519.2 + 1583.7.0 x + 475.0 x^2$ \ meV}
+    \item{$\epsilon_r = 14.6 x + 12.9 (1-x) + 13.5 x (1-x)$}
+\end{itemize}
+
+\paragraph{In\textsubscript{x}Al\textsubscript{1-x}As}
+\begin{itemize}
+    \item{$E_g = 2640.0 - 2280x$ \ meV}
+    \item{$\epsilon_r = 14.6 x + 10.1 (1-x) + 12.5 x (1-x)$}
+    \item Comments -- Alloy ratios of \texttt{x < 0.53} are not allowed.
+\end{itemize}
+
+\section{Geometry Definitions}
+\label{app:GeometryDefinitions}
+
+\section{Known issues}
+\begin{itemize}
+    \item For some reason, it is possible for the iterator to stall.  This involves the
+    value of $t$ calculated using the Bank-Rose method is essentially zero and the potential
+    is not changed.  It is possible for QuMESHS to recover from this situation but not
+    guaranteed.  The iteration method stops QuMESHS from exiting because it thinks density
+    will not change.
+    %
+    \item The \dealii{} solver for the Newton iteration step can stop without warning
+    when solving the finite element matrix equation.  This error manifests itself when
+    \dealii{} does not create a \texttt{x.dat}.   The exception (which comes from
+    \dealii{}) says \texttt{Unknown exception!\textbackslash nAborting!}, followed by a stack
+    trace.  Sometimes this can be solved by decreasing the accuracy of the matrix
+    solver in \dealii{}.  This is done by changing the second argument of the \texttt{SolverControl}
+    class in the \texttt{NewtonProblem<dim>::solve~()} method.  Another possible solution is
+    to change the lattice spacing on which the density is calculated.
+    %
+    \item When the lattice spacing is too large, convergence is very difficult (if not impossible).
+    This manifests itself with a very noisy potential and a density which randomly localises.
+    The solution is to decrease the lattice spacing (if this is possible).
+\end{itemize}
+
+\end{document}
+% ----------------------------------------------------------------
