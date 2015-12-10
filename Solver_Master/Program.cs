@@ -55,16 +55,18 @@ namespace Solver_Master
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, "Solver_Config.txt");
             Inputs_to_Dictionary.Add_Input_Parameters_to_Dictionary(ref inputs, args[1]);
 
-            int no_runs = 1;
+            int no_sims = 1;
             bool batch_run = false;
             if (inputs.ContainsKey("batch_run"))
                 batch_run = (bool)inputs["batch_run"];
-            if (inputs.ContainsKey("no_runs"))
-                no_runs = (int)(double)inputs["no_runs"];
+            if (inputs.ContainsKey("no_sims"))
+                no_sims = (int)(double)inputs["no_sims"];
 
-            int first_run = 0;
-            if (args.Length != 0)
-                first_run = int.Parse(args[0]);
+            // get the sim_id for the first run
+            // this is set using the first console input argumen
+            int first_sim;
+            if (!int.TryParse(args[0], out first_sim))
+                throw new ArgumentException("Error - an integer simulation index must be specified in as the first input argument!  If not running in batch mode, this should be 0");
 
             if (!inputs.ContainsKey("dim"))
                 throw new KeyNotFoundException("Error - you must define the dimensionality of the system you want to solve!");
@@ -72,12 +74,12 @@ namespace Solver_Master
             int dim = (int)(double)inputs["dim"];
             Calculate_1D_Band_Structure(inputs);
 
-            for (int batch_no = first_run; batch_no < first_run + no_runs; batch_no++)
+            for (int sim_id = first_sim; sim_id < first_sim + no_sims; sim_id++)
             {
-                inputs["batch_no"] = batch_no;
+                inputs["sim_id"] = sim_id;
                 IExperiment exp;
                 if (batch_run)
-                    Prepare_Batch_Inputs(inputs, batch_no);
+                    Prepare_Batch_Inputs(inputs, sim_id);
 
                 switch (dim)
                 {
@@ -99,12 +101,12 @@ namespace Solver_Master
             }
         }
 
-        static void Prepare_Batch_Inputs(Dictionary<string, object> inputs, int batch_no)
+        static void Prepare_Batch_Inputs(Dictionary<string, object> inputs, int sim_id)
         {
-            // remove any input parameters from previous runs
+            // remove any input parameters from previous simulations
             inputs.Remove("output_suffix");
 
-            // get the boundary conditions which will be editted in the batch
+            // get the boundary conditions which will be edited in the batch
             string[] batch_params = ((string)inputs["batch_params"]).TrimStart('{').TrimEnd('}').Split(',');
             string output_suffix = "";
 
@@ -130,24 +132,28 @@ namespace Solver_Master
                 if (!inputs.ContainsKey("init_" + tmp_bc))
                     throw new KeyNotFoundException("Error - there is no \"init_" + tmp_bc + "\" option defined in the input file");
 
+                // no_sims is special so make sure that the tmp_bc is not called "sims"
+                if (tmp_bc == "sims")
+                    throw new ArgumentException("Error - you are trying to use \"sims\" as a boundary condition name.  This is a keyword and cannot be used");
+
                 // get the batch information
                 nos[i] = (int)(double)inputs["no_" + tmp_bc];
                 deltas[i] = (double)inputs["delta_" + tmp_bc];
                 inits[i] = (double)inputs["init_" + tmp_bc];
             }
 
-            // process the batch number
-            batch_index[0] = batch_no % nos[0];
+            // process the simulation id
+            batch_index[0] = sim_id % nos[0];
             for (int i = 1; i < batch_params.Length; i++)
             {
                 int mod_val = nos[0];
                 for (int j = 1; j < i; j++)
                     mod_val *= nos[j];
 
-                batch_index[i] = (batch_no - batch_no % mod_val) / mod_val;
+                batch_index[i] = (sim_id - sim_id % mod_val) / mod_val;
             }
 
-            // change the input library according to the requested batch input
+            // change the input library according to the requested simulation input
             for (int i = 0; i < batch_params.Length; i++)
                 if (!batch_params[i].Contains('='))
                 {
@@ -160,7 +166,7 @@ namespace Solver_Master
                     inputs[vals[0].Trim()] = (double)inputs[vals[1].Trim()];
                 }
 
-            // reset the "voltages" value to reflect the new batch values
+            // reset the "voltages" value to reflect the new values
             int count = 0;
             string voltages = "{";
             while (inputs.ContainsKey("V" + count.ToString()))
@@ -170,7 +176,7 @@ namespace Solver_Master
             }
             inputs["voltages"] = voltages.Remove(voltages.Length - 2) + "}";
 
-            // and generate the relevant batch suffix
+            // and generate the relevant batch suffix for this simulation
             for (int i = 0; i < batch_params.Length; i++)
                 if (!batch_params[i].Contains('='))
                     output_suffix += "_" + batch_params[i].Trim() + "_" + ((double)inputs[batch_params[i].Trim()]).ToString("F3");
