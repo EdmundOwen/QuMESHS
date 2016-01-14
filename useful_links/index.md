@@ -20,6 +20,6 @@ title: Useful Links
 
 [Quantum electronics in semiconductors](http://www.physics.udel.edu/~bnikolic/QTTG/shared/reviews/quantum_electronics_in_semiconductors_barnes.pdf)
 
-### Relevant Wikipedia entries]
+### Relevant Wikipedia entries
 
 [Density functional theory](https://en.wikipedia.org/wiki/Density_functional_theory)
