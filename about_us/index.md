@@ -14,5 +14,9 @@ QuMESHS can simulate 1, 2 and 3-D electron systems in layered
 semiconductor heterostructures.
 
 QuMESHS was developed by Edmund Owen and Crispin Barnes with 
-additional contributions by Thomas Gemunden.
+additional contributions by Thomas Gemunden.  This work was
+developed under the EPSRC grant `Nanoelectronic Based Quantum
+Physics - Technology and Applications` under the direction of
+Mike Pepper and supported by the Engineering and Physical 
+Sciences Research Council (EPSRC), UK, EP/K004077/1.
 
