@@ -43,9 +43,19 @@
 \tableofcontents
 \newpage
 
-\commentout{
+
 \section{Overview}
-}
+
+QuMESHS is a numerical code for solving finding the electron densities in quantum mesoscopic systems. Specifically, it is designed to model layered semiconductor heterostructure devices with arbitrary surface gate geometries. The electron density and electrostatic potential are calculated using self-consistent iterative procedure. The potential is calculated using finite-element analysis and the density is (typically) calculated using density functional theory. Simulations in 1, 2 and 3-D can be performed with varying degrees of approximation for the density. Dopents and surface charges are included. We intend the solutions of QuMESHS to be accurate representations of the actual experimental devices without the need to resort to using model potentials.
+
+QuMESHS is written in C\#. The density calculations and the control code is performed in the main body of the QuMESHS code. For 1D calculations, QuMESHS can also calculate the electrostatic potential but for 2 and 3-D, we use external programs to calculate the electrostatic potential using the finite-element method. At the moment, this is done using either FlexPDE or the deal.II FEA library but QuMESHS can use any external program to generate these potentials.
+
+QuMESHS was designed to model electrons in semiconductor heterostructures. The original focus was to study quasi-one-dimensional constrictions, with a specific focus on the low density limit, but the software has been designed to be applicable to more general semiconductor heterostructure systems.
+
+QuMESHS can simulate 1, 2 and 3-D electron and hole systems in layered semiconductor heterostructures.  The software is still under development and it is recommended that if you want to use QuMESHS you get in contact with us either through www.qumeshs.org or by emailing eto24@cam.ac.uk.
+
+QuMESHS was developed by Edmund T. Owen and Crispin H. W. Barnes with additional contributions by Thomas Gemunden. This work was developed under the EPSRC grant ``Nanoelectronic Based Quantum Physics - Technology and Applications'' under the direction of Mike Pepper and supported by the Engineering and Physical Sciences Research Council (EPSRC), UK, EP/K004077/1.
+
 
 \section{Setting up QuMESHS}
 
