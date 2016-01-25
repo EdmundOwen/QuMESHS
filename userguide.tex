@@ -20,6 +20,8 @@
 \newcommand{\intinfty}{\int_{- \infty}^{\infty}}
 \newcommand{\dealii}{\texttt{deal.II}}
 
+\newcommand{\commentout}[1]{}
+
 
 \begin{document}
 
@@ -41,7 +43,9 @@
 \tableofcontents
 \newpage
 
+\commentout{
 \section{Overview}
+}
 
 \section{Setting up QuMESHS}
 
@@ -270,11 +274,11 @@ The type of carriers which the solution will calculate for.  In 2D and 3D, this 
 to specify that you want to allow ``both'' although it is recommended that you use either
 ``electron'' or ``hole'' if you know what you expect.
 
-
+\commentout{
 \subsubsection{1D}
 
 \red{I cannot think of any 1D specific input parameters\ldots}
-
+}
 
 \subsubsection{2D}
 
@@ -700,8 +704,8 @@ user to prevent QuMESHS from restarting from a checkpoint without changing the c
 \section{Theory}
 
 QuMESHS solves the self-consistent Poisson-Schr\"{o}inger equation in layered semiconductor
-heterostructures using a variety of approximate methods to calculate the electron \red{and
-possibly hole} densities.
+heterostructures using a variety of approximate methods to calculate the electron and
+hole densities.
 
 \subsection{Poisson's Equation}
 
@@ -774,14 +778,15 @@ defined as
 In reality, we will never be able to solve this set of equations so we must find
 approximations for the charge density $\rho (r)$.
 
+\commentout{
 \subsubsection{Thomas-Fermi semi-classical approximation}
 
 The first approximation is the simplest.  We assume that the electrons have a density
 at $r$ which is equivalent to what the bulk density would be for the chemical potential
 at this point $\mu (r)$.
+}
 
-
-
+\commentout{
 \section{Code Layout}
 
 QuMESHS uses the NMath library for a significant amount of its data manipulation and
@@ -1157,6 +1162,8 @@ adequate, as in this example.
 
 \subsection{Top-Gated Split Gates with Spontaneous Row Formation}
 \label{subsec:TopAndSplitGate}
+}
+
 
 \appendix
 
@@ -1212,12 +1219,7 @@ adequate, as in this example.
 
 \section{Known issues}
 \begin{itemize}
-    \item For some reason, it is possible for the iterator to stall.  This involves the
-    value of $t$ calculated using the Bank-Rose method is essentially zero and the potential
-    is not changed.  It is possible for QuMESHS to recover from this situation but not
-    guaranteed.  The iteration method stops QuMESHS from exiting because it thinks density
-    will not change.
-    %
+\commentout{
     \item The \dealii{} solver for the Newton iteration step can stop without warning
     when solving the finite element matrix equation.  This error manifests itself when
     \dealii{} does not create a \texttt{x.dat}.   The exception (which comes from
@@ -1227,6 +1229,7 @@ adequate, as in this example.
     class in the \texttt{NewtonProblem<dim>::solve~()} method.  Another possible solution is
     to change the lattice spacing on which the density is calculated.
     %
+}
     \item When the lattice spacing is too large, convergence is very difficult (if not impossible).
     This manifests itself with a very noisy potential and a density which randomly localises.
     The solution is to decrease the lattice spacing (if this is possible).
