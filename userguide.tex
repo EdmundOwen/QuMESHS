@@ -58,14 +58,29 @@ QuMESHS was developed by Edmund T. Owen and Crispin H. W. Barnes with additional
 
 
 \section{Setting up QuMESHS}
+\label{sec:Setup}
+
+QuMESHS is a console application and must be run through the command line.  The executable takes two console input arguments.  The first argument is an unsigned integer which should, by default, be set to 0.  If you are using QuMESHS batch run system, then this is the batch run ordinal (see Sec.~\ref{subsubsec:BatchRuns} for details).  The second argument is the string containing the location of the input parameter file as described in Sec.~\ref{subsec:InputFile}.
 
 \subsection{Windows}
 \label{subsec:SetupWindows}
 
+QuMESHS can either be run on Windows using the compiled binaries or by compiling the code yourself.  In order to compile QuMESHS, you must have a license for the NMath library provided by CenterSpace.  Please see the accompanying README for details.
+
+With the binaries and libraries provided in the release contained within the same folder and with correctly formatted input files (see Sec.~\ref{sec:Inputs}), open a PowerShell in this folder and run the executable \texttt{Solver\_Master.exe}. 
+
 \subsection{Linux}
 \label{subsec:SetupLinux}
 
+QuMESHS can be run in Linux but, as it is written using C\#, QuMESHS requires mono in order to provide the correct runtime framework.  We suggest bundling the libraries provided in the release section of the QuMESHS repository using the mono command mkbundle.  Exact details on how this can be done can be found on the mono website or, if you are having problems, contact eto24@cam.ac.uk.
+
+\subsubsection{Using deal.II}
+\label{subsubsec:UsingdealII}
+
+In Linux, the recommended way of calculating the electrostatic potentials is using deal.II.  At the moment, we have not provided any information on how to do this.  Contact eto24@cam.ac.uk for details.
+
 \section{Editing the inputs}
+\label{sec:Inputs}
 
 There are three input files: The config file, which contains the QuMESHS configuration;
 the input file, which contains the simulation input parameters; and the band structure
@@ -100,8 +115,7 @@ the mixing parameter $t$.  This the chosen definition for convergence as it is
 related to the residual $g(\phi) = - \nabla \cdot ( \epsilon \nabla \phi ) -
 \rho (\phi)$ through the Newton step $g' (\phi) x = - g (\phi)$ rather than the
 optimised potential $t x$ which is what is actually added to the solution each
-iteration step.  It is in units of meV.  Recommended settings are \red{not given
-yet\ldots}
+iteration step.  It is in units of meV.  
 
 \paragraph{\texttt{tolerance\_1d} \emph{(compulsory)}}
 Same as \texttt{tolerance} but for the 1D band structure calculation.  If
@@ -129,8 +143,8 @@ http://www.pdesolutions.com for details.
 \paragraph{\texttt{FlexPDE\_file} \emph{(compulsory for FlexPDE)}}
 Name of the FlexPDE script file (which should end in .pde although this might
 not be necessary).  At the moment, QuMESHS will generate a custom FlexPDE
-script and this is where this file will be written. \red{In future, we could try
-and allow custom FlexPDE scripts which QuMESHS can edit}.  The intermediate
+script and this is where this file will be written.  In future, we could try
+and allow custom FlexPDE scripts which QuMESHS can edit.  The intermediate
 output from a FlexPDE solution will be written to a file with the same name but
 with the .pg6 extension.
 
@@ -190,8 +204,6 @@ the mixing factor $\alpha$.  Default is $\alpha = 0.3$.
 The input file contains all of the simulation parameters QuMESHS needs.  These will
 be different depending on the dimensionality of the system to be simulated but there
 are some universal parameters which must always be specified for QuMESHS to run.
-{\color{red} NOTE:} \emph{Presently, the input file must be called} \texttt{Input\_Parameters.txt}
-\emph{and located in the folder where QuMESHS runs!}
 
 \paragraph{\texttt{dim} \emph{(compulsory but not yet implemented\ldots)}}
 Dimensionality of the problem you want QuMESHS to solve.
@@ -234,7 +246,7 @@ distribution (see~\ref{sec:DensityTheory}).  The default is \texttt{false}.
 By default, QuMESHS will throw an exception if the top of the 1D band structure is not at
 the surface.  If this parameter is set to \texttt{true}, then this check is ignored.
 {\color{red} NOTE:} This means that typical 1D simulations never include the PMMA or air
-above a sample (see sec~\ref{?} for explanation).
+above a sample.
 
 \paragraph{\texttt{bottom\_V}}
 Voltage at the base of the band structure in V.  By default, for 1D simulations, this is
@@ -298,16 +310,15 @@ defined in the ``\texttt{Input\_Parameters.txt}'' file but with the suffix ``\te
 ie. \texttt{nz\_1d} and \texttt{dz\_1d} whilst the optional inputs are \texttt{nz\_dens\_1d},
 \texttt{dft\_1d}, etc\ldots  The only extra parameter for the 1D calculation is
 \texttt{ny\_1d} which gives the number of lattice sites to replicate the dopent distribution
-for FlexPDE calculations (see sec~\ref{subsec:UsingFlexPDE}).
+for FlexPDE calculations.
 
 \paragraph{\texttt{ny} \emph{(compulsory)}}
 Number of lattice points for the direction transverse to the transport direction.  Note
-that this is mostly used along with \texttt{dz} to define the domain size (see sec~\ref{?}).
+that this is mostly used along with \texttt{dz} to define the domain size).
 
 \paragraph{\texttt{dy} \emph{(compulsory)}}
 Lattice point spacing in nm for the direction transverse to the transport direction.
-Note that this is mostly used along with \texttt{nz} to define the domain size (see
-sec~\ref{?}).
+Note that this is mostly used along with \texttt{nz} to define the domain size).
 
 \paragraph{\texttt{ny\_dens}}
 Number of lattice points for the direction transverse to the transport direction on which
@@ -333,7 +344,7 @@ calculation in order to pin the surface mid-gap for cool-down when all gates are
 (see sec~\ref{subsec:PotentialSolvers} for explanation).  However, it is possible to
 override this value here.
 
-\paragraph{\texttt{split\_width} \emph{(compulsory?)}}
+\paragraph{\texttt{split\_width} \emph{(compulsory)}}
 QuMESHS was originally written to study split gates in 2D.  This parameter defines the
 width of the split.  \red{Whilst the split width should be defined entirely by the band
 structure file, QuMESHS is not currently equipped to get at this information\ldots}
@@ -354,7 +365,7 @@ Gives the level of approximation for calculating the 2D density.  The options ar
     \item dft
     \item sodft (untested)
 \end{enumerate}
-Further details of the theory of these approximations is given in Sec.~\ref{sec:theory}.
+Further details of the theory of these approximations is given in Sec.~\ref{sec:Theory}.
 
 
 \subsubsection{3D}
@@ -365,16 +376,15 @@ defined in the ``\texttt{Input\_Parameters.txt}'' file but with the suffix ``\te
 ie. \texttt{nz\_1d} and \texttt{dz\_1d} whilst the optional inputs are \texttt{nz\_dens\_1d},
 \texttt{dft\_1d}, etc\ldots  The only extra parameters for the 1D calculation are
 \texttt{nx\_1d} and \texttt{ny\_1d} which gives the number of lattice sites to replicate
-the dopent distribution for FlexPDE calculations (see sec~\ref{subsec:UsingFlexPDE}).
+the dopent distribution for FlexPDE calculations.
 
 \paragraph{\texttt{nx} \emph{(compulsory)}}
 Number of lattice points for the direction along the transport direction.  Note
-that this is mostly used along with \texttt{dz} to define the domain size (see sec~\ref{?}).
+that this is mostly used along with \texttt{dz} to define the domain size.
 
 \paragraph{\texttt{dx} \emph{(compulsory)}}
 Lattice point spacing in nm for the direction along the transport direction.
-Note that this is mostly used along with \texttt{nz} to define the domain size (see
-sec~\ref{?}).
+Note that this is mostly used along with \texttt{nz} to define the domain size.
 
 \paragraph{\texttt{nx\_dens}}
 Number of lattice points for the direction along the transport direction on which
@@ -390,12 +400,11 @@ which to calculate the density.
 
 \paragraph{\texttt{ny} \emph{(compulsory)}}
 Number of lattice points for the direction transverse to the transport direction.  Note
-that this is mostly used along with \texttt{dz} to define the domain size (see sec~\ref{?}).
+that this is mostly used along with \texttt{dz} to define the domain size.
 
 \paragraph{\texttt{dy} \emph{(compulsory)}}
 Lattice point spacing in nm for the direction transverse to the transport direction.
-Note that this is mostly used along with \texttt{nz} to define the domain size (see
-sec~\ref{?}).
+Note that this is mostly used along with \texttt{nz} to define the domain size.
 
 \paragraph{\texttt{ny\_dens}}
 Number of lattice points for the direction transverse to the transport direction on which
@@ -438,7 +447,8 @@ conditions which is useful for parameter sweeps.  When running a batch job, each
 simulation will be assigned a simulation number.  This is counted from zero and can be
 offset by an integer value with the first console argument of QuMESHS.  Therefore,
 if the batch run is managed externally (using Condor, say), then the number of simulations
-should be set to one and the console argument is provided by the batch run manager.
+should be set to one and the first console argument is provided by the batch run manager
+(see Sec.~\ref{sec:Setup}).
 \texttt{batch\_run} must still be set to true, otherwise the boundary conditions will
 not be incremented according to your batch run definitions.
 
@@ -582,6 +592,7 @@ still necessary but has no effect.
 
 
 \section{Outputs}
+\label{sec:Output}
 
 \subsection{Console output}
 \label{subsec:ConsoleOutput}
@@ -595,7 +606,7 @@ time is not output.
 
 For DFT calculations, the exchange-correlation potential is mixed in when the electrostatic
 potential has converged to a ``good enough'' self-consistent solution (see
-sec~\ref{subsec:DensityTheory}).  When this occurs, the console will say what the maximum
+sec~\ref{sec:Theory}).  When this occurs, the console will say what the maximum
 and minimum density difference between the current and calculated exchange-correlation potential
 is.
 
@@ -611,7 +622,6 @@ QuMESHS outputs a variety of data from the simulation and the way it must be pro
 depend on the dimensionality of the simulation.  Unless otherwise specified, the data
 files contain various functions defined on the density lattice given by the input file.
 The format of the output suffix \texttt{<suffix>} is given in sec~\ref{subsec:InputFile}.
-\red{must describe how the data is arranged, ie. what is the $x, y, z$ ordering\ldots}
 
 \paragraph{\texttt{bare\_pot\_<suffix>}}
 This is the bare potential in meV for the system assuming that there is no carriers in
@@ -646,7 +656,7 @@ includes the relevant band gaps.  This is the Kohn-Sham potential and, therefore
 the exchange-correlation potential if the calculation includes DFT.
 
 \paragraph{\texttt{potential\_<suffix>}}
-This is the converged, self-consistent \emph{\color{red} electrostatic} potential in meV
+This is the converged, self-consistent electrostatic potential in meV
 for the system.  Note that this is the quantum potential of the conduction band and,
 therefore, includes the relevant band gaps.  Also, this is the electrostatic potential
 and, therefore, does not include the exchange-correlation potential if the calculation
@@ -657,7 +667,7 @@ FlexPDE outputs graphs when a potential or Newton step calculation is complete. 
 file will contain the final FlexPDE solution data (whatever that may be\ldots).
 
 \paragraph{\texttt{surface\_charge\_<suffix>}}
-This is the surface charge \red{what units?} calculated from the 1D dopent distribution
+This is the surface charge \commentout{\red{what units?}} calculated from the 1D dopent distribution
 calculation at the beginning of the simulation.
 
 \paragraph{\texttt{xc\_pot\_<suffix>}}
@@ -729,15 +739,14 @@ The first of the two coupled equations which we want to solve is the Poisson equ
 where $\epsilon_0$ is the permittivity of free space and $\epsilon(r)$ is the relative
 dielectric constant, which is different for the various materials in the heterostructure.
 $\phi(r)$ is the electrostatic potential and $\rho(r)$ is the electric charge.   The
-function $g$ is positive-definite \red{in some sense which is important for the Bank-Rose
-method}.
+function $g$ is positive-definite.
 
 QuMESHS solves Eq.~\ref{eq:Poisson} using the finite-differences method for 1D and
 the finite-element method for 2D and 3D.  The finite-element method is better explained
 elsewhere in the respective documentation for FlexPDE and \dealii but we will explain
 the finite-differences method here.  In order to solve Eq.~\ref{eq:Poisson}, the
 Laplacian $\nabla \cdot \left(\epsilon_0 \epsilon(r) \nabla \phi(r)\right)$ needs to
-be discretised onto a lattice.  \red{At the moment,} QuMESHS only implements finite
+be discretised onto a lattice.  QuMESHS only implements finite
 differences on a regular grid in 1D.  However, here we show how to discretise the
 Laplacian on an irregular grid.
 
@@ -753,11 +762,11 @@ In 1D, we want to discretise
 \end{eqnarray}
 %
 where the final equality is for $\Delta_- = \Delta_+$, ie. a regular grid (as used in
-QuMESHS).  This discretisation can be put in matrix form:
+QuMESHS). \commentout{ This discretisation can be put in matrix form:
 %
 \red{some matrix}
 %
-\red{some details on how to do boundary conditions}
+\red{some details on how to do boundary conditions}}
 This allows us to reduce Eq.~\ref{eq:Poisson} to a matrix equation where
 %
 \begin{equation}
@@ -1226,6 +1235,8 @@ adequate, as in this example.
 
 \section{Geometry Definitions}
 \label{app:GeometryDefinitions}
+
+Under construction\ldots
 
 \section{Known issues}
 \begin{itemize}
