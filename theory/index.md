@@ -5,7 +5,7 @@ title: Theory
 # Theory
 
 A detailed description of the theory used in QuMESHS can be found
-in the [QuMESHS user guide]() but here we give a brief outline of the
+in the [QuMESHS user guide](/download/documentation/) but here we give a brief outline of the
 methods used.
 
 ### Poisson`s Equation with Finite-Element Analysis
