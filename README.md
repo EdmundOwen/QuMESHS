@@ -5,11 +5,11 @@ Quantum Mesoscopic Electronic Semiconductor Heterostructure Solver
 
 1. Introduction
 2. Requirements
-  1. Running QuMESHS with NMath
-  2. Compiling QuMESHS with NMath
-  3. Calculating electrostatic potentials with QuMESHS
-    1. Using QuMESHS with FlexPDE
-    2. Using QuMESHS with deal.II
+   1. Running QuMESHS with NMath
+   2. Compiling QuMESHS with NMath
+   3. Calculating electrostatic potentials with QuMESHS
+      1. Using QuMESHS with FlexPDE
+      2. Using QuMESHS with deal.II
 
 ## 1. Introduction
 The QuMESHS program is designed to calculate self-consistent electrostatic potentials and charge densities for layered semiconductor heterostructures.
